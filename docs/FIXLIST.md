@@ -110,3 +110,11 @@ Status: **DONE in v2.1.0** (2026-10-22). G2 note: new per-world obstacles are ne
 - **J4.** The **YOU** row gets a glowing outline (stands out).
 - **J5.** YOU row today shows the rank class twice (corner on the avatar + separate D badge) → keep one.
 - **J6.** Far-down positions (e.g. #33,051) → show "#33,051" with "Top 14%" underneath so a low position still reads as progress.
+
+## K. Round 6 — EXP & rank guide (owner 2026-10-22 06:48) — chốt, chưa code
+- **K1.** Remove the minutes columns (Hard / Normal / Easy). Table = **RANK · EXP · UNLOCKS**.
+- **K2.** "Unlocks" per rank (icon + short name):
+  D Zenith · C XWAVE Vega · B Volt · A Phantom · AA Inferno ·
+  AAA Nexus + Mega Rush + AAA specials (Tunnel / Wall / Ghost / Rail) ·
+  S Ocean Drive · SS Volcano Run · SSS Aurora Peak.
+- **K3.** Keep only the EXP conversion line (EXP = metres × Hard 2 · Normal 1.15 · Easy 1) and "EXP can't be bought"; the S/SS/SSS note is covered by the table.
