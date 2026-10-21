@@ -189,7 +189,6 @@ function rivalProfile(name: string, score: number) {
   };
 }
 
-const ADV_WORLDS: [string, string][] = [['city', 'Future City'], ['cloud', 'Cloud City'], ['tunnel', 'Neon Tunnel'], ['space', 'Space Zone'], ['mega', 'Megacity']];
 const hex = (n: number) => '#' + n.toString(16).padStart(6, '0');
 /** side-view silhouette for the garage cards */
 function carSvg(shape: string, body: number, glow: number) {
@@ -564,7 +563,7 @@ export class UI {
     <section id="tutintro" class="screen overlay">
       <div class="panel tut-panel scrolly">
         <div class="mhead"><h2>${TUT_ICON} TUTORIAL</h2><button class="icon-btn sm" data-a="closeov" data-v="tutintro" aria-label="Close">${ICON.close}</button></div>
-        <p class="tut-lead">Everything in one place: learn the moves, practise every special item and meet the obstacles of each world. You can't crash in training.</p>
+        <p class="tut-lead">Learn the moves and practise each special. You can't crash in training.</p>
         <div class="tuthub">
           <div class="th-sec"><div class="th-h"><i>1</i><b>Basics · first flight</b></div>
             <div class="tut-grid">
@@ -576,9 +575,7 @@ export class UI {
             <div class="label tut-keys">Keyboard: arrow keys or W A S D</div>
             <button class="btn" data-a="tutstart">${ICON.play} Start training</button></div>
           <div class="th-sec"><div class="th-h"><i>2</i><b>Special items</b><button class="linkbtn" data-a="guide">${ICON.info} Roadster guide</button></div>
-            <div class="th-items">${(['super', 'hyper', 'escape', 'shield'] as ItemKey[]).map((k) => `<button class="th-it ${k}" data-a="boosttrain" data-v="${k}"><span>${ITEM_ICON[k]}</span><b>${ITEM_NAME[k]}</b><small>${ICON.target} Practise</small></button>`).join('')}</div></div>
-          <div class="th-sec"><div class="th-h"><i>3</i><b>Advanced · every obstacle of a world</b></div>
-            <div class="advgrid">${ADV_WORLDS.map(([id, name]) => `<button class="advw" data-a="advtrain" data-v="${id}"><img src="${THUMBS[id === 'city' ? 'future-city' : id === 'tunnel' ? 'neon-tunnel' : id === 'cloud' ? 'cloud-city' : id === 'space' ? 'space-zone' : 'mega-city']}" alt="" /><span>${name}</span></button>`).join('')}</div></div>
+            <div class="th-items">${(['super', 'hyper', 'escape'] as ItemKey[]).map((k) => `<button class="th-it ${k}" data-a="boosttrain" data-v="${k}"><span>${ITEM_ICON[k]}</span><b>${ITEM_NAME[k]}</b><small>${ICON.target} Practise</small></button>`).join('')}</div></div>
         </div>
         <button class="btn ghost sm" data-a="tutskip">Skip · go racing</button>
       </div>
@@ -598,10 +595,9 @@ export class UI {
       <div class="panel tut-panel">
         <div class="tut-check">${ICON.check}</div>
         <h2>TRAINING COMPLETE</h2>
-        <p class="tut-lead">You're ready. Pick a speed on the home screen, choose a track and race!</p>
-        <button class="btn big" data-a="play">${ICON.play} Let's race</button>
+        <p class="tut-lead">You're ready! <b>Distance = EXP</b>, and EXP is your rank: ${classBadge('D')} → ${classBadge('C')} in about 3 minutes on Hard. Every new rank is guarded by a hard <b>rank gate</b>.</p>
+        <button class="btn big" data-a="play">${ICON.play} Race Endless</button>
         <button class="btn ghost sm" data-a="tutstart">${ICON.retry} Replay training</button>
-        <button class="btn sm purple" data-a="help">${ICON.target} Advanced training</button>
       </div>
     </section>
 

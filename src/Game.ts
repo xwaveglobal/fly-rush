@@ -48,7 +48,7 @@ import type { ItemKey, Reward } from './meta/Daily.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v2.0.5';
+const VERSION = 'v2.0.6';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -252,7 +252,7 @@ export class Game {
     this.ui = new UI(container, {
       play: () => {
         this.returnTo = null;
-        this.afterResults(() => (this.save.tutorialDone ? this.openTracks() : this.openTutorialIntro()));
+        this.afterResults(() => (this.save.tutorialDone ? this.openTracks() : this.startTutorial())); // v2: first Play = training
       },
       help: () => this.openTutorialIntro(),
       startTutorial: () => this.startTutorial(),

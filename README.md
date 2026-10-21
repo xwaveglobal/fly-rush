@@ -187,6 +187,11 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v2.0.6 changes (v2 step 6 — new training)
+
+- First **Play** starts the training straight away (~60 s): left / right / up / down, coins, road power-ups, then the free Roadster Jump from the bag over a car block. Hints explain distance = EXP, coins buy specials, one special per race, ranks and rank gates.
+- The end card explains EXP → rank; "Race Endless" goes to the track list. The per-world advanced trainings are gone (special-item practice stays in the Tutorial hub).
+
 ## v2.0.5 changes (v2 step 5 — revive & ads)
 
 - **Revive only by rewarded ad, max 2 per race** ("Revives left 2 / 2 · the 3rd crash sends you back to Start"). Coin continues are gone.

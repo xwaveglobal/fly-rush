@@ -27,17 +27,16 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   { dist: 160, need: 'right', title: 'SWIPE RIGHT', sub: 'Back to the middle lane.', lead: 0.8 },
   { dist: 245, need: 'up', title: 'SWIPE UP', sub: 'Hop over the barriers. One hop, then the car lands by itself.', lead: 0.5 },
   { dist: 330, need: 'down', title: 'SWIPE DOWN', sub: 'Tuck the wheels in and slide under the beams.', lead: 0.42 },
-  { dist: 455, need: 'left', title: 'GRAB THE ROCKET', sub: 'The purple rocket is a ROADSTER JUMP. Swipe left into its lane.', lead: 0.8 },
-  { dist: 545, need: 'rocket', title: 'TAP ROADSTER!', sub: 'Cars block EVERY lane — too tall to hop. Tap the purple ROADSTER button to rocket over both rows!', lead: 0.6, super: true },
+  { dist: 545, need: 'rocket', title: 'TAP ROADSTER!', sub: 'Your free special: a ROADSTER JUMP. Tap the purple button to rocket over the whole block!', lead: 0.6, super: true },
 ];
 
 /** Short info captions shown without pausing. */
 export const TUTORIAL_HINTS: { dist: number; text: string }[] = [
-  { dist: 8, text: 'Your XWAVE drives on its wheels. Watch the road ahead!' },
-  { dist: 352, text: 'Collect energy coins for points' },
-  { dist: 404, text: 'Power-ups: Shield, Magnet, Turbo, 2X, Extra life' },
-  { dist: 470, text: 'Rocket stored! Look at the purple chip on the left' },
-  { dist: 590, text: 'Roadster Jumps appear on the road after 250 m' },
+  { dist: 8, text: 'Drive as far as you can — distance is your EXP' },
+  { dist: 352, text: 'Coins buy specials like the Roadster Jump' },
+  { dist: 404, text: 'Road power-ups: Shield, Magnet, Turbo, ×2 coins — they work at once' },
+  { dist: 470, text: 'You carry 1 special per race — today: a free Roadster Jump' },
+  { dist: 590, text: 'EXP gives your rank D → AAA. Hard rank gates guard every new rank!' },
 ];
 
 const row = (dist: number, obstacles: ObstacleSpec[]): RowSpec => ({ dist, dt: 1, masks: rowMasks(obstacles), obstacles });
@@ -58,7 +57,6 @@ export function tutorialScript(): { rows: RowSpec[]; pickups: PickupSpec[] } {
   for (let d = 30; d <= 66; d += 6) pickups.push({ kind: 'coin', lane: 1, dist: d, y: HEIGHT.NORMAL });
   for (let d = 360; d <= 396; d += 4) pickups.push({ kind: 'coin', lane: 1, dist: d, y: HEIGHT.NORMAL });
   pickups.push({ kind: 'shield', lane: 1, dist: 412, y: HEIGHT.NORMAL });
-  pickups.push({ kind: 'super', lane: 0, dist: 462, y: HEIGHT.NORMAL });
   for (let d = 600; d <= 630; d += 5) pickups.push({ kind: 'coin', lane: 0, dist: d, y: HEIGHT.NORMAL });
   return { rows, pickups };
 }
@@ -214,7 +212,8 @@ export function advancedScript(world: WorldId): TrainingScript {
 
 export function basicScript(): TrainingScript {
   const s = tutorialScript();
-  return { ...s, steps: TUTORIAL_STEPS, hints: TUTORIAL_HINTS, length: TUTORIAL_LENGTH };
+  // v2: the Roadster Jump comes from the bag (one special per race), not from the road
+  return { ...s, steps: TUTORIAL_STEPS, hints: TUTORIAL_HINTS, length: TUTORIAL_LENGTH, grant: { super: 1 } };
 }
 
 // ============================================================================
