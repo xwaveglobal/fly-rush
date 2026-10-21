@@ -6,7 +6,7 @@ import { flagOf } from './Country.ts';
 import { dayKey, weekKey, type SaveData } from '../core/Save.ts';
 import { CHECKIN, CHESTS, questsFor, type ItemKey, type QuestStat, type Reward } from './Daily.ts';
 import { cupFor, eventBoard, prizeFor, schedule, type EventInst, type Prize } from './Events.ts';
-import { classFor, CLASSES, type RankClass } from './Rank.ts';
+import { BASE_CLASSES as CLASSES, playerRank, toBase, type RankClass } from './Rank.ts';
 import { allTimeBoard, avatarColor, weeklyBoard } from './Leaderboard.ts';
 
 export interface RunSummary {
@@ -41,16 +41,16 @@ export class Meta {
   }
   /** rank from the best single-run EXP */
   get cls(): RankClass {
-    return classFor(this.s.expBest);
+    return playerRank(this.s.expBest, this.s.exp2Best);
   }
   /** the cup of the player's class in the live session (null between sessions) */
   myCup(now = Date.now()): EventInst | null {
     const sc = schedule(now);
-    return sc.live ? cupFor(sc.live, this.cls) : null;
+    return sc.live ? cupFor(sc.live, toBase(this.cls)) : null;
   }
   /** the player's cup in the next session */
   nextCup(now = Date.now()): EventInst {
-    return cupFor(schedule(now).next, this.cls);
+    return cupFor(schedule(now).next, toBase(this.cls));
   }
   /** v1 rank stars: no longer awarded (v2 rank = best run EXP). Kept so old cup code compiles until it is removed. */
   addBolts(_n: number) {}
@@ -178,6 +178,7 @@ export class Meta {
     this.s.weekBest = Math.max(this.s.weekBest, Math.floor(r.score));
     this.s.expBest = Math.max(this.s.expBest, Math.floor(r.exp));
     this.s.expWeek = Math.max(this.s.expWeek, Math.floor(r.exp));
+    if (r.track === 'track2') this.s.exp2Best = Math.max(this.s.exp2Best, Math.floor(r.exp));
     const cup = this.myCup();
     if (cup && cup.cup.track === r.track) {
       const e = (this.s.events[cup.key] ??= { best: 0 });

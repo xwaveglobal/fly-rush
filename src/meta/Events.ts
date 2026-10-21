@@ -7,7 +7,7 @@
  * (cup points), coins, HYPER JUMPs and trophies.
  */
 import { rankBoard, sampleBoard, type Board } from './Leaderboard.ts';
-import { CLASSES, type RankClass } from './Rank.ts';
+import { BASE_CLASSES as CLASSES, type BaseClass as RankClass } from './Rank.ts';
 
 export const SESSION_HOURS_ET = [12, 22] as const;
 export const LIVE_HOURS = 3;

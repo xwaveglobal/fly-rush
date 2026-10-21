@@ -68,9 +68,11 @@ export type SpeedLevel = 'easy' | 'normal' | 'hard';
 export const EXP = {
   rate: { easy: 0.2, normal: 0.23, hard: 0.4 } as Record<SpeedLevel, number>,
   /** EXP needed for each rank */
-  rank: { D: 0, C: 3000, B: 8000, A: 15000, AA: 26000, AAA: 40000 },
-  /** design targets (minutes of non-stop HARD) — shown in the rank guide, checked by the test */
-  hardMinutes: { D: 0, C: 3, B: 7, A: 12, AA: 20, AAA: 30 },
+  rank: { D: 0, C: 3000, B: 8000, A: 15000, AA: 26000, AAA: 40000, S: 65000, SS: 85000, SSS: 110000 },
+  /** design targets (minutes of non-stop HARD; S tiers on Track 2) — shown in the rank guide, checked by the test */
+  hardMinutes: { D: 0, C: 3, B: 7, A: 12, AA: 20, AAA: 30, S: 35, SS: 45, SSS: 58 },
+  /** Track 2 (unlocks at AAA): starts two difficulty phases ahead, pays more EXP and is the only road to S / SS / SSS */
+  track2: { rateMul: 1.25, phaseShift: 2, sSpeedStep: 0.03 },
   timeMul: { easy: 3, normal: 2, hard: 1 } as Record<SpeedLevel, number>,
 };
 /**

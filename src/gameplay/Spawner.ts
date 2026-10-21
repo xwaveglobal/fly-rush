@@ -8,7 +8,7 @@ import { sectionAt, type Course, type PatternKey } from './Courses.ts';
 import { PASS_ALL, PASS_N } from './types.ts';
 /** extra seconds after a jump/duck row: land, settle, see the next obstacle */
 const VERTICAL_RECOVERY = 0.7;
-import { MAPS, LEVEL_RULES, PATTERNS, tierWeights, type Tier, type MapDifficultyConfig, PHASES, PHASE_UNLOCK, GATE, RANK_ORDER, rankDist, phaseAt, type PhaseRank } from './Difficulty.ts';
+import { MAPS, LEVEL_RULES, PATTERNS, tierWeights, type Tier, type MapDifficultyConfig, PHASES, PHASE_UNLOCK, GATE, RANK_ORDER, rankDist, rankIdxAt, rankSpeed, VARIANTS, type PhaseRank, type Variant } from './Difficulty.ts';
 import type { SpeedLevel } from '../config.ts';
 
 /** Base speed is a pure function of distance so spawn timing can be predicted exactly. */
@@ -19,6 +19,7 @@ export function speedAt(dist: number) {
 // endless world order follows the difficulty ladder: 2/10 → 4 → 6 → 8 → 9
 export const WORLDS = ['city', 'cloud', 'tunnel', 'space', 'mega'] as const;
 export type WorldId = (typeof WORLDS)[number];
+export const TRACK2_WORLDS: WorldId[] = ['mega', 'space', 'tunnel'];
 export const worldAt = (dist: number): WorldId => WORLDS[Math.floor(dist / WORLD_LENGTH) % WORLDS.length];
 
 type Pattern = { k: PatternKey; w: number; make: () => ObstacleSpec[]; heavy?: boolean };
@@ -43,6 +44,8 @@ export class Spawner {
   speedMul = 1;
   gapMul = 1;
   level: SpeedLevel = 'normal';
+  /** v2 road when course is null: Endless or Track 2 */
+  variant: Variant = 'endless';
   /** difficulty bookkeeping */
   private prevRecovery = 0;
   private prevOccludes = false;
@@ -62,33 +65,38 @@ export class Spawner {
     return speedAt(d + this.off) * this.speedMul * (this.course ? 1 : this.phaseSpeed(d));
   }
 
-  /** v2 Endless: road speed multiplier of the rank phase, eased in after each new rank */
+  /** v2 Endless / Track 2: road speed multiplier of the rank reached, eased in after each new rank */
   phaseSpeed(d: number) {
-    const i = phaseAt(d, this.level);
-    if (i === 0) return PHASES[0].speed;
-    const k = Math.min(1, Math.max(0, (d - rankDist(i, this.level)) / GATE.speedEase));
-    return PHASES[i - 1].speed + (PHASES[i].speed - PHASES[i - 1].speed) * k;
+    const v = this.variant;
+    const i = rankIdxAt(d, this.level, v);
+    if (i === 0) return rankSpeed(0, v);
+    const k = Math.min(1, Math.max(0, (d - rankDist(i, this.level, v)) / GATE.speedEase));
+    return rankSpeed(i - 1, v) + (rankSpeed(i, v) - rankSpeed(i - 1, v)) * k;
   }
 
   /**
-   * v2 Endless: where on the rank ladder distance d is.
-   *  gate     — the last GATE.seconds before rank `next` (hardest stretch of the phase)
+   * v2: where on the rank ladder distance d is.
+   *  phase    — difficulty phase (index into PHASES)
+   *  gate     — the last GATE.seconds before rank `next` (hardest stretch)
    *  breather — a few seconds of easier road right after a new rank
    */
   zoneAt(d: number): { phase: number; kind: 'normal' | 'gate' | 'breather'; next: PhaseRank | null; from: number; to: number } {
     const lv = this.level;
-    const i = phaseAt(d, lv);
-    if (i + 1 < RANK_ORDER.length) {
-      const to = rankDist(i + 1, lv);
-      const from = to - GATE.seconds * speedAt(to) * this.speedMul * PHASES[i].speed;
-      if (d >= from) return { phase: i, kind: 'gate', next: RANK_ORDER[i + 1], from, to };
+    const v = this.variant;
+    const sh = VARIANTS[v].shift;
+    const i = rankIdxAt(d, lv, v);
+    const phase = Math.min(PHASES.length - 1, i + sh);
+    if (i + 1 <= VARIANTS[v].top) {
+      const to = rankDist(i + 1, lv, v);
+      const from = to - GATE.seconds * speedAt(to) * this.speedMul * rankSpeed(i, v);
+      if (d >= from) return { phase, kind: 'gate', next: RANK_ORDER[i + 1], from, to };
     }
     if (i > 0) {
-      const at = rankDist(i, lv);
-      const end = at + GATE.breather * speedAt(at) * this.speedMul * PHASES[i].speed;
-      if (d < end) return { phase: i, kind: 'breather', next: null, from: at, to: end };
+      const at = rankDist(i, lv, v);
+      const end = at + GATE.breather * speedAt(at) * this.speedMul * rankSpeed(i, v);
+      if (d < end) return { phase, kind: 'breather', next: null, from: at, to: end };
     }
-    return { phase: i, kind: 'normal', next: null, from: 0, to: 0 };
+    return { phase, kind: 'normal', next: null, from: 0, to: 0 };
   }
 
   /** v2 Endless: difficulty config at distance d (phase / gate / breather) */
@@ -107,7 +115,10 @@ export class Spawner {
     return { ...ph, world, target: 2 + z.phase * 1.6, warmup: 250 };
   }
   worldAt(d: number): WorldId {
-    return this.course ? this.course.world : worldAt(d);
+    if (this.course) return this.course.world;
+    // Track 2 runs through the hard-looking worlds only
+    if (this.variant === 'track2') return TRACK2_WORLDS[Math.floor(d / WORLD_LENGTH) % TRACK2_WORLDS.length];
+    return worldAt(d);
   }
 
   constructor(public rng = new Rng()) {}

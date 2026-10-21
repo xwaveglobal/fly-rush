@@ -153,8 +153,16 @@ export const patternOf = (k: PatternKey) => PATTERNS[k];
  * right after it comes a short BREATHER. Every row still passes the reachability validator, and no
  * row ever needs a special item.
  */
-export const RANK_ORDER = ['D', 'C', 'B', 'A', 'AA', 'AAA'] as const;
+/** the full rank ladder (Endless stops at AAA; Track 2 goes on to S / SS / SSS) */
+export const RANK_ORDER = ['D', 'C', 'B', 'A', 'AA', 'AAA', 'S', 'SS', 'SSS'] as const;
 export type PhaseRank = (typeof RANK_ORDER)[number];
+
+/** v2 roads that use the rank phases */
+export type Variant = 'endless' | 'track2';
+export const VARIANTS: Record<Variant, { top: number; rateMul: number; shift: number }> = {
+  endless: { top: 5, rateMul: 1, shift: 0 },
+  track2: { top: 8, rateMul: EXP.track2.rateMul, shift: EXP.track2.phaseShift },
+};
 
 export interface PhaseConfig extends Omit<MapDifficultyConfig, 'world' | 'target' | 'warmup'> {
   rank: PhaseRank;
@@ -192,14 +200,23 @@ export const GATE = {
   speedEase: 600,
 };
 
-/** EXP-equivalent of a distance at a speed level */
-export const expAtDist = (d: number, level: SpeedLevel) => Math.max(0, d) * EXP.rate[level];
-/** distance at which a rank is reached at a speed level */
-export const rankDist = (i: number, level: SpeedLevel) => EXP.rank[RANK_ORDER[Math.min(i, RANK_ORDER.length - 1)]] / EXP.rate[level];
-/** phase index (0 = D … 5 = AAA) at a distance */
-export function phaseAt(d: number, level: SpeedLevel) {
-  const e = expAtDist(d, level);
+/** EXP per metre on a road at a speed level */
+export const expRate = (level: SpeedLevel, v: Variant = 'endless') => EXP.rate[level] * VARIANTS[v].rateMul;
+/** EXP of a run that has driven d metres */
+export const expAtDist = (d: number, level: SpeedLevel, v: Variant = 'endless') => Math.max(0, d) * expRate(level, v);
+/** distance at which rank i (index into RANK_ORDER) is reached */
+export const rankDist = (i: number, level: SpeedLevel, v: Variant = 'endless') => EXP.rank[RANK_ORDER[Math.min(i, RANK_ORDER.length - 1)]] / expRate(level, v);
+/** rank index (into RANK_ORDER) a run has reached at distance d — capped at the road's top rank */
+export function rankIdxAt(d: number, level: SpeedLevel, v: Variant = 'endless') {
+  const e = expAtDist(d, level, v);
   let i = 0;
-  for (let k = 1; k < RANK_ORDER.length; k++) if (e >= EXP.rank[RANK_ORDER[k]]) i = k;
+  for (let k = 1; k <= VARIANTS[v].top; k++) if (e >= EXP.rank[RANK_ORDER[k]]) i = k;
   return i;
+}
+/** difficulty phase (index into PHASES) at distance d */
+export const phaseAt = (d: number, level: SpeedLevel, v: Variant = 'endless') => Math.min(PHASES.length - 1, rankIdxAt(d, level, v) + VARIANTS[v].shift);
+/** road speed multiplier of a rank index (Track 2 keeps speeding up past AAA) */
+export function rankSpeed(i: number, v: Variant = 'endless') {
+  const p = i + VARIANTS[v].shift;
+  return PHASES[Math.min(PHASES.length - 1, p)].speed + Math.max(0, p - (PHASES.length - 1)) * EXP.track2.sSpeedStep;
 }

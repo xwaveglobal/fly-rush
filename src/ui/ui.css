@@ -1926,3 +1926,10 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 #hud .gatebar .track { height: 6px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; }
 #hud .gatebar .track i { display: block; height: 100%; background: linear-gradient(90deg, #ff5a8a, #ffc21a); }
 #hud .gatebar .clsb { height: 20px; min-width: 22px; font-size: 11px; }
+/* v2 — garage: no upgrades, cars are rank trophies */
+#garage .upgrades { display: none !important; }
+.carinfo .cfair { margin: 6px 0 0; font: 600 12px var(--font-body); color: var(--muted); line-height: 1.35; }
+.carinfo .cbonus .clsb { margin-left: 4px; }
+.tcard .tmeta .clsb { margin-left: 4px; }
+.tcard .tmeta .xpt { width: 14px; height: 14px; }
+.rgt td, .rgt th { padding-top: 2px !important; padding-bottom: 2px !important; }

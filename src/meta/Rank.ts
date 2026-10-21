@@ -6,12 +6,29 @@
  */
 import { EXP, type SpeedLevel } from '../config.ts';
 
-export const CLASSES = ['D', 'C', 'B', 'A', 'AA', 'AAA'] as const;
+/** D → AAA on Endless; S / SS / SSS only on Track 2 (unlocks at AAA) */
+export const CLASSES = ['D', 'C', 'B', 'A', 'AA', 'AAA', 'S', 'SS', 'SSS'] as const;
 export type RankClass = (typeof CLASSES)[number];
+/** the Endless ladder (and cup divisions while cups still exist) */
+export const BASE_CLASSES = ['D', 'C', 'B', 'A', 'AA', 'AAA'] as const;
+export type BaseClass = (typeof BASE_CLASSES)[number];
+export const toBase = (c: RankClass): BaseClass => (CLASSES.indexOf(c) > 5 ? 'AAA' : (c as BaseClass));
+export const rankIdx = (c: RankClass) => CLASSES.indexOf(c);
+export const rankAtLeast = (c: RankClass, need: RankClass) => rankIdx(c) >= rankIdx(need);
 
 /** EXP needed to reach each rank */
 export const CLASS_MIN: Record<RankClass, number> = EXP.rank;
-export const CLASS_COLOR: Record<RankClass, string> = { D: '#9fb3dd', C: '#2fd36b', B: '#4fc3ff', A: '#9b6bff', AA: '#ffc21a', AAA: '#ff4fd8' };
+export const CLASS_COLOR: Record<RankClass, string> = { D: '#9fb3dd', C: '#2fd36b', B: '#4fc3ff', A: '#9b6bff', AA: '#ffc21a', AAA: '#ff4fd8', S: '#ff7a2e', SS: '#ff3b5c', SSS: '#ffe9a8' };
+
+/**
+ * The player's rank: Endless counts up to AAA, S tiers come only from Track 2.
+ * @param expBest best run on any track · @param exp2Best best run on Track 2
+ */
+export function playerRank(expBest: number, exp2Best = 0): RankClass {
+  const a = Math.min(rankIdx(classFor(expBest)), 5);
+  const b = rankIdx(classFor(exp2Best));
+  return CLASSES[Math.max(a, b)];
+}
 
 /** EXP earned by a run of `distance` metres at a speed level */
 export const expFor = (distance: number, level: SpeedLevel) => Math.floor(Math.max(0, distance) * EXP.rate[level]);
@@ -25,8 +42,8 @@ export function classFor(bolts: number): RankClass {
   return c;
 }
 
-export function classProgress(bolts: number) {
-  const c = classFor(bolts);
+export function classProgress(bolts: number, rank?: RankClass) {
+  const c = rank ?? classFor(bolts);
   const i = CLASSES.indexOf(c);
   const next = CLASSES[i + 1] ?? null;
   const from = CLASS_MIN[c];

@@ -1,6 +1,7 @@
 import { LANES, HEIGHT, LEVELS, type SpeedLevel } from '../config.ts';
 import { Player } from './Player.ts';
 import { Spawner, speedAt, type WorldId } from './Spawner.ts';
+import type { Variant } from './Difficulty.ts';
 import type { Course } from './Courses.ts';
 import { hitboxes, sweepX, zOffset } from './ObstacleRules.ts';
 import type { Box, ObstacleSpec, PickupSpec, RowSpec } from './types.ts';
@@ -90,8 +91,9 @@ export class World {
   }
 
   /** @param startDist start the run further down the road (tests / debug "jump to a rank") */
-  reset(seed?: number, course: Course | null = null, level: SpeedLevel = 'normal', startDist = 0) {
+  reset(seed?: number, course: Course | null = null, level: SpeedLevel = 'normal', startDist = 0, variant: Variant = 'endless') {
     this.spawner.course = course;
+    this.spawner.variant = variant;
     this.spawner.speedMul = LEVELS[level].speed;
     this.spawner.gapMul = LEVELS[level].gap;
     this.spawner.level = level;

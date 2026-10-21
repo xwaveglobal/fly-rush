@@ -187,6 +187,14 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v2.0.3 changes (v2 step 3 — tracks & cars)
+
+- Track list: **Endless** (the rank road D→AAA, at the speed level you pick), **Mega Rush** (Track 2, opens at AAA: starts two phases harder, EXP ×1.25, the only road to **S / SS / SSS** = 65,000 / 85,000 / 110,000 EXP), and three "coming soon" teasers. The 20 old courses are retired from the UI.
+- Endless is no longer forced to HARD — the speed selector (EXP ×1 / ×1.15 / ×2) applies.
+- Player rank = Endless best (capped at AAA) or Track 2 best (S tiers). `playerRank()` in `meta/Rank.ts`, `save.exp2Best`.
+- **Cars unlock by rank only** (Zenith D · Volt B · Phantom A · Inferno AA · Nexus AAA), no coin price, no score bonus — they are trophies; the garage no longer shows upgrades.
+- Tests: EXP calibration and rank-phase/autopilot tests cover Track 2 (624 km through all gates, 0 crashes).
+
 ## v2.0.2 changes (v2 step 2 — difficulty phases & rank gates)
 
 - **Endless difficulty climbs by rank phase** (`PHASES` in `gameplay/Difficulty.ts`), measured in EXP so every speed level meets the same phase at the same minute:

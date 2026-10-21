@@ -2,7 +2,7 @@ import { COUNTRIES, countryName, flagOf } from '../meta/Country.ts';
 import './ui.css';
 import { ICON } from './icons.ts';
 import { AVATAR_COUNT, avatarForName, avatarSvg, classCorner } from './avatars.ts';
-import { CLASSES, CLASS_COLOR, CLASS_MIN, EXP_RULES, XPT, classBadge, classFor as classOfBolts, classForScore, rankMinutes, type RankClass } from '../meta/Rank.ts';
+import { CLASSES, CLASS_COLOR, CLASS_MIN, EXP_RULES, XPT, classBadge, classFor as classOfBolts, classForScore, playerRank, rankMinutes, type RankClass } from '../meta/Rank.ts';
 import logoUrl from '../assets/images/sky-roadster-logo.webp';
 import appIcon from '../assets/images/app-icon.webp';
 import { amount, calendarGift, coinFace, coinPile, friends, giftBox, megaphone, phonePlus, shareNodes, starBig, tapMarks, wifiRobot } from './art.ts';
@@ -16,7 +16,6 @@ import thEndless from '../assets/images/tracks/endless.jpg';
 import guide1 from '../assets/images/guide/guide-1.jpg';
 import guide2 from '../assets/images/guide/guide-2.jpg';
 import guide3 from '../assets/images/guide/guide-3.jpg';
-import { COURSES, FREE_TRACKS, RANK_GATE_AT, trackLock } from '../gameplay/Courses.ts';
 import { MISSIONS, missionById, type ActiveMission } from '../gameplay/Missions.ts';
 import type { SaveData } from '../core/Save.ts';
 import { SKINS, carVisibility } from '../render/Vehicle.ts';
@@ -40,7 +39,6 @@ import type { CrashTip } from '../gameplay/CrashTip.ts';
 import { LANGS, getLang, setLang, translateTree, type Lang } from './i18n.ts';
 
 /** track thumbnail: remixes reuse their world's art */
-const thumbFor = (c: { id: string }) => THUMBS[c.id] ?? THUMBS[c.id.replace(/-\d+$/, '')] ?? THUMBS.endless;
 const THUMBS: Record<string, string> = {
   endless: thEndless,
   'future-city': thFuture,
@@ -303,12 +301,9 @@ export class UI {
 
     <section id="tracks" class="screen">
       ${this.head('SELECT TRACK')}
-      <div class="boosts panel">
-        <div class="label">Boosts for this run <small>tap to equip</small></div>
-        <div class="boost-row" data-k="boosts"></div>
-      </div>
       <div class="track-list" data-k="tracklist"></div>
-      <button class="btn gold adbtn" data-a="adboost" data-k="adboost">${ICON.play} Ad · Head start: Shield + Rocket</button>
+      <div class="boost-row" data-k="boosts" hidden></div>
+      <button class="btn gold adbtn" data-a="adboost" data-k="adboost" hidden>${ICON.play}</button>
     </section>
 
     <section id="finish" class="screen overlay">
@@ -365,7 +360,7 @@ export class UI {
       <div class="menu">
         <button class="cupstrip" data-a="events" data-k="cupstrip"></button>
         <div class="speedsel" role="radiogroup" aria-label="Speed">
-          ${(['easy', 'normal', 'hard'] as const).map((k, i) => `<button role="radio" data-a="speed" data-v="${k}" title="${LEVELS[k].label}: ${LEVELS[k].desc}"><i class="chev">${'›'.repeat(i + 1)}</i><b>${LEVELS[k].label}</b><small>Rewards ×${LEVELS[k].reward}</small></button>`).join('')}
+          ${(['easy', 'normal', 'hard'] as const).map((k, i) => `<button role="radio" data-a="speed" data-v="${k}" title="${LEVELS[k].label}: ${LEVELS[k].desc}"><i class="chev">${'›'.repeat(i + 1)}</i><b>${LEVELS[k].label}</b><small>EXP ×${['1', '1.15', '2'][i]}</small></button>`).join('')}
         </div>
         <div class="speedcap" data-k="speedtip"></div>
 
@@ -703,18 +698,8 @@ export class UI {
         case 'comfort': return this.h.toggleComfort();
         case 'vibrate': return this.h.toggleVibrate();
         case 'tutskip': return this.h.skipTutorial();
-        case 'track': {
-          const id = el.dataset.id!;
-          const c = COURSES.find((x) => x.id === id);
-          if (c) {
-            const lock = trackLock(c, this.lastSave?.trackBest ?? {}, CLASSES.indexOf(this.myClass) >= CLASSES.indexOf('A'));
-            if (!lock.open) {
-              this.toast(lock.why === 'score' ? `${ICON.lock} Score ${fmt(lock.need)} on ${lock.prev.name} to unlock ${c.name}` : `${ICON.lock} Reach rank class A to unlock tracks 11–20`, '#ffc21a');
-              return;
-            }
-          }
-          return this.h.startTrack(id);
-        }
+        case 'track': return this.h.startTrack(el.dataset.id!);
+        case 'soon': return this.toast(`${ICON.lock} New track coming soon — keep climbing the ranks!`, '#b7a6ff');
         case 'rankgate': return this.rankGuide();
         case 'garage': return this.h.garage();
         case 'missions': return this.h.missions();
@@ -1208,7 +1193,7 @@ export class UI {
     const skin = SKINS[this.garageIndex];
     this.setAll('carname', skin.name);
     this.setAll('carcls', skin.cls);
-    const myClass = classOfBolts(s.expBest);
+    const myClass = playerRank(s.expBest, s.exp2Best);
     const vis = carVisibility(s.unlocked, skin.id);
     const rankOk = (k: (typeof SKINS)[number]) => CLASSES.indexOf(myClass) >= CLASSES.indexOf((k.need ?? 'D') as RankClass);
     $(this.root, '[data-k="lockbadge"]').hidden = vis === 'own';
@@ -1225,20 +1210,20 @@ export class UI {
     const st = skin.stats ?? [7, 7, 7, 7];
     const bars = ['Speed', 'Acceleration', 'Handling', 'Energy'].map((n, i) => `<div class="cst"><span>${n}</span><i><b style="width:${st[i] * 10}%"></b></i><em>${vis === 'dark' ? '?' : st[i]}</em></div>`).join('');
     $(this.root, '[data-k="carinfo"]').innerHTML = vis === 'dark'
-      ? `<div class="crare" style="--rc:${RARITY_COLOR[skin.rarity ?? 'Common']}"><b class="cname">???</b>${skin.rarity ?? ''}</div><p class="cdark">${ICON.lock} Reach class <b>${skin.need}</b> to reveal and unlock this car. Earn rank points in Cups and on tracks.</p>`
+      ? `<div class="crare" style="--rc:${RARITY_COLOR[skin.rarity ?? 'Common']}"><b class="cname">???</b>${skin.rarity ?? ''}</div><p class="cdark">${ICON.lock} Reach rank ${classBadge(skin.need as RankClass)} to reveal and unlock this car. Drive farther in one run to earn EXP.</p>`
       : `<div class="crare" style="--rc:${RARITY_COLOR[skin.rarity ?? 'Common']}"><b class="cname">${skin.name}</b>${skin.rarity ?? ''}<small>${esc(skin.cls.split('·')[1]?.trim() ?? '')}</small></div>
-         <div class="cstats">${bars}</div>
-         <div class="cbonus">${(skin.bonus ?? 0) > 0 ? `${ICON.trophy} +${skin.bonus}% score on every run` : 'Starter car · no score bonus'}</div>
-         <div class="cskills">${(skin.skills ?? []).map((k) => `<span title="${esc(k.desc)}"><b>${k.name}</b><em>SOON</em></span>`).join('')}</div>`;
+         <div class="cbonus">${ICON.lock} Unlocks at rank ${classBadge(skin.need as RankClass)}</div>
+         <p class="cfair">Every car drives the same — EXP stays fair. Cars show off your rank.</p>`;
+    void bars;
     const on = strip.querySelector<HTMLElement>('.ccard.on');
     if (on) strip.scrollLeft = on.offsetLeft - strip.clientWidth / 2 + on.clientWidth / 2;
     $(this.root, '[data-k="cardots"]').innerHTML = SKINS.map((_, i) => `<i class="${i === this.garageIndex ? 'on' : ''}"></i>`).join('');
     const btn = $(this.root, '[data-k="carbtn"]');
     const owned = s.unlocked.includes(skin.id);
-    if (!owned && (!rankOk(skin) || vis === 'dark')) {
+    if (!owned) {
       btn.dataset.mode = 'rank';
       btn.className = 'btn purple';
-      btn.innerHTML = `${ICON.lock} Reach class ${skin.need}`;
+      btn.innerHTML = `${ICON.lock} Reach rank ${skin.need}`;
       btn.removeAttribute('disabled');
     } else if (!owned) {
       btn.dataset.mode = 'buy';
@@ -1313,60 +1298,39 @@ export class UI {
     return Array.from({ length: of }, (_, i) => `<i class="${i < n ? 'on' : ''}">★</i>`).join('');
   }
 
-  private lastSave: SaveData | null = null;
+  lastSave: SaveData | null = null;
+  /**
+   * v2 track list: Endless (the rank road), Track 2 (unlocks at AAA, ranks S / SS / SSS) and three
+   * "coming soon" teasers. The old 20 courses are retired.
+   */
   tracksSync(s: SaveData, liveTrack?: string) {
+    void liveTrack;
     this.lastSave = s;
-    const boost = (k: ItemKey) => {
-      const n = s.items[k];
-      const on = s.equip[k] && n > 0;
-      return `<button class="boost ${k} ${on ? 'on' : ''}" data-a="boostinfo" data-v="${k}">${ITEM_ICON[k]}<span><b>${ITEM_NAME[k]}</b><small>${on ? 'equipped' : n > 0 ? `owned ×${n}` : 'tap · learn'}</small></span><i class="tick">${on ? ICON.check : ICON.info}</i></button>`;
-    };
-    // class-locked start boosts: dark tile with a lock + the class that unlocks it
-    const ci = CLASSES.indexOf(this.myClass);
-    const locked = (u: (typeof UNLOCK_BOOSTS)[number]) => {
-      const open = ci >= CLASSES.indexOf(u.cls);
-      if (open) return boost(u.k);
-      return `<button class="boost ${u.k} lockedb" data-a="boostinfo" data-v="${u.k}">${ITEM_ICON[u.k]}<span><b>${ITEM_NAME[u.k]}</b><small>${ICON.lock} class ${classBadge(u.cls)}</small></span></button>`;
-    };
-    $(this.root, '[data-k="boosts"]').innerHTML = (['super', 'hyper', 'escape', 'shield'] as ItemKey[]).map(boost).join('') + UNLOCK_BOOSTS.map(locked).join('') +
-      `<button class="bagopen" data-a="bag">${BAG_ICON} Magic Bag · rules &amp; tips ›</button>`;
-    // 20 tracks in order: 1–10 unlock by score on the previous track, then the Rank-A gate, then 11–20.
-    // Endless sits right after track 1 (always HARD).
-    const classA = CLASSES.indexOf(this.myClass) >= CLASSES.indexOf('A');
-    // list number shown on a card: Endless takes #6, so remixes start at #7
-    const no = (i: number) => i + 1 + (i >= FREE_TRACKS ? 1 : 0);
-    const card = (c: (typeof COURSES)[number], i: number) => {
-      const lock = trackLock(c, s.trackBest, classA);
-      const stars = s.trackStars[c.id] ?? 0;
-      const diff = Array.from({ length: 5 }, (_, k) => `<i class="${k < c.difficulty ? 'on' : ''}"></i>`).join('');
-      if (!lock.open && lock.why === 'class') {
-        return `<button class="tcard tlocked dark" data-a="rankgate">
-          <img src="${thumbFor(c)}" alt="" draggable="false" />
-          <div class="tinfo"><b>? ? ?</b><span class="label">${fmt(c.length)} m</span><span class="tmeta">${ICON.lock}<span>Rank ${classBadge('A')}</span></span></div>
-          <span class="tbadge">${no(i)}</span></button>`;
-      }
-      const req = !lock.open && lock.why === 'score' ? `<span class="treq">${ICON.lock} Score ${fmt(lock.need)} on #${no(i - 1)}</span>` : '';
-      return `<button class="tcard ${s.track === c.id ? 'sel' : ''} ${lock.open ? '' : 'tlocked'}" data-a="track" data-id="${c.id}">
-        <img src="${thumbFor(c)}" alt="" draggable="false" />
-        <div class="tinfo"><b>${c.name}</b><span class="label">${fmt(c.length)} m · best ${fmt(s.trackBest[c.id] ?? 0)}</span>
-        <span class="tmeta"><span class="stars">${this.starsHtml(stars)}</span><span class="diff" title="Difficulty">${diff}</span></span>${req}</div>
-        <span class="tbadge">${lock.open ? no(i) : ICON.lock}</span>${liveTrack === c.id ? '<span class="cuptag">🏆 CUP LIVE</span>' : ''}</button>`;
-    };
-    const endless = `<button class="tcard endless ${s.track === 'endless' ? 'sel' : ''}" data-a="track" data-id="endless">
+    const rank = playerRank(s.expBest, s.exp2Best);
+    const aaa = CLASSES.indexOf(rank) >= CLASSES.indexOf('AAA');
+    const lv = s.settings.speed;
+    const endless = `<button class="tcard endless v2 ${s.track !== 'track2' ? 'sel' : ''}" data-a="track" data-id="endless">
         <img src="${THUMBS.endless}" alt="" draggable="false" />
-        <div class="tinfo"><b>Endless</b><span class="label">All worlds · no finish line · always HARD</span>
-        <span class="tmeta">${ICON.trophy}<span>${fmt(s.trackBest.endless ?? s.best)}</span></span></div>
-        <span class="tbadge">6</span>${liveTrack === 'endless' ? '<span class="cuptag">🏆 CUP LIVE</span>' : ''}</button>`;
-    const gate = `<button class="rankgate ${classA ? 'open' : ''}" data-a="rankgate">${classA ? ICON.check : ICON.lock}<span class="rgt"><b>${classA ? 'RANK A GATE OPEN' : 'REACH RANK A'}</b><small>${classA ? 'Tracks 11–20 unlocked' : 'to unlock tracks 11–20 · tap to see how'}</small></span>${classBadge('A')}</button>`;
-    const cards = [
-      // the 5 worlds (always open), Endless at position 6, then the unlockable remixes
-      ...COURSES.slice(0, FREE_TRACKS).map((c, k) => card(c, k)),
-      endless,
-      ...COURSES.slice(FREE_TRACKS, RANK_GATE_AT).map((c, k) => card(c, k + FREE_TRACKS)),
-      gate,
-      ...COURSES.slice(RANK_GATE_AT).map((c, k) => card(c, k + RANK_GATE_AT)),
-    ];
-    $(this.root, '[data-k="tracklist"]').innerHTML = cards.join('');
+        <div class="tinfo"><b>Endless</b><span class="label">The rank road · D → AAA · ${LEVELS[lv].label}</span>
+        <span class="tmeta">${XPT}<span>${fmt(s.expBest)}</span>${classBadge(CLASSES[Math.min(5, CLASSES.indexOf(classOfBolts(s.expBest)))])}</span></div>
+        <span class="tbadge">1</span></button>`;
+    const t2 = aaa
+      ? `<button class="tcard t2 ${s.track === 'track2' ? 'sel' : ''}" data-a="track" data-id="track2">
+        <img src="${THUMBS['mega-city']}" alt="" draggable="false" />
+        <div class="tinfo"><b>Mega Rush</b><span class="label">Harder from the start · EXP ×1.25 · ranks S · SS · SSS</span>
+        <span class="tmeta">${XPT}<span>${fmt(s.exp2Best)}</span>${classBadge('S')}${classBadge('SS')}${classBadge('SSS')}</span></div>
+        <span class="tbadge">2</span></button>`
+      : `<button class="tcard t2 tlocked dark" data-a="rankguide">
+        <img src="${THUMBS['mega-city']}" alt="" draggable="false" />
+        <div class="tinfo"><b>Mega Rush</b><span class="label">Harder road · new ranks S · SS · SSS</span>
+        <span class="tmeta">${ICON.lock}<span>Reach rank</span>${classBadge('AAA')}</span></div>
+        <span class="tbadge">${ICON.lock}</span></button>`;
+    const soon = ['Ocean Drive', 'Volcano Run', 'Aurora Peak']
+      .map((n, i) => `<button class="tcard mystery" data-a="soon"><div class="mq">?</div>
+        <div class="tinfo"><b>${n}</b><span class="tmeta">${ICON.lock}<span>Coming soon</span></span></div>
+        <span class="tbadge">${i + 3}</span></button>`)
+      .join('');
+    $(this.root, '[data-k="tracklist"]').innerHTML = endless + t2 + soon;
     this.scheduleFit();
     this.setAll('wallet', fmt(s.wallet));
   }
@@ -1825,6 +1789,7 @@ export class UI {
       <p class="tut-lead">EXP shows <b>how good you are</b>. The farther one run goes, the more EXP it scores. Your rank is your <b>best run</b>.</p>
       <table class="rgt"><thead><tr><th>Rank</th><th>EXP</th><th>Hard</th><th>Normal</th><th>Easy</th></tr></thead><tbody>${ladder}</tbody></table>
       <div class="rg-rules">${EXP_RULES.map((r) => `<span>${r.what}<b>${r.gain}</b></span>`).join('')}</div>
+      <div class="rg-note">${ICON.flag}<span>${classBadge('S')} ${classBadge('SS')} ${classBadge('SSS')} only on <b>Mega Rush</b> (opens at ${classBadge('AAA')}).</span></div>
       <div class="rg-note">${ICON.lock}<span>EXP can't be bought. New ranks unlock cars and tracks.</span></div>
 `;
     this.screens.rankguide.classList.add('show');

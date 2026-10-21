@@ -50,6 +50,8 @@ export interface SaveData {
   expBest: number;
   /** v2: best run EXP this week (weekly board) */
   expWeek: number;
+  /** v2: best run EXP on Track 2 (the only road to S / SS / SSS) */
+  exp2Best: number;
   /** mission rewards waiting for a manual claim (auto-claim off) */
   pendingMissions: { text: string; reward: number }[];
   /** consumable items (equipped on the track screen, used in a run) */
@@ -123,6 +125,7 @@ const defaults = (): SaveData => ({
   bolts: 0,
   expBest: 0,
   expWeek: 0,
+  exp2Best: 0,
   pendingMissions: [],
   items: { super: 1, hyper: 0, shield: 0, escape: 1, turbo: 0, magnet: 0, double: 0, life: 0 },
   equip: { super: false, hyper: false, shield: false, escape: false, turbo: false, magnet: false, double: false, life: false },
