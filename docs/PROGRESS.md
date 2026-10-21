@@ -4,6 +4,14 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-22 — v2 game design locked (no code yet)
+
+**Done**: owner and Claude locked the v2 design in `docs/GAME-DESIGN.md`: EXP = skill rating (best run), D→AAA (+S/SS/SSS on track 2), Coin is the only currency (special items only), Endless + 1 AAA track, Bonus events every 2 h, revive max 2× by ads only. `ECONOMY.md` is now marked superseded.
+
+**Next**: implement GAME-DESIGN.md §8 step by step (1: EXP & rank).
+
+---
+
 ## 2026-10-21 — v1.19 / v1.19.1: speed feel + tyre rotation per owner's reference
 
 **Done**: speed blur post pass + side streaks (v1.19); v1.19.1 = bag only in Profile, stale glow after death fixed, side walls in `Track.ts`, tread scroll synced to ground speed (`TYRE.treadTileM`), air free-spin, pitch. See README.

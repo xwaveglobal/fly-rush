@@ -1,7 +1,7 @@
 # AGENTS.md — read this first
 
 Instructions for any AI assistant (Claude, Cursor, Codex, Copilot, …) working on this repo.
-The owner switches between AI accounts and tools, so **this file + `docs/PROGRESS.md` are the shared memory**. Read both before changing anything, and update `docs/PROGRESS.md` before you finish.
+The owner switches between AI accounts and tools, so **this file + `docs/PROGRESS.md` are the shared memory**. Read both (and `docs/GAME-DESIGN.md`, the locked v2 design) before changing anything, and update `docs/PROGRESS.md` before you finish.
 
 ## What this is
 

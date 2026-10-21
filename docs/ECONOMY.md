@@ -1,4 +1,6 @@
-# Sky Roadster — economy
+# Sky Roadster — economy (v1, SUPERSEDED)
+
+> ⚠️ Replaced by `docs/GAME-DESIGN.md` (v2, locked 2026-10-22). Kept only as a record of the v1 code still in the repo.
 
 Three currencies:
 
