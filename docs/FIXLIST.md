@@ -102,3 +102,11 @@ Status: **DONE in v2.1.0** (2026-10-22). G2 note: new per-world obstacles are ne
   - **Phase Ghost** → a laser-fence / mixed obstacle zone → the car turns into a hologram and passes through.
 - **I5.** Bonus roads get **tunnel sections** (needed for Tunnel Rider): e.g. rock tunnel in the desert, tree tunnel in the forest, barn/haystack tunnel in the country, sea tunnel on the causeway.
 - **I6.** Bonus coin reward re-balanced for 5 minutes (finish bonus + coins on the road), still coins only.
+
+## J. Round 5 — leaderboard (owner 2026-10-22 06:47) — chốt, chưa code
+- **J1.** Sample bots: only a **few AAA** at the very top; the rest spread over D → AA (realistic pyramid: many D/C, fewer B/A, a handful of AA, very few AAA).
+- **J2.** Row layout, left → right: **position with a label** ("#12" in a "RANK" pill; top 3 = gold / silver / bronze) · avatar · name + flag · rank-class badge · **EXP value with the EXP badge** on the right.
+- **J3.** Make the two numbers impossible to confuse: **position** = "#…" (lower is better, #1 best) vs **EXP** = number with the EXP badge (higher is better). Column header line: "RANK · PILOT · EXP".
+- **J4.** The **YOU** row gets a glowing outline (stands out).
+- **J5.** YOU row today shows the rank class twice (corner on the avatar + separate D badge) → keep one.
+- **J6.** Far-down positions (e.g. #33,051) → show "#33,051" with "Top 14%" underneath so a low position still reads as progress.
