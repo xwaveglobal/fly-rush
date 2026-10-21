@@ -1,6 +1,6 @@
 import { countryName, detectCountry, flagOf, guessCountry } from './meta/Country.ts';
 import * as THREE from 'three';
-import { AUTOPILOT, DEBUG, HEIGHT, LANES, LEVELS, LEFTOVER_POINTS, SPEED, TIMING, TRACK_ITEM_BONUS, TYRE, WORLD_LENGTH, type SpeedLevel } from './config.ts';
+import { AUTOPILOT, DEBUG, HEIGHT, LANES, LEVELS, LEFTOVER_POINTS, SPEED, TIMING, TRACK_ITEM_BONUS, TYRE, type SpeedLevel } from './config.ts';
 import { clamp, damp } from './core/math.ts';
 import { Input, type Action } from './core/Input.ts';
 import { loadSave, writeSave, type SaveData } from './core/Save.ts';
@@ -8,7 +8,7 @@ import { World, type WorldEvent } from './gameplay/World.ts';
 import { Run, type Feedback, SHIELD_HITS } from './gameplay/Run.ts';
 import { MissionTracker } from './gameplay/Missions.ts';
 import { Autopilot } from './gameplay/Autopilot.ts';
-import { Spawner, speedAt, worldAt, WORLDS, type WorldId } from './gameplay/Spawner.ts';
+import { Spawner, speedAt, ENDLESS_LADDER, type WorldId } from './gameplay/Spawner.ts';
 import { BONUS, BONUS_NAME, BONUS_SECTIONS, bonusState } from './meta/Bonus.ts';
 
 /** Bonus roads start a little into the difficulty curve (friendly, but not empty) */
@@ -19,7 +19,7 @@ import { Vehicle, SKINS, carVisibility } from './render/Vehicle.ts';
 import { CarShatter } from './render/Shatter.ts';
 import { Track } from './render/Track.ts';
 import { Scenery } from './render/Scenery.ts';
-import { type PropTheme, ObstacleViews } from './render/ObstacleViews.ts';
+import { type PropTheme, PROP_THEMES, ObstacleViews } from './render/ObstacleViews.ts';
 import { PickupViews, POWER_COLORS } from './render/PickupViews.ts';
 import { READABILITY, COMFORT } from './render/Readability.ts';
 import { setObstacleContrast, OBSTACLE_FX } from './render/ObstacleViews.ts';
@@ -74,6 +74,13 @@ const WORLD_NAMES: Record<WorldId, string> = {
   forest: 'PINE FOREST',
   country: 'COUNTRY ROAD',
   sea: 'OCEAN CAUSEWAY',
+  harbor: 'NEON HARBOR',
+  solar: 'SOLAR FARMS',
+  canyon: 'CRYSTAL CANYON',
+  belt: 'ASTEROID BELT',
+  storm: 'STORM FRONT',
+  volcano: 'VOLCANO CORE',
+  ice: 'AURORA ICE',
 };
 
 const POWER_LABEL: Record<Exclude<PickupKind, 'coin'>, string> = {
@@ -1566,7 +1573,7 @@ export class Game {
     this.showcaseK = null;
     this.showcaseT = 0;
     this.ui.bonusHud = !!this.course?.bonus;
-    this.obstacleViews.theme = this.course?.bonus ? (this.course.world as PropTheme) : null;
+    this.obstacleViews.theme = (PROP_THEMES as string[]).includes(this.world.world) ? (this.world.world as PropTheme) : null;
     if (!this.tutorialMode && !this.course?.bonus) {
       const k = this.save.special ?? null;
       if (k && this.save.items[k] > 0) {
@@ -2234,9 +2241,9 @@ export class Game {
     }
 
     // ---- world transition portal & preload (endless only)
-    const nextBoundary = (Math.floor(w.dist / WORLD_LENGTH) + 1) * WORLD_LENGTH;
-    const toPortal = nextBoundary - w.dist;
-    if (!c && toPortal < 320) this.scenery.preload(worldAt(nextBoundary));
+    const nw = w.spawner.nextWorldAt(w.dist);
+    const toPortal = nw.at - w.dist;
+    if (!c && toPortal < 320) this.scenery.preload(nw.world);
     this.portal.group.visible = !c && toPortal < 260;
     if (this.portal.group.visible) {
       this.portal.group.position.z = -toPortal;
@@ -2661,11 +2668,13 @@ export class Game {
 
   private onWorldChange(id: WorldId) {
     this.scenery.setWorld(id);
+    // each place has its own obstacle looks (same hitboxes)
+    this.obstacleViews.theme = (PROP_THEMES as string[]).includes(id) ? (id as PropTheme) : null;
     this.track.setAccent(new THREE.Color(this.scenery.accent));
     this.applyReadability();
     this.track.setOpenAir(this.scenery.openAir);
-    const idx = (WORLDS as readonly WorldId[]).indexOf(id) + 1;
-    this.ui.banner(idx > 0 ? `WORLD ${idx}` : 'BONUS', WORLD_NAMES[id]);
+    const idx = ENDLESS_LADDER.indexOf(id) + 1;
+    this.ui.banner(this.course?.bonus ? 'BONUS' : idx > 0 ? `WORLD ${idx} / ${ENDLESS_LADDER.length}` : 'WORLD', WORLD_NAMES[id]);
     this.ui.flash();
     this.audio.play('warp');
     this.rig.fovKick += 10;

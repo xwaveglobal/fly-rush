@@ -192,6 +192,13 @@ export const WORLD_LESSONS: Record<WorldId, { name: string; lessons: string[] }>
   forest: { name: 'Pine Forest', lessons: ['crate', 'beam', 'barrier', 'ring'] },
   country: { name: 'Country Road', lessons: ['traffic', 'crate', 'barrier', 'ring'] },
   sea: { name: 'Ocean Causeway', lessons: ['crate', 'beam', 'traffic', 'ring'] },
+  harbor: { name: 'Neon Harbor', lessons: ['crate', 'traffic', 'beam'] },
+  solar: { name: 'Solar Farms', lessons: ['barrier', 'beam', 'crate'] },
+  canyon: { name: 'Crystal Canyon', lessons: ['crate', 'laserLow', 'beam'] },
+  belt: { name: 'Asteroid Belt', lessons: ['asteroid', 'crate', 'laserLow'] },
+  storm: { name: 'Storm Front', lessons: ['traffic', 'gate', 'beam'] },
+  volcano: { name: 'Volcano Core', lessons: ['barrier', 'laserBlock', 'gate'] },
+  ice: { name: 'Aurora Ice', lessons: ['crate', 'beam', 'gate'] },
 };
 
 export function advancedScript(world: WorldId): TrainingScript {

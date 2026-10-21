@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import type { WorldId } from '../gameplay/Spawner.ts';
 import { damp } from '../core/math.ts';
 import { Rng } from '../core/Rng.ts';
-import { billboardTexture, cloudSeaTexture, cloudTexture, glowTexture, groundTexture, logoTexture, starfieldTexture, windowsTexture } from './textures.ts';
-import type { BonusWorld } from '../gameplay/Spawner.ts';
+import { billboardTexture, cloudSeaTexture, cloudTexture, glowTexture, groundTexture, groundTexture2, logoTexture, starfieldTexture, windowsTexture } from './textures.ts';
+import type { BonusWorld, LadderWorld } from '../gameplay/Spawner.ts';
 import { wrapZ } from './Track.ts';
 import { bakeVertexColors } from './merge.ts';
 
@@ -44,6 +44,35 @@ export const LOOKS: Record<WorldId, ThemeLook> = {
   space: {
     skyTop: 0x000005, skyMid: 0x050a22, skyBottom: 0x101a4a, fog: 0x070c26, fogNear: 80, fogFar: 380,
     hemiSky: 0x8fb4ff, hemiGround: 0x101530, hemi: 0.9, sun: 0xc8dcff, sunI: 2.0, accent: 0x5ad1ff, stars: 1, cloudSea: 0, cloudTint: 0x2a3a7a, openAir: false,
+  },
+  // ---- v2.1 Endless ladder worlds
+  harbor: {
+    skyTop: 0x0a0a2a, skyMid: 0x3a1a5a, skyBottom: 0xff6a8a, fog: 0x3a2a6a, fogNear: 60, fogFar: 340,
+    hemiSky: 0xb0b8ff, hemiGround: 0x1a2040, hemi: 1.0, sun: 0xff9ab0, sunI: 1.8, accent: 0xff4fd8, stars: 0.4, cloudSea: 0, cloudTint: 0xffffff, openAir: true,
+  },
+  solar: {
+    skyTop: 0x2a7ae0, skyMid: 0x8ac8f4, skyBottom: 0xfff2c8, fog: 0xd8ecf0, fogNear: 90, fogFar: 430,
+    hemiSky: 0xffffff, hemiGround: 0x6a8a4a, hemi: 1.2, sun: 0xfff6d8, sunI: 2.5, accent: 0x2fd3ff, stars: 0, cloudSea: 0, cloudTint: 0xffffff, openAir: true,
+  },
+  canyon: {
+    skyTop: 0x1a0a3a, skyMid: 0x7a2a7a, skyBottom: 0xff9a6a, fog: 0x7a3a6a, fogNear: 60, fogFar: 320,
+    hemiSky: 0xffc8f0, hemiGround: 0x3a1a3a, hemi: 1.1, sun: 0xffb08a, sunI: 2.0, accent: 0x5ee6ff, stars: 0.2, cloudSea: 0, cloudTint: 0xffffff, openAir: true,
+  },
+  belt: {
+    skyTop: 0x02020a, skyMid: 0x140a30, skyBottom: 0x3a1a5a, fog: 0x0a0820, fogNear: 80, fogFar: 380,
+    hemiSky: 0xb0a0ff, hemiGround: 0x101030, hemi: 0.9, sun: 0xffd0b0, sunI: 2.0, accent: 0xff9a3c, stars: 1, cloudSea: 0, cloudTint: 0x2a3a7a, openAir: false,
+  },
+  storm: {
+    skyTop: 0x101418, skyMid: 0x3a4250, skyBottom: 0x6a7480, fog: 0x4a525e, fogNear: 40, fogFar: 260,
+    hemiSky: 0xc8d4e8, hemiGround: 0x202830, hemi: 1.0, sun: 0xd8e4ff, sunI: 1.6, accent: 0xffd23d, stars: 0, cloudSea: 0.6, cloudTint: 0x5a6270, openAir: true,
+  },
+  volcano: {
+    skyTop: 0x100404, skyMid: 0x4a0e08, skyBottom: 0xff5a1a, fog: 0x5a1a0a, fogNear: 50, fogFar: 300,
+    hemiSky: 0xffb08a, hemiGround: 0x2a0a04, hemi: 1.0, sun: 0xff7a2a, sunI: 2.2, accent: 0xff5a1a, stars: 0.1, cloudSea: 0, cloudTint: 0xffffff, openAir: true,
+  },
+  ice: {
+    skyTop: 0x020a1a, skyMid: 0x0a2a4a, skyBottom: 0x3ad6a0, fog: 0x2a5a6a, fogNear: 70, fogFar: 380,
+    hemiSky: 0xd8f4ff, hemiGround: 0x3a6a8a, hemi: 1.15, sun: 0xc8fff0, sunI: 1.9, accent: 0x5effc8, stars: 0.8, cloudSea: 0, cloudTint: 0xffffff, openAir: true,
   },
   // ---- v2 Bonus roads: daylight, everyday places
   desert: {
@@ -501,6 +530,252 @@ function buildSpace(): Theme {
   };
 }
 
+// ------------------------------------------------------------------ v2.1 Endless ladder worlds
+/** the seven new Endless places (two per rank with the original five) — props scroll on both sides */
+function buildLadder(id: LadderWorld): Theme {
+  const rng = new Rng(id.length * 313 + 11);
+  const group = new THREE.Group();
+  const near = new Scroller(480);
+  const far = new Scroller(640);
+  const anim: ((t: number) => void)[] = [];
+  const side = (i: number) => (i % 2 ? 1 : -1);
+  const put = (o: THREE.Object3D, i: number, x0: number, x1: number, y: number, sc: Scroller, range: number) => {
+    o.position.set(side(i) * rng.range(x0, x1), y, 0);
+    group.add(o);
+    sc.add(o, rng.range(0, range));
+  };
+  const std2 = (color: number, extra: THREE.MeshStandardMaterialParameters = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.7, metalness: 0.2, flatShading: true, ...extra });
+  const glowM = (color: number) => new THREE.MeshBasicMaterial({ color, toneMapped: false });
+  let ground: { tex: THREE.Texture; tile: number } | null = null;
+  const addGround = (tex: THREE.Texture, y: number, tile: number, color = 0xffffff) => {
+    const t = tex.clone();
+    t.needsUpdate = true;
+    t.repeat.set(600 / tile, 900 / tile);
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(600, 900), new THREE.MeshStandardMaterial({ map: t, color, roughness: 0.9 }));
+    m.rotation.x = -Math.PI / 2;
+    m.position.set(0, y, -420);
+    group.add(m);
+    ground = { tex: t, tile };
+  };
+  switch (id) {
+    case 'harbor': {
+      addGround(groundTexture('sea'), -8, 26, 0x4a3a8a);
+      const cols = [0xff4f6a, 0x2fb6ff, 0xffc21a, 0x3dd16b, 0xb46bff];
+      for (let i = 0; i < 18; i++) {
+        const st = new THREE.Group();
+        const h = rng.int(1, 4);
+        for (let k = 0; k < h; k++) {
+          const c = new THREE.Mesh(new THREE.BoxGeometry(6, 2.4, 2.4), std2(rng.pick(cols)));
+          c.position.y = 1.2 + k * 2.45;
+          st.add(c);
+        }
+        put(st, i, 12, 40, -6, near, 480);
+      }
+      for (let i = 0; i < 6; i++) {
+        const cr = new THREE.Group();
+        const legM = std2(0xffb02e);
+        for (const sx of [-2, 2]) {
+          const leg = new THREE.Mesh(new THREE.BoxGeometry(0.6, 26, 0.6), legM);
+          leg.position.set(sx, 13, 0);
+          cr.add(leg);
+        }
+        const boom = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 22), legM);
+        boom.position.set(0, 26, -4);
+        cr.add(boom);
+        const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.6, 8, 6), glowM(0xff3b4e));
+        lamp.position.set(0, 27, 6);
+        cr.add(lamp);
+        put(cr, i, 30, 60, -8, far, 640);
+      }
+      break;
+    }
+    case 'solar': {
+      addGround(groundTexture('country'), -5, 60, 0xb8d88a);
+      const panelM = std2(0x1a3a8a, { metalness: 0.7, roughness: 0.25 });
+      const frameM = std2(0xc8d0dc);
+      for (let i = 0; i < 26; i++) {
+        const row = new THREE.Group();
+        for (let k = 0; k < 4; k++) {
+          const p = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.1, 2), panelM);
+          p.rotation.x = -0.5;
+          p.position.set(k * 3.4 - 5, 1.4, 0);
+          row.add(p);
+          const leg = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.2, 0.15), frameM);
+          leg.position.set(k * 3.4 - 5, 0.6, 0);
+          row.add(leg);
+        }
+        put(row, i, 10, 45, -5, near, 480);
+      }
+      const whiteM = std2(0xf2f4f8);
+      for (let i = 0; i < 6; i++) {
+        const w = new THREE.Group();
+        const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.9, 30, 8), whiteM);
+        tower.position.y = 15;
+        w.add(tower);
+        const hub = new THREE.Group();
+        hub.position.set(0, 30, 1);
+        for (let k = 0; k < 3; k++) {
+          const arm = new THREE.Group();
+          arm.rotation.z = (k * Math.PI * 2) / 3;
+          const bl = new THREE.Mesh(new THREE.BoxGeometry(0.6, 12, 0.2), whiteM);
+          bl.position.y = 6;
+          arm.add(bl);
+          hub.add(arm);
+        }
+        w.add(hub);
+        anim.push((t) => (hub.rotation.z = t * 0.8 + i));
+        put(w, i, 45, 110, -5, far, 640);
+      }
+      break;
+    }
+    case 'canyon': {
+      addGround(groundTexture2('rockv'), -6, 24);
+      const rockM = std2(0x6a3a6a);
+      const cryM = new THREE.MeshStandardMaterial({ color: 0x5ee6ff, emissive: 0x2a9aff, emissiveIntensity: 0.9, roughness: 0.2, metalness: 0.3, flatShading: true });
+      const cryM2 = new THREE.MeshStandardMaterial({ color: 0xff7ae8, emissive: 0xc83ab0, emissiveIntensity: 0.9, roughness: 0.2, metalness: 0.3, flatShading: true });
+      for (let i = 0; i < 16; i++) {
+        const w = new THREE.Mesh(new THREE.BoxGeometry(rng.range(12, 22), rng.range(18, 40), rng.range(14, 26)), rockM);
+        w.rotation.y = rng.range(-0.3, 0.3);
+        put(w, i, 20, 45, 4, near, 480);
+      }
+      for (let i = 0; i < 30; i++) {
+        const c = new THREE.Mesh(new THREE.OctahedronGeometry(rng.range(0.8, 2.4), 0), i % 3 ? cryM : cryM2);
+        c.scale.y = rng.range(1.8, 3);
+        c.rotation.z = rng.range(-0.4, 0.4);
+        put(c, i, 8, 22, -4, near, 480);
+      }
+      break;
+    }
+    case 'belt': {
+      const rockM = new THREE.MeshStandardMaterial({ color: 0x5a4a44, roughness: 0.95, flatShading: true, emissive: 0x401a00, emissiveIntensity: 0.5 });
+      const geo = new THREE.IcosahedronGeometry(1, 0);
+      for (let i = 0; i < 70; i++) {
+        const r = new THREE.Mesh(geo, rockM);
+        r.scale.set(rng.range(1, 7), rng.range(1, 6), rng.range(1, 7));
+        r.position.set(side(i) * rng.range(9, 100), rng.range(-30, 40), 0);
+        group.add(r);
+        near.add(r, rng.range(0, 480));
+        const sp = rng.range(0.1, 0.5);
+        anim.push((t) => {
+          r.rotation.x = t * sp;
+          r.rotation.y = t * sp * 0.7;
+        });
+      }
+      const neb = new THREE.SpriteMaterial({ map: cloudTexture(), color: 0xb04dff, transparent: true, opacity: 0.35, depthWrite: false, blending: THREE.AdditiveBlending });
+      for (let i = 0; i < 10; i++) {
+        const n = new THREE.Sprite(neb);
+        n.scale.setScalar(rng.range(80, 160));
+        n.position.set(side(i) * rng.range(60, 200), rng.range(20, 90), 0);
+        group.add(n);
+        far.add(n, rng.range(0, 640));
+      }
+      break;
+    }
+    case 'storm': {
+      const towerM = std2(0x2a3038, { metalness: 0.6 });
+      const winM = glowM(0xffd23d);
+      for (let i = 0; i < 20; i++) {
+        const b = new THREE.Group();
+        const h = rng.range(20, 60);
+        const body = new THREE.Mesh(new THREE.BoxGeometry(rng.range(8, 14), h, rng.range(8, 14)), towerM);
+        body.position.y = h / 2 - 20;
+        b.add(body);
+        const lamp = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), winM);
+        lamp.position.y = h - 19;
+        b.add(lamp);
+        put(b, i, 18, 70, 0, near, 480);
+      }
+      // rain streaks + lightning flash
+      const rainGeo = new THREE.BufferGeometry();
+      const N = 500;
+      const pos = new Float32Array(N * 6);
+      for (let i = 0; i < N; i++) {
+        const x = (rng.next() - 0.5) * 80, y = rng.range(-5, 40), z = -rng.range(0, 200);
+        pos.set([x, y, z, x + 0.3, y - 2.4, z], i * 6);
+      }
+      rainGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const rain = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({ color: 0xaac4e0, transparent: true, opacity: 0.35 }));
+      group.add(rain);
+      anim.push((t) => (rain.position.y = -((t * 40) % 30)));
+      const flash = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: 0xe8f0ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+      flash.scale.setScalar(500);
+      flash.position.set(80, 120, -500);
+      group.add(flash);
+      anim.push((t) => {
+        const k = (t * 0.37) % 1;
+        (flash.material as THREE.SpriteMaterial).opacity = k < 0.04 ? 0.8 * (1 - k / 0.04) : 0;
+      });
+      break;
+    }
+    case 'volcano': {
+      addGround(groundTexture2('lava'), -7, 26, 0xffffff);
+      const coneM = std2(0x2a1410);
+      const lavaM = glowM(0xff6a1a);
+      for (let i = 0; i < 8; i++) {
+        const v = new THREE.Group();
+        const h = rng.range(40, 80);
+        const cone = new THREE.Mesh(new THREE.ConeGeometry(h * 0.7, h, 9), coneM);
+        cone.position.y = h / 2 - 8;
+        v.add(cone);
+        const crater = new THREE.Mesh(new THREE.CylinderGeometry(h * 0.12, h * 0.14, 2, 9), lavaM);
+        crater.position.y = h - 8.5;
+        v.add(crater);
+        put(v, i, 70, 160, 0, far, 640);
+      }
+      const rockM = std2(0x3a1a12);
+      for (let i = 0; i < 26; i++) {
+        const r = new THREE.Mesh(new THREE.IcosahedronGeometry(rng.range(1.5, 4), 0), rockM);
+        put(r, i, 8, 40, -6, near, 480);
+      }
+      const ember = new THREE.SpriteMaterial({ map: glowTexture(), color: 0xff8a2a, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
+      for (let i = 0; i < 40; i++) {
+        const e = new THREE.Sprite(ember);
+        e.scale.setScalar(rng.range(0.6, 1.4));
+        const x = side(i) * rng.range(6, 50);
+        const ph = rng.range(0, 10);
+        e.position.set(x, 0, 0);
+        group.add(e);
+        near.add(e, rng.range(0, 480));
+        anim.push((t) => (e.position.y = ((t * 3 + ph) % 18) - 4));
+      }
+      break;
+    }
+    case 'ice': {
+      addGround(groundTexture2('ice'), -5, 30);
+      const iceM = new THREE.MeshStandardMaterial({ color: 0xbfe8ff, roughness: 0.15, metalness: 0.1, transparent: true, opacity: 0.92, flatShading: true });
+      for (let i = 0; i < 34; i++) {
+        const c = new THREE.Mesh(new THREE.ConeGeometry(rng.range(1, 3), rng.range(5, 16), 6), iceM);
+        c.position.y = 0;
+        put(c, i, 8, 50, 0, near, 480);
+      }
+      // aurora ribbons
+      for (let k = 0; k < 3; k++) {
+        const geo = new THREE.PlaneGeometry(500, 60, 60, 1);
+        const m = new THREE.MeshBasicMaterial({ color: k === 1 ? 0x7a5aff : 0x3dffb0, transparent: true, opacity: 0.22, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
+        const rib = new THREE.Mesh(geo, m);
+        rib.position.set(0, 110 + k * 25, -520 - k * 40);
+        group.add(rib);
+        const base = (geo.attributes.position as THREE.BufferAttribute).array.slice();
+        anim.push((t) => {
+          const a = geo.attributes.position as THREE.BufferAttribute;
+          for (let v = 0; v < a.count; v++) a.setY(v, base[v * 3 + 1] + Math.sin(base[v * 3] * 0.02 + t * 0.6 + k) * 14);
+          a.needsUpdate = true;
+        });
+      }
+      break;
+    }
+  }
+  return {
+    group,
+    update(dist, t) {
+      if (ground) (ground as { tex: THREE.Texture; tile: number }).tex.offset.y = (dist / (ground as { tex: THREE.Texture; tile: number }).tile) % 1;
+      near.update(dist, t);
+      far.update(dist * 0.5, t);
+      for (const f of anim) f(t);
+    },
+  };
+}
+
 // ------------------------------------------------------------------ v2 Bonus roads
 const std = (color: number, extra: THREE.MeshStandardMaterialParameters = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.85, flatShading: true, ...extra });
 
@@ -818,7 +1093,8 @@ export class Scenery {
         : id === 'tunnel' ? buildTunnel()
         : id === 'cloud' ? buildCloud()
         : id === 'space' ? buildSpace()
-        : buildBonus(id);
+        : id === 'desert' || id === 'forest' || id === 'country' || id === 'sea' ? buildBonus(id)
+        : buildLadder(id);
       t.group.visible = false;
       this.group.add(t.group);
       this.themes.set(id, t);

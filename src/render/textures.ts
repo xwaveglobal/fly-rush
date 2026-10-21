@@ -693,3 +693,49 @@ export function labelTexture(text: string, color: number) {
     return toTex(c);
   });
 }
+
+/** v2.1 ladder worlds: lava crust and ice sheet ground */
+export function groundTexture2(kind: 'lava' | 'ice' | 'rockv') {
+  return memo(`ground2-${kind}`, () => {
+    const [c, g] = canvas(256, 256);
+    let a = kind.length * 7919;
+    const rnd = () => ((a = (a * 16807) % 2147483647) / 2147483647);
+    if (kind === 'lava') {
+      g.fillStyle = '#2a0e08';
+      g.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 26; i++) {
+        g.strokeStyle = `rgba(255,${90 + Math.floor(rnd() * 90)},20,${0.55 + rnd() * 0.4})`;
+        g.lineWidth = 2 + rnd() * 4;
+        g.beginPath();
+        let x = rnd() * 256, y = rnd() * 256;
+        g.moveTo(x, y);
+        for (let k = 0; k < 5; k++) {
+          x += (rnd() - 0.5) * 70;
+          y += (rnd() - 0.5) * 70;
+          g.lineTo(x, y);
+        }
+        g.stroke();
+      }
+    } else if (kind === 'ice') {
+      g.fillStyle = '#cfe8f6';
+      g.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 40; i++) {
+        g.strokeStyle = `rgba(120,170,210,${0.2 + rnd() * 0.3})`;
+        g.lineWidth = 1.2;
+        g.beginPath();
+        const x = rnd() * 256, y = rnd() * 256;
+        g.moveTo(x, y);
+        g.lineTo(x + (rnd() - 0.5) * 90, y + (rnd() - 0.5) * 90);
+        g.stroke();
+      }
+    } else {
+      g.fillStyle = '#4a2a5a';
+      g.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 500; i++) {
+        g.fillStyle = rnd() < 0.5 ? 'rgba(30,10,40,.35)' : 'rgba(160,110,200,.18)';
+        g.fillRect(rnd() * 256, rnd() * 256, 4, 4);
+      }
+    }
+    return toTex(c, { repeat: true });
+  });
+}

@@ -1,4 +1,4 @@
-import { HEIGHT, SPEED, WORLD_LENGTH, FAIRNESS, COIN_LINES, HEARTS } from '../config.ts';
+import { HEIGHT, SPEED, WORLD_LENGTH, FAIRNESS, COIN_LINES, HEARTS, EXP } from '../config.ts';
 import { clamp01, lerp } from '../core/math.ts';
 import { Rng } from '../core/Rng.ts';
 import { START_STATE, step, lanesOf, modeIn, MODE_H, MODE_L, stateBit } from './Fairness.ts';
@@ -8,7 +8,7 @@ import { sectionAt, type Course, type PatternKey } from './Courses.ts';
 import { PASS_ALL, PASS_N } from './types.ts';
 /** extra seconds after a jump/duck row: land, settle, see the next obstacle */
 const VERTICAL_RECOVERY = 0.7;
-import { MAPS, LEVEL_RULES, PATTERNS, tierWeights, type Tier, type MapDifficultyConfig, PHASES, PHASE_UNLOCK, GATE, RANK_ORDER, rankDist, rankIdxAt, rankSpeed, VARIANTS, expRate, type PhaseRank, type Variant } from './Difficulty.ts';
+import { MAPS, LEVEL_RULES, PATTERNS, tierWeights, type Tier, type MapDifficultyConfig, PHASES, PHASE_UNLOCK, GATE, RANK_ORDER, rankDist, rankIdxAt, rankSpeed, VARIANTS, expRate, expAtDist, type PhaseRank, type Variant } from './Difficulty.ts';
 import type { SpeedLevel } from '../config.ts';
 
 /** Base speed is a pure function of distance so spawn timing can be predicted exactly. */
@@ -18,10 +18,40 @@ export function speedAt(dist: number) {
 
 // endless world order follows the difficulty ladder: 2/10 → 4 → 6 → 8 → 9
 export const WORLDS = ['city', 'cloud', 'tunnel', 'space', 'mega'] as const;
+/** v2.1 Endless ladder worlds (new places between the original five) */
+export const LADDER_WORLDS = ['harbor', 'solar', 'canyon', 'belt', 'storm', 'volcano', 'ice'] as const;
+export type LadderWorld = (typeof LADDER_WORLDS)[number];
 /** v2 Bonus event roads (docs/GAME-DESIGN.md §5): everyday places, one per event, rotating */
 export const BONUS_WORLDS = ['desert', 'forest', 'country', 'sea'] as const;
 export type BonusWorld = (typeof BONUS_WORLDS)[number];
-export type WorldId = (typeof WORLDS)[number] | BonusWorld;
+export type WorldId = (typeof WORLDS)[number] | BonusWorld | LadderWorld;
+/**
+ * v2.1 Endless: 12 worlds, two per rank (the second ends at that rank's gate), so nothing repeats
+ * before AAA; after AAA the ladder loops. Same order and minutes on every speed level (EXP-based).
+ */
+export const ENDLESS_LADDER: WorldId[] = ['city', 'harbor', 'cloud', 'solar', 'tunnel', 'canyon', 'space', 'belt', 'mega', 'storm', 'volcano', 'ice'];
+/** EXP at which each ladder world starts (D, mid-D, C, mid-C … AAA, AAA+6k) and the loop span after AAA */
+export function ladderStarts(): number[] {
+  const r = EXP.rank;
+  const t = [r.D, r.C, r.B, r.A, r.AA, r.AAA];
+  const out: number[] = [];
+  for (let i = 0; i < 5; i++) out.push(t[i], (t[i] + t[i + 1]) / 2);
+  out.push(t[5], t[5] + LADDER_AAA_WORLD);
+  return out;
+}
+export const LADDER_AAA_WORLD = 6000;
+/** ladder world index + EXP where the next world starts, for a run's EXP */
+export function ladderAt(e: number): { idx: number; nextExp: number } {
+  const st = ladderStarts();
+  const end = st[11] + LADDER_AAA_WORLD;
+  if (e < end) {
+    let i = 0;
+    for (let k = 0; k < 12; k++) if (e >= st[k]) i = k;
+    return { idx: i, nextExp: i < 11 ? st[i + 1] : end };
+  }
+  const k = Math.floor((e - end) / LADDER_AAA_WORLD);
+  return { idx: k % 12, nextExp: end + (k + 1) * LADDER_AAA_WORLD };
+}
 export const TRACK2_WORLDS: WorldId[] = ['mega', 'space', 'tunnel'];
 export const worldAt = (dist: number): WorldId => WORLDS[Math.floor(dist / WORLD_LENGTH) % WORLDS.length];
 
@@ -122,7 +152,18 @@ export class Spawner {
     if (this.course) return this.course.world;
     // Track 2 runs through the hard-looking worlds only
     if (this.variant === 'track2') return TRACK2_WORLDS[Math.floor(d / WORLD_LENGTH) % TRACK2_WORLDS.length];
-    return worldAt(d);
+    return ENDLESS_LADDER[ladderAt(expAtDist(d, this.level, this.variant)).idx];
+  }
+
+  /** distance where the scenery changes next (portal + preload) */
+  nextWorldAt(d: number): { at: number; world: WorldId } {
+    if (this.course || this.variant === 'track2') {
+      const at = (Math.floor(d / WORLD_LENGTH) + 1) * WORLD_LENGTH;
+      return { at, world: this.worldAt(at) };
+    }
+    const rate = expRate(this.level, this.variant);
+    const at = ladderAt(expAtDist(d, this.level, this.variant)).nextExp / rate;
+    return { at, world: this.worldAt(at + 1) };
   }
 
   constructor(public rng = new Rng()) {}
@@ -505,12 +546,12 @@ export class Spawner {
       },
       {
         k: 'asteroid',
-        w: world === 'space' ? 3.2 : 0,
+        w: world === 'space' || world === 'belt' ? 3.2 : 0,
         make: () => [{ type: 'asteroid', lane: L(), variant: v() }],
       },
       {
         k: 'asteroid2',
-        w: world === 'space' ? 1.4 * (0.5 + t) : 0,
+        w: world === 'space' || world === 'belt' ? 1.4 * (0.5 + t) : 0,
         make: () => {
           const [a, b] = two();
           return [

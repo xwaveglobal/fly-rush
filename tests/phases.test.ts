@@ -3,12 +3,12 @@
  * the hardest stretch of each phase, and everything stays fair (reachable + an autopilot can drive it).
  */
 declare const process: { exit(code: number): never; env: Record<string, string | undefined> };
-import { Spawner } from '../src/gameplay/Spawner.ts';
+import { Spawner, LADDER_AAA_WORLD } from '../src/gameplay/Spawner.ts';
 import { World } from '../src/gameplay/World.ts';
 import { Autopilot } from '../src/gameplay/Autopilot.ts';
 import { START_STATE, step } from '../src/gameplay/Fairness.ts';
 import { Rng } from '../src/core/Rng.ts';
-import { PATTERNS, PHASES, PHASE_UNLOCK, RANK_ORDER, VARIANTS, rankDist, type Variant } from '../src/gameplay/Difficulty.ts';
+import { PATTERNS, PHASES, PHASE_UNLOCK, RANK_ORDER, VARIANTS, rankDist, expRate, type Variant } from '../src/gameplay/Difficulty.ts';
 import { LEVELS, type SpeedLevel } from '../src/config.ts';
 
 let fails = 0;
@@ -87,6 +87,22 @@ for (const level of LEVEL_IDS) {
     }
   }
   if (!bad) ok(`track2 ${level}: ${sp.rows.length} rows to SSS, all reachable`);
+}
+
+// ---------------------------------------------------------------- 1c. world ladder: 12 places, no repeat before AAA
+for (const level of LEVEL_IDS) {
+  const sp = new Spawner();
+  sp.level = level;
+  sp.speedMul = LEVELS[level].speed;
+  const seen: string[] = [];
+  // the AAA phase has two worlds of LADDER_AAA_WORLD EXP each; then the ladder loops
+  const end = rankDist(VARIANTS.endless.top, level) + (2 * LADDER_AAA_WORLD) / expRate(level) - 50;
+  for (let d = 0; d < end; d += 50) {
+    const w = sp.worldAt(d);
+    if (seen[seen.length - 1] !== w) seen.push(w);
+  }
+  const unique = new Set(seen);
+  unique.size === 12 && seen.length === 12 ? ok(`${level}: 12 worlds in order, none repeated (${seen.join(' → ')})`) : fail(`${level}: world ladder ${seen.join(' → ')}`);
 }
 
 // ---------------------------------------------------------------- 2. dynamic: autopilot through every gate

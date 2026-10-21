@@ -595,8 +595,11 @@ function build(type: ObstacleType): ObstacleView {
 // ------------------------------------------------------------------ v2 Bonus-road props
 /** Bonus places get everyday props with the SAME silhouettes / hitboxes as the neon ones:
  *  crate = lane block (hop over) · barrier = low (hop over) · beam = overhead (duck) · traffic = vehicle (switch lane) */
-export type PropTheme = 'desert' | 'forest' | 'country' | 'sea';
-const THEMED: ObstacleType[] = ['crate', 'barrier', 'beam', 'traffic'];
+export type PropTheme = 'desert' | 'forest' | 'country' | 'sea' | 'harbor' | 'solar' | 'canyon' | 'belt' | 'storm' | 'volcano' | 'ice';
+export const PROP_THEMES: PropTheme[] = ['desert', 'forest', 'country', 'sea', 'harbor', 'solar', 'canyon', 'belt', 'storm', 'volcano', 'ice'];
+const BONUS_PROPS: PropTheme[] = ['desert', 'forest', 'country', 'sea'];
+/** which obstacle types get a themed look in a place (Endless ladder worlds keep the neon traffic) */
+const themedTypes = (th: PropTheme): ObstacleType[] => (BONUS_PROPS.includes(th) ? ['crate', 'barrier', 'beam', 'traffic'] : ['crate', 'barrier', 'beam']);
 const PM = (() => {
   const m = (color: number, extra: THREE.MeshStandardMaterialParameters = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.8, metalness: 0.05, flatShading: true, ...extra });
   return {
@@ -605,6 +608,14 @@ const PM = (() => {
     hay: m(0xe0c060), fence: m(0xf2efe6), barnRed: m(0xb8342a), tractorGreen: m(0x3a8a3a), tractorRed: m(0xc0392b),
     buoyRed: m(0xe03a2a), white: m(0xf4f4f4), rope: m(0xc8a870), hullBlue: m(0x2a6ab0), sand: m(0xe2ad6a),
     tyre: m(0x1a1a1a), glass: m(0x203040, { metalness: 0.6, roughness: 0.2 }), truckSand: m(0xd9b27a), truckWhite: m(0xe8e8e8),
+    // v2.1 ladder worlds
+    contRed: m(0xd8343a, { metalness: 0.5, roughness: 0.45 }), contBlue: m(0x2a6ad8, { metalness: 0.5, roughness: 0.45 }), steel: m(0x8a94a6, { metalness: 0.8, roughness: 0.35 }),
+    bollard: m(0x2a2e38, { metalness: 0.7 }), chain: m(0xd0d4dc, { metalness: 0.9, roughness: 0.3 }), panel: m(0x1a3a8a, { metalness: 0.7, roughness: 0.25 }), battery: m(0x2fd36b, { metalness: 0.4 }),
+    crystal: new THREE.MeshStandardMaterial({ color: 0x5ee6ff, emissive: 0x2a9aff, emissiveIntensity: 0.8, roughness: 0.2, flatShading: true }),
+    crystalPink: new THREE.MeshStandardMaterial({ color: 0xff7ae8, emissive: 0xc83ab0, emissiveIntensity: 0.8, roughness: 0.2, flatShading: true }),
+    canyonRock: m(0x6a3a6a), debris: m(0x5a5e6a, { metalness: 0.7, roughness: 0.4 }), sandbag: m(0xb8a070), billboard: m(0x1a1f2e, { metalness: 0.6 }),
+    basalt: m(0x2a1a16), lava: new THREE.MeshBasicMaterial({ color: 0xff6a1a, toneMapped: false }),
+    ice: new THREE.MeshStandardMaterial({ color: 0xbfe8ff, roughness: 0.1, metalness: 0.1, transparent: true, opacity: 0.85, flatShading: true }), snow: m(0xf4fbff),
   };
 })();
 
@@ -627,6 +638,11 @@ function buildThemed(type: ObstacleType, theme: PropTheme): ObstacleView {
     for (const sx of [-1, 1]) for (const sz of [-1.3, 1.3]) add(new THREE.CylinderGeometry(0.42, 0.42, 0.35, 12), PM.tyre, sx * 1.0, 0.42, sz, 0, 0, Math.PI / 2);
     if (load) load(group);
   };
+  if (!BONUS_PROPS.includes(theme)) {
+    buildLadderProp(type, theme, add, edge);
+    mergeByMaterial(group, new Set());
+    return { type, group, update: () => {}, setup: () => {} };
+  }
   switch (type) {
     case 'crate': {
       if (theme === 'desert') {
@@ -730,6 +746,41 @@ function buildThemed(type: ObstacleType, theme: PropTheme): ObstacleView {
   return { type, group, update: () => {}, setup: () => {} };
 }
 
+type AddFn = (geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z?: number, rx?: number, ry?: number, rz?: number) => THREE.Mesh;
+/** v2.1 Endless ladder worlds: each place has its own crate / barrier / beam look (same hitboxes) */
+function buildLadderProp(type: ObstacleType, theme: PropTheme, add: AddFn, edge: (m: THREE.Mesh) => void) {
+  const posts = (mat: THREE.Material) => {
+    for (const sx of [-1, 1]) add(new THREE.BoxGeometry(0.3, 6.2, 0.35), mat, 1.38 * sx, 3.1);
+  };
+  if (type === 'crate') {
+    if (theme === 'harbor') { edge(add(new THREE.BoxGeometry(2.2, 1.7, 1.7), PM.contRed, 0, 0.85)); for (const x of [-0.8, -0.4, 0, 0.4, 0.8]) add(new THREE.BoxGeometry(0.06, 1.5, 1.72), PM.steel, x, 0.85); }
+    else if (theme === 'solar') { edge(add(new THREE.BoxGeometry(1.8, 1.6, 1.5), PM.white, 0, 0.8)); add(new THREE.BoxGeometry(1.2, 0.35, 0.05), PM.battery, 0, 1.0, 0.76); }
+    else if (theme === 'canyon') { const c = add(new THREE.OctahedronGeometry(0.9, 0), PM.crystal, 0, 1.0); c.scale.y = 1.9; edge(c); add(new THREE.OctahedronGeometry(0.5, 0), PM.crystalPink, 0.7, 0.55, 0.2).scale.y = 1.6; }
+    else if (theme === 'belt') { const d = add(new THREE.DodecahedronGeometry(0.95, 0), PM.debris, 0, 0.9, 0, 0.4, 0.3); edge(d); add(new THREE.BoxGeometry(2.2, 0.15, 0.3), PM.steel, 0, 1.0, 0, 0, 0.4, 0.3); }
+    else if (theme === 'storm') { edge(add(new THREE.BoxGeometry(2.0, 1.6, 0.6), PM.billboard, 0, 0.8, 0, 0, 0, 0.08)); add(new THREE.BoxGeometry(1.7, 1.2, 0.05), PM.sign, 0, 0.85, 0.31, 0, 0, 0.08); }
+    else if (theme === 'volcano') { const r = add(new THREE.IcosahedronGeometry(1.0, 0), PM.basalt, 0, 0.85, 0, 0.3, 0.5); r.scale.set(1.15, 0.9, 1); edge(r); add(new THREE.IcosahedronGeometry(1.02, 0), PM.lava, 0, 0.85, 0, 0.3, 0.5).scale.set(0.6, 0.45, 1.05); }
+    else { edge(add(new THREE.BoxGeometry(1.7, 1.7, 1.7), PM.ice, 0, 0.85)); add(new THREE.BoxGeometry(1.75, 0.25, 1.75), PM.snow, 0, 1.75); }
+  } else if (type === 'barrier') {
+    if (theme === 'harbor') { for (const x of [-1.1, 0, 1.1]) add(new THREE.CylinderGeometry(0.3, 0.38, 1.2, 10), PM.bollard, x, 0.6); edge(add(new THREE.CylinderGeometry(0.06, 0.06, 2.4, 6), PM.chain, 0, 1.05, 0, 0, 0, Math.PI / 2)); }
+    else if (theme === 'solar') { const p = add(new THREE.BoxGeometry(2.6, 0.1, 1.2), PM.panel, 0, 1.2, 0, -0.5); edge(p); for (const x of [-1.1, 1.1]) add(new THREE.BoxGeometry(0.12, 1.2, 0.12), PM.steel, x, 0.6); }
+    else if (theme === 'canyon') { const r = add(new THREE.BoxGeometry(2.7, 1.1, 1.2), PM.canyonRock, 0, 0.55, 0, 0.1, 0, 0.05); edge(r); add(new THREE.OctahedronGeometry(0.35, 0), PM.crystal, 0.8, 1.25).scale.y = 1.8; }
+    else if (theme === 'belt') { const pipe = add(new THREE.CylinderGeometry(0.45, 0.45, 2.8, 12), PM.steel, 0, 0.6, 0, 0, 0, Math.PI / 2); edge(pipe); add(new THREE.TorusGeometry(0.5, 0.08, 6, 14), PM.lava, 1.0, 0.6, 0, 0, Math.PI / 2); }
+    else if (theme === 'storm') { for (const x of [-0.9, 0, 0.9]) for (const y of [0.3, 0.75]) add(new THREE.BoxGeometry(0.85, 0.42, 0.7), PM.sandbag, x + (y > 0.5 ? 0.4 : 0), y); edge(add(new THREE.BoxGeometry(2.7, 0.08, 0.72), PM.sandbag, 0, 1.0)); }
+    else if (theme === 'volcano') { const w = add(new THREE.BoxGeometry(2.7, 1.0, 0.7), PM.basalt, 0, 0.5); edge(w); add(new THREE.BoxGeometry(2.4, 0.25, 0.72), PM.lava, 0, 1.05); }
+    else { const d = add(new THREE.SphereGeometry(1, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), PM.snow, 0, 0); d.scale.set(1.4, 1.2, 0.8); edge(d); add(new THREE.ConeGeometry(0.25, 1.2, 6), PM.ice, 0.9, 1.0); }
+  } else if (type === 'beam') {
+    const postMat = theme === 'harbor' || theme === 'belt' ? PM.steel : theme === 'solar' ? PM.white : theme === 'canyon' ? PM.canyonRock : theme === 'storm' ? PM.billboard : theme === 'volcano' ? PM.basalt : PM.ice;
+    posts(postMat);
+    if (theme === 'harbor') { edge(add(new THREE.BoxGeometry(2.6, 1.7, 1.6), PM.contBlue, 0, 1.95)); add(new THREE.CylinderGeometry(0.05, 0.05, 3, 6), PM.chain, 0, 4.3); }
+    else if (theme === 'solar') { edge(add(new THREE.BoxGeometry(2.8, 0.9, 0.3), PM.panel, 0, 1.55)); add(new THREE.BoxGeometry(2.9, 0.1, 0.1), PM.steel, 0, 5.8); }
+    else if (theme === 'canyon') { edge(add(new THREE.BoxGeometry(3.0, 1.6, 1.4), PM.canyonRock, 0, 1.9)); add(new THREE.OctahedronGeometry(0.4, 0), PM.crystalPink, 0, 1.0).scale.y = 1.7; }
+    else if (theme === 'belt') { edge(add(new THREE.BoxGeometry(2.8, 0.5, 0.5), PM.steel, 0, 1.3)); add(new THREE.BoxGeometry(1.4, 1.0, 1.0), PM.debris, 0, 2.1); add(new THREE.BoxGeometry(2.6, 0.05, 1.2), PM.panel, 0, 2.7); }
+    else if (theme === 'storm') { edge(add(new THREE.BoxGeometry(2.9, 1.5, 0.4), PM.billboard, 0, 1.85, 0, 0, 0, -0.06)); add(new THREE.BoxGeometry(2.5, 1.1, 0.05), PM.contRed, 0, 1.85, 0.22, 0, 0, -0.06); }
+    else if (theme === 'volcano') { edge(add(new THREE.BoxGeometry(3.0, 1.4, 1.0), PM.basalt, 0, 1.8)); for (const x of [-0.8, 0.2, 0.9]) add(new THREE.ConeGeometry(0.12, 0.5, 6), PM.lava, x, 1.0, 0.3, Math.PI); }
+    else { edge(add(new THREE.BoxGeometry(3.0, 0.9, 1.0), PM.ice, 0, 1.55)); for (const x of [-1, -0.3, 0.4, 1]) add(new THREE.ConeGeometry(0.16, 0.6, 6), PM.ice, x, 0.85, 0, Math.PI); }
+  }
+}
+
 /** Pools one view type per obstacle type; attaches/detaches from the scene. */
 export class ObstacleViews {
   /** v2 Bonus road: everyday props for the place (null = neon city props) */
@@ -743,7 +794,7 @@ export class ObstacleViews {
   }
 
   private pool(type: ObstacleType, theme: PropTheme | null = null) {
-    const th = theme && THEMED.includes(type) ? theme : null;
+    const th = theme && themedTypes(theme).includes(type) ? theme : null;
     const key = th ? `${th}:${type}` : type;
     let p = this.pools.get(key);
     if (!p) {
