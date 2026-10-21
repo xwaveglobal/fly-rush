@@ -87,3 +87,18 @@ Status: **DONE in v2.1.0** (2026-10-22). G2 note: new per-world obstacles are ne
 - **H5.** After a special practice, "Replay training" restarts the BASIC training → should replay the same practice (Roadster / HYPER / SOS).
 - **H6.** During training the HUD shows "EXP 0" and the daily-mission strip ("Play 3 races") — training earns nothing → hide the EXP box value / show "TRAINING", hide the mission strip.
 - **H7.** The end card text says "Race Endless" even after a special practice → for practices show "Back to the bag" / "Race" + "Home".
+
+## I. Round 4 — Bonus redesign (owner 2026-10-22 06:34) — chốt, chưa code
+- **I1.** A Bonus road lasts **5 minutes** (finish line at 5 min of non-stop driving), **one play per event** (after the finish / end, the card shows "Played · next at hh:mm").
+- **I2.** **Normal items appear as usual** on Bonus roads (Magnet, Shield, Turbo, ×2 coins, hearts).
+- **I3.** **Special items appear only now and then (probability)**, not as a parade. Coin-bought specials (SOS / Roadster / HYPER) are a rare drop.
+- **I4. Every special has its own situation ("set piece")** — the pickup appears just before it and, once picked up, fires by itself into that situation. The set piece is spawned **only after the pickup is collected** (miss it → nothing special happens, the road stays fair):
+  - **Roadster** → a wall of cars across all lanes right after → auto-hop over the cars.
+  - **HYPER** → one big obstacle (mega gate / truck convoy) → auto long flight over it.
+  - **SOS** → a dense convoy filling the road → auto rocket up, glide down behind it.
+  - **Tunnel Rider** → appears **only on Bonus roads that have a tunnel**, just before the tunnel → the car drives upside-down on the tunnel roof through it.
+  - **Wall Run** → a row blocked in every lane → the car runs along the side wall past it.
+  - **Sky Rail** → a rail gantry over a busy stretch → the car hooks the rail and glides over it.
+  - **Phase Ghost** → a laser-fence / mixed obstacle zone → the car turns into a hologram and passes through.
+- **I5.** Bonus roads get **tunnel sections** (needed for Tunnel Rider): e.g. rock tunnel in the desert, tree tunnel in the forest, barn/haystack tunnel in the country, sea tunnel on the causeway.
+- **I6.** Bonus coin reward re-balanced for 5 minutes (finish bonus + coins on the road), still coins only.
