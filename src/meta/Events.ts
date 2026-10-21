@@ -152,7 +152,7 @@ export function schedule(now = Date.now()) {
 /** local clock text of a session start, e.g. "23:00" */
 export const localTime = (ms: number) => new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-export function eventBoard(e: EventInst, you: { name: string; score: number; color: string; pass?: boolean; av?: number }, now = Date.now()): Board {
+export function eventBoard(e: EventInst, you: { name: string; score: number; color: string; pass?: boolean; av?: number; flag?: string }, now = Date.now()): Board {
   const f = Math.min(1, Math.max(0, (now - e.start) / (e.end - e.start)));
   const g = 0.3 + 0.7 * Math.min(1, f * 1.3);
   const curve = { top: e.cup.top * g, k: 0.38, total: Math.round(e.cup.field * (0.25 + 0.75 * g)) };

@@ -1,3 +1,4 @@
+import { countryName, detectCountry, flagOf, guessCountry } from './meta/Country.ts';
 import * as THREE from 'three';
 import { AUTOPILOT, DEBUG, HEIGHT, LANES, LEVELS, LEFTOVER_POINTS, SPEED, TIMING, TYRE, WORLD_LENGTH, type SpeedLevel } from './config.ts';
 import { clamp, damp } from './core/math.ts';
@@ -333,6 +334,14 @@ export class Game {
         this.openDailyPopup();
       },
       rocketFix: (how) => this.resolveNeedRocket(how),
+      setCountry: (code) => {
+        this.save.country = code;
+        this.save.countryAuto = false;
+        this.persist();
+        this.audio.play('click');
+        this.syncProfile();
+        this.ui.toast(`${flagOf(code)} Country set to ${countryName(code)}`);
+      },
       setAvatar: (i) => {
         this.save.avatar = i;
         this.save.perks.avatarPicked = true;
@@ -408,8 +417,23 @@ export class Game {
     (window as unknown as { __xwave: Game }).__xwave = this;
   }
 
+  /** country: offline guess right away, then IP detection once (until the player picks one) */
+  private initCountry() {
+    if (!this.save.country) {
+      this.save.country = guessCountry();
+      this.persist();
+    }
+    if (!this.save.countryAuto || this.save.perks.countryDetected) return;
+    void detectCountry().then((c) => {
+      this.save.perks.countryDetected = true;
+      if (c && this.save.countryAuto) this.save.country = c;
+      this.persist();
+    });
+  }
+
   async boot() {
     this.ui.setLoading(0.15);
+    this.initCountry();
     // prewarm pools & compile shaders up-front so the first obstacles don't hitch
     this.obstacleViews.prewarm();
     this.pickupViews.prewarm();
@@ -627,7 +651,7 @@ export class Game {
     try {
       const now = Date.now();
       const id = this.selfId();
-      await this.db.upsertPlayer({ id, name: this.meta.name, avatar: this.save.avatar, flag: '⭐', isBot: false, cls: this.meta.cls, xp: this.save.bolts, best: this.save.best, runs: this.save.totalRuns, car: this.save.vehicle, trophies: { ...this.save.trophies }, createdAt: now, lastSeen: now });
+      await this.db.upsertPlayer({ id, name: this.meta.name, avatar: this.save.avatar, flag: flagOf(this.save.country), isBot: false, cls: this.meta.cls, xp: this.save.bolts, best: this.save.best, runs: this.save.totalRuns, car: this.save.vehicle, trophies: { ...this.save.trophies }, createdAt: now, lastSeen: now });
       const s = Math.floor(score);
       await this.db.submitScore({ playerId: id, board: 'all', score: s, at: now });
       await this.db.submitScore({ playerId: id, board: weekBoard(), score: s, at: now });
@@ -1112,6 +1136,7 @@ export class Game {
       runs: this.save.totalRuns,
       trophies: this.save.trophies,
       car: (SKINS.find((x) => x.id === this.save.vehicle) ?? SKINS[0]).name,
+      country: this.save.country,
     });
     if (fresh) this.ui.show('start', 'profile');
   }

@@ -2,6 +2,7 @@
  * Live-ops rules on top of SaveData: rewards, check-in, daily quests, weekly
  * best, tournaments, XWAVE Pass. Pure logic (no DOM) — the Game persists after calls.
  */
+import { flagOf } from './Country.ts';
 import { dayKey, weekKey, type SaveData } from '../core/Save.ts';
 import { CHECKIN, CHESTS, questsFor, type ItemKey, type QuestStat, type Reward } from './Daily.ts';
 import { cupFor, eventBoard, prizeFor, schedule, type EventInst, type Prize } from './Events.ts';
@@ -57,7 +58,7 @@ export class Meta {
     return this.s.passUntil > Date.now();
   }
   private me(score: number) {
-    return { name: this.name, score, color: this.color, pass: this.passActive, av: this.s.avatar };
+    return { name: this.name, score, color: this.color, pass: this.passActive, av: this.s.avatar, flag: flagOf(this.s.country) };
   }
 
   grant(r: Reward) {

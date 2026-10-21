@@ -1816,3 +1816,17 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .ckrow.today { border: 1.5px solid #4fe0ff; background: linear-gradient(90deg, rgba(40,150,220,.45), rgba(20,60,140,.5)); box-shadow: 0 0 14px rgba(79,224,255,.35); }
 .ckrow.lock .ckbody { filter: saturate(.6) brightness(.8); }
 #start .profile .tierb { display: none; } /* v1.18: class shows once (chip next to the name), not twice */
+
+/* v1.18 — country (profile) + picker */
+.ctryrow { appearance: none; cursor: pointer; width: 100%; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 14px; color: #fff; text-align: left;
+  background: var(--card); border: 1px solid var(--card-rim); font-family: var(--font-body); }
+.ctryrow .fl { font-size: 26px; line-height: 1; }
+.ctryrow span:nth-child(2) { flex: 1; display: flex; flex-direction: column; }
+.ctryrow small { font: 700 10px var(--font-body); letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.ctryrow b { font: 800 14px var(--font-body); }
+.ctryrow em { font: 800 12px var(--font-body); font-style: normal; color: #7fd0ff; }
+.ctrysearch { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(140,160,255,.4); background: #0c1235; color: #fff; font: 600 14px var(--font-body); }
+.ctrylist { max-height: 46vh; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; text-align: left; }
+.ctryopt { appearance: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 10px; border: 0; background: rgba(255,255,255,.04); color: #fff; font: 700 13px var(--font-body); text-align: left; }
+.ctryopt[hidden] { display: none; }
+.ctryopt .fl { font-size: 20px; }

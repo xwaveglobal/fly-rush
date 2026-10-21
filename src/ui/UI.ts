@@ -1,3 +1,4 @@
+import { COUNTRIES, countryName, flagOf } from '../meta/Country.ts';
 import './ui.css';
 import { ICON } from './icons.ts';
 import { AVATAR_COUNT, avatarForName, avatarSvg, classCorner } from './avatars.ts';
@@ -113,6 +114,7 @@ export interface UIHandlers {
   share(): void;
   sos(): void;
   setAvatar(i: number): void;
+  setCountry(code: string): void;
   randomAvatar(): void;
   profile(): void;
   viewPlayer(i: number): void;
@@ -744,6 +746,10 @@ export class UI {
           this.toast(`${ICON.lock} Hidden world · reach class ${el.dataset.v} to reveal it`, 'var(--purple, #9b6bff)');
           return;
         case 'popa': return this.h.popAction(el.dataset.v!);
+        case 'country': return this.countryPicker();
+        case 'setcountry':
+          this.closePopup();
+          return this.h.setCountry(el.dataset.v!);
         case 'popgo': {
           // entry popup shortcuts (after the reward is claimed)
           this.closePopup();
@@ -1434,7 +1440,7 @@ export class UI {
   }
 
   /** own profile (editable) or a rival's card */
-  profileSync(o: { self: true; name: string; avatar: number; cls: RankClass; bolts: number; next: RankClass | null; k: number; need: number; best: number; weekRank: number | null; runs: number; trophies: SaveData['trophies']; car: string }) {
+  profileSync(o: { self: true; name: string; avatar: number; cls: RankClass; bolts: number; next: RankClass | null; k: number; need: number; best: number; weekRank: number | null; runs: number; trophies: SaveData['trophies']; car: string; country: string }) {
     this.myClass = o.cls;
     this.setAll('proftitle', 'YOUR PROFILE');
     const strip = Array.from({ length: AVATAR_COUNT }, (_, i) => `<button class="avpick ${i === o.avatar ? 'on' : ''}" data-a="avpick" data-i="${i}" aria-label="Avatar ${i + 1}">${avatarSvg(i)}</button>`).join('');
@@ -1443,6 +1449,7 @@ export class UI {
         <div class="nameedit"><input data-k="pnameinput" maxlength="14" value="${esc(o.name)}" aria-label="Pilot name" /><button class="btn sm blue" data-a="savepname">Save</button></div>
         <small>Tap the name to change it</small></div></div>
       <div class="avrow2"><div class="avstrip" data-k="pavstrip">${strip}</div><button class="btn sm purple" data-a="avrand" aria-label="Random avatar">🎲</button></div>
+      <button class="ctryrow" data-a="country"><span class="fl">${flagOf(o.country)}</span><span><small>Country</small><b>${esc(countryName(o.country || 'US'))}</b></span><em>Change</em></button>
       ${this.classCard(o.cls, o.bolts, o.next, o.k, o.need)}
       <div class="pstats">
         <div><span class="label">Best score</span><b>${fmt(o.best)}</b></div>
@@ -1840,6 +1847,20 @@ export class UI {
       const e = b.querySelector<HTMLElement>('.badge');
       if (e) e.hidden = st !== 'ready';
     }
+  }
+
+  /** country picker: search + list (auto-detected by IP until the player picks) */
+  countryPicker() {
+    const list = [...COUNTRIES].map((c) => ({ c, n: countryName(c) })).sort((a, b) => a.n.localeCompare(b.n));
+    $(this.root, '[data-k="popbody"]').innerHTML = `<div class="p3h"><span class="p3i blue">🌍</span><h2>COUNTRY</h2><button class="icon-btn sm" data-a="closeov" data-v="popup" aria-label="Close">${ICON.close}</button></div>
+      <input class="ctrysearch" data-k="ctryq" placeholder="Search country…" aria-label="Search country" />
+      <div class="ctrylist" data-k="ctrylist">${list.map(({ c, n }) => `<button class="ctryopt" data-a="setcountry" data-v="${c}" data-n="${n.toLowerCase()}"><span class="fl">${flagOf(c)}</span><span>${n}</span></button>`).join('')}</div>`;
+    this.screens.popup.classList.add('show');
+    const q = $<HTMLInputElement>(this.root, '[data-k="ctryq"]');
+    q.addEventListener('input', () => {
+      const v = q.value.trim().toLowerCase();
+      this.root.querySelectorAll<HTMLElement>('.ctryopt').forEach((b) => (b.hidden = !!v && !b.dataset.n!.includes(v) && !b.dataset.v!.toLowerCase().startsWith(v)));
+    });
   }
 
   /** language picker (6 basic languages) */

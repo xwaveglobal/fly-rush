@@ -93,13 +93,13 @@ export function sampleBoard(seedKey: string, curve: Curve, rows = 100): Omit<LbR
 
 const MILESTONES = [1, 3, 10, 50, 100, 500, 1000, 5000, 10000];
 
-export function rankBoard(sample: Omit<LbRow, 'rank'>[], curve: Curve, you: { name: string; score: number; color: string; pass?: boolean; av?: number }): Board {
+export function rankBoard(sample: Omit<LbRow, 'rank'>[], curve: Curve, you: { name: string; score: number; color: string; pass?: boolean; av?: number; flag?: string }): Board {
   const all = sample.map((r) => ({ ...r }));
   let yourRank: number;
   const idx = all.findIndex((r) => you.score > r.score);
   if (idx >= 0) yourRank = idx + 1;
   else yourRank = you.score > 0 ? Math.max(all.length + 1, rankFor(curve, you.score)) : curve.total;
-  const me: LbRow = { rank: yourRank, name: you.name, flag: '⭐', score: you.score, color: you.color, you: true, pass: you.pass, av: you.av };
+  const me: LbRow = { rank: yourRank, name: you.name, flag: you.flag ?? '🏁', score: you.score, color: you.color, you: true, pass: you.pass, av: you.av };
   const rows: LbRow[] = all.map((r, i) => ({ ...r, rank: i + 1 + (idx >= 0 && i >= idx ? 1 : 0) }));
   if (idx >= 0) rows.splice(idx, 0, me);
   const target = [...MILESTONES].reverse().find((m) => m < yourRank);
@@ -113,12 +113,12 @@ export function weekProgress(now = new Date()) {
   return (d * 24 + now.getHours() + now.getMinutes() / 60) / (7 * 24);
 }
 
-export function allTimeBoard(you: { name: string; score: number; color: string; pass?: boolean; av?: number }): Board {
+export function allTimeBoard(you: { name: string; score: number; color: string; pass?: boolean; av?: number; flag?: string }): Board {
   const curve: Curve = { top: 61850, k: 0.27, total: 248_316 };
   return rankBoard(sampleBoard('xwave-all-time-v1', curve), curve, you);
 }
 
-export function weeklyBoard(week: string, you: { name: string; score: number; color: string; pass?: boolean; av?: number }, now = new Date()): Board {
+export function weeklyBoard(week: string, you: { name: string; score: number; color: string; pass?: boolean; av?: number; flag?: string }, now = new Date()): Board {
   // rivals keep playing through the week: scores and field size grow over time
   const f = 0.35 + 0.65 * Math.min(1, weekProgress(now) * 1.4);
   const curve: Curve = { top: 38400 * f, k: 0.31, total: Math.round(9000 + 31000 * f) };
