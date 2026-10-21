@@ -1641,3 +1641,49 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .modal > .mhead { position: sticky; top: -14px; z-index: 5; margin: -14px -14px 0; padding: 12px 14px 8px; width: calc(100% + 28px); box-sizing: border-box;
   background: linear-gradient(180deg, rgba(10, 20, 54, .98), rgba(8, 15, 44, .95)); border-radius: 18px 18px 0 0; }
 .modal > .mhead [data-a="closemodal"] { flex: none; }
+
+/* v1.18 — garage: 5 XWAVE cars by rarity; next car shown in colour (locked), later cars black */
+.ccard { --rc: #4fb3ff; }
+.ccard .cimg { width: 92px; height: 58px; object-fit: cover; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--rc) 55%, transparent); }
+.ccard.next .cimg { box-shadow: 0 0 12px color-mix(in srgb, var(--rc) 60%, transparent); }
+.ccard.dark .cimg { filter: brightness(0) contrast(1.2); opacity: .9; }
+.ccard.locked.next b, .ccard.locked.next .cimg { opacity: 1; filter: none; }
+.ccard .q { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); font: 900 24px var(--font); font-style: normal; color: rgba(255,255,255,.55); }
+.carinfo { position: absolute; left: 12px; right: 12px; top: calc(64px + var(--safe-t)); padding: 8px 12px !important; display: flex; flex-direction: column; gap: 5px; }
+.carinfo .crare { font: 900 13px var(--font); font-style: italic; letter-spacing: 1.5px; text-transform: uppercase; color: var(--rc); display: flex; gap: 8px; align-items: baseline; }
+.carinfo .crare small { font: 700 11px var(--font-body); color: #c9d8f5; letter-spacing: .5px; text-transform: uppercase; }
+.carinfo .cstats { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 12px; }
+.carinfo .cst { display: grid; grid-template-columns: 74px 1fr 16px; align-items: center; gap: 6px; font: 700 10px var(--font-body); color: #c9d8f5; text-transform: uppercase; }
+.carinfo .cst i { height: 5px; border-radius: 3px; background: rgba(255,255,255,.1); overflow: hidden; }
+.carinfo .cst i b { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #4fc3ff, #a77bff); }
+.carinfo .cst em { font-style: normal; color: #fff; text-align: right; }
+.carinfo .cbonus { font: 800 11px var(--font-body); color: #ffe08a; display: flex; gap: 5px; align-items: center; }
+.carinfo .cbonus svg { width: 13px; height: 13px; }
+.carinfo .cskills { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.carinfo .cskills span { position: relative; padding: 5px 7px; border-radius: 9px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); display: flex; flex-direction: column; }
+.carinfo .cskills b { font: 800 11px var(--font); font-style: italic; color: #fff; }
+.carinfo .cskills small { font: 600 10px/1.25 var(--font-body); color: #a9bbdc; }
+.carinfo .cskills em { position: absolute; top: 4px; right: 5px; font: 800 8px var(--font-body); font-style: normal; color: #2a1600; background: #ffc21a; border-radius: 4px; padding: 1px 3px; }
+.carinfo .cdark { margin: 0; font: 600 12px/1.4 var(--font-body); color: #c9d8f5; }
+.carinfo .cdark svg { width: 13px; height: 13px; vertical-align: -2px; }
+
+#garage .carsel { display: none; }
+.carinfo { gap: 4px; }
+.carinfo .crare { flex-wrap: wrap; row-gap: 0; }
+.carinfo .crare .cname { color: #fff; font-size: 16px; letter-spacing: .5px; text-transform: none; margin-right: 2px; }
+.carinfo .cskills { display: flex; gap: 6px; }
+.carinfo .cskills span { flex-direction: row; align-items: center; gap: 6px; padding: 3px 7px; }
+.carinfo .cskills em { position: static; }
+.ccard.dark .cimg.shadow { filter: brightness(0); object-fit: contain; background: radial-gradient(circle at 50% 60%, color-mix(in srgb, var(--rc) 35%, transparent), rgba(0,0,0,.4) 70%); opacity: 1; }
+.ccard .q { top: 26px; color: rgba(255,255,255,.7); text-shadow: 0 0 8px var(--rc); }
+/* v1.18 — upgrades as 3 compact tiles so the car stays visible above the card strip */
+#garage .lockbadge { display: none !important; }
+#garage .upgrades { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 6px !important; padding: 8px !important; }
+#garage .upgrades > .label { grid-column: 1 / -1; margin: 0; }
+#garage .upg { display: flex !important; flex-direction: column; align-items: center; text-align: center; gap: 3px !important; padding: 6px 4px !important; border-radius: 12px; background: rgba(255,255,255,.04); }
+#garage .upg > div:nth-child(2) { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+#garage .upg .ic { width: 26px !important; height: 26px !important; }
+#garage .upg .nm { font-size: 12px !important; }
+#garage .upg .nm small { display: none; }
+#garage .upg .pips i { width: 8px !important; }
+#garage .upg .btn.sm { height: 28px !important; min-width: 0; width: 100%; padding: 0 6px !important; font-size: 12px !important; }

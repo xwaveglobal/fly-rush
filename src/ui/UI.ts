@@ -1,7 +1,7 @@
 import './ui.css';
 import { ICON } from './icons.ts';
 import { AVATAR_COUNT, avatarForName, avatarSvg, classCorner } from './avatars.ts';
-import { CLASSES, CLASS_COLOR, CLASS_MIN, XP_RULES, XPT, classBadge, classForScore, type RankClass, type XpGain } from '../meta/Rank.ts';
+import { CLASSES, CLASS_COLOR, CLASS_MIN, XP_RULES, XPT, classBadge, classFor as classOfBolts, classForScore, type RankClass, type XpGain } from '../meta/Rank.ts';
 import logoUrl from '../assets/images/sky-roadster-logo.webp';
 import loadingUrl from '../assets/images/loading.jpg';
 import thFuture from '../assets/images/tracks/future-city.jpg';
@@ -16,7 +16,15 @@ import guide3 from '../assets/images/guide/guide-3.jpg';
 import { COURSES } from '../gameplay/Courses.ts';
 import { MISSIONS, missionById, type ActiveMission } from '../gameplay/Missions.ts';
 import type { SaveData } from '../core/Save.ts';
-import { SKINS } from '../render/Vehicle.ts';
+import { SKINS, carVisibility } from '../render/Vehicle.ts';
+import carZenith from '../assets/images/cars/zenith.webp';
+import carVolt from '../assets/images/cars/volt.webp';
+import carPhantom from '../assets/images/cars/phantom.webp';
+import carInferno from '../assets/images/cars/inferno.webp';
+import carNexus from '../assets/images/cars/nexus.webp';
+import carShadow from '../assets/images/car/x1-back.webp';
+const CAR_IMG: Record<string, string> = { zenith: carZenith, volt: carVolt, phantom: carPhantom, inferno: carInferno, nexus: carNexus };
+const RARITY_COLOR: Record<string, string> = { Common: '#4fb3ff', Rare: '#a77bff', Epic: '#ffc24a', Legendary: '#ff4a3c', Mythic: '#d04dff' };
 import { LEVELS } from '../config.ts';
 import type { Run } from '../gameplay/Run.ts';
 import type { PickupKind } from '../gameplay/types.ts';
@@ -598,7 +606,8 @@ export class UI {
 
     <section id="garage" class="screen">
       ${this.head('GARAGE')}
-      <div class="lockbadge" data-k="lockbadge" hidden>${ICON.lock}<span>LOCKED</span></div>
+      <div class="lockbadge" data-k="lockbadge" hidden>${ICON.lock}<span data-k="locktxt">LOCKED</span></div>
+      <div class="carinfo panel" data-k="carinfo"></div>
       <div class="bottom">
         <div class="carstrip" data-k="carstrip"></div>
         <div class="carsel panel">
@@ -743,6 +752,7 @@ export class UI {
           const s = SKINS[this.garageIndex];
           if (el.dataset.mode === 'buy') this.h.buySkin(s.id);
           else if (el.dataset.mode === 'shop') this.h.shop();
+          else if (el.dataset.mode === 'rank') this.rankGuide();
           else this.h.selectSkin(s.id);
           return;
         }
@@ -1080,19 +1090,39 @@ export class UI {
     const skin = SKINS[this.garageIndex];
     this.setAll('carname', skin.name);
     this.setAll('carcls', skin.cls);
-    $(this.root, '[data-k="lockbadge"]').hidden = s.unlocked.includes(skin.id);
+    const myClass = classOfBolts(s.bolts);
+    const vis = carVisibility(s.unlocked, skin.id);
+    const rankOk = (k: (typeof SKINS)[number]) => CLASSES.indexOf(myClass) >= CLASSES.indexOf((k.need ?? 'D') as RankClass);
+    $(this.root, '[data-k="lockbadge"]').hidden = vis === 'own';
+    this.setAll('locktxt', vis === 'dark' ? `CLASS ${skin.need} NEEDED` : 'LOCKED');
     const strip = $(this.root, '[data-k="carstrip"]');
     strip.innerHTML = SKINS.map((k, i) => {
-      const own = s.unlocked.includes(k.id);
-      return `<button class="ccard ${own ? '' : 'locked'} ${i === this.garageIndex ? 'on' : ''} ${s.vehicle === k.id ? 'cur' : ''}" data-a="pickcar" data-id="${k.id}">
-        ${carSvg(k.shape, k.body, k.glow)}<b>${k.name}</b><small>${own ? (s.vehicle === k.id ? 'In use' : 'Owned') : `${ICON.coin}${fmt(k.price)}`}</small>${own ? '' : `<i class="lk">${ICON.lock}</i>`}</button>`;
+      const v = carVisibility(s.unlocked, k.id);
+      const img = v === 'dark' ? `<img class="cimg shadow" src="${carShadow}" alt="" />` : CAR_IMG[k.id] ? `<img class="cimg" src="${CAR_IMG[k.id]}" alt="" />` : carSvg(k.shape, k.body, k.glow);
+      const label = v === 'own' ? (s.vehicle === k.id ? 'In use' : 'Owned') : v === 'next' ? (rankOk(k) ? `${ICON.coin}${fmt(k.price)}` : `${ICON.lock} Class ${k.need}`) : `Class ${k.need}`;
+      return `<button class="ccard ${v === 'own' ? '' : 'locked'} ${v} ${i === this.garageIndex ? 'on' : ''} ${s.vehicle === k.id ? 'cur' : ''}" data-a="pickcar" data-id="${k.id}" style="--rc:${RARITY_COLOR[k.rarity ?? 'Common']}">
+        ${img}${v === 'dark' ? '<i class="q">?</i>' : ''}<b>${v === 'dark' ? '???' : k.name.replace('XWAVE ', '')}</b><small>${label}</small>${v === 'own' ? '' : `<i class="lk">${ICON.lock}</i>`}</button>`;
     }).join('');
+    // details: rarity, tagline, stats, score bonus, signature skills (hidden for dark cars)
+    const st = skin.stats ?? [7, 7, 7, 7];
+    const bars = ['Speed', 'Acceleration', 'Handling', 'Energy'].map((n, i) => `<div class="cst"><span>${n}</span><i><b style="width:${st[i] * 10}%"></b></i><em>${vis === 'dark' ? '?' : st[i]}</em></div>`).join('');
+    $(this.root, '[data-k="carinfo"]').innerHTML = vis === 'dark'
+      ? `<div class="crare" style="--rc:${RARITY_COLOR[skin.rarity ?? 'Common']}"><b class="cname">???</b>${skin.rarity ?? ''}</div><p class="cdark">${ICON.lock} Reach class <b>${skin.need}</b> to reveal and unlock this car. Earn rank points in Cups and on tracks.</p>`
+      : `<div class="crare" style="--rc:${RARITY_COLOR[skin.rarity ?? 'Common']}"><b class="cname">${skin.name}</b>${skin.rarity ?? ''}<small>${esc(skin.cls.split('·')[1]?.trim() ?? '')}</small></div>
+         <div class="cstats">${bars}</div>
+         <div class="cbonus">${(skin.bonus ?? 0) > 0 ? `${ICON.trophy} +${skin.bonus}% score on every run` : 'Starter car · no score bonus'}</div>
+         <div class="cskills">${(skin.skills ?? []).map((k) => `<span title="${esc(k.desc)}"><b>${k.name}</b><em>SOON</em></span>`).join('')}</div>`;
     const on = strip.querySelector<HTMLElement>('.ccard.on');
     if (on) strip.scrollLeft = on.offsetLeft - strip.clientWidth / 2 + on.clientWidth / 2;
     $(this.root, '[data-k="cardots"]').innerHTML = SKINS.map((_, i) => `<i class="${i === this.garageIndex ? 'on' : ''}"></i>`).join('');
     const btn = $(this.root, '[data-k="carbtn"]');
     const owned = s.unlocked.includes(skin.id);
-    if (!owned) {
+    if (!owned && (!rankOk(skin) || vis === 'dark')) {
+      btn.dataset.mode = 'rank';
+      btn.className = 'btn purple';
+      btn.innerHTML = `${ICON.lock} Reach class ${skin.need}`;
+      btn.removeAttribute('disabled');
+    } else if (!owned) {
       btn.dataset.mode = 'buy';
       btn.className = 'btn gold';
       btn.innerHTML = `${ICON.lock} Unlock <span class="price">${ICON.coin}${fmt(skin.price)}</span>`;

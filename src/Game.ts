@@ -10,7 +10,7 @@ import { Autopilot } from './gameplay/Autopilot.ts';
 import { speedAt, worldAt, WORLDS, type WorldId } from './gameplay/Spawner.ts';
 import { Renderer } from './render/Renderer.ts';
 import { CameraRig } from './render/CameraRig.ts';
-import { Vehicle, SKINS } from './render/Vehicle.ts';
+import { Vehicle, SKINS, carVisibility } from './render/Vehicle.ts';
 import { Track } from './render/Track.ts';
 import { Scenery } from './render/Scenery.ts';
 import { ObstacleViews } from './render/ObstacleViews.ts';
@@ -26,7 +26,7 @@ import { COURSES, courseById, sectionAt, type Course } from './gameplay/Courses.
 import { makeArch } from './render/Arches.ts';
 import { rowMasks } from './gameplay/ObstacleRules.ts';
 import { Ads, ADS } from './ads/Ads.ts';
-import { advancedScript, basicScript, boostScript, WORLD_LESSONS, type BoostKind, type TrainingScript } from './gameplay/Tutorial.ts';
+import { advancedScript, basicScript, boostScript, WORLD_LESSONS, type BoostKind, type TrainingScript, type TutorialStep } from './gameplay/Tutorial.ts';
 import { PASS_H, PASS_L, PASS_N } from './gameplay/types.ts';
 import { MAPS, TIER_NAME, type Tier } from './gameplay/Difficulty.ts';
 import { FAIRNESS } from './config.ts';
@@ -1169,7 +1169,8 @@ export class Game {
     this.tutPrompting = false;
     this.timeScale = this.timeScaleTarget = 1;
     this.ui.tutPrompt(null);
-    this.run = new Run({ ...this.save.upgrades }, LEVELS[level].score);
+    const car = SKINS.find((x) => x.id === this.save.vehicle) ?? SKINS[0];
+    this.run = new Run({ ...this.save.upgrades }, LEVELS[level].score * (1 + (car.bonus ?? 0) / 100));
     {
       const cup = this.meta.myCup();
       this.ui.hudBoltsBase = this.save.bolts;
@@ -1413,6 +1414,22 @@ export class Game {
     }
   }
 
+  /**
+   * Lane-change lessons: point the prompt at the target lane from where the car really is.
+   * Already lined up → praise and skip the step (returns false = no prompt).
+   */
+  private aimStep(st: TutorialStep) {
+    if (st.target === undefined) return true;
+    const d = st.target - this.world.player.lane;
+    if (d === 0) {
+      this.tutStep++;
+      this.ui.toast(`${ICON.check} ${st.title}: you're lined up — stay in this lane`, '#b6ff2e');
+      return false;
+    }
+    st.need = d < 0 ? 'left' : 'right';
+    return true;
+  }
+
   /** training: is this the gesture the current step waits for? (advances the step) */
   private tutAccept(a: Action | 'sos' | 'rocket') {
     const step = this.tut.steps[this.tutStep];
@@ -1422,6 +1439,15 @@ export class Game {
       return false;
     }
     this.tutPrompting = false;
+    if (step.target !== undefined && (a === 'left' || a === 'right')) {
+      // two lanes away: this swipe is right, but one more is needed — prompt again from the new lane
+      const after = this.world.player.lane + (a === 'left' ? -1 : 1);
+      if (after !== step.target) {
+        this.ui.tutPrompt(null);
+        this.audio.play('combo');
+        return true;
+      }
+    }
     this.tutStep++;
     this.timeScaleTarget = 1;
     this.ui.tutPrompt(null);
@@ -1782,7 +1808,7 @@ export class Game {
     // ---- pilot training: wait for each gesture, captions, finish
     if (this.tutorialMode) {
       const st = this.tut.steps[this.tutStep];
-      if (st && !this.tutPrompting && this.state === 'run' && (st.dist - w.dist) / Math.max(1, w.speed) <= st.lead) {
+      if (st && !this.tutPrompting && this.state === 'run' && (st.dist - w.dist) / Math.max(1, w.speed) <= st.lead && this.aimStep(st)) {
         this.tutPrompting = true;
         this.timeScaleTarget = 0.035;
         this.ui.tutPrompt({ index: this.tutStep, total: this.tut.steps.length, need: st.need, title: st.title, sub: st.sub });
@@ -2341,7 +2367,8 @@ export class Game {
 
   private applySkin(id: string, preview = false) {
     const s = SKINS.find((x) => x.id === id) ?? SKINS[0];
-    this.vehicle.setSkin(s, preview && !this.save.unlocked.includes(s.id));
+    // the next car to earn shows in colour (curiosity); cars after it stay a black silhouette
+    this.vehicle.setSkin(s, preview && carVisibility(this.save.unlocked, s.id) === 'dark');
     this.rig.rearOnly = s.shape === 'gt';
   }
 
@@ -2363,6 +2390,8 @@ export class Game {
   private buySkin(id: string) {
     const s = SKINS.find((x) => x.id === id);
     if (!s || this.save.unlocked.includes(id) || this.save.wallet < s.price) return;
+    if (carVisibility(this.save.unlocked, id) !== 'next') return; // cars unlock in order
+    if (CLASSES.indexOf(classFor(this.save.bolts)) < CLASSES.indexOf((s.need ?? 'D') as (typeof CLASSES)[number])) return;
     this.save.wallet -= s.price;
     this.save.unlocked.push(id);
     this.save.vehicle = id;

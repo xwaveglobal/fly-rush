@@ -45,20 +45,48 @@ export interface VehicleSkin {
   glass: number;
   glow: number;
   accent: number;
+  /** coins to unlock (after reaching `need`) */
   price: number;
+  rarity?: 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic';
+  /** rank class required before the car can be bought */
+  need?: string;
+  /** score bonus in % while driving this car */
+  bonus?: number;
+  /** how strongly the X1 render's body paint is recoloured (0 = original pearl) */
+  tintAmt?: number;
+  /** speed / acceleration / handling / energy, out of 10 (display) */
+  stats?: [number, number, number, number];
+  skills?: { name: string; desc: string }[];
 }
 
 export const SKINS: VehicleSkin[] = [
-  { id: 'pearl', name: 'XWAVE Pearl', shape: 'gt', cls: 'GT Coupe', body: 0xf3f5fa, trim: 0xb9c2d3, glass: 0x0a0d16, glow: 0x39b6ff, accent: 0x1c64ff, price: 0 },
-  { id: 'midnight', name: 'Midnight Volt', shape: 'gt', cls: 'GT Coupe', body: 0x1b1f2b, trim: 0x9aa6bd, glass: 0x05060a, glow: 0x3cf2ff, accent: 0x00d0ff, price: 750 },
-  { id: 'aurora', name: 'Aurora Bloom', shape: 'gt', cls: 'GT Coupe', body: 0xb98cff, trim: 0xd6c6f2, glass: 0x140a24, glow: 0xc45bff, accent: 0xff4fd8, price: 1500 },
-  { id: 'solar', name: 'Solar Flare', shape: 'gt', cls: 'GT Coupe', body: 0xff9a2e, trim: 0xe0b46a, glass: 0x1a0d05, glow: 0xffa21a, accent: 0xff5a1f, price: 2500 },
-  { id: 'wedge', name: 'Hyper Wedge', shape: 'wedge', cls: 'Hypercar', body: 0xe8203a, trim: 0x2a2d36, glass: 0x07080c, glow: 0xff6a2a, accent: 0xffd23d, price: 4000 },
-  { id: 'muscle', name: 'Thunder Muscle', shape: 'muscle', cls: 'Muscle', body: 0x1f5bff, trim: 0xc9d2e6, glass: 0x05070d, glow: 0xffffff, accent: 0xffffff, price: 6000 },
-  { id: 'bubble', name: 'Orbit Pod', shape: 'bubble', cls: 'Pod Racer', body: 0xffd23d, trim: 0x30343f, glass: 0x0b1830, glow: 0x3dff8b, accent: 0x3dff8b, price: 8000 },
-  { id: 'cyber', name: 'Cyber Blade', shape: 'cyber', cls: 'Cyber Truck', body: 0xaeb6c4, trim: 0x5d6575, glass: 0x05060a, glow: 0xff2ad4, accent: 0x3cf2ff, price: 12000 },
-  { id: 'legend', name: 'Gold Legend', shape: 'wedge', cls: 'Hypercar · Legend', body: 0xffc21a, trim: 0x1a1a1a, glass: 0x140c00, glow: 0xfff3a0, accent: 0xffffff, price: 20000 },
+  { id: 'zenith', name: 'XWAVE Zenith', shape: 'gt', cls: 'Common · Balanced for every run', rarity: 'Common', need: 'D', price: 0, bonus: 0, tintAmt: 0,
+    body: 0xf3f5fa, trim: 0xb9c2d3, glass: 0x0a0d16, glow: 0x39b6ff, accent: 0x1c64ff, stats: [7, 7, 8, 7],
+    skills: [{ name: 'Turbo Boost', desc: 'Short burst of high speed.' }, { name: 'Stable Flight', desc: 'Easier to control.' }] },
+  { id: 'volt', name: 'XWAVE Volt', shape: 'gt', cls: 'Rare · Speed beyond limits', rarity: 'Rare', need: 'C', price: 2500, bonus: 5, tintAmt: 0.92,
+    body: 0x6a3cf0, trim: 0x9aa6bd, glass: 0x05060a, glow: 0xb46bff, accent: 0x8a4dff, stats: [9, 9, 8, 8],
+    skills: [{ name: 'Ion Burst', desc: 'Massive speed boost for 5 seconds.' }, { name: 'Shockwave', desc: 'Pushes nearby obstacles out of the way.' }] },
+  { id: 'phantom', name: 'XWAVE Phantom', shape: 'gt', cls: 'Epic · Invisible. Unstoppable.', rarity: 'Epic', need: 'B', price: 6000, bonus: 10, tintAmt: 0.85,
+    body: 0xd4a548, trim: 0x2a2416, glass: 0x140c00, glow: 0xffc24a, accent: 0xffd23d, stats: [9, 8, 9, 9],
+    skills: [{ name: 'Phase Shift', desc: 'Turns semi-invisible for 3 seconds.' }, { name: 'Auto Collect', desc: 'Automatically collects nearby coins.' }] },
+  { id: 'inferno', name: 'XWAVE Inferno', shape: 'gt', cls: 'Legendary · Burn through everything', rarity: 'Legendary', need: 'A', price: 12000, bonus: 15, tintAmt: 0.92,
+    body: 0xc4121f, trim: 0x1a1a1a, glass: 0x0a0202, glow: 0xff3b2a, accent: 0xff6a2a, stats: [10, 9, 8, 8],
+    skills: [{ name: 'Fire Trail', desc: 'Destroys all obstacles in its path.' }, { name: 'Speed Rush', desc: 'Extreme speed boost for 8 seconds.' }] },
+  { id: 'nexus', name: 'XWAVE Nexus', shape: 'gt', cls: 'Mythic · The ultimate evolution', rarity: 'Mythic', need: 'AA', price: 25000, bonus: 25, tintAmt: 0.35,
+    body: 0xdfe8ff, trim: 0xc9d2e6, glass: 0x0b1830, glow: 0x3cf2ff, accent: 0xd04dff, stats: [10, 10, 10, 10],
+    skills: [{ name: 'Gravity Control', desc: 'Switches flight height freely for 5 seconds.' }, { name: 'Dimension Dash', desc: 'Teleports forward a short distance.' }] },
 ];
+
+
+/**
+ * Garage visibility: owned cars and the NEXT car to earn are shown in full colour (the next one
+ * stays locked, to make players curious); every car after that is a black silhouette.
+ */
+export function carVisibility(unlocked: string[], id: string): 'own' | 'next' | 'dark' {
+  if (unlocked.includes(id)) return 'own';
+  const next = SKINS.find((k) => !unlocked.includes(k.id));
+  return next?.id === id ? 'next' : 'dark';
+}
 
 const BLUE = new THREE.Color(0x39b6ff);
 
@@ -770,7 +798,7 @@ export class Vehicle {
       this.shapes.gt!.visible = false;
       const u = this.sprite.material.uniforms;
       u.tint.value.setHex(skin.body);
-      u.tintAmt.value = skin.id === 'pearl' ? 0 : 0.92;
+      u.tintAmt.value = skin.tintAmt ?? 0.92;
       u.dim.value = locked ? 0.06 : 1;
     }
     for (const pod of this.pods) pod.pivot.visible = !this.spriteOn;

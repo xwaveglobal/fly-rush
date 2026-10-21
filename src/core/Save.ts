@@ -1,4 +1,15 @@
 /** Persistent player profile in localStorage (wrapped: storage can be blocked). */
+
+/** v1.17 and older car ids → the v1.18 line-up (bought cars map to the tier of what was paid) */
+const LEGACY_CAR: Record<string, string> = {
+  pearl: 'zenith', midnight: 'volt', aurora: 'volt', solar: 'phantom', wedge: 'phantom',
+  muscle: 'inferno', bubble: 'inferno', cyber: 'nexus', legend: 'nexus',
+};
+function migrateCars(ids: string[]) {
+  const out = new Set<string>(['zenith']);
+  for (const id of ids) out.add(LEGACY_CAR[id] ?? id);
+  return [...out];
+}
 export interface SaveData {
   best: number;
   bestDistance: number;
@@ -80,8 +91,8 @@ const defaults = (): SaveData => ({
   bestDistance: 0,
   wallet: 0,
   totalRuns: 0,
-  vehicle: 'pearl',
-  unlocked: ['pearl'],
+  vehicle: 'zenith',
+  unlocked: ['zenith'],
   upgrades: { engine: 0, shield: 0, magnet: 0 },
   missions: { active: [], completed: 0, rank: 1 },
   settings: {
@@ -154,7 +165,8 @@ export function loadSave(): SaveData {
       dailyProg: { ...(p.dailyProg ?? {}) },
       dailyClaimed: Array.isArray(p.dailyClaimed) ? p.dailyClaimed : [],
       dailyChests: Array.isArray(p.dailyChests) ? p.dailyChests : [],
-      unlocked: Array.isArray(p.unlocked) && p.unlocked.length ? p.unlocked : d.unlocked,
+      unlocked: migrateCars(Array.isArray(p.unlocked) && p.unlocked.length ? p.unlocked : d.unlocked),
+      vehicle: LEGACY_CAR[p.vehicle as string] ?? (typeof p.vehicle === 'string' ? p.vehicle : d.vehicle),
       // older saves may hold an auto-detected LOW: start on HIGH once, then respect the player's choice
       ...(p.settingsRev !== SETTINGS_REV ? { settingsRev: SETTINGS_REV } : {}),
     };

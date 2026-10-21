@@ -15,6 +15,9 @@ export interface TutorialStep {
   lead: number;
   /** this UP fires the Roadster Jump */
   super?: boolean;
+  /** lane-change lessons: the lane the car must reach. The prompt direction is worked out from
+   *  where the car actually is when the prompt shows (free control in advanced training). */
+  target?: number;
 }
 
 export const TUTORIAL_LENGTH = 640;
@@ -103,7 +106,7 @@ const LESSONS: Record<string, Lesson> = {
     const to = side(lane);
     return {
       rows: [row(at, [{ type: 'traffic', lane, variant: 1 }])],
-      step: { need: dirTo(lane, to), title: 'ONCOMING TRAFFIC', sub: 'Red chevrons = a car racing toward you. It is too tall to hop: follow the GREEN arrow.', lead: 1.0 },
+      step: { need: dirTo(lane, to), title: 'ONCOMING TRAFFIC', sub: 'Red chevrons = a car racing toward you. It is too tall to hop: follow the GREEN arrow.', lead: 1.0, target: to },
       lane: to,
     };
   },
@@ -119,6 +122,7 @@ const LESSONS: Record<string, Lesson> = {
         title: 'HUNTER DRONE',
         sub: need === 'up' ? 'It slides across the amber zone (⇄). Hop over it!' : 'It slides across the amber zone (⇄). Move to the lane with the GREEN arrow.',
         lead: need === 'up' ? 0.5 : 0.9,
+        ...(need === 'up' ? {} : { target }),
       },
       lane: target,
     };
@@ -152,7 +156,7 @@ const LESSONS: Record<string, Lesson> = {
     cfg[to] = 'open';
     return {
       rows: [row(at, [{ type: 'laser', lane: 0, laser: cfg, variant: 0 }])],
-      step: { need: dirTo(lane, to), title: 'LASER WALL', sub: 'Full wall of beams. Only the lane with the GREEN arrow is open.', lead: 0.9 },
+      step: { need: dirTo(lane, to), title: 'LASER WALL', sub: 'Full wall of beams. Only the lane with the GREEN arrow is open.', lead: 0.9, target: to },
       lane: to,
     };
   },
@@ -160,7 +164,7 @@ const LESSONS: Record<string, Lesson> = {
     const to = side(lane);
     return {
       rows: [row(at, [{ type: 'gate', lane: 1, door: to, variant: 0 }])],
-      step: { need: dirTo(lane, to), title: 'MEGA GATE', sub: 'A wall across the road with ONE open door (green frame). Line up with it.', lead: 1.1 },
+      step: { need: dirTo(lane, to), title: 'MEGA GATE', sub: 'A wall across the road with ONE open door (green frame). Line up with it.', lead: 1.1, target: to },
       lane: to,
     };
   },
@@ -168,7 +172,7 @@ const LESSONS: Record<string, Lesson> = {
     const to = side(lane);
     return {
       rows: [row(at, [{ type: 'asteroid', lane, variant: 0 }])],
-      step: { need: dirTo(lane, to), title: 'ASTEROID', sub: 'Huge rock — too big to hop or duck. Change lane!', lead: 0.9 },
+      step: { need: dirTo(lane, to), title: 'ASTEROID', sub: 'Huge rock — too big to hop or duck. Change lane!', lead: 0.9, target: to },
       lane: to,
     };
   },
