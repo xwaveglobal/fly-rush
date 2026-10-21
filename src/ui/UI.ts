@@ -216,6 +216,13 @@ export class UI {
     this.root.innerHTML = this.template();
     for (const el of Array.from(this.root.querySelectorAll<HTMLElement>('.screen'))) this.screens[el.id] = el;
     this.pops = $(this.root, '#pops');
+    // one notice lane under the HUD: section banners + toasts stack instead of covering each other
+    this.notices = document.createElement('div');
+    this.notices.id = 'notices';
+    this.pops.appendChild(this.notices);
+    const ban = $(this.root, '#banner');
+    this.notices.appendChild(ban);
+    ban.addEventListener('animationend', () => ban.classList.remove('show'));
     this.bind();
     // translations: re-apply to anything newly rendered (HUD numbers are skipped)
     const tmo = new MutationObserver((recs) => {
@@ -618,7 +625,13 @@ export class UI {
 
   private bind() {
     this.root.addEventListener('click', (e) => {
-      const el = (e.target as HTMLElement).closest<HTMLElement>('[data-a]');
+      // tap on the dimmed backdrop around a modal with a close button = close it
+      const tgt = e.target as HTMLElement;
+      if (tgt.classList.contains('overlay') && tgt.classList.contains('screen') && tgt.querySelector(':scope > .modal [data-a="closemodal"]')) {
+        tgt.querySelectorAll('.gstep.open').forEach((g) => g.classList.remove('open'));
+        return this.h.closeModal();
+      }
+      const el = tgt.closest<HTMLElement>('[data-a]');
       if (!el || el.hasAttribute('disabled')) return;
       const a = el.dataset.a!;
       switch (a) {
@@ -655,7 +668,9 @@ export class UI {
           if (el.dataset.v && el.classList.contains('on')) return;
           return this.h.toggleQuality();
         case 'settings': return this.h.settings();
-        case 'closemodal': return this.h.closeModal();
+        case 'closemodal':
+          this.root.querySelectorAll('.gstep.open').forEach((g) => g.classList.remove('open'));
+          return this.h.closeModal();
         case 'daily': return this.h.daily();
         case 'events': return this.h.events();
         case 'ranks': return this.h.ranks();
@@ -697,9 +712,14 @@ export class UI {
           this.closePopup();
           return this.h.setLang(el.dataset.v!);
         case 'dailypop': return this.h.dailyPop();
-        case 'gstep':
-          el.classList.toggle('open');
+        case 'gstep': {
+          // one detail open at a time: opening a step closes the others
+          const open = !el.classList.contains('open');
+          el.parentElement?.querySelectorAll('.gstep.open').forEach((g) => g.classList.remove('open'));
+          el.classList.toggle('open', open);
+          if (open) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
           return;
+        }
         case 'rankguide':
           this.rankGuide();
           return;
@@ -975,17 +995,42 @@ export class UI {
     window.setTimeout(() => el.remove(), 4000); // safety
   }
 
+  /**
+   * Toasts and section banners share one lane just below the HUD (score / track bar / power chips):
+   * they stack top-down instead of covering each other, long text wraps, at most 2 toasts at once (the road stays visible).
+   */
+  private notices!: HTMLElement;
+  private placeNotices() {
+    const root = this.root.getBoundingClientRect();
+    let bottom = 0;
+    for (const sel of ['#hud .row', '#hud .row2', '#hud [data-h="trackbar"]', '#hud .hudline']) {
+      const el = this.root.querySelector<HTMLElement>(sel);
+      if (!el || el.hidden || !el.offsetParent) continue;
+      if (sel === '#hud .hudline' && !Array.from(el.children).some((c) => (c as HTMLElement).offsetHeight > 4 && !(c as HTMLElement).hidden)) continue;
+      bottom = Math.max(bottom, el.getBoundingClientRect().bottom - root.top);
+    }
+    this.notices.style.top = bottom > 0 ? `${Math.round(bottom + 8)}px` : '';
+  }
+
   toast(html: string, color = 'var(--cyan)') {
+    const live = Array.from(this.notices.querySelectorAll<HTMLElement>('.toast'));
+    if (live.some((t) => t.dataset.html === html)) return; // same message already on screen
+    if (live.length >= 2) live[0].remove();
+    this.placeNotices();
     const el = document.createElement('div');
     el.className = 'toast panel';
+    el.dataset.html = html;
     el.style.borderColor = color;
     el.innerHTML = html;
-    this.pops.appendChild(el);
-    window.setTimeout(() => el.remove(), 2700);
+    const ms = Math.min(4200, 2700 + Math.max(0, el.textContent!.length - 40) * 25);
+    el.style.animationDuration = `${ms}ms`;
+    this.notices.appendChild(el);
+    window.setTimeout(() => el.remove(), ms + 50);
   }
 
   banner(world: string, name: string) {
     const b = $(this.root, '#banner');
+    this.placeNotices();
     this.setAll('bw', world);
     this.setAll('bn', name);
     b.classList.remove('show');
