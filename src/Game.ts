@@ -43,7 +43,7 @@ import { classForScore } from './meta/Rank.ts';
 import { avatarForName } from './ui/avatars.ts';
 import { productBySku, DemoStore, type Store } from './meta/Shop.ts';
 import type { ItemKey, Reward } from './meta/Daily.ts';
-import { UNLOCK_BOOSTS } from './meta/Daily.ts';
+import { ITEM_PRICE, UNLOCK_BOOSTS } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
 const VERSION = 'v1.18';
@@ -313,16 +313,19 @@ export class Game {
       popAction: (a) => this.popAction(a),
       freePop: () => this.openAdPopup(),
       perk: (k) => this.openPerk(k as PerkKind, true),
-      buyBoost: (k) => {
+      buyBoost: (key) => {
+        const k = key as ItemKey;
         const u = UNLOCK_BOOSTS.find((x) => x.k === k);
-        if (!u || this.save.wallet < u.price) return;
-        this.save.wallet -= u.price;
-        this.save.items[u.k]++;
+        if (u && CLASSES.indexOf(classFor(this.save.bolts)) < CLASSES.indexOf(u.cls)) return;
+        const price = ITEM_PRICE[k];
+        if (price === undefined || this.save.wallet < price) return;
+        this.save.wallet -= price;
+        this.save.items[k]++;
         this.persist();
         this.audio.play('power');
         this.ui.refreshProfile(this.save);
         this.ui.tracksSync(this.save, this.meta.myCup()?.cup.track);
-        this.ui.boostSync(u.k, this.save.items[u.k], this.save.equip[u.k], this.save.wallet);
+        this.ui.boostSync(k, this.save.items[k], this.save.equip[k], this.save.wallet);
         if (this.ui.isShown('bag')) this.ui.bagSync(this.save);
       },
       setLang: (code) => {

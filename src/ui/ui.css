@@ -1885,3 +1885,5 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .tut-panel > .mhead h2 { margin: 0; color: #fff; }
 .tut-panel > .mhead h2 svg { color: #7fd0ff; }
 .th-sec > .btn { align-self: stretch; }
+.pinfo .pworth { display: inline-flex; align-items: center; gap: 3px; margin-top: 2px; font: 800 10.5px var(--font-body); font-style: normal; color: #7dffb0; }
+.pinfo .pworth svg { width: 12px; height: 12px; }

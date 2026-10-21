@@ -12,6 +12,19 @@ export const UNLOCK_BOOSTS: { k: ItemKey; cls: 'C' | 'B' | 'A' | 'AA'; price: nu
   { k: 'double', cls: 'A', price: 260 },
   { k: 'life', cls: 'AA', price: 400 },
 ];
+/**
+ * Coin price of ONE item bought singly (Magic Bag / item card). Deliberately above the
+ * value inside real-money bundles, so bundles are always the better deal (see docs/ECONOMY.md).
+ */
+export const ITEM_PRICE: Record<ItemKey, number> = { super: 400, hyper: 1200, escape: 350, shield: 300, turbo: 150, magnet: 180, double: 260, life: 400 };
+
+/** coin value of a reward (used to show "worth N coins" on shop bundles) */
+export function rewardValue(r: { coins?: number; items?: Partial<Record<ItemKey, number>> }) {
+  let v = r.coins ?? 0;
+  for (const [k, n] of Object.entries(r.items ?? {})) v += (n ?? 0) * ITEM_PRICE[k as ItemKey];
+  return v;
+}
+
 export interface Reward {
   coins?: number;
   items?: Partial<Record<ItemKey, number>>;

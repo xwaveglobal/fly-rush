@@ -187,6 +187,21 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v1.18 changes
+
+- **Notices**: toasts and section banners share one lane under the HUD (max 2 toasts), long text wraps.
+- **Guide modal**: one detail open at a time; header + close button pinned; tap the backdrop to close.
+- **Training**: lane-change lessons (Mega Gate, Laser Wall, Traffic, Asteroid) aim the prompt from the car's real lane.
+- **Garage**: 5 XWAVE cars (Zenith Common → Nexus Mythic) with rear-view art, stats and a +0–25 % score bonus. Cars unlock in order (class + coins). The next car shows in colour; later cars are black silhouettes with "Reach class X". Old cars map to the new line-up.
+- **Tracks**: 20 tracks (5 worlds + 15 harder remixes). Each unlocks by score on the previous track; tracks 11–20 need class A (the Rank A gate). Endless is always HARD.
+- **Reward popups**: Entry, Launch, Share, Add to Screen, Revisit Gift, Invite, Rate, No Connection and the 7-day Daily list, redrawn with illustrated SVG art (`src/ui/art.ts`). The Entry button stays after claiming and links to Daily, Shop, Garage, Tutorial, Race and Cups.
+- **Wheels**: spoked rear rims with rotational blur. The spin is capped per frame, so it never strobes backwards.
+- **Avatars**: 32 new pilot portraits. The rank badge on the home profile chip is no longer duplicated.
+- **Country**: auto-detected (IP, then time zone / language), editable in Profile; your flag replaces the star on leaderboards.
+- **Magic Bag**: item inventory with rules and which item fits which track; reachable from the home bar, Profile and track select. Big-reward tracks add items to the bag on a 2–3★ finish.
+- **Tutorial**: one hub for basics, special-item practice and advanced worlds.
+- **Economy**: every item can be bought singly for coins (`ITEM_PRICE`), and bundles are priced to beat coin packs. The shop shows each bundle's coin value. See `docs/ECONOMY.md`.
+
 ## v1.17 changes
 
 **ROADSTER button**

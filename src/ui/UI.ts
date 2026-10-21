@@ -32,7 +32,7 @@ import { LEVELS } from '../config.ts';
 import type { Run } from '../gameplay/Run.ts';
 import type { PickupKind } from '../gameplay/types.ts';
 import type { Board, LbRow } from '../meta/Leaderboard.ts';
-import { CHECKIN, CHESTS, UNLOCK_BOOSTS, rewardText, type ItemKey, type Quest, type Reward } from '../meta/Daily.ts';
+import { CHECKIN, CHESTS, ITEM_PRICE, UNLOCK_BOOSTS, rewardText, rewardValue, type ItemKey, type Quest, type Reward } from '../meta/Daily.ts';
 import { DIV_MULT, fmtLeft, localTime, prizesFor, type EventInst, type Prize } from '../meta/Events.ts';
 import { PRODUCTS, type Product } from '../meta/Shop.ts';
 import type { EventResult } from '../meta/Meta.ts';
@@ -1583,8 +1583,8 @@ export class UI {
       ${canTrain ? `<button class="btn big" data-a="boosttrain" data-v="${k}">${ICON.target} Practice it · free</button>` : ''}
       <div class="sbtns">
         ${owned > 0 && !isLocked ? `<button class="btn sm ${equipped ? 'ghost' : 'green'}" data-a="equip" data-v="${k}">${equipped ? `${ICON.check} Equipped · tap to remove` : 'Equip for next run'}</button>` : ''}
-        ${un && !isLocked ? `<button class="btn sm gold" data-a="buyboost" data-v="${k}" ${wallet < un.price ? 'disabled' : ''}>Buy 1 · ${ICON.coin}${fmt(un.price)}</button>` : ''}
-        ${!un ? `<button class="btn sm pink" data-a="shop">${ICON.bag} Get more</button>` : ''}
+        ${!isLocked ? `<button class="btn sm gold" data-a="buyboost" data-v="${k}" ${wallet < ITEM_PRICE[k] ? 'disabled' : ''}>Buy 1 · ${ICON.coin}${fmt(ITEM_PRICE[k])}</button>` : ''}
+        ${!un ? `<button class="btn sm pink" data-a="shop">${ICON.bag} Bundles · better value</button>` : ''}
       </div>`;
   }
 
@@ -1697,7 +1697,7 @@ export class UI {
       return `<div class="pcard ${p.kind} art-${p.art} ${owned ? 'owned' : ''}">
         ${p.badge ? `<em class="pbadge">${p.badge}</em>` : ''}
         <div class="part">${this.productArt(p)}</div>
-        <div class="pinfo"><b>${p.name}</b><small>${p.desc}</small></div>
+        <div class="pinfo"><b>${p.name}</b><small>${p.desc}</small>${p.kind === 'bundle' || p.sku === 'starter_pack' ? `<em class="pworth">${ICON.coin} worth ${fmt(rewardValue(p.grant))} coins</em>` : ''}</div>
         <button class="btn sm ${p.kind === 'coins' ? 'blue' : 'gold'} pbuy" data-a="buy" data-sku="${p.sku}" ${owned ? 'disabled' : ''}>${owned ? 'Owned' : passOn ? `Extend · ${p.price}` : p.price}</button></div>`;
     };
     const specials = PRODUCTS.filter((p) => p.kind !== 'coins' && !(p.once && p.sku === 'starter_pack' && s.starterBought));
