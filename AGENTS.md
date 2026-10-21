@@ -58,4 +58,5 @@ builds/              prebuilt single-file HTML snapshots (playable by opening th
 - Small, focused commits with clear messages (e.g. `feat: boss lane on Mega City`, `fix: shield timer reset on respawn`).
 - When you bump the version: update `VERSION` in `src/Game.ts`, add a changelog section to `README.md`.
 - At the end of every session: update `docs/PROGRESS.md` (what changed, what's half-done, what's next).
+- The owner runs `SkyRoadster-Dev.bat` on Windows: localhost auto-pulls `main` every 20 s, so **every push to `main` goes live on their PC** — push only playable code to `main`.
 - Optional snapshot for sharing: `npm run build:single` then copy `dist/index.html` to `builds/sky-roadster-vX.YY.html`.
