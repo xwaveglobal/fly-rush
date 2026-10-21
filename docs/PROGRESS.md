@@ -8,6 +8,8 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 **Done**: owner and Claude locked the v2 design in `docs/GAME-DESIGN.md`: EXP = skill rating (best run), D→AAA (+S/SS/SSS on track 2), Coin is the only currency (special items only), Endless + 1 AAA track, Bonus events every 2 h, revive max 2× by ads only. `ECONOMY.md` is now marked superseded.
 
+**Branches**: `v1` = old game frozen at v1.19.1 (commit 51c08a9), still maintainable. `main` = v2 development.
+
 **Next**: implement GAME-DESIGN.md §8 step by step (1: EXP & rank).
 
 ---

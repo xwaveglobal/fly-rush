@@ -54,6 +54,9 @@ builds/              prebuilt single-file HTML snapshots (playable by opening th
 
 ## Workflow
 
+- **Two versions live side by side:**
+  - `main` = **v2** (redesign per `docs/GAME-DESIGN.md`).
+  - `v1` = the old game, frozen at v1.19.1. It stays fully playable and can still get improvements: check out `v1`, commit there, push `v1`. Never merge `v1` into `main` or `main` into `v1` (cherry-pick a fix if both need it). The v1 single-file build is `builds/sky-roadster-v1.18.html` on the `v1` branch.
 - Branch `main` = always playable. Big or risky work → a branch (`feat/…`, `fix/…`), merge when it works.
 - Small, focused commits with clear messages (e.g. `feat: boss lane on Mega City`, `fix: shield timer reset on respawn`).
 - When you bump the version: update `VERSION` in `src/Game.ts`, add a changelog section to `README.md`.
