@@ -41,6 +41,9 @@ export interface Course {
  * world. Track 1 follows the "Level 1 — Full Track" plan (9 sections, 3,200 m).
  * Endless mode is `null` — the original rotating-world run.
  */
+/** tracks 1–5 (the hand-made worlds) are open from the start; unlocking starts at track 6 */
+export const FREE_TRACKS = 5;
+
 const BASE: Course[] = [
   {
     id: 'future-city',
@@ -166,7 +169,7 @@ function remix(b: Course, tier: number, name: string): Course {
 export const COURSES: Course[] = [...BASE, ...REMIX.flatMap((names, t) => BASE.map((b, i) => remix(b, t + 1, names[i])))].map((c, i, all) => ({
   ...c,
   // score to beat on the previous track ≈ 1.5 points per metre of it (rounded)
-  unlockScore: i === 0 ? 0 : Math.round((all[i - 1].length * 1.5) / 500) * 500,
+  unlockScore: i < FREE_TRACKS ? 0 : Math.round((all[i - 1].length * 1.5) / 500) * 500,
   needClass: i >= 10 ? 'A' : undefined,
 }));
 
@@ -177,7 +180,7 @@ export type TrackLock = { open: true } | { open: false; why: 'score'; need: numb
 /** is track `c` playable for this player? (best scores per track id, current rank class index ≥ A?) */
 export function trackLock(c: Course, best: Record<string, number>, hasClassA: boolean): TrackLock {
   const i = COURSES.indexOf(c);
-  if (i <= 0) return { open: true };
+  if (i < FREE_TRACKS) return { open: true }; // the 5 worlds (and Endless) are always open
   if (c.needClass && !hasClassA) return { open: false, why: 'class' };
   const prev = COURSES[i - 1];
   const need = c.unlockScore ?? 0;

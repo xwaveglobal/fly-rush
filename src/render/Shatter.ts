@@ -3,7 +3,8 @@ import { OVERLAY_LAYER } from './Renderer.ts';
 import type { Vehicle } from './Vehicle.ts';
 
 /**
- * Game-over crash: the car render breaks into irregular shards that fly apart, spin, fall and fade.
+ * Game-over crash: a FEW pieces break off the car (bumper corners, diffuser, mirrors) and fly away,
+ * spin, fall and fade — the car itself stays on the road (only chipped, not blown apart).
  * Shards are cut from the exact studio image (same texture + tint) and drawn in the overlay pass,
  * so the wreck looks like the real car coming apart.
  */
@@ -35,8 +36,11 @@ export class CarShatter {
     // jittered grid → irregular quads (each cell's corners are shared, so the car starts whole)
     const jx = (i: number, j: number) => (i === 0 || i === COLS ? 0 : Math.sin(i * 12.9 + j * 78.2) * 0.35 / COLS);
     const jy = (i: number, j: number) => (j === 0 || j === ROWS ? 0 : Math.sin(i * 39.3 + j * 11.7) * 0.35 / ROWS);
+    // cells (column, row from the bottom) that break off: rear corners, diffuser, side panels, mirrors
+    const picks = new Set(['0,1', '7,1', '1,0', '6,0', '3,0', '4,0', '0,2', '7,2', '1,3', '6,3']);
     for (let i = 0; i < COLS; i++) {
       for (let j = 0; j < ROWS; j++) {
+        if (!picks.has(`${i},${j}`)) continue;
         const c = [
           [i / COLS + jx(i, j), j / ROWS + jy(i, j)],
           [(i + 1) / COLS + jx(i + 1, j), j / ROWS + jy(i + 1, j)],
@@ -80,12 +84,11 @@ export class CarShatter {
         const local = new THREE.Vector3(cx - 0.5, cy - 0.5, 0).applyMatrix4(matrix);
         m.position.copy(local);
         m.quaternion.copy(this.tmpQ);
-        m.scale.copy(this.tmpS);
+        m.scale.copy(this.tmpS).multiplyScalar(0.55 + Math.random() * 0.2); // pieces, not whole panels
         // blast outward from the impact point (front-centre of the car), up, and toward the camera
         const dx = cx - 0.5;
-        const dy = cy - 0.35;
         const r = Math.random();
-        const vel = new THREE.Vector3(dx * (7 + r * 7), 3 + dy * 6 + Math.random() * 5, 2 + Math.random() * 7);
+        const vel = new THREE.Vector3(Math.sign(dx || 0.1) * (2.5 + Math.abs(dx) * 6 + r * 3), 2.5 + Math.random() * 4, 2 + Math.random() * 5);
         vel.applyQuaternion(this.tmpQ);
         vel.y = Math.abs(vel.y) + 1.5;
         const spin = new THREE.Vector3((Math.random() - 0.5) * 9, (Math.random() - 0.5) * 9, (Math.random() - 0.5) * 12);

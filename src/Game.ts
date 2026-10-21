@@ -2163,7 +2163,6 @@ export class Game {
     this.input.enabled = false;
     const pos = this.vehicle.root.position.clone();
     const skin = SKINS.find((s) => s.id === this.save.vehicle) ?? SKINS[0];
-    // final crash: the car itself breaks apart (shatter); a survivable hit keeps the small debris burst
     if (!final) this.debris.explode(pos, skin.body, skin.glow);
     this.particles.burst(pos.x, pos.y, pos.z, 36, 0xd8742a, 10, 0.55, 0.8, { grav: 4 });
     this.particles.burst(pos.x, pos.y, pos.z, 30, 0x555a66, 4, 1.2, 1.3, { drag: 1.5, up: 2 });
@@ -2172,10 +2171,7 @@ export class Game {
     this.rig.shake(final ? 0.7 : 0.45);
     // heavy, ragged rumble on the final crash; one solid hit otherwise
     this.vibrate(final ? [90, 40, 140, 50, 60] : [70]);
-    if (final) {
-      this.shatter.burst(this.vehicle);
-      this.vehicle.root.visible = false;
-    }
+    if (final) this.shatter.burst(this.vehicle); // a few pieces fly off; the car stays on the road
     this.ui.tutorial(false);
     if (final) this.rig.mode = 'crash';
     this.audio.intensity = 0;
