@@ -1862,3 +1862,26 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .modal.scrolly { max-height: 100%; overflow-y: auto; }
 .icon-btn.bagb { position: relative; background: linear-gradient(155deg, #c77dff, #6a1fd6) !important; }
 .icon-btn.bagb svg { width: 22px; height: 22px; }
+/* v1.18 — Tutorial hub (one button: basics · special items · advanced worlds) */
+.tut-panel.scrolly { align-items: stretch !important; text-align: left; }
+.tut-panel .mhead h2 { display: flex; align-items: center; gap: 8px; }
+.tut-panel .mhead h2 svg { width: 22px; height: 22px; }
+.tuthub { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.th-sec { padding: 10px; border-radius: 14px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); display: flex; flex-direction: column; gap: 8px; }
+.th-h { display: flex; align-items: center; gap: 8px; }
+.th-h i { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 900 12px var(--font-body); font-style: normal; background: linear-gradient(180deg, #9a72ff, #5b2fe6); flex: none; }
+.th-h b { flex: 1; font: 800 13px var(--font-body); }
+.th-items { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.th-it { appearance: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 3px; border-radius: 12px; color: #fff; font-family: var(--font);
+  background: linear-gradient(180deg, rgba(120,90,255,.25), rgba(30,30,90,.6)); border: 1px solid rgba(160,130,255,.4); }
+.th-it > span svg { width: 30px; height: 30px; }
+.th-it b { font-size: 10px; font-style: italic; text-align: center; line-height: 1.1; min-height: 22px; display: grid; place-items: center; }
+.th-it small { font: 800 9.5px var(--font-body); color: #7fd0ff; display: flex; gap: 3px; align-items: center; }
+.th-it small svg { width: 11px; height: 11px; }
+.th-it.hyper { background: linear-gradient(180deg, rgba(255,190,40,.25), rgba(60,40,10,.6)); border-color: rgba(255,210,61,.5); }
+.th-it.escape { background: linear-gradient(180deg, rgba(255,80,80,.22), rgba(60,15,20,.6)); border-color: rgba(255,110,110,.45); }
+.th-it.shield { background: linear-gradient(180deg, rgba(79,195,255,.22), rgba(15,40,80,.6)); border-color: rgba(120,200,255,.45); }
+.tut-panel > .mhead { width: 100%; display: flex; align-items: center; justify-content: space-between; position: sticky; top: -14px; z-index: 5; margin: -14px -14px 0; padding: 12px 14px 8px; width: calc(100% + 28px); box-sizing: border-box; background: linear-gradient(180deg, rgba(10,20,54,.98), rgba(8,15,44,.95)); border-radius: 18px 18px 0 0; }
+.tut-panel > .mhead h2 { margin: 0; color: #fff; }
+.tut-panel > .mhead h2 svg { color: #7fd0ff; }
+.th-sec > .btn { align-self: stretch; }

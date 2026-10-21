@@ -344,7 +344,7 @@ export class UI {
           <button class="wallet" data-a="shop" aria-label="Coins · open shop">${ICON.coin}<b data-k="wallet">0</b><i class="plus" data-a="freepop" role="button" aria-label="Free coins · watch an ad">${ICON.plus}</i></button>
           <button class="icon-btn sm2 langb" data-a="lang" aria-label="Language"><span data-k="langflag">🇬🇧</span></button>
           <button class="icon-btn sm2 bagb" data-a="bag" aria-label="Magic Bag">${BAG_ICON}<em class="badge" data-k="bagbadge" hidden>0</em></button>
-          <button class="icon-btn sm2" data-a="guide" aria-label="Tutorial · Roadster guide">${TUT_ICON}</button>
+          <button class="icon-btn sm2" data-a="help" aria-label="Tutorial">${TUT_ICON}</button>
           <button class="icon-btn" data-a="settings" aria-label="Settings">${ICON.gear}</button>
         </div>
       </div>
@@ -545,21 +545,25 @@ export class UI {
     <div id="flash"></div>
 
     <section id="tutintro" class="screen overlay">
-      <div class="panel tut-panel">
-        <div class="label">First flight</div>
-        <h2>PILOT TRAINING</h2>
-        <p class="tut-lead">Your XWAVE drives on the road and hops into the air. Learn the moves on a short practice road — including the ROADSTER JUMP. You can't crash here.</p>
-        <div class="tut-grid">
-          <div class="tut-tile"><span class="g g-lr"><i>←</i><i>→</i></span><b>Swipe left / right</b><small>Exactly one lane per swipe</small></div>
-          <div class="tut-tile"><span class="g g-up"><i>↑</i></span><b>Swipe up</b><small>One hop over low obstacles, then it lands</small></div>
-          <div class="tut-tile"><span class="g g-down"><i>↓</i></span><b>Swipe down</b><small>Tuck the wheels in, slide under beams</small></div>
-          <div class="tut-tile"><span class="g g-coin">${ICON.rocket}</span><b>Roadster Jump</b><small>Grab the rocket, tap ROADSTER: clear 2 rows</small></div>
+      <div class="panel tut-panel scrolly">
+        <div class="mhead"><h2>${TUT_ICON} TUTORIAL</h2><button class="icon-btn sm" data-a="closeov" data-v="tutintro" aria-label="Close">${ICON.close}</button></div>
+        <p class="tut-lead">Everything in one place: learn the moves, practise every special item and meet the obstacles of each world. You can't crash in training.</p>
+        <div class="tuthub">
+          <div class="th-sec"><div class="th-h"><i>1</i><b>Basics · first flight</b></div>
+            <div class="tut-grid">
+              <div class="tut-tile"><span class="g g-lr"><i>←</i><i>→</i></span><b>Swipe left / right</b><small>Exactly one lane per swipe</small></div>
+              <div class="tut-tile"><span class="g g-up"><i>↑</i></span><b>Swipe up</b><small>One hop over low obstacles</small></div>
+              <div class="tut-tile"><span class="g g-down"><i>↓</i></span><b>Swipe down</b><small>Slide under beams</small></div>
+              <div class="tut-tile"><span class="g g-coin">${ICON.rocket}</span><b>Roadster Jump</b><small>Tap ROADSTER: clear 2 rows</small></div>
+            </div>
+            <div class="label tut-keys">Keyboard: arrow keys or W A S D</div>
+            <button class="btn" data-a="tutstart">${ICON.play} Start training</button></div>
+          <div class="th-sec"><div class="th-h"><i>2</i><b>Special items</b><button class="linkbtn" data-a="guide">${ICON.info} Roadster guide</button></div>
+            <div class="th-items">${(['super', 'hyper', 'escape', 'shield'] as ItemKey[]).map((k) => `<button class="th-it ${k}" data-a="boosttrain" data-v="${k}"><span>${ITEM_ICON[k]}</span><b>${ITEM_NAME[k]}</b><small>${ICON.target} Practise</small></button>`).join('')}</div></div>
+          <div class="th-sec"><div class="th-h"><i>3</i><b>Advanced · every obstacle of a world</b></div>
+            <div class="advgrid">${ADV_WORLDS.map(([id, name]) => `<button class="advw" data-a="advtrain" data-v="${id}"><img src="${THUMBS[id === 'city' ? 'future-city' : id === 'tunnel' ? 'neon-tunnel' : id === 'cloud' ? 'cloud-city' : id === 'space' ? 'space-zone' : 'mega-city']}" alt="" /><span>${name}</span></button>`).join('')}</div></div>
         </div>
-        <div class="label tut-keys">Keyboard: arrow keys or W A S D</div>
-        <button class="btn big" data-a="tutstart">${ICON.play} Start training</button>
-        <div class="advtrain"><div class="label">Advanced · every obstacle of a world</div>
-          <div class="advgrid">${ADV_WORLDS.map(([id, name]) => `<button class="advw" data-a="advtrain" data-v="${id}"><img src="${THUMBS[id === 'city' ? 'future-city' : id === 'tunnel' ? 'neon-tunnel' : id === 'cloud' ? 'cloud-city' : id === 'space' ? 'space-zone' : 'mega-city']}" alt="" /><span>${name}</span></button>`).join('')}</div></div>
-        <button class="btn ghost sm" data-a="tutskip">Skip</button>
+        <button class="btn ghost sm" data-a="tutskip">Skip · go racing</button>
       </div>
     </section>
 
