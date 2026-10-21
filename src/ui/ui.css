@@ -2085,3 +2085,5 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .dailyv2 .ckt { padding: 4px 2px; }
 .dailyv2 [data-k="cibtn"] { padding-top: 8px; padding-bottom: 8px; }
 .dailyv2 .panel.block { margin-bottom: 8px; }
+/* rank-gate strip lives just above the mission strip — never under the notice lane */
+#hud .gatebar { position: absolute; left: 12px; right: 12px; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); margin: 0; z-index: 3; }

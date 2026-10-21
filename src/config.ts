@@ -67,6 +67,9 @@ export const V2_POWERUPS = { engine: 2, shield: 2, magnet: 2 };
  * v2 coin economy (docs/GAME-DESIGN.md §4): coin lines on the road. Specials cost 2,000–6,000, so
  * coins are scarce on Endless (~40 / min for a good player) and generous on Bonus roads.
  */
+/** v2 hearts: every EXP race starts with 1; a heart lies on the road about every `everyExp` EXP */
+export const HEARTS = { everyExp: 1000, max: 3 };
+
 export const COIN_LINES = {
   endless: { skip: 0.62, max: 5 },
   bonus: { skip: 0.4, max: 6 },

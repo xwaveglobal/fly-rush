@@ -1,4 +1,4 @@
-import { HEIGHT, SPEED, WORLD_LENGTH, FAIRNESS, COIN_LINES } from '../config.ts';
+import { HEIGHT, SPEED, WORLD_LENGTH, FAIRNESS, COIN_LINES, HEARTS } from '../config.ts';
 import { clamp01, lerp } from '../core/math.ts';
 import { Rng } from '../core/Rng.ts';
 import { START_STATE, step, lanesOf, modeIn, MODE_H, MODE_L, stateBit } from './Fairness.ts';
@@ -8,7 +8,7 @@ import { sectionAt, type Course, type PatternKey } from './Courses.ts';
 import { PASS_ALL, PASS_N } from './types.ts';
 /** extra seconds after a jump/duck row: land, settle, see the next obstacle */
 const VERTICAL_RECOVERY = 0.7;
-import { MAPS, LEVEL_RULES, PATTERNS, tierWeights, type Tier, type MapDifficultyConfig, PHASES, PHASE_UNLOCK, GATE, RANK_ORDER, rankDist, rankIdxAt, rankSpeed, VARIANTS, type PhaseRank, type Variant } from './Difficulty.ts';
+import { MAPS, LEVEL_RULES, PATTERNS, tierWeights, type Tier, type MapDifficultyConfig, PHASES, PHASE_UNLOCK, GATE, RANK_ORDER, rankDist, rankIdxAt, rankSpeed, VARIANTS, expRate, type PhaseRank, type Variant } from './Difficulty.ts';
 import type { SpeedLevel } from '../config.ts';
 
 /** Base speed is a pure function of distance so spawn timing can be predicted exactly. */
@@ -39,6 +39,7 @@ export class Spawner {
   private lastDist = 0;
   private coinLane = 1;
   private nextPowerAt = 320;
+  private nextHeartAt = 2500;
   rejected = 0;
   generated = 0;
   /** Track mode course (null = endless) */
@@ -134,6 +135,7 @@ export class Spawner {
     this.lastDist = startDist + 45; // first row comes after a short warm-up
     this.coinLane = 1;
     this.nextPowerAt = startDist + 300;
+    this.nextHeartAt = startDist + HEARTS.everyExp / expRate(this.level, this.variant);
     this.prevRecovery = 0;
     this.prevOccludes = false;
     this.hardStreak = 0;
@@ -319,6 +321,12 @@ export class Spawner {
         else if (mode === MODE_L && Math.abs(dist - row.dist) < 4) y = HEIGHT.LOW;
       }
       let kind: PickupKind = 'coin';
+      // v2 hearts on the EXP roads: one about every HEARTS.everyExp EXP
+      if (!this.course && dist >= this.nextHeartAt && i === Math.floor(n / 2)) {
+        this.nextHeartAt = dist + HEARTS.everyExp / expRate(this.level, this.variant);
+        this.pickups.push({ kind: 'life', lane, dist, y });
+        continue;
+      }
       if (dist >= this.nextPowerAt && i === Math.floor(n / 2)) {
         if (this.course?.bonus) {
           // v2 Bonus road: a parade of specials that fire by themselves (incl. the AAA teasers)

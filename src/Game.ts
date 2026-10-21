@@ -2092,8 +2092,10 @@ export class Game {
     const h = dt / steps;
     const opts = {
       invulnerable: this.state !== 'run' || run.invulnerable || (this.tutorialMode && !this.tut.vulnerable),
-      smash: run.turboT > 0,
-      magnet: run.magnetActive,
+      // Bonus showcase specials ride the wall / the sky / the roof: obstacles they pass break apart,
+      // and coins on the road fly up to the car (it is not down in the lane any more)
+      smash: run.turboT > 0 || (!!this.showcaseK && this.showcaseK !== 'ghost'),
+      magnet: run.magnetActive || (!!this.showcaseK && this.showcaseK !== 'ghost'),
       magnetRadius: run.magnetRadius,
       speedMul: run.speedMul * this.speedScale,
     };

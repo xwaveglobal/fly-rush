@@ -39,7 +39,7 @@ export class Run {
   powerups = 0;
   combo = 0;
   lives = 1;
-  maxLives = 3;
+  maxLives = 3; // HEARTS.max
 
   /** ROADSTER JUMP charges (swipe UP to use) */
   superJumps = 0;

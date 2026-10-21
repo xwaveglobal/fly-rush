@@ -233,35 +233,35 @@ export function boostScript(kind: BoostKind): TrainingScript {
   const pickups: PickupSpec[] = [];
   switch (kind) {
     case 'super':
-      hints.push({ dist: 10, text: 'You hold 1 ROADSTER JUMP (purple chip on the left)' }, { dist: 200, text: 'Landing shockwave clears the road ahead — safe touch-down' });
+      hints.push({ dist: 10, text: 'Practice: your Roadster Jump is ready' });
       for (let d = 220; d <= 250; d += 5) pickups.push({ kind: 'coin', lane: 1, dist: d, y: HEIGHT.NORMAL });
       return {
         title: 'ROADSTER JUMP',
         rows: [carWall(140, 1), carWall(156, 0)],
         pickups,
-        steps: [{ dist: 140, need: 'rocket', title: 'TAP ROADSTER!', sub: 'Cars block every lane. Tap the purple ROADSTER button: rocket 5.6 m over both rows.', lead: 0.6, super: true }],
+        steps: [{ dist: 140, need: 'rocket', title: 'TAP ROADSTER!', sub: 'Cars block every lane — tap ROADSTER to hop over.', lead: 0.6, super: true }],
         hints,
         length: 270,
         grant: { super: 1 },
       };
     case 'hyper':
-      hints.push({ dist: 10, text: 'Mythic HYPER JUMP ready (gold chip) — used before Roadster Jumps' }, { dist: 230, text: '+1,000 score and +25 coins at the apex of every HYPER JUMP' });
+      hints.push({ dist: 10, text: 'Practice: your HYPER JUMP is ready' });
       return {
         title: 'HYPER JUMP',
         rows: [carWall(140, 1), carWall(156, 2), carWall(172, 0)],
         pickups,
-        steps: [{ dist: 140, need: 'rocket', title: 'TAP HYPER!', sub: 'Three walls of cars: tap the gold HYPER button — 7.4 m high, double roll, golden trail.', lead: 0.6, super: true }],
+        steps: [{ dist: 140, need: 'rocket', title: 'TAP HYPER!', sub: 'Three walls of cars — tap HYPER to fly over them all.', lead: 0.6, super: true }],
         hints,
         length: 300,
         grant: { hyper: 1 },
       };
     case 'escape':
-      hints.push({ dist: 10, text: 'SKY ESCAPE ready — the red SOS button (or E key)' }, { dist: 260, text: 'Use it when there is no other way out' });
+      hints.push({ dist: 10, text: 'Practice: your SOS is ready' });
       return {
         title: 'SKY ESCAPE',
         rows: [carWall(140, 1), carWall(156, 0), carWall(172, 2), carWall(188, 1)],
         pickups,
-        steps: [{ dist: 140, need: 'sos', title: 'TAP SOS!', sub: 'A whole convoy blocks the road. Tap the red SOS button: straight up, cruise, glide down.', lead: 0.9 }],
+        steps: [{ dist: 140, need: 'sos', title: 'TAP SOS!', sub: 'A convoy blocks the road — tap SOS to rocket up.', lead: 0.9 }],
         hints,
         length: 330,
         grant: { escape: 1 },
