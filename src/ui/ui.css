@@ -1830,3 +1830,35 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .ctryopt { appearance: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 10px; border: 0; background: rgba(255,255,255,.04); color: #fff; font: 700 13px var(--font-body); text-align: left; }
 .ctryopt[hidden] { display: none; }
 .ctryopt .fl { font-size: 20px; }
+
+/* v1.18 — MAGIC BAG */
+#start .ri.g-bag { background: linear-gradient(155deg, #ffa8e8 0%, #c24dff 55%, #6a1fd6 100%); }
+.bagm .mhead h2 { display: flex; align-items: center; gap: 8px; }
+.bagm .mhead h2 svg { width: 22px; height: 22px; }
+.bagsum { width: 100%; display: flex; align-items: center; justify-content: space-between; font: 700 12px var(--font-body); color: #c9d8f5; }
+.baggrid { width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.bagit { appearance: none; cursor: pointer; position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 3px 6px; border-radius: 12px; color: #fff;
+  background: linear-gradient(180deg, rgba(120,90,255,.22), rgba(30,30,90,.6)); border: 1px solid rgba(160,130,255,.4); font-family: var(--font); }
+.bagit .bi svg { width: 30px; height: 30px; }
+.bagit b { font-size: 10px; font-style: italic; text-align: center; line-height: 1.1; min-height: 22px; display: grid; place-items: center; }
+.bagit small { font: 700 9px var(--font-body); color: #a9bbdc; display: flex; gap: 2px; align-items: center; }
+.bagit small svg { width: 10px; height: 10px; }
+.bagit .cnt { position: absolute; top: 4px; right: 5px; font: 900 11px var(--font-body); font-style: normal; color: #ffe08a; }
+.bagit.on { border-color: #3dff8b; box-shadow: 0 0 10px rgba(61,255,139,.35); }
+.bagit.on small { color: #7dffb0; }
+.bagit.empty .bi, .bagit.empty b { opacity: .55; }
+.bagit.locked { filter: grayscale(.8); opacity: .6; border-style: dashed; }
+.bagrules, .bagtips { width: 100%; box-sizing: border-box; text-align: left; padding: 8px 10px; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); font: 600 11.5px/1.4 var(--font-body); color: #dbe6ff; }
+.bagrules > b, .bagtips > b { font: 800 12px var(--font-body); letter-spacing: .5px; text-transform: uppercase; color: #c8a8ff; }
+.bagrules ul { margin: 4px 0 0; padding-left: 16px; }
+.bagtips .bt { display: grid; grid-template-columns: 96px 1fr; gap: 0 8px; padding: 4px 0; border-top: 1px solid rgba(255,255,255,.06); }
+.bagtips .bt1 { font-weight: 800; color: #fff; }
+.bagtips .bt2 { font-weight: 800; color: #ffe08a; }
+.bagtips .bt small { grid-column: 1 / -1; color: #a9bbdc; font-size: 10.5px; }
+.bagopen { grid-column: 1 / -1; appearance: none; cursor: pointer; border: 1px dashed rgba(200,160,255,.55); background: rgba(155,107,255,.12); color: #e6dcff; border-radius: 10px; padding: 6px; font: 800 11px var(--font-body); display: flex; gap: 6px; align-items: center; justify-content: center; }
+.bagopen svg { width: 14px; height: 14px; }
+.ctryrow.bagrow .fl svg { width: 26px; height: 26px; color: #d9b8ff; }
+#finish .leftover.bonus { background: rgba(194,77,255,.16); border-color: rgba(220,150,255,.5); }
+.modal.scrolly { max-height: 100%; overflow-y: auto; }
+.icon-btn.bagb { position: relative; background: linear-gradient(155deg, #c77dff, #6a1fd6) !important; }
+.icon-btn.bagb svg { width: 22px; height: 22px; }

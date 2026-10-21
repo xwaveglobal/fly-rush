@@ -119,6 +119,7 @@ export interface UIHandlers {
   profile(): void;
   viewPlayer(i: number): void;
   boostInfo(k: string): void;
+  bag(): void;
   boostTrain(k: string): void;
   toggleAutoClaim(): void;
   claimMission(i: number): void;
@@ -131,6 +132,9 @@ export interface UIHandlers {
   setLang(code: string): void;
   dailyPop(): void;
 }
+
+/** Magic Bag: drawstring pouch with a star */
+const BAG_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6.5c-1-1.6-.4-3.5 1.2-3.5 1 0 1.6.8 2.8.8s1.8-.8 2.8-.8c1.6 0 2.2 1.9 1.2 3.5z" fill="#ffd23d"/><path d="M8.2 6.6h7.6M7.6 8.6C4.5 11 3.5 14.4 4.3 17.4 5 20.2 7.6 21.5 12 21.5s7-1.3 7.7-4.1c.8-3-.2-6.4-3.3-8.8z" fill="#fff" fill-opacity=".95" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 11.2l1.1 2.3 2.5.3-1.8 1.8.4 2.5-2.2-1.2-2.2 1.2.4-2.5-1.8-1.8 2.5-.3z" fill="#b04dff"/></svg>`;
 
 /** tutorial (book + ?) and launch (megaphone) icons */
 const TUT_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M10.2 8.3a2 2 0 1 1 2.6 1.9c-.5.2-.8.6-.8 1.1v.6"/><path d="M12 14.4h.01"/></g></svg>`;
@@ -310,6 +314,7 @@ export class UI {
         <div class="res-top"><button class="icon-btn sm" data-a="home" aria-label="Close">${ICON.close}</button><img class="res-logo" src="${logoUrl}" alt="" /><button class="icon-btn sm" data-a="share" aria-label="Share">${ICON.share}</button></div>
         <div class="finish-title">FINISH! <small class="label" data-k="ftrack">Future City</small></div>
         <div class="scoreline"><div class="stars big" data-k="fstars"></div><div class="final" data-k="ffinal">0</div><div class="newbest" data-k="fnewbest">${ICON.trophy} NEW BEST!</div></div>
+        <div class="leftover bonus" data-k="fbonus" hidden>${ICON.bag}<span>Track bonus</span><small data-k="fbonustxt"></small><b>BAG</b></div>
         <div class="leftover" data-k="fleft" hidden>${ICON.rocket}<span>Unused boosts</span><small data-k="flefttxt"></small><b data-k="fleftpts">+0</b></div>
         <div class="stats mini">
           <div class="stat"><span class="label">Time</span><span class="v">${ICON.flag}<span data-k="ftime">0</span></span></div>
@@ -338,6 +343,7 @@ export class UI {
         <div class="tr">
           <button class="wallet" data-a="shop" aria-label="Coins · open shop">${ICON.coin}<b data-k="wallet">0</b><i class="plus" data-a="freepop" role="button" aria-label="Free coins · watch an ad">${ICON.plus}</i></button>
           <button class="icon-btn sm2 langb" data-a="lang" aria-label="Language"><span data-k="langflag">🇬🇧</span></button>
+          <button class="icon-btn sm2 bagb" data-a="bag" aria-label="Magic Bag">${BAG_ICON}<em class="badge" data-k="bagbadge" hidden>0</em></button>
           <button class="icon-btn sm2" data-a="guide" aria-label="Tutorial · Roadster guide">${TUT_ICON}</button>
           <button class="icon-btn" data-a="settings" aria-label="Settings">${ICON.gear}</button>
         </div>
@@ -472,6 +478,13 @@ export class UI {
       <div class="panel modal prof">
         <div class="mhead"><h2 data-k="proftitle">PILOT PROFILE</h2><button class="icon-btn sm" data-a="closeov" data-v="profile" aria-label="Close">${ICON.close}</button></div>
         <div data-k="profbody"></div>
+      </div>
+    </section>
+
+    <section id="bag" class="screen overlay">
+      <div class="panel modal bagm scrolly">
+        <div class="mhead"><h2>${BAG_ICON} MAGIC BAG</h2><button class="icon-btn sm" data-a="closeov" data-v="bag" aria-label="Close">${ICON.close}</button></div>
+        <div data-k="bagbody"></div>
       </div>
     </section>
 
@@ -739,6 +752,7 @@ export class UI {
         case 'profile': return this.h.profile();
         case 'viewp': return this.h.viewPlayer(Number(el.dataset.i));
         case 'boostinfo': return this.h.boostInfo(el.dataset.v!);
+        case 'bag': return this.h.bag();
         case 'boosttrain': return this.h.boostTrain(el.dataset.v!);
         case 'autoclaim': return this.h.toggleAutoClaim();
         case 'claimm': return this.h.claimMission(Number(el.dataset.i));
@@ -848,7 +862,7 @@ export class UI {
     this.fitLabels();
     for (const scr of Array.from(this.root.querySelectorAll<HTMLElement>('.screen.overlay.show'))) {
       const panel = scr.querySelector<HTMLElement>(':scope > .panel');
-      if (!panel) continue;
+      if (!panel || panel.classList.contains('scrolly')) continue; // long lists scroll instead of shrinking
       const prev = panel.style.getPropertyValue('--fit');
       panel.style.setProperty('--fit', '1');
       if (!panel.classList.contains('fitting')) panel.classList.add('fitting');
@@ -1254,7 +1268,8 @@ export class UI {
       if (open) return boost(u.k);
       return `<button class="boost ${u.k} lockedb" data-a="boostinfo" data-v="${u.k}">${ITEM_ICON[u.k]}<span><b>${ITEM_NAME[u.k]}</b><small>${ICON.lock} class ${classBadge(u.cls)}</small></span></button>`;
     };
-    $(this.root, '[data-k="boosts"]').innerHTML = (['super', 'hyper', 'escape', 'shield'] as ItemKey[]).map(boost).join('') + UNLOCK_BOOSTS.map(locked).join('');
+    $(this.root, '[data-k="boosts"]').innerHTML = (['super', 'hyper', 'escape', 'shield'] as ItemKey[]).map(boost).join('') + UNLOCK_BOOSTS.map(locked).join('') +
+      `<button class="bagopen" data-a="bag">${BAG_ICON} Magic Bag · rules &amp; tips ›</button>`;
     // 20 tracks in order: 1–10 unlock by score on the previous track, then the Rank-A gate, then 11–20.
     // Endless sits right after track 1 (always HARD).
     const classA = CLASSES.indexOf(this.myClass) >= CLASSES.indexOf('A');
@@ -1306,7 +1321,7 @@ export class UI {
     this.hset('tmarks', o.marks.map((m) => `<s style="left:${((m / o.length) * 100).toFixed(2)}%"></s>`).join(''), true);
   }
 
-  finish(o: { track: string; stars: number; score: number; isBest: boolean; time: number; coins: number; coinTarget: number; lost: number; reward: number; hasNext: boolean; rewards: RunRewards | null; speedBonus: number; level: string; leftover?: { pts: number; items: string } | null }) {
+  finish(o: { track: string; stars: number; score: number; isBest: boolean; time: number; coins: number; coinTarget: number; lost: number; reward: number; hasNext: boolean; rewards: RunRewards | null; speedBonus: number; level: string; leftover?: { pts: number; items: string } | null; bonusItems?: string[] }) {
     this.setAll('ftrack', o.track);
     $(this.root, '[data-k="fstars"]').innerHTML = this.starsHtml(o.stars);
     this.setAll('ffinal', fmt(o.score));
@@ -1316,6 +1331,9 @@ export class UI {
     this.setAll('fcoins', `${fmt(o.coins)}`);
     this.setAll('flost', `${o.lost}`);
     this.setAll('freward', `+${fmt(o.reward)}`);
+    const tb = $(this.root, '[data-k="fbonus"]');
+    tb.hidden = !o.bonusItems?.length;
+    if (o.bonusItems?.length) this.setAll('fbonustxt', o.bonusItems.join(' · '));
     const lo = $(this.root, '[data-k="fleft"]');
     lo.hidden = !o.leftover;
     if (o.leftover) {
@@ -1449,6 +1467,7 @@ export class UI {
         <div class="nameedit"><input data-k="pnameinput" maxlength="14" value="${esc(o.name)}" aria-label="Pilot name" /><button class="btn sm blue" data-a="savepname">Save</button></div>
         <small>Tap the name to change it</small></div></div>
       <div class="avrow2"><div class="avstrip" data-k="pavstrip">${strip}</div><button class="btn sm purple" data-a="avrand" aria-label="Random avatar">🎲</button></div>
+      <button class="ctryrow bagrow" data-a="bag"><span class="fl">${BAG_ICON}</span><span><small>Magic Bag</small><b>Your items · when to use them</b></span><em>Open</em></button>
       <button class="ctryrow" data-a="country"><span class="fl">${flagOf(o.country)}</span><span><small>Country</small><b>${esc(countryName(o.country || 'US'))}</b></span><em>Change</em></button>
       ${this.classCard(o.cls, o.bolts, o.next, o.k, o.need)}
       <div class="pstats">
@@ -1495,6 +1514,51 @@ export class UI {
       <div class="trophies in"><span class="label">Trophies</span><span class="tro gold">${ICON.cup}${p.gold}</span><span class="tro silver">${ICON.cup}${p.silver}</span><span class="tro bronze">${ICON.cup}${p.bronze}</span></div>
       ${r.pass ? `<div class="label passnote">${ICON.crown} XWAVE Pass member</div>` : ''}`;
     this.screens.profile.classList.add('show');
+  }
+
+  /**
+   * MAGIC BAG: every item the player owns (bag = inventory), what is equipped for the next run,
+   * class locks, shop shortcuts and the rules / which item fits which track.
+   */
+  bagSync(s: SaveData) {
+    this.lastSave = s;
+    const ci = CLASSES.indexOf(this.myClass);
+    const keys: ItemKey[] = ['super', 'hyper', 'escape', 'shield', 'turbo', 'magnet', 'double', 'life'];
+    const total = keys.reduce((a, k) => a + s.items[k], 0);
+    const tiles = keys.map((k) => {
+      const un = UNLOCK_BOOSTS.find((u) => u.k === k);
+      const locked = !!un && ci < CLASSES.indexOf(un.cls);
+      const n = s.items[k];
+      const on = s.equip[k] && n > 0;
+      return `<button class="bagit ${k} ${locked ? 'locked' : ''} ${on ? 'on' : ''} ${n > 0 ? '' : 'empty'}" data-a="boostinfo" data-v="${k}">
+        <span class="bi">${ITEM_ICON[k]}</span><b>${ITEM_NAME[k]}</b>
+        <small>${locked ? `${ICON.lock} class ${un!.cls}` : on ? `${ICON.check} equipped` : n > 0 ? 'tap · equip' : 'tap · get'}</small>
+        <em class="cnt">×${n}</em></button>`;
+    }).join('');
+    const tips: [string, string, string][] = [
+      ['Future City', 'Shield · Magnet', 'Traffic + crates: a Start Shield forgives one hit; Magnet for the 3rd star.'],
+      ['Cloud City', 'Roadster Jump', 'Floating platforms stack up — keep a Roadster for double rows.'],
+      ['Neon Tunnel', 'Sky Escape (SOS)', 'Laser walls give little time: SOS saves a run when no lane is open.'],
+      ['Space Zone', 'Roadster · HYPER', 'Asteroid fields block lanes — jump over a whole field.'],
+      ['Megacity', 'HYPER · Shield', 'Gates + rush-hour traffic: the hardest world, bring both.'],
+      ['Endless · Cups', 'Shield · Extra Life · ×2 Coins', 'Long runs: protection first, coins second.'],
+    ];
+    $(this.root, '[data-k="bagbody"]').innerHTML = `
+      <div class="bagsum"><span>${fmt(total)} items in your bag</span><button class="linkbtn" data-a="shop">${ICON.bag} Get more</button></div>
+      <div class="baggrid">${tiles}</div>
+      <div class="bagrules">
+        <b>Rules</b>
+        <ul>
+          <li><b>Equip</b> an item before a race: one is taken from the bag when the race starts.</li>
+          <li>On the road you can <b>hold</b> up to 2 Roadster Jumps, 1 HYPER and 2 SOS (pickups + equipped).</li>
+          <li>Roadster / HYPER / SOS still unused at the <b>finish line</b> turn into points.</li>
+          <li>Start boosts (Turbo, Magnet, ×2 Coins, Extra Life) unlock with your rank class.</li>
+          <li>Tracks with big rewards also <b>give items</b> when you finish with 2–3 stars.</li>
+        </ul>
+      </div>
+      <div class="bagtips"><b>Which item for which track?</b>${tips.map(([t, i, d]) => `<div class="bt"><span class="bt1">${t}</span><span class="bt2">${i}</span><small>${d}</small></div>`).join('')}</div>
+      <div class="sbtns"><button class="btn sm pink" data-a="shop">${ICON.bag} Shop items</button><button class="btn sm gold" data-a="freepop">${ICON.play} Free coins</button><button class="btn sm blue" data-a="play">${ICON.flag} Race</button></div>`;
+    this.setAll('bagbadge', String(total));
   }
 
   /** boost info card: what it does + equip + practice */

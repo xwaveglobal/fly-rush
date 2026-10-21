@@ -69,6 +69,14 @@ export const LEVELS: Record<SpeedLevel, { label: string; speed: number; gap: num
   hard: { label: 'HARD', speed: 1.18, gap: 0.92, score: 1.3, reward: 1.6, desc: 'Fast & tight · score ×1.3 · coins & stars ×1.6' },
 };
 
+/** big-reward tracks also pay items when finished with enough stars (all matching rules apply) */
+export const TRACK_ITEM_BONUS: { minReward: number; stars: number; items: Partial<Record<'super' | 'hyper' | 'escape' | 'shield', number>> }[] = [
+  { minReward: 500, stars: 2, items: { super: 1 } },
+  { minReward: 800, stars: 2, items: { escape: 1 } },
+  { minReward: 900, stars: 3, items: { hyper: 1 } },
+  { minReward: 1200, stars: 3, items: { shield: 1 } },
+];
+
 /** points per unused boost charge still held when a track is finished (× the run's score multiplier) */
 export const LEFTOVER_POINTS = { super: 1500, hyper: 3000, escape: 1000 };
 

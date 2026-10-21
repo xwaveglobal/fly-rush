@@ -1,6 +1,6 @@
 import { countryName, detectCountry, flagOf, guessCountry } from './meta/Country.ts';
 import * as THREE from 'three';
-import { AUTOPILOT, DEBUG, HEIGHT, LANES, LEVELS, LEFTOVER_POINTS, SPEED, TIMING, TYRE, WORLD_LENGTH, type SpeedLevel } from './config.ts';
+import { AUTOPILOT, DEBUG, HEIGHT, LANES, LEVELS, LEFTOVER_POINTS, SPEED, TIMING, TRACK_ITEM_BONUS, TYRE, WORLD_LENGTH, type SpeedLevel } from './config.ts';
 import { clamp, damp } from './core/math.ts';
 import { Input, type Action } from './core/Input.ts';
 import { loadSave, writeSave, type SaveData } from './core/Save.ts';
@@ -283,6 +283,7 @@ export class Game {
       profile: () => this.openProfile(),
       viewPlayer: (i) => this.ui.showPlayer(i),
       boostInfo: (k) => this.openBoostInfo(k as ItemKey),
+      bag: () => this.openBag(),
       boostTrain: (k) => this.startBoostTraining(k as BoostKind),
       toggleAutoClaim: () => {
         this.save.settings.autoClaim = this.save.settings.autoClaim === false;
@@ -322,6 +323,7 @@ export class Game {
         this.ui.refreshProfile(this.save);
         this.ui.tracksSync(this.save, this.meta.myCup()?.cup.track);
         this.ui.boostSync(u.k, this.save.items[u.k], this.save.equip[u.k], this.save.wallet);
+        if (this.ui.isShown('bag')) this.ui.bagSync(this.save);
       },
       setLang: (code) => {
         this.save.settings.lang = code;
@@ -899,6 +901,7 @@ export class Game {
     this.audio.play(this.save.equip[k] ? 'power' : 'click');
     this.ui.tracksSync(this.save, this.meta.myCup()?.cup.track);
     if (this.ui.isShown('boostinfo')) this.ui.boostSync(k, this.save.items[k], this.save.equip[k], this.save.wallet);
+    if (this.ui.isShown('bag')) this.ui.bagSync(this.save);
   }
 
   private claimResults() {
@@ -1144,7 +1147,18 @@ export class Game {
   private openBoostInfo(k: ItemKey) {
     this.audio.play('click');
     this.ui.boostSync(k, this.save.items[k], this.save.equip[k], this.save.wallet);
-    this.ui.show('tracks', 'boostinfo');
+    // from the Magic Bag: the info card opens on top of the bag (over whatever screen is under it)
+    if (this.ui.isShown('bag')) {
+      const base = ['start', 'tracks', 'profile'].filter((id) => this.ui.isShown(id));
+      this.ui.show(...base, 'bag', 'boostinfo');
+    } else this.ui.show('tracks', 'boostinfo');
+  }
+
+  private openBag() {
+    this.audio.play('click');
+    this.ui.bagSync(this.save);
+    const base = ['start', 'tracks', 'profile'].filter((id) => this.ui.isShown(id));
+    this.ui.show(...(base.length ? base : ['start']), 'bag');
   }
 
   private claimMissions(i: number) {
@@ -2228,6 +2242,16 @@ export class Game {
     this.save.bestDistance = Math.max(this.save.bestDistance, Math.floor(run.distance));
     this.save.wallet += run.coins + speedBonus + reward;
     this.save.totalRuns++;
+    // big-reward tracks: item bonus into the Magic Bag
+    const bonusItems: string[] = [];
+    for (const rule of TRACK_ITEM_BONUS) {
+      if (c.reward < rule.minReward || stars < rule.stars) continue;
+      for (const [k, n] of Object.entries(rule.items)) {
+        this.save.items[k as ItemKey] += n ?? 0;
+        bonusItems.push(`+${n} ${({ super: 'Roadster Jump', hyper: 'HYPER JUMP', escape: 'Sky Escape', shield: 'Start Shield' } as Record<string, string>)[k]}`);
+      }
+    }
+    if (bonusItems.length) window.setTimeout(() => this.ui.toast(`${ICON.bag} Track bonus → Magic Bag · ${bonusItems.join(' · ')}`, '#c24dff'), 1200);
     const rewards = this.recordMeta(true);
     this.persist();
     this.ui.finish({
@@ -2245,6 +2269,7 @@ export class Game {
       level: lv.label,
       hasNext: COURSES.indexOf(c) < COURSES.length - 1,
       leftover: this.leftover,
+      bonusItems,
     });
     this.ui.show('finish');
     this.lastResult = { coins: run.coins, reward, doubled: false };
