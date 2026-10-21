@@ -1902,3 +1902,20 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 #hud .rocketbtn, #hud .sos { touch-action: none; }
 #hud .rocketbtn::after, #hud .sos::after { content: ''; position: absolute; inset: -12px; border-radius: 50%; }
 #hud .rocketbtn.pressed, #hud .sos.pressed { transform: scale(.9) !important; filter: brightness(1.3); }
+
+/* v2 — EXP & rank: shield-shaped rank plates, EXP box on the HUD */
+.clsb { clip-path: polygon(10% 0, 90% 0, 100% 14%, 100% 58%, 50% 100%, 0 58%, 0 14%); border-radius: 0 !important;
+  padding: 0 5px .32em; min-width: 22px; height: 21px; background: linear-gradient(180deg, color-mix(in srgb, var(--cc) 70%, #fff) 0%, var(--cc) 45%, color-mix(in srgb, var(--cc) 70%, #000) 100%);
+  box-shadow: none; font-style: normal; box-sizing: border-box; flex: none !important; align-self: center !important; max-height: 46px; }
+.clsb.md { min-width: 32px; height: 30px; }
+.clsb.lg { min-width: 46px; height: 46px; }
+.lbrow .ln small .clsb, #start .top-row .profile .pmeta small .clsb { height: 17px; min-width: 18px; }
+.rw-bar .clsb { height: 19px; min-width: 20px; }
+.rgt .clsb.md { min-width: 30px; height: 27px; }
+.xpt { width: 1em; height: 1em; vertical-align: -0.15em; flex: none; }
+#hud .scorebox.exp .label { display: flex; align-items: center; gap: 4px; }
+#hud .scorebox.exp .label .xpt { width: 13px; height: 13px; }
+#hud .scorebox.exp .val { display: flex; align-items: center; gap: 8px; }
+#hud .scorebox .rankp:empty { display: none; }
+#hud .scorebox .rankp .clsb { height: 22px; min-width: 24px; font-size: 12px; }
+.rchip.bolt { display: none !important; }

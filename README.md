@@ -187,6 +187,16 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v2.0.1 changes (v2 step 1 — EXP & rank)
+
+v2 redesign per `docs/GAME-DESIGN.md` (the old game lives on the `v1` branch).
+
+- **EXP** = distance × speed-level rate (Easy 0.2 · Normal 0.23 · Hard 0.4 per metre, `EXP` in `config.ts`). Player EXP = best single run, never summed. Calibrated by `tests/exp.test.ts`: C/B/A/AA/AAA at 3/7/12/20/30 min on Hard, ×2 Normal, ×3 Easy.
+- **Ranks** D→AAA = EXP 0 / 3,000 / 8,000 / 15,000 / 25,000 / 38,000. New shield logo and shield-shaped rank plates (no more star icon).
+- HUD shows the run's EXP + the rank it has reached; in-run notice on each new rank and on beating your best.
+- Game over, profile, leaderboards (week / all time) and the rank guide all use EXP. Car / track / boost locks read the EXP rank.
+- Rank stars (bolts) are no longer awarded; old saves start v2 at rank D. Score/combo pops removed from the HUD.
+
 ## v1.19.1 changes
 
 - **Magic Bag** only in Profile (home top bar freed for the avatar chip).

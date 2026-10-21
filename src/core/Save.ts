@@ -44,8 +44,12 @@ export interface SaveData {
   /** ISO country code (flag on leaderboards); auto-detected until the player picks one */
   country: string;
   countryAuto: boolean;
-  /** ⚡ bolts = cup points (rank class D → AAA) */
+  /** v1 rank stars — no longer used (v2 rank comes from expBest) */
   bolts: number;
+  /** v2: best single-run EXP (= the player's rank, docs/GAME-DESIGN.md) */
+  expBest: number;
+  /** v2: best run EXP this week (weekly board) */
+  expWeek: number;
   /** mission rewards waiting for a manual claim (auto-claim off) */
   pendingMissions: { text: string; reward: number }[];
   /** consumable items (equipped on the track screen, used in a run) */
@@ -117,6 +121,8 @@ const defaults = (): SaveData => ({
   country: '',
   countryAuto: true,
   bolts: 0,
+  expBest: 0,
+  expWeek: 0,
   pendingMissions: [],
   items: { super: 1, hyper: 0, shield: 0, escape: 1, turbo: 0, magnet: 0, double: 0, life: 0 },
   equip: { super: false, hyper: false, shield: false, escape: false, turbo: false, magnet: false, double: false, life: false },

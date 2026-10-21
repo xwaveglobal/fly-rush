@@ -12,8 +12,9 @@
     "typecheck": "tsc --noEmit",
     "test:fairness": "node --experimental-transform-types --no-warnings tests/fairness.test.ts",
     "test:difficulty": "node --experimental-transform-types --no-warnings tests/difficulty.test.ts",
-    "test": "npm run test:fairness && npm run test:difficulty && npm run test:air",
-    "test:air": "node --experimental-transform-types --no-warnings tests/airlane.test.ts"
+    "test": "npm run test:fairness && npm run test:difficulty && npm run test:air && npm run test:exp",
+    "test:air": "node --experimental-transform-types --no-warnings tests/airlane.test.ts",
+    "test:exp": "node --experimental-transform-types --no-warnings tests/exp.test.ts"
   },
   "dependencies": {
     "three": "0.169.0"

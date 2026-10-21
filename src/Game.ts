@@ -1,6 +1,6 @@
 import { countryName, detectCountry, flagOf, guessCountry } from './meta/Country.ts';
 import * as THREE from 'three';
-import { AUTOPILOT, DEBUG, HEIGHT, LANES, LEVELS, LEFTOVER_POINTS, SPEED, TIMING, TRACK_ITEM_BONUS, TYRE, WORLD_LENGTH, type SpeedLevel } from './config.ts';
+import { AUTOPILOT, DEBUG, HEIGHT, LANES, LEVELS, LEFTOVER_POINTS, SPEED, TIMING, TRACK_ITEM_BONUS, TYRE, EXP, WORLD_LENGTH, type SpeedLevel } from './config.ts';
 import { clamp, damp } from './core/math.ts';
 import { Input, type Action } from './core/Input.ts';
 import { loadSave, writeSave, type SaveData } from './core/Save.ts';
@@ -35,7 +35,7 @@ import { FAIRNESS } from './config.ts';
 import type { Box, PickupKind, RowSpec } from './gameplay/types.ts';
 import { Meta, type EventResult, type RunSummary } from './meta/Meta.ts';
 import { schedule, fmtLeft, localTime, prizesFor, cupFor } from './meta/Events.ts';
-import { classFor, classProgress, xpForRun, CLASSES, CLASS_MIN, XPT as XPT_ICON } from './meta/Rank.ts';
+import { classFor, classProgress, CLASSES, CLASS_MIN, XPT as XPT_ICON, type RankClass } from './meta/Rank.ts';
 import type { RunRewards } from './ui/UI.ts';
 import { crashTip, type CrashTip } from './gameplay/CrashTip.ts';
 import { createStore, weekBoard, type PlayerStore } from './net/PlayerStore.ts';
@@ -47,7 +47,7 @@ import type { ItemKey, Reward } from './meta/Daily.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v1.19.1';
+const VERSION = 'v2.0.1';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -188,6 +188,10 @@ export class Game {
   private speedScale = 1;
   private countdownStep = -1;
   private runMissionsDone: { text: string; reward: number }[] = [];
+  /** v2: rank reached by the current run's EXP (for the in-run rank-up notice) */
+  private runRank: RankClass = 'D';
+  /** v2: personal-best EXP already beaten in this run (notice shown once) */
+  private runBeatBest = false;
   private menuDist = 0;
   private tmpV = new THREE.Vector3();
   private frameTimes: number[] = [];
@@ -320,7 +324,7 @@ export class Game {
       buyBoost: (key) => {
         const k = key as ItemKey;
         const u = UNLOCK_BOOSTS.find((x) => x.k === k);
-        if (u && CLASSES.indexOf(classFor(this.save.bolts)) < CLASSES.indexOf(u.cls)) return;
+        if (u && CLASSES.indexOf(classFor(this.save.expBest)) < CLASSES.indexOf(u.cls)) return;
         const price = ITEM_PRICE[k];
         if (price === undefined || this.save.wallet < price) return;
         this.save.wallet -= price;
@@ -531,7 +535,7 @@ export class Game {
       color: this.meta.color,
       best: this.save.best,
       avatar: this.save.avatar,
-      bolts: this.save.bolts,
+      bolts: this.save.expBest,
       weekRank: this.save.weekBest > 0 ? this.meta.weekly().you.rank : null,
       dailyBadge: this.meta.dailyBadge(),
       cup: cup
@@ -579,7 +583,7 @@ export class Game {
     const session = sc.live ?? sc.next;
     this.ui.eventsSync({
       cls,
-      bolts: this.save.bolts,
+      bolts: this.save.expBest,
       live: !!sc.live,
       mine,
       now: Date.now(),
@@ -661,7 +665,7 @@ export class Game {
     try {
       const now = Date.now();
       const id = this.selfId();
-      await this.db.upsertPlayer({ id, name: this.meta.name, avatar: this.save.avatar, flag: flagOf(this.save.country), isBot: false, cls: this.meta.cls, xp: this.save.bolts, best: this.save.best, runs: this.save.totalRuns, car: this.save.vehicle, trophies: { ...this.save.trophies }, createdAt: now, lastSeen: now });
+      await this.db.upsertPlayer({ id, name: this.meta.name, avatar: this.save.avatar, flag: flagOf(this.save.country), isBot: false, cls: this.meta.cls, xp: this.save.expBest, best: this.save.best, runs: this.save.totalRuns, car: this.save.vehicle, trophies: { ...this.save.trophies }, createdAt: now, lastSeen: now });
       const s = Math.floor(score);
       await this.db.submitScore({ playerId: id, board: 'all', score: s, at: now });
       await this.db.submitScore({ playerId: id, board: weekBoard(), score: s, at: now });
@@ -935,8 +939,29 @@ export class Game {
     }
   }
 
+  /** best EXP before the last recorded run (result screen bar) */
+  private prevExpBest = 0;
+
+  /** v2: in-run notices when the run's EXP reaches a new rank / beats the personal best */
+  private expMilestones(run: Run) {
+    if (this.tutorialMode || this.state !== 'run' || run.expRate <= 0) return;
+    const exp = run.exp;
+    const rc = classFor(exp);
+    if (rc !== this.runRank) {
+      this.runRank = rc;
+      const first = CLASSES.indexOf(rc) > CLASSES.indexOf(classFor(this.save.expBest));
+      this.ui.toast(`${XPT_ICON} RANK ${rc}${first ? ' · NEW!' : ''}`, '#ffc21a');
+      this.audio.play('mission');
+      this.vibrate([20, 40, 30]);
+    }
+    if (!this.runBeatBest && exp > this.save.expBest) {
+      this.runBeatBest = true;
+      this.ui.toast(`${XPT_ICON} NEW BEST EXP`, '#7fe6ff');
+    }
+  }
+
   /** Feed the finished run to dailies / weekly board / live cup and build the rank line. */
-  /** records the run in meta, awards X-Points; returns what the result screen shows */
+  /** records the run in meta (best EXP, weekly EXP); returns what the result screen shows */
   private recordMeta(finished: boolean): RunRewards | null {
     if (this.tutorialMode) return null;
     const run = this.run;
@@ -950,30 +975,22 @@ export class Game {
       jumps: run.superUsed,
       rings: run.rings,
       finished,
+      exp: run.exp,
     };
+    this.prevExpBest = this.save.expBest;
     const done = this.meta.recordRun(sum);
     done.forEach((t, i) => window.setTimeout(() => this.ui.toast(`${ICON.calendar} DAILY QUEST DONE · ${t}`, 'var(--green)'), 400 + i * 900));
     const wk = this.meta.weekly().you.rank;
-    const fromPts = this.save.bolts;
-    const before = classFor(fromPts);
     const cup = this.meta.myCup();
     const inCup = !!cup && cup.cup.track === sum.track;
-    const stars = finished && this.course ? this.save.trackStars[this.course.id] ?? 0 : 0;
-    const xp = xpForRun(run.score, run.nearMiss, finished, stars, inCup, LEVELS[this.runLevel].reward);
-    this.meta.addBolts(xp.total);
     void this.syncDb(run.score, inCup && cup ? cup.key : null);
-    const after = classFor(this.save.bolts);
-    if (after !== before) {
-      window.setTimeout(() => {
-        this.ui.toast(`RANK UP · CLASS ${after} — class ${after} cups unlocked!`, '#ffc21a');
-        this.audio.play('mission');
-        // (no ground roll — the car only flips in the air)
-      }, 900);
-    }
+    // (the rank-up notice already showed during the run; the result bar shows RANK UP)
+    const before = classFor(this.prevExpBest);
+    const after = classFor(this.save.expBest);
     return {
-      xp,
-      from: fromPts,
-      to: this.save.bolts,
+      exp: sum.exp,
+      from: this.prevExpBest,
+      to: this.save.expBest,
       clsBefore: before,
       clsAfter: after,
       weekRank: wk,
@@ -1132,13 +1149,13 @@ export class Game {
       this.save.perks.profileSeen = true;
       this.persist();
     }
-    const p = classProgress(this.save.bolts);
+    const p = classProgress(this.save.expBest);
     this.ui.profileSync({
       self: true,
       name: this.meta.name,
       avatar: this.save.avatar,
       cls: p.cls,
-      bolts: this.save.bolts,
+      bolts: this.save.expBest,
       next: p.next,
       k: p.k,
       need: p.need,
@@ -1199,7 +1216,7 @@ export class Game {
   nextTrack() {
     const i = this.course ? COURSES.indexOf(this.course) : -1;
     const next = COURSES[i + 1];
-    const lock = next && trackLock(next, this.save.trackBest, CLASSES.indexOf(classFor(this.save.bolts)) >= CLASSES.indexOf('A'));
+    const lock = next && trackLock(next, this.save.trackBest, CLASSES.indexOf(classFor(this.save.expBest)) >= CLASSES.indexOf('A'));
     if (next && lock && lock.open) this.startTrack(next.id);
     else {
       if (lock && !lock.open) this.ui.toast(lock.why === 'score' ? `${ICON.lock} Score ${lock.need.toLocaleString('en-US')} here to unlock ${next.name}` : `${ICON.lock} Reach rank class A to unlock tracks 11–20`, '#ffc21a');
@@ -1229,11 +1246,9 @@ export class Game {
     this.ui.tutPrompt(null);
     const car = SKINS.find((x) => x.id === this.save.vehicle) ?? SKINS[0];
     this.run = new Run({ ...this.save.upgrades }, LEVELS[level].score * (1 + (car.bonus ?? 0) / 100));
-    {
-      const cup = this.meta.myCup();
-      this.ui.hudBoltsBase = this.save.bolts;
-      this.ui.hudBoltsMul = !this.tutorialMode && cup && cup.cup.track === (this.course?.id ?? 'endless') ? 2 : 1;
-    }
+    this.run.expRate = this.tutorialMode ? 0 : EXP.rate[level];
+    this.runRank = 'D';
+    this.runBeatBest = this.save.expBest <= 0;
     this.superFlight = false;
     this.blockade = null;
     this.nextBlockadeAt = 420;
@@ -1639,7 +1654,7 @@ export class Game {
         this.vehicle.barrelRoll(1, dir === -1 ? 1 : -1, 15);
         this.audio.play('ring');
         if (r && this.state === 'run') r.score += 100 * r.scoreMul;
-        this.ui.pop('AIR DASH FLIP!', '#7ff5e2', '+100', -8);
+        this.ui.pop('AIR DASH FLIP!', '#7ff5e2', '', -8);
         const c = this.vehicle.root.position;
         for (let i = 0; i < 22; i++) this.particles.emit(c.x, c.y + (Math.random() - 0.5) * 0.6, 0.3 + Math.random(), -dir * (8 + Math.random() * 6), (Math.random() - 0.5) * 2, 3, i % 2 ? 0x2ee6c8 : 0xa8fff0, 0.22, 0.35, { drag: 3, locked: true });
       },
@@ -1849,7 +1864,7 @@ export class Game {
           // mythic bonus at the apex: coin shower + score
           this.run.coins += 25;
           this.run.score += 1000 * this.run.scoreMul;
-          this.ui.pop('+1,000', '#ffd24a', '+25 coins', -18);
+          this.ui.pop('+25 COINS', '#ffd24a', '', -18);
           const c = this.vehicle.root.position;
           this.particles.burst(c.x, c.y + 0.5, -1.5, 26, 0xffd23d, 7, 0.22, 0.8, { grav: 6, up: 3 });
         }
@@ -1945,6 +1960,7 @@ export class Game {
     // ---- HUD (throttled)
     if (Math.floor(this.time * 20) !== Math.floor((this.time - dt) * 20)) {
       this.ui.updateHud(run, w.speed, SPEED.max * SPEED.turboMul * LEVELS[this.runLevel].speed, this.missions.active[0]);
+      this.expMilestones(run);
       if (c) this.ui.trackHud({ section: this.sectionName, dist: w.dist, length: c.length, marks: c.sections.slice(1).map((s) => s.from) });
     }
   }
@@ -2088,10 +2104,8 @@ export class Game {
           break;
         }
         case 'near': {
-          const s = this.toScreen(this.vehicle.root.position.x, this.vehicle.root.position.y + 0.6, 0);
-          if (s) this.ui.flyTo(s.x, s.y, XPT_ICON, 'bolts', 120);
           this.audio.play('near', { pan: clamp(f.x / 4, -1, 1) });
-          this.ui.pop('NEAR MISS', '#b6ff2e', `+${Math.round(f.points)}`, 6);
+          this.ui.pop('NEAR MISS', '#b6ff2e', '', 6);
           this.vibrate(10);
           for (let i = 0; i < 4; i++) this.particles.emit(f.x * 0.6, f.y, -1, 0, 0, 14, 0xb6ff2e, 0.1, 0.2, { drag: 1 });
           this.rig.fovKick += 2;
@@ -2100,13 +2114,12 @@ export class Game {
         case 'ring':
           this.audio.play('ring');
           this.vibrate(8);
-          this.ui.pop('RING', '#4fc3ff', `+${Math.round(f.points)}`, 2);
+          this.ui.pop('RING', '#4fc3ff', '', 2);
           this.rings.spawn(this.tmpV.copy(this.vehicle.root.position), 0x39b6ff, 3, 0.5);
           break;
         case 'combo':
           this.audio.play('combo');
           // only whole multipliers get a pop (x2, x3, x4) — fewer interruptions
-          if (Number.isInteger(f.mult)) this.ui.pop(`COMBO x${f.mult}`, '#ffc21a', '', -12);
           break;
         case 'shieldBreak': {
           this.audio.play('shieldBreak');
@@ -2322,12 +2335,12 @@ export class Game {
     this.save.totalRuns++;
     const rewards = this.recordMeta(false);
     this.persist();
-    this.ui.gameOver({ score, best: this.save.best, isBest, dist: run.distance, length: this.course?.length, coins: run.coins, near: run.nearMiss, missions: this.runMissionsDone, rewards, speedBonus, level: lvg.label, tip: this.lastTip });
+    this.ui.gameOver({ score: run.exp, best: this.save.expBest, isBest: !!rewards && rewards.exp > 0 && rewards.to > rewards.from, dist: run.distance, length: this.course?.length, coins: run.coins, near: run.nearMiss, missions: this.runMissionsDone, rewards, speedBonus, level: lvg.label, tip: this.lastTip });
     this.lastResult = { coins: run.coins, reward: 0, doubled: false };
     this.ui.adButton('ad2x', run.coins > 0 ? 'ready' : 'used', 'No coins to double');
     this.ads.runEnded();
     this.ui.show('gameover');
-    if (isBest) this.audio.play('mission');
+    if (rewards && rewards.to > rewards.from) this.audio.play('mission');
   }
 
   private onWorldChange(id: WorldId) {
@@ -2494,7 +2507,7 @@ export class Game {
     const s = SKINS.find((x) => x.id === id);
     if (!s || this.save.unlocked.includes(id) || this.save.wallet < s.price) return;
     if (carVisibility(this.save.unlocked, id) !== 'next') return; // cars unlock in order
-    if (CLASSES.indexOf(classFor(this.save.bolts)) < CLASSES.indexOf((s.need ?? 'D') as (typeof CLASSES)[number])) return;
+    if (CLASSES.indexOf(classFor(this.save.expBest)) < CLASSES.indexOf((s.need ?? 'D') as (typeof CLASSES)[number])) return;
     this.save.wallet -= s.price;
     this.save.unlocked.push(id);
     this.save.vehicle = id;

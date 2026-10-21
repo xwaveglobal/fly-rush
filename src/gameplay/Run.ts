@@ -31,6 +31,8 @@ export class Run {
   score = 0;
   coins = 0;
   distance = 0;
+  /** v2: EXP per metre for this run's speed level (0 = no EXP, e.g. training) */
+  expRate = 0;
   nearMiss = 0;
   dodges = 0;
   rings = 0;
@@ -63,6 +65,10 @@ export class Run {
   /** @param scoreMul speed-level score multiplier (EASY 0.8 · NORMAL 1 · HARD 1.3) */
   constructor(public up: Upgrades, public scoreMul = 1) {}
 
+  /** v2: EXP earned so far (distance × level rate) */
+  get exp() {
+    return Math.floor(this.distance * this.expRate);
+  }
   get mult() {
     return Math.min(SCORE.comboMax, 1 + Math.floor(this.combo / SCORE.comboStep) * 0.5) * (this.doubleT > 0 ? 2 : 1) * this.scoreMul;
   }

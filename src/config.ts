@@ -59,14 +59,28 @@ export const TIMING = {
 
 /** Player speed levels chosen on the home screen (3 audiences: new, regular, expert). */
 export type SpeedLevel = 'easy' | 'normal' | 'hard';
+
+/**
+ * v2 EXP (docs/GAME-DESIGN.md §1). Run EXP = metres × rate[level]; the player's EXP = best run (never summed).
+ * Rates are calibrated (tests/exp.test.ts) so a non-stop run reaches C / B / A / AA / AAA at
+ * 3 / 7 / 12 / 20 / 30 min on HARD, ×2 that time on NORMAL and ×3 on EASY.
+ */
+export const EXP = {
+  rate: { easy: 0.2, normal: 0.23, hard: 0.4 } as Record<SpeedLevel, number>,
+  /** EXP needed for each rank */
+  rank: { D: 0, C: 3000, B: 8000, A: 15000, AA: 25000, AAA: 38000 },
+  /** design targets (minutes of non-stop HARD) — shown in the rank guide, checked by the test */
+  hardMinutes: { D: 0, C: 3, B: 7, A: 12, AA: 20, AAA: 30 },
+  timeMul: { easy: 3, normal: 2, hard: 1 } as Record<SpeedLevel, number>,
+};
 /**
  * Speed levels. Harder = faster AND better paid (tiered rewards):
  *  `reward` multiplies the coin bonus, the track reward and the rank X-Points of a run.
  */
 export const LEVELS: Record<SpeedLevel, { label: string; speed: number; gap: number; score: number; reward: number; desc: string }> = {
-  easy: { label: 'EASY', speed: 0.78, gap: 1.2, score: 0.8, reward: 1, desc: 'Slower road, more time to react' },
-  normal: { label: 'NORMAL', speed: 1, gap: 1, score: 1, reward: 1.25, desc: 'Regular speed · coins & stars ×1.25' },
-  hard: { label: 'HARD', speed: 1.18, gap: 0.92, score: 1.3, reward: 1.6, desc: 'Fast & tight · score ×1.3 · coins & stars ×1.6' },
+  easy: { label: 'EASY', speed: 0.78, gap: 1.2, score: 0.8, reward: 1, desc: 'Slower road · EXP ×1 (ranks take 3× longer)' },
+  normal: { label: 'NORMAL', speed: 1, gap: 1, score: 1, reward: 1.25, desc: 'Regular speed · EXP ×1.15 · coins ×1.25' },
+  hard: { label: 'HARD', speed: 1.18, gap: 0.92, score: 1.3, reward: 1.6, desc: 'Fast & tight · EXP ×2 · coins ×1.6' },
 };
 
 /** big-reward tracks also pay items when finished with enough stars (all matching rules apply) */

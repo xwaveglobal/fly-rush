@@ -2,7 +2,7 @@ import { COUNTRIES, countryName, flagOf } from '../meta/Country.ts';
 import './ui.css';
 import { ICON } from './icons.ts';
 import { AVATAR_COUNT, avatarForName, avatarSvg, classCorner } from './avatars.ts';
-import { CLASSES, CLASS_COLOR, CLASS_MIN, XP_RULES, XPT, classBadge, classFor as classOfBolts, classForScore, type RankClass, type XpGain } from '../meta/Rank.ts';
+import { CLASSES, CLASS_COLOR, CLASS_MIN, EXP_RULES, XPT, classBadge, classFor as classOfBolts, classForScore, rankMinutes, type RankClass } from '../meta/Rank.ts';
 import logoUrl from '../assets/images/sky-roadster-logo.webp';
 import appIcon from '../assets/images/app-icon.webp';
 import { amount, calendarGift, coinFace, coinPile, friends, giftBox, megaphone, phonePlus, shareNodes, starBig, tapMarks, wifiRobot } from './art.ts';
@@ -33,7 +33,7 @@ import type { Run } from '../gameplay/Run.ts';
 import type { PickupKind } from '../gameplay/types.ts';
 import type { Board, LbRow } from '../meta/Leaderboard.ts';
 import { CHECKIN, CHESTS, ITEM_PRICE, UNLOCK_BOOSTS, rewardText, rewardValue, type ItemKey, type Quest, type Reward } from '../meta/Daily.ts';
-import { DIV_MULT, fmtLeft, localTime, prizesFor, type EventInst, type Prize } from '../meta/Events.ts';
+import { fmtLeft, localTime, type EventInst, type Prize } from '../meta/Events.ts';
 import { PRODUCTS, type Product } from '../meta/Shop.ts';
 import type { EventResult } from '../meta/Meta.ts';
 import type { CrashTip } from '../gameplay/CrashTip.ts';
@@ -142,7 +142,9 @@ const MEGA_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="
 
 /** what a finished / crashed run paid out (result screens) */
 export interface RunRewards {
-  xp: XpGain;
+  /** EXP of this run */
+  exp: number;
+  /** best EXP before / after this run */
   from: number;
   to: number;
   clsBefore: RankClass;
@@ -201,7 +203,7 @@ function carSvg(shape: string, body: number, glow: number) {
 }
 /** avatar with the rank-class plate (D … AAA) in the corner */
 const avaHtml = (av: number, rc: RankClass, cls = '', extra = '') => `<span class="ava img ${cls}">${avatarSvg(av)}${classCorner(rc)}${extra}</span>`;
-/** XWAVE "X" badge = X-Points (rank points) */
+/** EXP logo (rank shield) */
 const BOLT = XPT;
 const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
 const $ = <T extends HTMLElement = HTMLElement>(root: ParentNode, sel: string) => root.querySelector(sel) as T;
@@ -451,7 +453,7 @@ export class UI {
           <div class="bhead"><b>Prizes</b><span class="label">Final rank when the cup ends</span></div>
           <div class="prizes" data-k="prizes"></div>
         </div>
-        <div class="bhead out"><b>Divisions</b><button class="linkbtn" data-a="rankguide">${ICON.info} How rank works</button></div>
+        <div class="bhead out"><b>Divisions</b><button class="linkbtn" data-a="rankguide">${ICON.info} How EXP works</button></div>
         <div class="divgrid" data-k="divisions"></div>
         <div class="bhead out"><b>Upcoming</b><span class="label">daily 12:00 &amp; 22:00 US Eastern · 3 h each</span></div>
         <div class="upcoming" data-k="upcoming"></div>
@@ -497,7 +499,7 @@ export class UI {
 
     <section id="rankguide" class="screen overlay">
       <div class="panel modal rguide">
-        <div class="mhead"><h2>RANK ${XPT} STARS</h2><button class="icon-btn sm" data-a="closeov" data-v="rankguide" aria-label="Close">${ICON.close}</button></div>
+        <div class="mhead"><h2>${XPT} EXP &amp; RANK</h2><button class="icon-btn sm" data-a="closeov" data-v="rankguide" aria-label="Close">${ICON.close}</button></div>
         <div data-k="rgbody"></div>
       </div>
     </section>
@@ -514,9 +516,8 @@ export class UI {
     <section id="hud" class="screen passthrough">
       <div class="row">
         <button class="icon-btn hit" data-a="pause" aria-label="Pause">${ICON.pause}</button>
-        <div class="scorebox panel"><div class="label">Score</div><div class="val"><span data-h="score">0</span><span class="mult" data-h="mult"></span></div></div>
+        <div class="scorebox panel exp"><div class="label">${XPT}EXP</div><div class="val"><span data-h="score">0</span><span class="rankp" data-h="rankp"></span></div></div>
         <div class="side">
-          <span class="pill bolts" title="Rank stars">${BOLT}<b data-h="bolts">0</b></span>
           <span class="pill coins">${ICON.coin}<b data-h="coins">0</b></span>
           <span class="pill">${ICON.flag}<b data-h="dist">0 m</b></span>
         </div>
@@ -622,10 +623,10 @@ export class UI {
       <div class="panel result">
         <div class="res-top"><button class="icon-btn sm" data-a="home" aria-label="Close">${ICON.close}</button><img class="res-logo" src="${logoUrl}" alt="" /><button class="icon-btn sm" data-a="share" aria-label="Share">${ICON.share}</button></div>
         <div class="title">GAME OVER</div>
-        <div class="scoreline"><div class="final" data-k="final">0</div><div class="newbest" data-k="newbest">${ICON.trophy} NEW BEST!</div></div>
+        <div class="scoreline"><div class="final exp" data-k="final">0</div><div class="newbest" data-k="newbest">${ICON.trophy} NEW BEST EXP!</div></div>
         <div class="tipbox" data-k="gtip" hidden></div>
         <div class="stats mini">
-          <div class="stat"><span class="label">Best</span><span class="v">${ICON.trophy}<span data-k="gbest">0</span></span></div>
+          <div class="stat"><span class="label">Best EXP</span><span class="v">${XPT}<span data-k="gbest">0</span></span></div>
           <div class="stat"><span class="label">Distance</span><span class="v">${ICON.flag}<span data-k="gdist">0</span></span></div>
           <div class="stat"><span class="label">Coins</span><span class="v">${ICON.coin}<span data-k="gcoins">0</span></span></div>
           <div class="stat"><span class="label">Near miss</span><span class="v">${ICON.bolt}<span data-k="gnear">0</span></span></div>
@@ -953,13 +954,10 @@ export class UI {
     this.hudCache = {};
   }
 
-  /** ⚡ bolts already owned (HUD shows owned + this run's live estimate) */
-  hudBoltsBase = 0;
-  hudBoltsMul = 1;
   updateHud(run: Run, speed: number, maxSpeed: number, mission: ActiveMission | undefined) {
-    this.hset('score', fmt(run.score));
-    this.hset('bolts', fmt(this.hudBoltsBase + (Math.floor(run.score / 1000) + Math.floor(run.nearMiss / 10)) * this.hudBoltsMul));
-    this.hset('mult', run.mult > 1 ? `x${run.mult % 1 ? run.mult.toFixed(1) : run.mult}` : '');
+    // v2: the big number is the run's EXP; the plate next to it is the rank that EXP has reached
+    this.hset('score', fmt(run.exp));
+    this.hset('rankp', run.expRate > 0 ? classBadge(classOfBolts(run.exp)) : '', true);
     this.hset('coins', fmt(run.coins));
     this.hset('dist', `${fmt(run.distance)} m`);
     this.hset('kmh', fmt(speed * 3.6));
@@ -1199,16 +1197,16 @@ export class UI {
     const skin = SKINS[this.garageIndex];
     this.setAll('carname', skin.name);
     this.setAll('carcls', skin.cls);
-    const myClass = classOfBolts(s.bolts);
+    const myClass = classOfBolts(s.expBest);
     const vis = carVisibility(s.unlocked, skin.id);
     const rankOk = (k: (typeof SKINS)[number]) => CLASSES.indexOf(myClass) >= CLASSES.indexOf((k.need ?? 'D') as RankClass);
     $(this.root, '[data-k="lockbadge"]').hidden = vis === 'own';
-    this.setAll('locktxt', vis === 'dark' ? `CLASS ${skin.need} NEEDED` : 'LOCKED');
+    this.setAll('locktxt', vis === 'dark' ? `RANK ${skin.need} NEEDED` : 'LOCKED');
     const strip = $(this.root, '[data-k="carstrip"]');
     strip.innerHTML = SKINS.map((k, i) => {
       const v = carVisibility(s.unlocked, k.id);
       const img = v === 'dark' ? `<img class="cimg shadow" src="${carShadow}" alt="" />` : CAR_IMG[k.id] ? `<img class="cimg" src="${CAR_IMG[k.id]}" alt="" />` : carSvg(k.shape, k.body, k.glow);
-      const label = v === 'own' ? (s.vehicle === k.id ? 'In use' : 'Owned') : v === 'next' ? (rankOk(k) ? `${ICON.coin}${fmt(k.price)}` : `${ICON.lock} Class ${k.need}`) : `Class ${k.need}`;
+      const label = v === 'own' ? (s.vehicle === k.id ? 'In use' : 'Owned') : v === 'next' ? (rankOk(k) ? `${ICON.coin}${fmt(k.price)}` : `${ICON.lock} Rank ${k.need}`) : `Rank ${k.need}`;
       return `<button class="ccard ${v === 'own' ? '' : 'locked'} ${v} ${i === this.garageIndex ? 'on' : ''} ${s.vehicle === k.id ? 'cur' : ''}" data-a="pickcar" data-id="${k.id}" style="--rc:${RARITY_COLOR[k.rarity ?? 'Common']}">
         ${img}${v === 'dark' ? '<i class="q">?</i>' : ''}<b>${v === 'dark' ? '???' : k.name.replace('XWAVE ', '')}</b><small>${label}</small>${v === 'own' ? '' : `<i class="lk">${ICON.lock}</i>`}</button>`;
     }).join('');
@@ -1525,13 +1523,13 @@ export class UI {
       <button class="ctryrow" data-a="country"><span class="fl">${flagOf(o.country)}</span><span><small>Country</small><b>${esc(countryName(o.country || 'US'))}</b></span><em>Change</em></button>
       ${this.classCard(o.cls, o.bolts, o.next, o.k, o.need)}
       <div class="pstats">
-        <div><span class="label">Best score</span><b>${fmt(o.best)}</b></div>
+        <div><span class="label">Best EXP</span><b>${fmt(o.bolts)}</b></div>
         <div><span class="label">This week</span><b>${o.weekRank ? `#${fmt(o.weekRank)}` : '—'}</b></div>
         <div><span class="label">Runs</span><b>${fmt(o.runs)}</b></div>
         <div><span class="label">Car</span><b class="sm">${esc(o.car)}</b></div>
       </div>
       <div class="trophies in"><span class="label">Trophies</span><span class="tro gold">${ICON.cup}${o.trophies.gold}</span><span class="tro silver">${ICON.cup}${o.trophies.silver}</span><span class="tro bronze">${ICON.cup}${o.trophies.bronze}</span></div>
-      <div class="sbtns"><button class="btn sm ghost" data-a="rankguide">${ICON.info} How rank works</button><button class="btn sm ghost" data-a="ranks">${ICON.podium} Leaderboard</button><button class="btn sm ghost" data-a="events">${ICON.cup} Cups</button></div>`;
+      <div class="sbtns"><button class="btn sm ghost" data-a="rankguide">${ICON.info} How EXP works</button><button class="btn sm ghost" data-a="ranks">${ICON.podium} Leaderboard</button><button class="btn sm ghost" data-a="events">${ICON.cup} Cups</button></div>`;
     const on = this.root.querySelector<HTMLElement>('[data-k="pavstrip"] .avpick.on');
     const st = this.root.querySelector<HTMLElement>('[data-k="pavstrip"]');
     if (on && st) st.scrollLeft = on.offsetLeft - st.clientWidth / 2 + on.clientWidth / 2;
@@ -1540,7 +1538,7 @@ export class UI {
   private classCard(cls: RankClass, bolts: number, next: RankClass | null, k: number, need: number) {
     const ladder = CLASSES.map((c) => `<span class="lad ${c === cls ? 'cur' : CLASSES.indexOf(c) < CLASSES.indexOf(cls) ? 'done' : ''}" style="--cc:${CLASS_COLOR[c]}">${c}</span>`).join('');
     return `<div class="clscard" style="--cc:${CLASS_COLOR[cls]}">
-      <div class="cc-top">${classBadge(cls, 'lg')}<div><b>Class ${cls}</b><small>${next ? `${BOLT}${fmt(need)} more to class ${next}` : 'Top class reached'}</small></div><span class="cc-bolts">${BOLT}${fmt(bolts)}</span></div>
+      <div class="cc-top">${classBadge(cls, 'lg')}<div><b>Rank ${cls}</b><small>${next ? `${fmt(need)} EXP more to rank ${next}` : 'Top rank reached'}</small></div><span class="cc-bolts">${BOLT}${fmt(bolts)}</span></div>
       <div class="cc-bar"><i style="width:${(k * 100).toFixed(1)}%"></i></div>
       <div class="ladder">${ladder}</div></div>`;
   }
@@ -1558,9 +1556,9 @@ export class UI {
     $(this.root, '[data-k="profbody"]').innerHTML = `
       <div class="ph">${avaHtml(r.av ?? avatarForName(r.name), cls, 'xl', r.rank <= 3 ? `<i class="crown">${ICON.crown}</i>` : '')}<div class="pn">
         <b class="big ${r.pass ? 'gold' : ''}">${esc(r.name)}</b><small>${r.flag} · <span class="${p.online ? 'online' : ''}">${p.seen}</span></small></div></div>
-      <div class="clscard" style="--cc:${CLASS_COLOR[cls]}"><div class="cc-top">${classBadge(cls, 'lg')}<div><b>Class ${cls}</b><small>Rank #${fmt(r.rank)} on this board</small></div><span class="cc-bolts">${BOLT}${fmt(Math.max(CLASS_MIN[cls], Math.round(r.score / 9)))}</span></div></div>
+      <div class="clscard" style="--cc:${CLASS_COLOR[cls]}"><div class="cc-top">${classBadge(cls, 'lg')}<div><b>Rank ${cls}</b><small>#${fmt(r.rank)} on this board</small></div><span class="cc-bolts">${BOLT}${fmt(r.score)}</span></div></div>
       <div class="pstats">
-        <div><span class="label">Score</span><b>${fmt(r.score)}</b></div>
+        <div><span class="label">Best EXP</span><b>${fmt(r.score)}</b></div>
         <div><span class="label">Runs</span><b>${fmt(p.runs)}</b></div>
         <div><span class="label">Streak</span><b>${p.streak} d</b></div>
         <div><span class="label">Car</span><b class="sm">${p.car}</b></div>
@@ -1629,7 +1627,7 @@ export class UI {
         <div><b>How to use</b><p>${inf.how}</p></div>
         <div><b>Best moment</b><p>${inf.when}</p></div>
       </div>
-      ${isLocked ? `<div class="bi-lock">${ICON.lock} Unlocks at class ${classBadge(un!.cls)} — earn rank stars by racing</div>` : ''}
+      ${isLocked ? `<div class="bi-lock">${ICON.lock} Unlocks at rank ${classBadge(un!.cls)} — earn EXP by driving farther</div>` : ''}
       ${canTrain ? `<button class="btn big" data-a="boosttrain" data-v="${k}">${ICON.target} Practice it · free</button>` : ''}
       <div class="sbtns">
         ${owned > 0 && !isLocked ? `<button class="btn sm ${equipped ? 'ghost' : 'green'}" data-a="equip" data-v="${k}">${equipped ? `${ICON.check} Equipped · tap to remove` : 'Equip for next run'}</button>` : ''}
@@ -1672,7 +1670,7 @@ export class UI {
     $(this.root, '[data-k="lblist"]').innerHTML = board.rows.slice(3).map((r) => this.lbRow(r)).join('') + (SAMPLE_BOARD_NOTE ? `<div class="lbnote">${extra}</div>` : '');
     const y = board.you;
     const pct = Math.max(0.1, (y.rank / board.total) * 100);
-    $(this.root, '[data-k="lbyou"]').innerHTML = `${this.lbRow(y)}<div class="lbnext">${y.score <= 0 ? 'Play a run to get ranked' : board.next ? `Top ${pct < 1 ? pct.toFixed(1) : Math.ceil(pct)}% · score <b>${fmt(board.next.score)}</b> to reach <b>#${fmt(board.next.rank)}</b>` : 'You are #1!'}</div>`;
+    $(this.root, '[data-k="lbyou"]').innerHTML = `${this.lbRow(y)}<div class="lbnext">${y.score <= 0 ? 'Play a run to get ranked' : board.next ? `Top ${pct < 1 ? pct.toFixed(1) : Math.ceil(pct)}% · EXP <b>${fmt(board.next.score)}</b> to reach <b>#${fmt(board.next.rank)}</b>` : 'You are #1!'}</div>`;
   }
 
   dailySync(o: { slot: number; claimedToday: boolean; streak: number; quests: (Quest & { progress: number; done: boolean; claimed: boolean })[]; pts: number; chests: number[]; resetIn: string; pass: { active: boolean; claimed: boolean; days: number } }) {
@@ -1716,7 +1714,7 @@ export class UI {
       <div class="ch-top">${o.live ? '<em class="live">LIVE</em>' : '<em class="soon">NEXT</em>'}${classBadge(e.division)}<span class="label">${ICON.clock} ${o.live ? `ends in <b>${fmtLeft(e.end - o.now)}</b>` : `starts <b>${localTime(e.start)}</b> · in <b>${fmtLeft(e.start - o.now)}</b>`}</span></div>
       <div class="ch-name">${c.name}</div>
       <div class="ch-tag">Class ${e.division} division · ${c.tag}</div>
-      <div class="ch-prize">${ICON.hyper}<div><b>#1 wins ${BOLT}${top.bolts} · HYPER JUMP ×${top.hyper}</b><small>+ ${fmt(top.coins)} coins + Gold trophy · run bolts ×2 while it is live</small></div></div>
+      <div class="ch-prize">${ICON.hyper}<div><b>#1 wins HYPER JUMP ×${top.hyper}</b><small>+ ${fmt(top.coins)} coins + Gold trophy · run bolts ×2 while it is live</small></div></div>
       <div class="ch-stats"><div><span class="label">Your best</span><b>${o.best ? fmt(o.best) : '—'}</b></div><div><span class="label">Your rank</span><b>${o.rank ? `#${fmt(o.rank)}` : '—'}</b></div><div><span class="label">Racers</span><b>${fmt(o.total)}</b></div></div>
       <div class="ch-btns">${o.live ? `<button class="btn big" data-a="racecup">${ICON.play} Race now</button>` : `<button class="btn big ghost" disabled>${ICON.clock} Opens ${localTime(e.start)}</button>`}<button class="btn sm ghost" data-a="cupboard">${ICON.podium} ${o.boardOpen ? 'Hide' : 'Standings'}</button></div>`;
     const cb = $(this.root, '[data-k="cupboard"]');
@@ -1784,7 +1782,7 @@ export class UI {
       .join('');
   }
 
-  /** result-screen rewards box (compact): coins total + breakdown, rank stars + bar, standings */
+  /** result-screen rewards box (compact): coins total + breakdown, EXP + rank bar, standings */
   private rewardsHtml(r: RunRewards | null, coins: { label: string; coins: number }[]) {
     const parts = coins.filter((c) => c.coins > 0).map((c) => ({ label: c.label, n: c.coins }));
     if (r) for (const m of r.missions) parts.push({ label: 'mission', n: m.reward });
@@ -1792,13 +1790,8 @@ export class UI {
     const rows: string[] = [];
     rows.push(`<div class="rw-line"><span class="rl">${ICON.coin} Coins</span><span class="rs">${parts.map((p) => `${fmt(p.n)} ${esc(p.label.toLowerCase())}`).join(' · ') || '—'}</span><b class="c">+${fmt(total)}</b></div>`);
     if (!r) return `<div class="rw-h"><b>Rewards</b></div>${rows.join('')}`;
-    const x = r.xp;
-    const xs = [`${x.score} score`, `${x.near} near-miss`];
-    if (x.finish) xs.push(`+${x.finish} finish`);
-    if (x.stars) xs.push(`+${x.stars}★ track`);
-    if (x.cupMul > 1) xs.push('cup ×2');
-    if (x.levelMul !== 1) xs.push(`speed ×${x.levelMul}`);
-    rows.push(`<div class="rw-line"><span class="rl">${XPT} Rank</span><span class="rs">${xs.join(' · ')}</span><b class="xg">+${fmt(x.total)}</b></div>`);
+    const best = r.exp > 0 && r.to > r.from;
+    rows.push(`<div class="rw-line"><span class="rl">${XPT} EXP</span><span class="rs">${best ? '<b class="upt">NEW BEST</b>' : `best ${fmt(r.to)}`}</span><b class="xg">${fmt(r.exp)}</b></div>`);
     const ci = CLASSES.indexOf(r.clsAfter);
     const next = CLASSES[ci + 1] ?? null;
     const lo = CLASS_MIN[r.clsAfter];
@@ -1806,26 +1799,22 @@ export class UI {
     const kTo = next ? Math.min(1, (r.to - lo) / (hi - lo)) : 1;
     const kFrom = next && r.clsAfter === r.clsBefore ? Math.max(0, Math.min(1, (r.from - lo) / (hi - lo))) : 0;
     const up = r.clsAfter !== r.clsBefore;
-    rows.push(`<div class="rw-bar ${up ? 'up' : ''}" style="--cc:${CLASS_COLOR[r.clsAfter]}">${classBadge(r.clsAfter)}<div class="bar"><i class="old" style="width:${(kFrom * 100).toFixed(1)}%"></i><i class="new" style="left:${(kFrom * 100).toFixed(1)}%;width:${((kTo - kFrom) * 100).toFixed(1)}%"></i></div>${next ? classBadge(next) : ''}<small>${up ? `<b class="upt">RANK UP!</b>` : next ? `${fmt(hi - r.to)} to ${next}` : 'top'}</small></div>`);
+    rows.push(`<div class="rw-bar ${up ? 'up' : ''}" style="--cc:${CLASS_COLOR[r.clsAfter]}">${classBadge(r.clsAfter)}<div class="bar"><i class="old" style="width:${(kFrom * 100).toFixed(1)}%"></i><i class="new" style="left:${(kFrom * 100).toFixed(1)}%;width:${((kTo - kFrom) * 100).toFixed(1)}%"></i></div>${next ? classBadge(next) : ''}<small>${up ? `<b class="upt">RANK UP!</b>` : next ? `${fmt(hi - r.to)} EXP to ${next}` : 'top'}</small></div>`);
     const chips = [`<span>${ICON.podium} Week #${fmt(r.weekRank)}</span>`];
     if (r.cup) chips.push(`<span>${ICON.cup} ${classBadge(r.cup.div)} #${fmt(r.cup.rank)}</span>`);
     for (const q of r.quests) chips.push(`<span class="qd" title="${esc(q)}">${ICON.check}<em>${esc(q)}</em></span>`);
     rows.push(`<div class="rw-chips">${chips.join('')}</div>`);
-    return `<div class="rw-h"><b>Rewards</b><button class="linkbtn" data-a="rankguide">${ICON.info} How rank works</button></div>${rows.join('')}`;
+    return `<div class="rw-h"><b>Rewards</b><button class="linkbtn" data-a="rankguide">${ICON.info} How EXP works</button></div>${rows.join('')}`;
   }
 
-  /** the conversion table: X-Points → class, how to earn, cup payouts. Rank can't be bought. */
+  /** EXP & rank guide: thresholds and minutes per speed level. EXP can not be bought. */
   rankGuide() {
-    const ladder = CLASSES.map((c, i) => {
-      const nx = CLASSES[i + 1];
-      return `<tr><td>${classBadge(c, 'md')}</td><td>${fmt(CLASS_MIN[c])}${nx ? `–${fmt(CLASS_MIN[nx] - 1)}` : '+'} ${XPT}</td><td>×${DIV_MULT[c]}</td><td>${XPT}${prizesFor(c)[0].bolts}</td></tr>`;
-    }).join('');
+    const ladder = CLASSES.map((c) => `<tr><td>${classBadge(c, 'md')}</td><td>${fmt(CLASS_MIN[c])}</td><td>${c === 'D' ? '—' : `${rankMinutes(c, 'hard')}′`}</td><td>${c === 'D' ? '—' : `${rankMinutes(c, 'normal')}′`}</td><td>${c === 'D' ? '—' : `${rankMinutes(c, 'easy')}′`}</td></tr>`).join('');
     $(this.root, '[data-k="rgbody"]').innerHTML = `
-      <p class="tut-lead">Start in <b>class D</b> and climb to <b>AAA</b> with rank stars ${XPT}. You never drop a class.</p>
-      <table class="rgt"><thead><tr><th>Class</th><th>Stars</th><th>Cup ×</th><th>#1 prize</th></tr></thead><tbody>${ladder}</tbody></table>
-      <div class="bhead out"><b>How to earn ${XPT}</b></div>
-      <div class="rg-rules">${XP_RULES.map((r) => `<span>${r.what}<b>${r.gain}</b></span>`).join('')}</div>
-      <div class="rg-note">${ICON.lock}<span>Rank can't be bought — stars ${XPT} come only from racing and cups.</span></div>
+      <p class="tut-lead">EXP shows <b>how good you are</b>. The farther one run goes, the more EXP it scores. Your rank is your <b>best run</b>.</p>
+      <table class="rgt"><thead><tr><th>Rank</th><th>EXP</th><th>Hard</th><th>Normal</th><th>Easy</th></tr></thead><tbody>${ladder}</tbody></table>
+      <div class="rg-rules">${EXP_RULES.map((r) => `<span>${r.what}<b>${r.gain}</b></span>`).join('')}</div>
+      <div class="rg-note">${ICON.lock}<span>EXP can't be bought. New ranks unlock cars and tracks.</span></div>
 `;
     this.screens.rankguide.classList.add('show');
   }

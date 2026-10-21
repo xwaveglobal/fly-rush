@@ -114,13 +114,14 @@ export function weekProgress(now = new Date()) {
 }
 
 export function allTimeBoard(you: { name: string; score: number; color: string; pass?: boolean; av?: number; flag?: string }): Board {
-  const curve: Curve = { top: 61850, k: 0.27, total: 248_316 };
-  return rankBoard(sampleBoard('xwave-all-time-v1', curve), curve, you);
+  // v2: boards rank EXP (best single run). Top pilots sit around AAA.
+  const curve: Curve = { top: 46200, k: 0.36, total: 248_316 };
+  return rankBoard(sampleBoard('xwave-all-time-v2', curve), curve, you);
 }
 
 export function weeklyBoard(week: string, you: { name: string; score: number; color: string; pass?: boolean; av?: number; flag?: string }, now = new Date()): Board {
   // rivals keep playing through the week: scores and field size grow over time
   const f = 0.35 + 0.65 * Math.min(1, weekProgress(now) * 1.4);
-  const curve: Curve = { top: 38400 * f, k: 0.31, total: Math.round(9000 + 31000 * f) };
-  return rankBoard(sampleBoard(`xwave-week-${week}`, curve), curve, you);
+  const curve: Curve = { top: 39800 * f, k: 0.4, total: Math.round(9000 + 31000 * f) };
+  return rankBoard(sampleBoard(`xwave-exp-week-${week}`, curve), curve, you);
 }

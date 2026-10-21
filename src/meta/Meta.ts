@@ -19,6 +19,8 @@ export interface RunSummary {
   jumps: number;
   rings: number;
   finished: boolean;
+  /** EXP of this run */
+  exp: number;
 }
 
 export interface EventResult {
@@ -37,9 +39,9 @@ export class Meta {
   get color() {
     return avatarColor(this.s.pid);
   }
-  /** rank class from ⚡ bolts */
+  /** rank from the best single-run EXP */
   get cls(): RankClass {
-    return classFor(this.s.bolts);
+    return classFor(this.s.expBest);
   }
   /** the cup of the player's class in the live session (null between sessions) */
   myCup(now = Date.now()): EventInst | null {
@@ -50,9 +52,8 @@ export class Meta {
   nextCup(now = Date.now()): EventInst {
     return cupFor(schedule(now).next, this.cls);
   }
-  addBolts(n: number) {
-    if (n > 0) this.s.bolts += n;
-  }
+  /** v1 rank stars: no longer awarded (v2 rank = best run EXP). Kept so old cup code compiles until it is removed. */
+  addBolts(_n: number) {}
 
   get passActive() {
     return this.s.passUntil > Date.now();
@@ -80,6 +81,7 @@ export class Meta {
     if (this.s.weekKey !== wk) {
       this.s.weekKey = wk;
       this.s.weekBest = 0;
+      this.s.expWeek = 0;
     }
   }
 
@@ -174,6 +176,8 @@ export class Meta {
       this.s.dailyProg[q.id] = q.mode === 'max' ? Math.max(cur, v) : cur + v;
     }
     this.s.weekBest = Math.max(this.s.weekBest, Math.floor(r.score));
+    this.s.expBest = Math.max(this.s.expBest, Math.floor(r.exp));
+    this.s.expWeek = Math.max(this.s.expWeek, Math.floor(r.exp));
     const cup = this.myCup();
     if (cup && cup.cup.track === r.track) {
       const e = (this.s.events[cup.key] ??= { best: 0 });
@@ -192,11 +196,11 @@ export class Meta {
 
   // ------------------------------------------------------------- boards
   allTime() {
-    return allTimeBoard(this.me(this.s.best));
+    return allTimeBoard(this.me(this.s.expBest));
   }
   weekly() {
     this.rollover();
-    return weeklyBoard(this.s.weekKey, this.me(this.s.weekBest));
+    return weeklyBoard(this.s.weekKey, this.me(this.s.expWeek));
   }
   cupBoard(e: EventInst) {
     return eventBoard(e, this.me(this.s.events[e.key]?.best ?? 0));

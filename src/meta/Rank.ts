@@ -1,23 +1,23 @@
 /**
- * RANK CLASSES & X-POINTS (internally "bolts")
+ * v2 RANKS (docs/GAME-DESIGN.md §1)
  *
- * Bolts are the ranking currency. Every pilot starts in class D; collecting bolts
- * promotes D → C → B → A → AA → AAA. Bolts are never lost (no demotion), so progress
- * always feels earned; a seasonal soft reset can be added later.
- *
- * How bolts are earned (recommended economy, tuned so class A takes ~2 weeks of daily play):
- *  - in every run: +1 ⚡ per 1,000 score, +1 ⚡ per 10 near misses
- *  - finishing a track: +2 ⚡ (+1 per star)
- *  - Cup races: run bolts ×2 while racing in your live cup
- *  - Cup results: placement bolts × division multiplier (see CUP_BOLTS / DIV_MULT)
- *  - (never purchasable: no shop item, pass or ad grants X-Points)
+ * EXP measures skill: run EXP = distance × speed-level rate, and the player's EXP is their BEST
+ * run (never summed, never bought). Ranks D → C → B → A → AA → AAA are EXP thresholds (config EXP.rank).
  */
+import { EXP, type SpeedLevel } from '../config.ts';
+
 export const CLASSES = ['D', 'C', 'B', 'A', 'AA', 'AAA'] as const;
 export type RankClass = (typeof CLASSES)[number];
 
-/** bolts needed to reach each class */
-export const CLASS_MIN: Record<RankClass, number> = { D: 0, C: 150, B: 450, A: 1100, AA: 2400, AAA: 4800 };
+/** EXP needed to reach each rank */
+export const CLASS_MIN: Record<RankClass, number> = EXP.rank;
 export const CLASS_COLOR: Record<RankClass, string> = { D: '#9fb3dd', C: '#2fd36b', B: '#4fc3ff', A: '#9b6bff', AA: '#ffc21a', AAA: '#ff4fd8' };
+
+/** EXP earned by a run of `distance` metres at a speed level */
+export const expFor = (distance: number, level: SpeedLevel) => Math.floor(Math.max(0, distance) * EXP.rate[level]);
+
+/** non-stop minutes to reach a rank at a speed level (design target) */
+export const rankMinutes = (c: RankClass, level: SpeedLevel) => EXP.hardMinutes[c] * EXP.timeMul[level];
 
 export function classFor(bolts: number): RankClass {
   let c: RankClass = 'D';
@@ -34,55 +34,18 @@ export function classProgress(bolts: number) {
   return { cls: c, next, k: next ? (bolts - from) / (to - from) : 1, need: next ? to - bolts : 0 };
 }
 
-/** sample rivals: class from their best score (keeps the ladder believable) */
-export function classForScore(score: number): RankClass {
-  if (score >= 40000) return 'AAA';
-  if (score >= 26000) return 'AA';
-  if (score >= 14000) return 'A';
-  if (score >= 6000) return 'B';
-  if (score >= 2000) return 'C';
-  return 'D';
-}
+/** rivals on the sample boards: rank straight from their EXP */
+export const classForScore = (exp: number) => classFor(exp);
 
-/** bolts earned by a run (before cup ×2 / finish bonus) */
-export const runBolts = (score: number, nearMiss: number) => Math.floor(score / 1000) + Math.floor(nearMiss / 10);
-
-/**
- * X-POINTS (shown with the XWAVE "X" badge) — the only way to climb classes.
- * They can NOT be bought: no shop product, ad or pass grants them. Earned only by racing.
- */
-export const XP_RULES: { what: string; gain: string }[] = [
-  { what: 'Every 1,000 score in a run', gain: '+1' },
-  { what: 'Every 10 near misses', gain: '+1' },
-  { what: 'Finish a track', gain: '+2' },
-  { what: 'Each star on that finish', gain: '+1' },
-  { what: 'Racing your live cup track', gain: '×2 run points' },
-  { what: 'Speed level: EASY / NORMAL / HARD', gain: '×1 / ×1.25 / ×1.6' },
-  { what: 'Cup final rank (×class multiplier)', gain: '+12 … +300' },
+/** how EXP works (rank guide) */
+export const EXP_RULES: { what: string; gain: string }[] = [
+  { what: 'Every metre you drive', gain: 'EXP' },
+  { what: 'Speed EASY / NORMAL / HARD', gain: `×${EXP.rate.easy / EXP.rate.easy} / ×${(EXP.rate.normal / EXP.rate.easy).toFixed(2).replace(/0$/, '')} / ×${EXP.rate.hard / EXP.rate.easy}` },
+  { what: 'Your EXP = your best single run', gain: 'best' },
 ];
 
-export interface XpGain {
-  score: number;
-  near: number;
-  finish: number;
-  stars: number;
-  cupMul: number;
-  /** speed-level reward tier (EASY ×1 · NORMAL ×1.25 · HARD ×1.6) */
-  levelMul: number;
-  total: number;
-}
-
-export function xpForRun(score: number, near: number, finished: boolean, stars: number, inCup: boolean, levelMul = 1): XpGain {
-  const s = Math.floor(score / 1000);
-  const n = Math.floor(near / 10);
-  const mul = inCup ? 2 : 1;
-  const finish = finished ? 2 : 0;
-  const st = finished ? stars : 0;
-  return { score: s, near: n, finish, stars: st, cupMul: mul, levelMul, total: Math.round(((s + n) * mul + finish + st) * levelMul) };
-}
-
-/** the rank-star badge (inline SVG) */
-export const XPT = `<svg viewBox="0 0 24 24" class="xpt" aria-label="Rank stars"><path d="M12 1.8l3.05 6.3 6.9.95-5.03 4.83 1.24 6.86L12 17.47l-6.16 3.27 1.24-6.86L2.05 9.05l6.9-.95z" fill="#ffc21a" stroke="#8a5a00" stroke-width="1.2" stroke-linejoin="round"/><path d="M12 5.2l1.9 3.95" stroke="#fff6c8" stroke-width="1.2" stroke-linecap="round" opacity=".8"/></svg>`;
+/** the EXP logo: a rank shield with two rising chevrons (not a star — stars meant something else in v1) */
+export const XPT = `<svg viewBox="0 0 24 24" class="xpt" aria-label="EXP"><defs><linearGradient id="xpg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fe6ff"/><stop offset="1" stop-color="#7a4dff"/></linearGradient></defs><path d="M12 1.6l8.6 3.1v6.6c0 5.2-3.6 9.3-8.6 11.1C7 20.6 3.4 16.5 3.4 11.3V4.7z" fill="url(#xpg)" stroke="#1b1450" stroke-width="1.2" stroke-linejoin="round"/><path d="M7.6 12.6L12 8.6l4.4 4M7.6 16.6L12 12.6l4.4 4" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 /** small class badge (hex plate with the letters) */
 export function classBadge(c: RankClass, size = 'sm') {
