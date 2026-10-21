@@ -77,3 +77,13 @@ Status: **DONE in v2.1.0** (2026-10-22). G2 note: new per-world obstacles are ne
 1. F3 "Average EXP": shown on the pilot card only, or should rank / leaderboard use average too? (Design today: rank = best single run.)
 2. A8 special prices: SOS 1,200 · Roadster 1,800 · HYPER 4,000 OK?
 3. F10: name of the rank-C car? Cars B → AAA keep Volt / Phantom / Inferno / Nexus?
+
+## H. Round 3 — training (owner 2026-10-22 06:30) — chốt, chưa code
+- **H1.** No ad after a training / practice ends (`afterResults` must skip the interstitial when the finished run was training).
+- **H2.** Basic training: no Shield pickup on the road (remove the shield at 412 m), and its hint "Road power-ups: Shield, …" → mention only Magnet / Turbo / ×2.
+- **H3.** Basic training: remove the coin line at the very end (600–630 m) — the road just runs out to the finish.
+- **H4.** Training end card (basic + every special practice): add a **Home** button.
+- Found while checking (Claude):
+- **H5.** After a special practice, "Replay training" restarts the BASIC training → should replay the same practice (Roadster / HYPER / SOS).
+- **H6.** During training the HUD shows "EXP 0" and the daily-mission strip ("Play 3 races") — training earns nothing → hide the EXP box value / show "TRAINING", hide the mission strip.
+- **H7.** The end card text says "Race Endless" even after a special practice → for practices show "Back to the bag" / "Race" + "Home".
