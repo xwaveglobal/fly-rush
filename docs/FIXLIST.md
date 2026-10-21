@@ -118,3 +118,9 @@ Status: **DONE in v2.1.0** (2026-10-22). G2 note: new per-world obstacles are ne
   AAA Nexus + Mega Rush + AAA specials (Tunnel / Wall / Ghost / Rail) ·
   S Ocean Drive · SS Volcano Run · SSS Aurora Peak.
 - **K3.** Keep only the EXP conversion line (EXP = metres × Hard 2 · Normal 1.15 · Easy 1) and "EXP can't be bought"; the S/SS/SSS note is covered by the table.
+
+## L. Round 7 — Magic Bag (owner 2026-10-22 06:50) — chốt, chưa code
+- **L1.** Re-organise "what's in my bag": an **"In your bag"** row that always shows all 3 specials (SOS · Roadster · HYPER) with their count (×0 greyed out), so it is obvious what you own; "Get with coins" below; AAA teasers last.
+- **L2.** Starting items: **1 HYPER + 2 Roadster** for new players (existing players get the difference once as a gift).
+- **L3.** Tapping an owned special (pre-race pick) opens a **confirm popup**: "Take Roadster into this race?" → [Take it] / [Cancel].
+- **L4.** The empty option reads clearly: **"Race without a special"** (instead of "None").
