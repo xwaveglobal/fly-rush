@@ -1,0 +1,27 @@
+{
+  "name": "xwave-flying-run",
+  "private": true,
+  "version": "1.0.0",
+  "description": "XWAVE Flying Run \u2014 mobile-first 3D flying-car endless runner (Three.js + TypeScript + Vite)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc --noEmit && vite build",
+    "build:single": "tsc --noEmit && vite build --mode single",
+    "preview": "vite preview --host",
+    "typecheck": "tsc --noEmit",
+    "test:fairness": "node --experimental-transform-types --no-warnings tests/fairness.test.ts",
+    "test:difficulty": "node --experimental-transform-types --no-warnings tests/difficulty.test.ts",
+    "test": "npm run test:fairness && npm run test:difficulty && npm run test:air",
+    "test:air": "node --experimental-transform-types --no-warnings tests/airlane.test.ts"
+  },
+  "dependencies": {
+    "three": "0.169.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.169.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "vite-plugin-singlefile": "^2.0.3"
+  }
+}

@@ -1,0 +1,76 @@
+/**
+ * Daily live-ops: 7-day check-in calendar + 4 daily quests (reset at local
+ * midnight) that earn Daily Points toward 3 milestone chests.
+ */
+import { hashStr, rng } from './Leaderboard.ts';
+
+export type ItemKey = 'super' | 'hyper' | 'shield' | 'escape' | 'turbo' | 'magnet' | 'double' | 'life';
+/** start-of-run boosts unlocked by rank class (then bought with coins) */
+export const UNLOCK_BOOSTS: { k: ItemKey; cls: 'C' | 'B' | 'A' | 'AA'; price: number }[] = [
+  { k: 'turbo', cls: 'C', price: 150 },
+  { k: 'magnet', cls: 'B', price: 180 },
+  { k: 'double', cls: 'A', price: 260 },
+  { k: 'life', cls: 'AA', price: 400 },
+];
+export interface Reward {
+  coins?: number;
+  items?: Partial<Record<ItemKey, number>>;
+}
+
+export const CHECKIN: Reward[] = [
+  { coins: 100 },
+  { coins: 150 },
+  { items: { shield: 1, escape: 1 } },
+  { coins: 250 },
+  { items: { super: 1 }, coins: 100 },
+  { coins: 400 },
+  { items: { hyper: 1 }, coins: 500 },
+];
+
+export type QuestStat = 'runs' | 'coins' | 'distance' | 'near' | 'powerups' | 'jumps' | 'score' | 'finish' | 'rings';
+
+export interface Quest {
+  id: string;
+  text: string;
+  stat: QuestStat;
+  target: number;
+  /** 'sum' accumulates across runs today, 'max' needs it in one run */
+  mode: 'sum' | 'max';
+  pts: number;
+  coins: number;
+}
+
+const POOL: Quest[] = [
+  { id: 'runs3', text: 'Play 3 runs', stat: 'runs', target: 3, mode: 'sum', pts: 20, coins: 60 },
+  { id: 'coins150', text: 'Collect 150 coins', stat: 'coins', target: 150, mode: 'sum', pts: 25, coins: 80 },
+  { id: 'dist2k', text: 'Drive 2,000 m in total', stat: 'distance', target: 2000, mode: 'sum', pts: 25, coins: 80 },
+  { id: 'near12', text: 'Get 12 near misses', stat: 'near', target: 12, mode: 'sum', pts: 25, coins: 80 },
+  { id: 'power4', text: 'Grab 4 power-ups', stat: 'powerups', target: 4, mode: 'sum', pts: 25, coins: 80 },
+  { id: 'jump1', text: 'Use a Roadster Jump', stat: 'jumps', target: 1, mode: 'sum', pts: 30, coins: 100 },
+  { id: 'score3k', text: 'Score 3,000 in one run', stat: 'score', target: 3000, mode: 'max', pts: 30, coins: 100 },
+  { id: 'finish1', text: 'Finish any track', stat: 'finish', target: 1, mode: 'sum', pts: 30, coins: 120 },
+  { id: 'rings6', text: 'Fly through 6 energy rings', stat: 'rings', target: 6, mode: 'sum', pts: 25, coins: 80 },
+];
+
+/** Same 4 quests for everyone on a given day. */
+export function questsFor(day: string): Quest[] {
+  const r = rng(hashStr(`daily-${day}`));
+  const pool = [...POOL];
+  const out: Quest[] = [pool.splice(0, 1)[0]]; // "Play 3 runs" is always there
+  while (out.length < 4) out.push(pool.splice(Math.floor(r() * pool.length), 1)[0]);
+  return out;
+}
+
+export const CHESTS: { pts: number; reward: Reward }[] = [
+  { pts: 30, reward: { coins: 150 } },
+  { pts: 70, reward: { coins: 200, items: { super: 1, escape: 1 } } },
+  { pts: 100, reward: { coins: 400, items: { super: 2 } } },
+];
+
+export const rewardText = (r: Reward) => {
+  const parts: string[] = [];
+  if (r.coins) parts.push(`${r.coins.toLocaleString('en-US')} coins`);
+  const names: Record<ItemKey, string> = { super: 'Roadster Jump', hyper: 'HYPER JUMP', shield: 'Start Shield', escape: 'Sky Escape', turbo: 'Turbo Start', magnet: 'Coin Magnet', double: '×2 Coins', life: 'Extra Life' };
+  for (const [k, n] of Object.entries(r.items ?? {})) if (n) parts.push(`${names[k as ItemKey]} ×${n}`);
+  return parts.join(' + ');
+};

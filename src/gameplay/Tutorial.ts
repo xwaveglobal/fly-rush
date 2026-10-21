@@ -1,0 +1,275 @@
+import type { WorldId } from './Spawner.ts';
+import type { Action } from '../core/Input.ts';
+import { HEIGHT } from '../config.ts';
+import { rowMasks } from './ObstacleRules.ts';
+import type { ObstacleSpec, PickupSpec, RowSpec } from './types.ts';
+
+/** One guided gesture: the game slows almost to a stop until the player does it. */
+export interface TutorialStep {
+  dist: number;
+  /** gesture to wait for ('sos' = tap the Sky Escape button) */
+  need: Action | 'sos' | 'rocket';
+  title: string;
+  sub: string;
+  /** seconds before the obstacle when the prompt appears */
+  lead: number;
+  /** this UP fires the Roadster Jump */
+  super?: boolean;
+}
+
+export const TUTORIAL_LENGTH = 640;
+
+export const TUTORIAL_STEPS: TutorialStep[] = [
+  { dist: 80, need: 'left', title: 'SWIPE LEFT', sub: 'One swipe moves exactly one lane. Dodge the crates!', lead: 0.8 },
+  { dist: 160, need: 'right', title: 'SWIPE RIGHT', sub: 'Back to the middle lane.', lead: 0.8 },
+  { dist: 245, need: 'up', title: 'SWIPE UP', sub: 'Hop over the barriers. One hop, then the car lands by itself.', lead: 0.5 },
+  { dist: 330, need: 'down', title: 'SWIPE DOWN', sub: 'Tuck the wheels in and slide under the beams.', lead: 0.42 },
+  { dist: 455, need: 'left', title: 'GRAB THE ROCKET', sub: 'The purple rocket is a ROADSTER JUMP. Swipe left into its lane.', lead: 0.8 },
+  { dist: 545, need: 'rocket', title: 'TAP ROADSTER!', sub: 'Cars block EVERY lane — too tall to hop. Tap the purple ROADSTER button to rocket over both rows!', lead: 0.6, super: true },
+];
+
+/** Short info captions shown without pausing. */
+export const TUTORIAL_HINTS: { dist: number; text: string }[] = [
+  { dist: 8, text: 'Your XWAVE drives on its wheels. Watch the road ahead!' },
+  { dist: 352, text: 'Collect energy coins for points' },
+  { dist: 404, text: 'Power-ups: Shield, Magnet, Turbo, 2X, Extra life' },
+  { dist: 470, text: 'Rocket stored! Look at the purple chip on the left' },
+  { dist: 590, text: 'Roadster Jumps appear on the road after 250 m' },
+];
+
+const row = (dist: number, obstacles: ObstacleSpec[]): RowSpec => ({ dist, dt: 1, masks: rowMasks(obstacles), obstacles });
+
+/** Hand-built practice road: crates (left), crates (right), barriers (up), beams (down), coins, a shield. */
+export function tutorialScript(): { rows: RowSpec[]; pickups: PickupSpec[] } {
+  const rows = [
+    row(80, [{ type: 'crate', lane: 1, variant: 0 }, { type: 'crate', lane: 2, variant: 1 }]),
+    row(160, [{ type: 'crate', lane: 0, variant: 2 }, { type: 'crate', lane: 2, variant: 3 }]),
+    row(245, [0, 1, 2].map((lane) => ({ type: 'barrier' as const, lane, variant: 0 }))),
+    row(330, [0, 1, 2].map((lane) => ({ type: 'beam' as const, lane, variant: 0 }))),
+    row(455, [{ type: 'crate', lane: 1, variant: 0 }, { type: 'crate', lane: 2, variant: 2 }]),
+    // two walls of cars across the whole road: only the rocket clears them
+    row(545, [0, 1, 2].map((lane) => ({ type: 'traffic' as const, lane, variant: lane === 1 ? 4 : lane }))),
+    row(561, [0, 1, 2].map((lane) => ({ type: 'traffic' as const, lane, variant: lane === 0 ? 4 : lane + 1 }))),
+  ];
+  const pickups: PickupSpec[] = [];
+  for (let d = 30; d <= 66; d += 6) pickups.push({ kind: 'coin', lane: 1, dist: d, y: HEIGHT.NORMAL });
+  for (let d = 360; d <= 396; d += 4) pickups.push({ kind: 'coin', lane: 1, dist: d, y: HEIGHT.NORMAL });
+  pickups.push({ kind: 'shield', lane: 1, dist: 412, y: HEIGHT.NORMAL });
+  pickups.push({ kind: 'super', lane: 0, dist: 462, y: HEIGHT.NORMAL });
+  for (let d = 600; d <= 630; d += 5) pickups.push({ kind: 'coin', lane: 0, dist: d, y: HEIGHT.NORMAL });
+  return { rows, pickups };
+}
+
+// ============================================================================
+// ADVANCED TRAINING — a guided tour of every obstacle used in one world
+// ============================================================================
+
+export interface TrainingScript {
+  rows: RowSpec[];
+  pickups: PickupSpec[];
+  steps: TutorialStep[];
+  hints: { dist: number; text: string }[];
+  length: number;
+  /** boosts handed out at the start (boost trainings) */
+  grant?: { super?: number; hyper?: number; escape?: number; shield?: boolean };
+  /** obstacles really hit (shield training: watch the shield absorb one) */
+  vulnerable?: boolean;
+  title?: string;
+}
+
+type Lesson = (lane: number, at: number) => { rows: RowSpec[]; step?: Omit<TutorialStep, 'dist'>; hint?: string; lane: number };
+
+/** the free neighbour lane (prefers moving toward the middle) */
+const side = (lane: number) => (lane === 0 ? 1 : lane === 2 ? 1 : 2);
+const dirTo = (from: number, to: number): Action => (to < from ? 'left' : 'right');
+
+const LESSONS: Record<string, Lesson> = {
+  crate: (lane, at) => ({
+    rows: [row(at, [{ type: 'crate', lane, variant: 1 }])],
+    step: { need: 'up', title: 'CRATE', sub: 'Low cargo box: hop over it (or change lane).', lead: 0.5 },
+    lane,
+  }),
+  barrier: (lane, at) => ({
+    rows: [row(at, [0, 1, 2].map((l) => ({ type: 'barrier' as const, lane: l, variant: 0 })))],
+    step: { need: 'up', title: 'ENERGY BARRIER', sub: 'Orange force field at road level: only a hop clears it.', lead: 0.5 },
+    lane,
+  }),
+  beam: (lane, at) => ({
+    rows: [row(at, [0, 1, 2].map((l) => ({ type: 'beam' as const, lane: l, variant: 0 })))],
+    step: { need: 'down', title: 'BEAM', sub: 'Heavy block with a red underside: swipe DOWN and slide under.', lead: 0.42 },
+    lane,
+  }),
+  traffic: (lane, at) => {
+    const to = side(lane);
+    return {
+      rows: [row(at, [{ type: 'traffic', lane, variant: 1 }])],
+      step: { need: dirTo(lane, to), title: 'ONCOMING TRAFFIC', sub: 'Red chevrons = a car racing toward you. It is too tall to hop: follow the GREEN arrow.', lead: 1.0 },
+      lane: to,
+    };
+  },
+  drone: (lane, at) => {
+    // from the middle: the drone sweeps lanes 0–1 → move right; from an edge it sweeps your lane → hop
+    const pair: [number, number] = lane === 1 ? [0, 1] : lane === 0 ? [0, 1] : [1, 2];
+    const target = lane === 1 ? 2 : lane;
+    const need: Action = target === lane ? 'up' : dirTo(lane, target);
+    return {
+      rows: [row(at, [{ type: 'drone', lane: pair[0], lane2: pair[1], variant: 0 }])],
+      step: {
+        need,
+        title: 'HUNTER DRONE',
+        sub: need === 'up' ? 'It slides across the amber zone (⇄). Hop over it!' : 'It slides across the amber zone (⇄). Move to the lane with the GREEN arrow.',
+        lead: need === 'up' ? 0.5 : 0.9,
+      },
+      lane: target,
+    };
+  },
+  platform: (lane, at) => {
+    const pair: [number, number] = lane === 0 ? [0, 1] : [1, 2];
+    return {
+      rows: [row(at, [{ type: 'platform', lane: pair[0], lane2: pair[1], variant: 1 }])],
+      step: { need: 'up', title: 'SLIDING PLATFORM', sub: 'A floating slab sweeps across the amber zone. Hop over it.', lead: 0.5 },
+      lane,
+    };
+  },
+  ring: (lane, at) => ({
+    rows: [row(at, [{ type: 'ring', lane, variant: 0 }])],
+    hint: 'ENERGY RING ahead: drive through it on the road for bonus points — don\'t jump!',
+    lane,
+  }),
+  laserLow: (lane, at) => ({
+    rows: [row(at, [{ type: 'laser', lane: 0, laser: ['low', 'low', 'low'], variant: 0 }])],
+    step: { need: 'up', title: 'LOW LASERS', sub: 'Red beams near the road: hop over them.', lead: 0.5 },
+    lane,
+  }),
+  laserHigh: (lane, at) => ({
+    rows: [row(at, [{ type: 'laser', lane: 0, laser: [0, 1, 2].map((l) => (l === lane ? 'high' : 'low')) as [LaserModeT, LaserModeT, LaserModeT], variant: 0 }])],
+    step: { need: 'down', title: 'HIGH LASERS', sub: 'Beams from knee height up in your lane: swipe DOWN and duck under.', lead: 0.42 },
+    lane,
+  }),
+  laserBlock: (lane, at) => {
+    const to = side(lane);
+    const cfg: [LaserModeT, LaserModeT, LaserModeT] = ['block', 'block', 'block'];
+    cfg[to] = 'open';
+    return {
+      rows: [row(at, [{ type: 'laser', lane: 0, laser: cfg, variant: 0 }])],
+      step: { need: dirTo(lane, to), title: 'LASER WALL', sub: 'Full wall of beams. Only the lane with the GREEN arrow is open.', lead: 0.9 },
+      lane: to,
+    };
+  },
+  gate: (lane, at) => {
+    const to = side(lane);
+    return {
+      rows: [row(at, [{ type: 'gate', lane: 1, door: to, variant: 0 }])],
+      step: { need: dirTo(lane, to), title: 'MEGA GATE', sub: 'A wall across the road with ONE open door (green frame). Line up with it.', lead: 1.1 },
+      lane: to,
+    };
+  },
+  asteroid: (lane, at) => {
+    const to = side(lane);
+    return {
+      rows: [row(at, [{ type: 'asteroid', lane, variant: 0 }])],
+      step: { need: dirTo(lane, to), title: 'ASTEROID', sub: 'Huge rock — too big to hop or duck. Change lane!', lead: 0.9 },
+      lane: to,
+    };
+  },
+  wall3: (lane, at) => ({
+    rows: [row(at, [0, 1, 2].map((l) => (l === lane ? { type: 'beam' as const, lane: l, variant: 0 } : { type: 'crate' as const, lane: l, variant: 2 })))],
+    step: { need: 'down', title: 'TRIPLE WALL', sub: 'Every lane is blocked: a beam in yours → slide under.', lead: 0.42 },
+    lane,
+  }),
+};
+type LaserModeT = 'low' | 'high' | 'block' | 'open';
+
+export const WORLD_LESSONS: Record<WorldId, { name: string; lessons: string[] }> = {
+  city: { name: 'Future City', lessons: ['crate', 'traffic', 'beam', 'barrier', 'ring'] },
+  tunnel: { name: 'Neon Tunnel', lessons: ['barrier', 'laserLow', 'beam', 'laserHigh', 'ring', 'laserBlock'] },
+  cloud: { name: 'Cloud City', lessons: ['crate', 'platform', 'ring', 'beam', 'traffic'] },
+  space: { name: 'Space Zone', lessons: ['asteroid', 'laserLow', 'asteroid', 'ring', 'crate'] },
+  mega: { name: 'XWAVE Megacity', lessons: ['traffic', 'gate', 'laserHigh', 'laserBlock', 'beam'] },
+};
+
+export function advancedScript(world: WorldId): TrainingScript {
+  const rows: RowSpec[] = [];
+  const steps: TutorialStep[] = [];
+  const hints: { dist: number; text: string }[] = [{ dist: 8, text: `${WORLD_LESSONS[world].name}: meet every obstacle of this world` }];
+  const pickups: PickupSpec[] = [];
+  let lane = 1;
+  let at = 90;
+  for (const key of WORLD_LESSONS[world].lessons) {
+    const l = LESSONS[key](lane, at);
+    rows.push(...l.rows);
+    if (l.step) steps.push({ dist: at, ...l.step });
+    if (l.hint) hints.push({ dist: at - 60, text: l.hint });
+    lane = l.lane;
+    // a few coins in the lane you end up in, as a reward
+    for (let k = 1; k <= 4; k++) pickups.push({ kind: 'coin', lane, dist: at + 10 + k * 5, y: HEIGHT.NORMAL });
+    at += 95;
+  }
+  return { rows, pickups, steps, hints, length: at + 10 };
+}
+
+export function basicScript(): TrainingScript {
+  const s = tutorialScript();
+  return { ...s, steps: TUTORIAL_STEPS, hints: TUTORIAL_HINTS, length: TUTORIAL_LENGTH };
+}
+
+// ============================================================================
+// BOOST TRAININGS — one short practice road per boost, opened from its info card
+// ============================================================================
+export type BoostKind = 'super' | 'hyper' | 'escape' | 'shield';
+
+const carWall = (dist: number, truckLane: number): RowSpec =>
+  row(dist, [0, 1, 2].map((lane) => ({ type: 'traffic' as const, lane, variant: lane === truckLane ? 4 : lane })));
+
+export function boostScript(kind: BoostKind): TrainingScript {
+  const hints: { dist: number; text: string }[] = [];
+  const pickups: PickupSpec[] = [];
+  switch (kind) {
+    case 'super':
+      hints.push({ dist: 10, text: 'You hold 1 ROADSTER JUMP (purple chip on the left)' }, { dist: 200, text: 'Landing shockwave clears the road ahead — safe touch-down' });
+      for (let d = 220; d <= 250; d += 5) pickups.push({ kind: 'coin', lane: 1, dist: d, y: HEIGHT.NORMAL });
+      return {
+        title: 'ROADSTER JUMP',
+        rows: [carWall(140, 1), carWall(156, 0)],
+        pickups,
+        steps: [{ dist: 140, need: 'rocket', title: 'TAP ROADSTER!', sub: 'Cars block every lane. Tap the purple ROADSTER button: rocket 5.6 m over both rows.', lead: 0.6, super: true }],
+        hints,
+        length: 270,
+        grant: { super: 1 },
+      };
+    case 'hyper':
+      hints.push({ dist: 10, text: 'Mythic HYPER JUMP ready (gold chip) — used before Roadster Jumps' }, { dist: 230, text: '+1,000 score and +25 coins at the apex of every HYPER JUMP' });
+      return {
+        title: 'HYPER JUMP',
+        rows: [carWall(140, 1), carWall(156, 2), carWall(172, 0)],
+        pickups,
+        steps: [{ dist: 140, need: 'rocket', title: 'TAP HYPER!', sub: 'Three walls of cars: tap the gold HYPER button — 7.4 m high, double roll, golden trail.', lead: 0.6, super: true }],
+        hints,
+        length: 300,
+        grant: { hyper: 1 },
+      };
+    case 'escape':
+      hints.push({ dist: 10, text: 'SKY ESCAPE ready — the red SOS button (or E key)' }, { dist: 260, text: 'Use it when there is no other way out' });
+      return {
+        title: 'SKY ESCAPE',
+        rows: [carWall(140, 1), carWall(156, 0), carWall(172, 2), carWall(188, 1)],
+        pickups,
+        steps: [{ dist: 140, need: 'sos', title: 'TAP SOS!', sub: 'A whole convoy blocks the road. Tap the red SOS button: straight up, cruise, glide down.', lead: 0.9 }],
+        hints,
+        length: 330,
+        grant: { escape: 1 },
+      };
+    case 'shield':
+      hints.push({ dist: 10, text: 'START SHIELD on: the blue bubble absorbs ONE hit' }, { dist: 90, text: 'Crates in every lane — just drive into them!' }, { dist: 170, text: 'Shield popped — you are safe. Next hit would cost a life' });
+      return {
+        title: 'START SHIELD',
+        rows: [row(140, [0, 1, 2].map((lane) => ({ type: 'crate' as const, lane, variant: lane })))],
+        pickups,
+        steps: [],
+        hints,
+        length: 220,
+        grant: { shield: true },
+        vulnerable: true,
+      };
+  }
+}

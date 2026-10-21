@@ -1,2 +1,474 @@
-# sky-roadster
-game sky-roadster
+# Sky Roadster
+
+Sky Roadster (formerly "XWAVE Flying Run") is a high-speed 3D endless runner. Pilot the XWAVE flying car through a neon sky-city: swipe left or right to switch lanes, up to fly over barriers, down to dive under beams. Collect energy coins, grab shields, magnets and turbo boosts, and chain near misses for combo points. Race five tracks from Future City to the XWAVE Megacity, or go Endless and chase your best score.
+
+**Stack:** Three.js r169 · TypeScript · Vite · WebGL · zero runtime CDNs (every model, texture and sound is generated procedurally and can be swapped for real files).
+
+---
+
+## Quick start
+
+```bash
+npm install
+npm run dev          # http://localhost:5173 (also on your LAN; open it on your phone)
+```
+
+Production build:
+
+```bash
+npm run build        # typecheck + dist/ (static files, host anywhere)
+npm run preview      # serve dist/ locally
+npm run build:single # dist/index.html with everything inlined (one shareable file)
+```
+
+No Vite? `node scripts/build-esbuild.mjs [--single]` builds with esbuild alone (output in `dist-esbuild/`).
+
+Tests:
+
+```bash
+npm run test:fairness   # obstacle fairness + movement state-machine tests (Node 22+)
+npm run typecheck
+```
+
+## Controls
+
+| Action | Touch | Keyboard |
+|---|---|---|
+| Move one lane left / right | swipe ← / → | ← / → or A / D |
+| **Fly up** (clear low obstacles) | swipe ↑ | ↑ / W / Space |
+| **Fly down** (pass under beams) | swipe ↓ | ↓ / S |
+| **Air Dash** (with charges, while airborne): cross 2 lanes with a flip | swipe ← / → in the air | ← / → in the air |
+| **Sky Escape** (emergency item) | SOS button | E / Enter |
+| Pause | ⏸ button | Esc / P |
+
+Swipes fire the moment your finger passes the threshold (not on release), and one drag can chain gestures (e.g. left, then up).
+
+URL flags: `?debug` (FPS, draw calls, state readout, hitbox wireframes) · `?autopilot` (bot plays; good for demos and soak tests) · `?manual` (time only advances through `window.__xwave.advance(s)`, used by automated browser tests) · `?noauto` (disable automatic quality downgrade).
+
+## Gameplay
+
+- **3 lanes × 3 heights** (LOW / NORMAL / HIGH). Lane changes are allowed at any height.
+- **Fly up:** anticipation dip → launch (wings deploy, thrusters swing straight down, engines flare, blue plasma column) → hold → smooth descent.
+- **Fly down:** small hop → drop and compress, thrusters tuck back and turn orange → hold → spring back up.
+- **Interruption rules:** UP while high extends the hold; DOWN while high is a fast dive (and vice-versa); a second lane swipe mid-slide retargets immediately; inputs during an anticipation are buffered (160 ms).
+- **Scoring:** distance, coins, near misses (+50), ring fly-throughs (+100), dodges, combo multiplier (+0.5× every 10 dodges, up to 4×), missions.
+- **Speed** ramps from 76 to 166 km/h over distance; obstacle density and pattern complexity rise with it.
+- **Worlds** change every 1,000 m through a glowing portal: Future City → Neon Tunnel → Cloud City → Space Zone → XWAVE Megacity → loop.
+
+### Speed levels (home screen)
+
+| Level | For | Speed | Obstacle spacing | Score |
+|---|---|---|---|---|
+| EASY | new players | ×0.78 (≈ 59–129 km/h) | +20 % | ×0.8 |
+| NORMAL | regular players | ×1 (≈ 76–166 km/h) | — | ×1 |
+| HARD | experts | ×1.18 (≈ 89–195 km/h) | −8 % | ×1.3 |
+
+Every level passes the same fairness test (no unavoidable patterns). The choice is saved and applies to Endless and every track.
+
+### How the car moves
+
+- **On the road** the four pods stand up as wheels and roll with the speed: the car drives like a car, with a light road vibration and no thruster flames or air columns.
+- **Lane changes:** one swipe = exactly one lane. A swipe during a slide is queued and runs once the car has settled, so it never stops between lanes. One touch = one gesture.
+- **Wheels:** chrome five-twin-spoke rims with a blue light ring, treaded tyres and a motion-blur disc that fades in with speed.
+- **Fly up = one hop:** only possible with the wheels on the road. The pods flip into thrusters and blow air *upward* around the car, it rises, hovers for one beat and lands by itself. UP while airborne is ignored and there is a 0.12 s rest after landing, so spamming UP can't keep the car flying (tested: max 0.97 s airborne under constant spam).
+- **Landing:** the pods turn back into wheels and vent smoke and air that rolls out along the road, with an air-release sound.
+- **Fly down:** the wheels tuck into the body and the car drops onto its belly, throwing a few sparks.
+
+### First-run training
+
+The first PLAY opens **Pilot Training**: an intro card explaining the moves, then a short scripted practice road. Before each obstacle the game slows almost to a stop and shows an animated swipe prompt (6 steps: left, right, up, down, grab the rocket, Roadster Jump over two walls); only the right gesture continues. The player can't crash, and the result is saved. Settings → *How to play* replays it.
+
+**Advanced training** (same screen, 5 world tiles): a guided tour of every obstacle used in that world — e.g. Neon Tunnel: barrier, low lasers, beam, high lasers, ring, laser wall; Megacity: traffic, mega gate, high lasers, triple wall, laser wall, beam. Each obstacle gets its own slowed-down prompt and explanation. Lessons: `WORLD_LESSONS` in `src/gameplay/Tutorial.ts`.
+
+**Danger arrows** (Settings, on by default): ~0.85 s before an unavoidable hit, a big arrow shows the move that saves you (stay-in-lane moves first: ↓ or ↑, else the open lane; "TAP SOS" when only the Sky Escape can help).
+
+### Game modes
+
+**PLAY** opens the track select screen:
+
+| Track | World | Length | Sections |
+|---|---|---|---|
+| ∞ Endless | all 5, rotating every 1,000 m | no finish | — |
+| 1 Future City | Future City | 3,200 m | Start Area → City Highway → Obstacle Zone → Ring Tunnel → Sky Bridge → Laser Gate → Jump Section → Mega Structure → Final Sprint |
+| 2 Neon Tunnel | Neon Tunnel | 2,400 m | Tunnel Entry → Laser Corridor → Ring Run → Overdrive |
+| 3 Cloud City | Cloud City | 2,800 m | Cloud Gate → Floating Platforms → Sky Bridges → Drone Swarm |
+| 4 Space Zone | Space Zone | 3,000 m | Launch → Asteroid Belt → Orbital Highway → Meteor Storm |
+| 5 XWAVE Megacity | XWAVE Megacity | 3,600 m | HQ Approach → Rush Hour → Security Gates → Tower Run → XWAVE Finale |
+
+Tracks run between a START and a FINISH gate. Each section changes the obstacle mix (e.g. Laser Gate = mostly laser gates), later tracks start faster and denser, and the HUD shows section name and progress. Finishing awards up to 3 stars (finish · no lives lost · coin target) and a coin reward; best stars and scores are saved per track. Track definitions live in `src/gameplay/Courses.ts` — add a track by adding an entry. All tracks are open from the start.
+
+### Obstacles
+
+Every obstacle has a bright outline/glow. **Moving obstacles get road guides**: oncoming traffic paints red chevrons in its lane; sweeping drones/platforms paint an amber ⇄ zone with a floating "⇠ ⇢" sign; a **green arrow** marks each lane that is open at driving height (`src/render/Guides.ts`). The hunter drone was rebuilt at hitbox size with a red warning ring, searchlight and a red spot on the road under it.
+
+| Obstacle | How to pass |
+|---|---|
+| Cargo crate | change lane or fly up |
+| Energy barrier | fly up |
+| Overhead beam | fly down |
+| Drone (sweeps 2 lanes) | change lane or fly up |
+| Laser gate (per lane: low / high / full / open) | right lane or right height |
+| Flying traffic (oncoming) | change lane |
+| Energy ring | fly through the centre (not HIGH): bonus |
+| Moving platform (slides 2 lanes) | timing, or fly up |
+| Asteroid (Space Zone) | change lane |
+| Mechanical gate (one open door) | be in the door lane, not HIGH |
+
+### Power-ups
+
+Energy Coin · **Shield** (absorbs one hit) · **Magnet** (pulls coins) · **Turbo Boost** (×1.55 speed, smashes obstacles, grace period after) · **Double Score** · **Extra Life** (respawn instead of game over, max 3). Each has a 3D pickup, burst VFX, sound and a HUD chip with a countdown ring.
+
+**Roadster Jump** (purple rocket, appears after 250 m, stack max 2): the next swipe UP fires a rocket-assisted super jump to ~5.6 m that clears two rows of obstacles, with a full barrel roll at the apex. The car is invulnerable during the flight + 0.5 s; swipe DOWN cancels it early. Timings: `TIMING.super*`, height: `HEIGHT.SUPER`.
+
+**Air Dash** (teal », road pickup after 150 m, +2 charges, max 3): while airborne a sideways swipe crosses **two lanes** (edge → edge) with a quick flip; the hop is extended until the dash lands. Normal jumps can always shift one lane in the air.
+
+**Sky Escape** (red SOS item, road pickup after 400 m, or from the item inventory): tap the SOS button (or E) at any moment — the car rockets straight up to ~9.6 m, cruises 3 s above every obstacle and glides back down. Landing ends with the same shockwave.
+
+**Car blockade** (Roadster showcase): while you hold a Roadster/HYPER charge, about every 520 m a double wall of cars (a white semi truck flanked by cars) blocks all three lanes, like the stunt reference video — only a rocket jump clears it. A toast warns ~120 m ahead and the danger arrow says ↑. If the charge is gone before you get there, the blockade is removed, so it can never cause an unfair crash. The basic training's last step practises exactly this.
+
+**HYPER JUMP** (mythic, gold rocket — cup prize, check-in day 7, shop): 7.4 m, double barrel roll, golden trail, +1,000 score and +25 coins at the apex. All rocket jumps end in a **landing shockwave** that clears ~26 m of road so the touch-down is always fair.
+
+## Live-ops
+
+| Feature | Where | Notes |
+|---|---|---|
+| **Daily check-in** | Home → Daily | 7-day calendar (day 7 = HYPER JUMP); missing a day restarts at day 1 |
+| **Daily quests** | Home → Daily | 4 per day (same for everyone, seeded by date), points → 3 chests (30/70/100 pts) |
+| **Cups (tournaments)** | Home → Cups, live strip on home | back-to-back 72 h cups on a fixed schedule (5 rotating tracks); best score while live counts; prizes: #1 Gold + HYPER ×5 + 5,000 coins … everyone: Roadster ×1 + 150 coins; results are collected on the next home visit |
+| **Leaderboard** | Home → Ranks / profile chip | This week / All time; your row is highlighted and pinned with "score X to reach #N" |
+| **Boosts** | Track select | equip owned Roadster / HYPER / Sky Escape / Start Shield for the next run |
+
+> **Sample data:** rival pilots on leaderboards and cups are generated deterministically (`src/meta/Leaderboard.ts`, `Events.ts`) so the game feels alive offline; the local player's real scores are ranked against them. A small note says so (`SAMPLE_BOARD_NOTE` in `UI.ts`). Replace `sampleBoard()` with your backend before a public launch.
+
+## In-app purchases
+
+`src/meta/Shop.ts` — products + a `Store` interface. The default **DemoStore** shows a confirmation sheet ("demo — no payment is taken").
+
+| SKU | Price | Content |
+|---|---|---|
+| `starter_pack` | $1.99 (once) | 3,000 coins, 3 Roadster, 1 HYPER, no interstitials |
+| `xwave_pass` | $4.99 / 30 days | daily 300 coins + Roadster, ×2 quest coins, gold name |
+| `no_ads` | $2.99 | removes interstitials (rewarded stay optional) |
+| `jump_bundle` | $2.99 | 5 Roadster + 2 HYPER |
+| `escape_3` | $1.99 | 3 Sky Escapes |
+| `hyper_3` | $3.99 | 3 HYPER JUMPs |
+| `coins_s/m/l/xl` | $0.99–19.99 | 1,200 – 32,000 coins |
+
+Upsell touchpoints: wallet "+" (everywhere), Continue screen when coins are short, Garage "Need N more · Get coins", Boost tiles with 0 owned. To go live, implement `Store.purchase()` with Google Play Billing / StoreKit (Capacitor plugin) or a web checkout, verify receipts server-side, and grant from the server.
+
+## Ads (rewarded + interstitial)
+
+All ad logic is in `src/ads/Ads.ts` (placements + caps in the `ADS` object). Without an ad SDK a **demo ad overlay** is shown so every placement can be tested.
+
+| Placement | Type | Where | Reward |
+|---|---|---|---|
+| `continue` | rewarded | "CONTINUE?" overlay after the last life (7 s countdown) | respawn in place, keep score; max 2 per run, or pay coins (300, ×2 each use) |
+| `double_coins` | rewarded | Game Over / Track Finish | ×2 coins of the run |
+| `free_coins` | rewarded | Home | +100 coins, 5 per day |
+| `head_start` | rewarded | Track select | next run starts with Shield + 1 Roadster Jump |
+| `between_runs` | interstitial | leaving the results screen | only from run 3, every 3 runs, ≥ 120 s apart, never within 60 s after a rewarded ad, never in the tutorial |
+
+Enable Google H5 Games Ads (AdSense for Games) by adding to `index.html` `<head>`:
+
+```html
+<script async data-adbreak-test="on"
+  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
+  crossorigin="anonymous"></script>
+<script>
+  window.adsbygoogle = window.adsbygoogle || [];
+  var adBreak = adConfig = function (o) { adsbygoogle.push(o); };
+  adConfig({ preloadAdBreaks: 'on', sound: 'on' });
+</script>
+```
+
+When `window.adBreak` exists the game uses it automatically (remove `data-adbreak-test` for production). For portals (Poki, CrazyGames) or an app-store wrapper (AdMob), implement the small `AdProvider` interface in `Ads.ts`.
+
+### Meta
+
+Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
+
+## v1.14 changes
+
+**Panels fit the phone**
+- Every overlay was measured at 375×640 and now fits on its own; anything still too tall shrinks to fit.
+- Settings: 6 toggles in a 2-column grid, a language row and 4 small buttons. Name and avatar moved to the profile.
+- Roadster guide, rank guide, pilot training, boost info and profile were all tightened.
+
+**Loading screen**
+- Full key-art screen, with the logo kept visible at the top.
+- Progress bar sits on a soft bottom gradient.
+- Stays up for at least 2.2 s.
+
+**Jump feel**
+- A normal hop now rises higher on screen (visual peak 3.35 instead of 2.85). The camera follows the hop only a little, so the car clearly clears the obstacle.
+- While it is above the obstacles, the car is drawn over them, so it no longer looks like it passes through.
+- Ducking keeps the wheels on the road: the body squashes instead of sinking into the asphalt.
+
+**Wheels and visuals**
+- The rear-render tyres roll: tread bands scroll with road speed, plus a light speed sheen.
+- The car's brightness gain is lowered, so it no longer blooms or looks soft.
+
+**Languages**
+- English, Français, 日本語, Português (BR), Deutsch and Español (`src/ui/i18n.ts`).
+- Pick one from the flag button next to Settings, or from Settings ▸ Language.
+- Fixed UI labels are translated; dynamic sentences stay in English.
+
+## v1.13 changes
+
+**XWAVE X1 drawn from the studio renders**
+- The rear view (`src/assets/images/car/x1-back.webp`) is cut out of the checkerboard.
+- 7 more views come from the design sheet (front, back and both sides, plus the four 45° corners), with 2 corner views mirrored.
+- The car is a camera-facing billboard that picks the view by viewing angle. Racing always uses the high-res rear view, which banks and barrel-rolls with the car.
+- A soft contact shadow sits under the car.
+- The other GT colourways recolour the body paint in the shader.
+
+**Home screen**
+- Popups now sit above everything, with a dimmed and blurred background.
+- Shop moved next to Garage (Garage · Shop · Missions).
+- Share took Shop's place at the top of the right rail.
+
+## v1.12 changes: Sky Roadster
+
+**Branding**
+- New name: Sky Roadster.
+- New logo, with its white background removed.
+- Full-screen loading art.
+- New app icon (1024 px, plus 512, 192, 180, 32 and maskable sizes).
+
+**Rank** is shown with a gold star.
+
+**No scrolling on phones**
+- Every overlay panel shrinks to fit the screen.
+- The result screens are compact: one row of 4 stats, a single coins line with its breakdown, a single rank line with the class bar, and chips for week, cup and quests.
+
+**Crash tips**
+- After a crash, `CrashTip.ts` works out the move that would have passed: hop, duck, the open lane, or SOS.
+- The tip shows on respawn, on the continue screen and on game over.
+
+**Vibration**
+- One short pulse on hop, landing, flip, Roadster, HYPER, Sky Escape, turbo and crash.
+- Can be switched off in Settings ▸ Vibration.
+
+**Shield**: a soft cloud of light motes hugging the car's shape. No flicker.
+
+**XWAVE X1 v2 car**
+- Smooth body lofted from cross-sections, with the wheels inside the fenders.
+- Black glass canopy, full-width red light bar, XWAVE rear panel, finned diffuser.
+- Wheel spin is readable and the blur is light.
+- The hidden fans puff air only on take-off and landing. A continuous jet appears only on rocket flights.
+
+**Popups** (rewards in coins)
+
+| Popup | How it's opened |
+|---|---|
+| Entry reward (300) | Side button |
+| Launch reward (300) | Side button |
+| Share (300 per day) | Side button |
+| Invite (100) | Link in the Share popup |
+| Rate us | Asked once after 8 runs; no reward |
+| Add to screen | From Launch, uses the install prompt where supported |
+| No connection | When the device goes offline |
+| Daily | Unchanged |
+| Watch-ad | Unchanged |
+| Welcome back | Unchanged |
+
+**Home screen**
+- The guide is now a small tutorial icon next to Settings.
+- The Free button is removed.
+- The speed tooltip floats above the menu.
+
+## v1.11 changes: eye comfort, controls, X rank points, reward popups, player DB
+
+**Nothing flashes, ever.**
+- Removed: full-screen flashes, the shield shimmer and blink, the invulnerability blink, turbo/boost glow on the car and bloom spikes, magnet pulse rings, the finish rings, street-lamp glow halos, and every looping CSS pulse/blink.
+- Protection now shows as a steady soft bubble that fades smoothly in its last 2 s, plus the HUD chip.
+
+**Controls**
+- Landing is responsive. An UP swipe made in the last 0.34 s before touchdown fires the moment the wheels land, with only a 0.03 s rest instead of 0.12 s.
+- A lane swipe made just before landing steers on touchdown.
+- Training: the car only takes input when a training prompt is on screen.
+- The Roadster / HYPER Jump has its own HUD button (keys R or Shift). A swipe UP is always a normal hop.
+- If a training step needs a rocket you don't hold, a sheet offers: use one you own, buy one for 250 coins, or retry.
+- The small hint arrow sits in the top-right corner whenever a hard moment is coming.
+
+**X-Points (rank)**
+- Shown with the XWAVE "X" badge.
+- Result screens list every reward: coins, speed bonus, track reward, missions, quests, X-Points with a breakdown, the class progress bar, and rank-ups.
+- "How rank works" opens the conversion table.
+- Rank can't be bought: no product, pass or ad grants X-Points.
+
+**Speed tiers**
+
+| Level | Rewards (coin bonus, track reward, X-Points) |
+|---|---|
+| EASY | ×1 |
+| NORMAL | ×1.25 |
+| HARD | ×1.6 |
+
+Tapping a level shows a tooltip.
+
+**Popups**
+- Daily reward (7 days)
+- Watch-ad reward
+- Welcome-back gift: 200 coins + shield after 12 h away
+
+**Roadster guide**: tap a step for full details.
+
+**Sliding platforms**: no arrows, and they appear much less often.
+
+**Player database**
+- `src/net/PlayerStore.ts`: bots and real players share one players/scores model, stored locally today.
+- `?api=` switches to the reference server in `/server` (`index.mjs`, `schema.sql`, README).
+
+## v1.10 changes — classes, ⚡ bolts, cups by division
+
+**Rank classes** (`src/meta/Rank.ts`): every pilot starts in **D** and climbs D → C → B → A → AA → AAA with ⚡ bolts (cup points). No demotion.
+
+| Class | D | C | B | A | AA | AAA |
+|---|---|---|---|---|---|---|
+| ⚡ needed | 0 | 150 | 450 | 1,100 | 2,400 | 4,800 |
+
+**Earning ⚡**: +1 per 1,000 score, +1 per 10 near misses; finishing a track +2 (+1 per star); ×2 while racing in your live cup; cup placement prizes (below) × division multiplier (D 1, C 1.2, B 1.4, A 1.7, AA 2, AAA 2.5).
+The ⚡ total sits top-right in the HUD (gold, steady glow — nothing blinks while racing).
+
+**Cups** (`src/meta/Events.ts`): 2 sessions per day at **12:00 and 22:00 US Eastern** (DST-aware), live 3 h. Each session runs one cup per class; a pilot can only enter the cup of their own class. Base prizes: #1 120⚡ + 3,000 coins + HYPER ×3 + gold trophy · #2–3 80⚡ · #4–10 50⚡ · top 100 25⚡ · everyone 10⚡ + Roadster Jump.
+
+**Profile**: tap the home chip → editable name, racing-helmet avatars (24 liveries, re-roll), class progress, stats. Leaderboard/cup rows open a pilot card. Rivals are demo data until an online backend is connected.
+
+**Boosts**: tapping a boost opens its card (what it does / how / when) with Equip and a free **practice road** (`boostScript()` in Tutorial.ts).
+
+**Missions**: auto-collect switch (default ON); OFF keeps finished rewards in a "Ready to collect" list.
+
+**Worlds**: listed easiest → hardest (World 1–5), Endless is World 6, then 3 hidden worlds that reveal at class A / AA / AAA.
+
+**Defaults**: graphics HIGH, music ON, SFX ON (settings migration rev 3). Music is original procedural Web Audio (no samples) → safe for commercial use.
+
+**Difficulty**: triple walls removed; laser rows always keep one open lane with at most one duck lane; after any jump/duck row there is extra landing + reading time (`VERTICAL_RECOVERY`). Road arrows are smaller. Eye comfort: no screen flashes, no pulsing neon, steady lights.
+
+## v1.9 changes
+
+- New default car body **XWAVE X1** (design sheet): low angular hypercar on the same one-lane footprint — wide wheel arches and rear haunches, black panoramic canopy, V-shaped blue LED face with a blue lip, black lower body with blue LED lines, full-width red light bar and glowing blue XWAVE lettering on the rear fascia. The four wheel/thruster pods still spin and flip to thrusters in flight. All GT Coupe colourways use the X1 body.
+- The car stays upright and points straight down the road (bank on lane changes cut to a light lean, almost no yaw).
+- **One lane per hop**: while airborne the car can change lane once, then it must touch down. Exception: took off from the left/right edge lane holding an **Air Dash** booster → a second swipe in the same direction carries it to the far edge with a 360° flip (consumes the charge). A refused swipe shows "LAND FIRST". The fairness model and the test bot use the same rule (`tests/airlane.test.ts`).
+
+## v1.8 changes
+
+- Obstacles are matte (no neon glow halos / bloom): solid colours, thin non-glowing outlines.
+- The hunter drone is removed from the game (no spawns, not in training); the floating ⇠ ⇢ sign is gone (sliding platforms keep their amber zone on the road).
+- ~~Air flip on two lane changes without a booster~~ (replaced in v1.9 by the one-lane-per-hop rule).
+
+## Difficulty system (v1.7)
+
+`src/gameplay/Difficulty.ts`
+
+- **Pattern library** — every spawner pattern has an id (P01–P15), tier, solving actions, minimum lead time, recovery time, an "occludes" flag and the worlds it may appear in.
+- **Tiers** — T1 easy (weight 1) · T2 normal (2) · T3 hard (4) · T4 expert (7). Examples: crate/barrier/ring = T1; beam, two blockers, oncoming car, slow drone = T2; sliding platform, laser gate, triple wall = T3; mega gate (one door) = T4.
+- **MapDifficultyConfig** per world: tier distribution, max fully-blocked lanes, min time gap, reaction slack, max consecutive hard rows, recovery after hard rows, density, moving-obstacle speed, warm-up distance.
+
+| Map | Target | T1 / T2 / T3 / T4 | Notes |
+|---|---|---|---|
+| Future City | 2/10 | 75 / 25 / 0 / 0 | learning map: no lasers, walls or gates; slow drones |
+| Cloud City | 4/10 | 55 / 35 / 10 / 0 | vertical obstacles, platforms rare |
+| Neon Tunnel | 6/10 | 35 / 40 / 25 / 0 | lasers + triple walls |
+| Space Zone | 8/10 | 20 / 35 / 35 / 10 | asteroids, drones, first gates |
+| XWAVE Megacity | 9/10 | 10 / 25 / 45 / 20 | everything, clearly telegraphed |
+
+Endless runs and the track list now follow this ladder (City → Cloud → Tunnel → Space → Megacity).
+
+- **Selection** — tier first (map mix, damped in the first 30 % of a map, slightly raised in the last 25 %, shifted one step by EASY/HARD), then a pattern of that tier.
+- **Spacing** — time-based: base curve, floored by the map's min gap × speed level, plus the pattern's own lead time (walls/gates/lasers get time to align) and recovery after T3/T4 rows.
+- **No blind traps** — after a wall that hides the road (mega gate) the next row is T1–T2 with recovery spacing; hard streaks are capped per map.
+- **Time-aware validation** — `Fairness.step()` tracks every (lane, height) state through each row using the real lane-switch / fly-up / fly-down / re-jump timings, now with a per-map **reaction slack** each forced move must leave. Candidates that fail are rejected and regenerated (reasons are counted).
+
+### Readability & comfort
+
+`src/render/Readability.ts` — one profile per world (lane glow, road tone, reflections, rail glow, hazard outline colour, dark-metal lift, bloom). Colour language: red/orange = danger, yellow = caution, cyan = navigation, green = safe opening, gold = collectible, purple = special. Cloud City lane glow −55 %, Neon Tunnel gets strong orange hazard outlines on lighter obstacle metal, asteroids get rims. **Comfort visuals** (Settings, on by default) lowers bloom, softens full-screen flashes, pulsing and speed lines.
+
+In-world previews: yellow/black caution bar ~30 m before every T3+ row; mega gates paint the closed lanes red-hatched and lead into the door with green arrows; moving obstacles keep their ⇄ zones and green safe-lane arrows.
+
+Guidance overlays: danger hints are a thin, ~34 %-opacity chevron at the screen edge on the side of the move (↑/↓ at the bottom), fade the moment the move is made, and a gesture stops being hinted after the player has answered it 3 times (toggle hints off/on in Settings to reset). Training prompts are a compact card in the sky area under the HUD; section banners are small and high.
+
+### Rendering
+
+The bloom composer now renders into an **MSAA target** (4×, WebGL2) — previously the canvas `antialias` flag was ignored behind post-processing. Pixel ratio cap 2.0 with **dynamic resolution steps** (2 → 1.75 → 1.5, then bloom off, only then LOW) instead of dropping straight to LOW; anisotropic filtering 8×; tighter, high-threshold bloom (0.3 / radius 0.22).
+
+### Debug & tests
+
+`?debug` shows map + target difficulty, speed level, the next row's pattern id / tier / time-to-collision / safe lanes (N/H/L) / reaction margin, the last collision explained, plus hitboxes. `npm test` runs:
+
+- `tests/fairness.test.ts` — static reachability + a physics bot driving 144 km endless, all 5 tracks and 3 speed levels (0 crashes).
+- `tests/difficulty.test.ts` — ~30,000 rows in 360 generated sequences (5 maps × 3 levels × 24 seeds): reachable path, allowed tiers per map, no expert in warm-up, min gaps, recovery after walls, no blind traps, hard-streak caps; prints the observed tier mix vs target and rejection reasons.
+
+## Fairness guarantee
+
+The game never generates an unavoidable pattern:
+
+1. Every obstacle's hitboxes **and** the set of heights that pass it are defined once, in `src/gameplay/ObstacleRules.ts`. Runtime collision and the spawner read the same data.
+2. The spawner (`src/gameplay/Spawner.ts`) tracks the set of `(lane, height)` states the player can be in, and only accepts a new row if at least one state is reachable in the time available (`src/gameplay/Fairness.ts`, using lane-step and vertical-action budgets from `config.ts`). Rejected patterns are re-rolled; the fallback is always a single dodgeable crate.
+3. `npm run test:fairness` checks this statically (15k+ rows over 40 seeds) and dynamically: an autopilot using human inputs drives the real movement physics against the real hitboxes. Last run: **600 km across 40 seeds at up to max speed, 0 crashes.**
+
+## Architecture
+
+```
+src/
+  config.ts            all tuning: lanes, heights, timings, speed curve, fairness budgets, scoring
+  main.ts              bootstrap + WebGL check
+  Game.ts              state machine & orchestration (menu → countdown → run → crash/respawn → game over)
+  core/                Input (swipe/keys), Save (localStorage), Pool, Rng, math/springs
+  gameplay/            PURE LOGIC, no Three.js, runs in Node:
+    Player.ts            movement state machine (lanes, LOW/NORMAL/HIGH phases, buffering, hitbox)
+    World.ts             scrolling simulation, swept-AABB collision, near-miss, pickups
+    Spawner.ts           pattern generator + speed curve + world sequence
+    Fairness.ts          reachability model
+    ObstacleRules.ts     hitboxes + pass masks (single source of truth)
+    Run.ts               score, combo, power-ups, lives
+    Missions.ts          mission defs + tracker
+    Autopilot.ts         bot (tests / demo)
+  render/              Three.js views (read-only consumers of gameplay state)
+    Vehicle.ts           procedural XWAVE car + animation rig + skins
+    ObstacleViews.ts     pooled obstacle meshes
+    PickupViews.ts       instanced coins + power-up meshes
+    Track.ts             scrolling road, instanced lamps & pylons
+    Scenery.ts           sky, fog, lights, 5 world themes (lazy-built)
+    Effects.ts           particles (1 draw call), speed lines, shield, rings, debris, portal
+    CameraRig.ts         chase / menu / garage / crash cameras, FOV kick, shake
+    Renderer.ts          renderer, tone mapping, half-res bloom (High quality)
+    textures.ts          canvas-generated textures
+    merge.ts             static-mesh merging for draw-call reduction
+  audio/Audio.ts       Web Audio synth SFX + synthwave sequencer
+  ui/                  DOM overlay UI (screens, HUD, garage, missions), CSS, inline SVG icons
+  assets/              manifest + loader for optional GLB/audio replacements
+public/assets/         drop-in folders for replacement files (see below)
+tests/                 fairness & movement tests
+```
+
+The car is fixed at `z = 0` and the world scrolls toward it, which keeps float precision perfect on very long runs.
+
+## Performance notes
+
+- Target 60 FPS on modern phones. High quality = MSAA + half-resolution bloom, pixel ratio ≤ 2. Low = no bloom/MSAA, pixel ratio ≤ 1.25. The game drops to Low automatically if it can't hold ~42 FPS, and Low is the default on devices with ≤ 4 CPU cores.
+- About 130–160 draw calls in a busy scene (Low). Coins, buildings, lamps, pylons and background traffic are instanced; all particles are a single `Points` draw; static parts of the car and obstacles are merged per material.
+- Object pools for obstacles and power-ups; modulo-scrolled props (no spawning); world themes built lazily, ~300 m before they're needed.
+- Fixed 120 Hz collision sub-steps + swept AABBs, so no tunnelling at top speed or on slow frames.
+
+## Branding assets
+
+- `src/assets/images/xwave-logo.png` / `xwave-mark.png` — XWAVE chrome logo (UI, billboards, car decals, Megacity arch)
+- `src/assets/images/tracks/*.jpg` — track-select thumbnails
+- `public/icons/` — app icon: `icon-1024.png` (1024×1024 master), 512/192 PNGs, maskable 512, `apple-touch-icon.png` (180), `favicon-32.png`; `public/manifest.webmanifest` makes the game installable ("Add to Home Screen")
+
+## Replacing procedural assets
+
+See `src/assets/manifest.ts`. Each entry lists its procedural builder and an optional `file`. Put a file in the matching `public/assets/<category>/` folder, set `file: 'assets/<category>/<name>.glb'` and it is loaded at boot, falling back to procedural automatically if it's missing. Car GLBs replace the body shell; thruster pods, wings and VFX stay procedural so the animations keep working. Conventions: +Y up, −Z forward, metres.
+
+Audio: set `file` on any SFX id (`coin`, `crash`, `power`, `up`, `down`, `lane`, …) to override the synthesized sound.
+
+## Tuning cheat-sheet (`src/config.ts`)
+
+- `TIMING`: lane-change time, fly up/down phase durations, input buffer windows
+- `HEIGHT` / `CAR_HALF`: car heights and hitbox (keep `ObstacleRules.ts` in sync if you change these)
+- `SPEED`: start / max speed and ramp distance
+- `FAIRNESS`: time budgets the spawner assumes a human needs (raise for an easier game)
+- `SCORE`, `POWERUP_DURATION`, `WORLD_LENGTH`
+
+After changing timings, run `npm run test:fairness`.
