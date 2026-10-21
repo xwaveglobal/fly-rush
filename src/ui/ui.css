@@ -2087,3 +2087,13 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .dailyv2 .panel.block { margin-bottom: 8px; }
 /* rank-gate strip lives just above the mission strip — never under the notice lane */
 #hud .gatebar { position: absolute; left: 12px; right: 12px; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); margin: 0; z-index: 3; }
+.dailyv2 .quest { padding: 4px 10px !important; }
+.dailyv2 .quest .qt b { font-size: 12.5px; }
+.dailyv2 .quest .qb { margin-top: 0 !important; }
+.dailyv2 .quest .qb span { font-size: 11px; }
+.dailyv2 .quest .rchip { padding-top: 1px; padding-bottom: 1px; }
+.dailyv2 .ckt { padding: 3px 2px; gap: 1px; }
+.dailyv2 .ckt .coinface, .dailyv2 .ckt svg { max-height: 18px; }
+.dailyv2 .panel.block { padding: 8px 12px !important; margin-bottom: 6px; }
+.dailyv2 .bhead { margin-bottom: 6px !important; }
+.bonusm .btn.big { width: 100%; }

@@ -1,6 +1,6 @@
 # Fix list — after v2.0.8 (owner review 2026-10-22)
 
-Status: **chốt, chưa code** (round 2 added 2026-10-22 02:08 — section F). Fix everything in one pass.
+Status: **DONE in v2.1.0** (2026-10-22). G2 note: new per-world obstacles are new LOOKS on the existing fair hitboxes (crate / barrier / beam); no new hitbox types were added.
 
 ## A. Gameplay / logic
 - **A1. Special trước khi đua** — Retry also opens the choice. Replace the long popup with ONE big "SPECIAL" button (icon of the chosen item) on the pre-race step → opens the **Magic Bag** popup to pick; items you don't own have a **Buy with coins** area at the bottom of the same popup.

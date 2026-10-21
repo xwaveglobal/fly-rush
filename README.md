@@ -187,6 +187,15 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v2.1.0 changes (owner fix list — all of `docs/FIXLIST.md`)
+
+- **Before every race (Retry too)**: one big SPECIAL button → the Magic Bag opens to pick; "Get with coins" at the bottom. Prices SOS 1,200 · Roadster 1,800 · HYPER 4,000.
+- **Hearts**: 1 heart per EXP race, a heart on the road about every 1,000 EXP (max 3); then 2 ad revives; 3rd crash ends the race.
+- **Endless never repeats before AAA**: 12-world ladder by EXP (2 per rank): Future City → Neon Harbor → Cloud City → Solar Farms → Neon Tunnel → Crystal Canyon → Space Zone → Asteroid Belt → Megacity → Storm Front → Volcano Core → Aurora Ice; loops after AAA. Each world has its own obstacle looks (same hitboxes).
+- **Bonus**: themed props per place (rocks / barrels / pickups, logs / logging trucks, hay / fences / tractors, buoys / crates / boats); showcase specials smash what they pass and pull coins in; Phase Ghost is a steady hologram; a closed Bonus can't be retried.
+- **Cars**: new rank-C car **XWAVE Vega** (owner's render, own rear sprite); B+ cars are black silhouettes; v1 coin-bought cars above the rank are re-locked and refunded.
+- **UI**: new logo, new emblem avatars, "EXP" pill badge, END screen (EXP + rank reached + leaderboard position), minimal revive popup, Daily = coins only with a 4 + 3 check-in grid (fits 375×640), Near Miss removed, Cups / Trophies / XWAVE Pass leftovers removed, tracks 3–5 open at S / SS / SSS, rival cards show average EXP, shorter texts everywhere, rank-gate strip above the mission strip, rank-up notices jump the queue.
+
 ## v2.0.8 changes (v2 step 8 — daily missions & coin balance)
 
 - **Daily + Missions merged**: one daily list (4 missions a day, chests at 30 / 70 / 100 pts) that pays coins; the home "Missions" button opens it. The in-race strip shows the next unfinished daily mission with live progress. The old per-run mission system no longer pays (waiting rewards were moved to the wallet).
