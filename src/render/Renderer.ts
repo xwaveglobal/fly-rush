@@ -5,6 +5,9 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 
+/** objects on this layer skip post-processing and are drawn last, pixel-exact (the car render) */
+export const OVERLAY_LAYER = 1;
+
 export type Quality = 'high' | 'low';
 
 /**
@@ -120,6 +123,20 @@ export class Renderer {
   render() {
     if (this.composer) this.composer.render();
     else this.renderer.render(this.scene, this.camera);
+    // overlay: the car render (layer OVERLAY_LAYER) is drawn last, straight onto the canvas,
+    // so tone mapping, bloom and scene lighting never change its pixels (exact studio image)
+    const r = this.renderer;
+    const auto = r.autoClear;
+    r.setRenderTarget(null);
+    r.autoClear = false;
+    r.clearDepth();
+    const bg = this.scene.background;
+    this.scene.background = null; // never repaint the sky over the finished frame
+    this.camera.layers.set(OVERLAY_LAYER);
+    r.render(this.scene, this.camera);
+    this.camera.layers.set(0);
+    this.scene.background = bg;
+    r.autoClear = auto;
   }
 
   get info() {

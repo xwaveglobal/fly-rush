@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { Spring, clamp, clamp01, lerp } from '../core/math.ts';
 import { HEIGHT, TYRE } from '../config.ts';
+import { OVERLAY_LAYER } from './Renderer.ts';
 import { glowTexture, logoTexture, rearBadgeTexture, treadTexture, wheelBlurTexture, wheelFaceTexture } from './textures.ts';
 import { mergeByMaterial } from './merge.ts';
 import type { Player } from '../gameplay/Player.ts';
@@ -574,14 +575,15 @@ export class Vehicle {
         this.spriteAspect[i] = img.width / img.height;
         if (this.spriteView === i) this.spriteView = -1; // re-apply size
       });
-      t.colorSpace = THREE.SRGBColorSpace;
+      // raw sRGB values: the sprite is drawn in the overlay pass without colour conversion → exact pixels
+      t.colorSpace = THREE.NoColorSpace;
       t.anisotropy = 4;
       t.generateMipmaps = true;
       t.minFilter = THREE.LinearMipmapLinearFilter;
       this.spriteTex[i] = t;
     });
     const mat = new THREE.ShaderMaterial({
-      uniforms: { map: { value: this.spriteTex[0] }, tint: { value: new THREE.Color(0xffffff) }, tintAmt: { value: 0 }, dim: { value: 1 }, gain: { value: 1.05 }, spin: { value: 0 }, streak: { value: 0 }, spinAmt: { value: 0 }, speedK: { value: 0 }, hot: { value: 0 }, rearView: { value: 1 } },
+      uniforms: { map: { value: this.spriteTex[0] }, tint: { value: new THREE.Color(0xffffff) }, tintAmt: { value: 0 }, dim: { value: 1 }, gain: { value: 1 }, spin: { value: 0 }, streak: { value: 0 }, spinAmt: { value: 0 }, speedK: { value: 0 }, hot: { value: 0 }, rearView: { value: 1 } },
       vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
       fragmentShader: `uniform sampler2D map; uniform vec3 tint; uniform float tintAmt; uniform float dim; uniform float gain;
         uniform float spin; uniform float streak; uniform float spinAmt; uniform float speedK; uniform float hot; uniform float rearView; varying vec2 vUv;
@@ -641,6 +643,7 @@ export class Vehicle {
     this.sprite = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
     this.sprite.renderOrder = 2;
     this.sprite.visible = false;
+    this.sprite.layers.set(OVERLAY_LAYER);
     this.squashG.add(this.sprite);
     // glowing comet trails orbit each rear tyre (additive light, like a hot
     // racing tyre at speed). Smooth arcs never strobe, so they may turn as fast as the wheel.
