@@ -4,6 +4,25 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-21 — v1.17: ROADSTER button, leftover points, wheel speed
+
+**Done**
+- Training: early ROADSTER tap → nudge + toast instead of silent ignore (`Game.useRocket`, `UI.rocketWait`).
+- ROADSTER button glows + "TAP!" when the danger hint says a jump is needed (`UI.danger` → `.ready`), same look as the training `.call` state.
+- Bug fix: ROADSTER/SOS count badges never updated (`data-h` was missing on the badges).
+- Track finish: unused Roadster/HYPER/SOS charges converted to points (`Game.cashLeftovers`, `LEFTOVER_POINTS`), and shown on the result screen.
+- Tyres: per-frame capped tread step (no wagon-wheel strobing), longer blur and streaks, tyre spray particles (`TYRE` config, `Game.tyreSpray`, `Vehicle.rearTyreWorld`).
+- `builds/sky-roadster-v1.17.html` (single file) replaces v1.16 and is published to the Claude artifact link.
+
+**Notes for the next session**
+- The cloud workspace has no npm registry access. Builds there use bun with three.js r169 fetched from GitHub, so they are not byte-identical to `vite build`. The owner's PC runs the real `npm run dev`.
+- Wheel feel was checked only in a 0.5 fps headless browser. Get the owner's feedback on real devices and tune with `TYRE.*`.
+
+**Next**
+- (owner to fill in)
+
+---
+
 ## 2026-10-21 — Moved to GitHub (v1.16)
 
 **Done**

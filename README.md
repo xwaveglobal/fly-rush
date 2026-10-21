@@ -187,6 +187,20 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v1.17 changes
+
+**ROADSTER button**
+- Training: tapping ROADSTER before the blockade no longer does nothing silently. The button gives a small nudge and a toast ("Save it! Tap ROADSTER when the button lights up"), and the charge is kept for the blockade.
+- The button lights up (steady purple / gold glow, slightly larger, label "TAP!") whenever a Roadster or HYPER jump is the way through the row ahead. This also covers the training step. Steady glow, no flashing.
+- Fixed: the count badge on the ROADSTER and SOS buttons always showed "1". The HUD wrote to `data-h` but the badges only had `data-k`.
+
+**Unused boosts become points**
+- When a track is finished, every Roadster Jump, HYPER JUMP and Sky Escape still held is converted to score (`LEFTOVER_POINTS` in `config.ts`: 1,500 / 3,000 / 1,000 × the run's score multiplier). A "+points · UNUSED BOOSTS" pop and a toast show at the line, and the result screen has an "Unused boosts" row.
+
+**Wheels at speed**
+- Rear-tyre tread on the X1 render now moves at most `TYRE.maxStep` of a block per frame. Before, it moved about 0.3–0.7 of a block per frame, so the eye read it as standing still or rolling backwards (wagon-wheel effect).
+- The extra speed now shows as a longer 5-tap motion smear, brighter streaks, and grit kicked back from both rear tyres (`TYRE` in `config.ts`). The 3D bodies' wheel blur disc is stronger.
+
 ## v1.14 changes
 
 **Panels fit the phone**

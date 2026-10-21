@@ -1608,3 +1608,21 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .flyer svg { width: 100%; height: 100%; }
 .flyer.coins { width: 24px; height: 24px; }
 .flyer.powers, .flyer.rocket, .flyer.sos, .flyer.hearts { width: 34px; height: 34px; }
+
+/* v1.17 — ROADSTER button lights up when a jump is the way through (danger hint / training step): steady glow, no flashing */
+#hud .rocketbtn { transition: transform .18s ease-out, box-shadow .18s ease-out, background .18s ease-out; }
+#hud .rocketbtn.ready, #hud .rocketbtn.call { background: radial-gradient(circle at 50% 35%, #c3a2ff, #6a2ee0 72%); border-color: #fff; color: #fff;
+  box-shadow: 0 0 0 4px rgba(190,150,255,.55), 0 0 26px 8px rgba(155,107,255,.8), 0 4px 14px rgba(0,0,0,.45); transform: scale(1.14); }
+#hud .rocketbtn.hyper.ready, #hud .rocketbtn.hyper.call { background: radial-gradient(circle at 50% 35%, #fff0a8, #e79a00 72%); color: #3a2000;
+  box-shadow: 0 0 0 4px rgba(255,220,120,.6), 0 0 26px 8px rgba(255,194,26,.8), 0 4px 14px rgba(0,0,0,.45); }
+#hud .rocketbtn.ready:active, #hud .rocketbtn.call:active { transform: scale(1.02); }
+#hud .rocketbtn.wait { animation: rbWait .4s ease-out; }
+@keyframes rbWait { 20% { translate: -5px 0 } 45% { translate: 5px 0 } 70% { translate: -3px 0 } 100% { translate: 0 0 } }
+/* v1.17 — result: unused boosts converted to points */
+#finish .leftover { display: flex; align-items: center; gap: 6px; margin: 2px auto 4px; padding: 4px 10px; border-radius: 12px; max-width: 100%;
+  background: rgba(155,107,255,.16); border: 1px solid rgba(180,140,255,.45); color: #e6dcff; font-size: 12px; }
+#finish .leftover[hidden] { display: none; }
+#finish .leftover svg { width: 16px; height: 16px; flex: none; }
+#finish .leftover small { opacity: .75; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+#finish .leftover b { margin-left: auto; color: #fff; font-size: 13px; white-space: nowrap; }
+#finish .leftover > span { white-space: nowrap; font-weight: 800; }

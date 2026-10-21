@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { Spring, clamp, clamp01, lerp } from '../core/math.ts';
-import { HEIGHT } from '../config.ts';
+import { HEIGHT, TYRE } from '../config.ts';
 import { glowTexture, logoTexture, rearBadgeTexture, treadTexture, wheelBlurTexture, wheelFaceTexture } from './textures.ts';
 import { mergeByMaterial } from './merge.ts';
 import type { Player } from '../gameplay/Player.ts';
@@ -550,10 +550,10 @@ export class Vehicle {
       this.spriteTex[i] = t;
     });
     const mat = new THREE.ShaderMaterial({
-      uniforms: { map: { value: this.spriteTex[0] }, tint: { value: new THREE.Color(0xffffff) }, tintAmt: { value: 0 }, dim: { value: 1 }, gain: { value: 1.05 }, spin: { value: 0 }, spinAmt: { value: 0 }, rearView: { value: 1 } },
+      uniforms: { map: { value: this.spriteTex[0] }, tint: { value: new THREE.Color(0xffffff) }, tintAmt: { value: 0 }, dim: { value: 1 }, gain: { value: 1.05 }, spin: { value: 0 }, streak: { value: 0 }, spinAmt: { value: 0 }, speedK: { value: 0 }, rearView: { value: 1 } },
       vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
       fragmentShader: `uniform sampler2D map; uniform vec3 tint; uniform float tintAmt; uniform float dim; uniform float gain;
-        uniform float spin; uniform float spinAmt; uniform float rearView; varying vec2 vUv;
+        uniform float spin; uniform float streak; uniform float spinAmt; uniform float speedK; uniform float rearView; varying vec2 vUv;
         void main(){
           vec4 c = texture2D(map, vUv);
           if (c.a < 0.02) discard;
@@ -561,21 +561,24 @@ export class Vehicle {
           float lt = step(vUv.x, 0.175) * step(vUv.y, 0.44);
           float rt = step(0.825, vUv.x) * step(vUv.y, 0.44);
           float tyre = (lt + rt) * rearView;
-          // vertical motion blur over the spinning tyres (3 taps), then high-speed tread bands
+          // vertical motion blur over the spinning tyres (5 taps) — longer smear the faster the car goes
           if (tyre > 0.5 && spinAmt > 0.01) {
-            vec3 b1 = texture2D(map, vUv + vec2(0.0, 0.014 * spinAmt)).rgb;
-            vec3 b2 = texture2D(map, vUv - vec2(0.0, 0.014 * spinAmt)).rgb;
-            c.rgb = mix(c.rgb, (c.rgb + b1 + b2) / 3.0, 0.75 * spinAmt);
+            float o = 0.012 * spinAmt * (1.0 + 2.2 * speedK);
+            vec3 b1 = texture2D(map, vUv + vec2(0.0, o)).rgb;
+            vec3 b2 = texture2D(map, vUv - vec2(0.0, o)).rgb;
+            vec3 b3 = texture2D(map, vUv + vec2(0.0, 2.0 * o)).rgb;
+            vec3 b4 = texture2D(map, vUv - vec2(0.0, 2.0 * o)).rgb;
+            c.rgb = mix(c.rgb, (c.rgb + b1 + b2 + b3 + b4) / 5.0, 0.8 * spinAmt);
           }
           float lum = dot(c.rgb, vec3(0.333));
           float rub = smoothstep(0.62, 0.25, lum);
-          // tread blocks racing down the tyre: strong contrast so the spin reads at a glance
-          float f = fract(vUv.y * 22.0 + spin);
-          float band = smoothstep(0.0, 0.18, f) * smoothstep(0.62, 0.42, f);
-          c.rgb = mix(c.rgb, c.rgb * (0.25 + 1.35 * band), tyre * rub * spinAmt);
-          // motion streaks (hot rim light sliding over the rubber, like a racing tyre at speed)
-          float g = fract(vUv.y * 6.0 + spin * 0.55);
-          c.rgb += vec3(0.32, 0.16, 0.06) * tyre * rub * spinAmt * smoothstep(0.82, 0.98, g) * smoothstep(1.0, 0.97, g);
+          // tread blocks racing down the tyre (bigger blocks, softened as the smear grows)
+          float f = fract(vUv.y * 14.0 + spin);
+          float band = smoothstep(0.0, 0.22, f) * smoothstep(0.66, 0.44, f);
+          c.rgb = mix(c.rgb, c.rgb * (0.3 + 1.3 * band), tyre * rub * spinAmt * (1.0 - 0.3 * speedK));
+          // long motion streaks sliding over the rubber (racing tyre at speed), brighter when fast
+          float g = fract(vUv.y * 5.0 + streak);
+          c.rgb += vec3(0.34, 0.2, 0.1) * (0.6 + 0.8 * speedK) * tyre * rub * spinAmt * smoothstep(0.7, 0.96, g) * smoothstep(1.0, 0.97, g);
           // lateral blur hint at the tyre edge
           c.rgb += vec3(0.05) * tyre * spinAmt * (1.0 - rub);
           float mx = max(c.r, max(c.g, c.b)); float mn = min(c.r, min(c.g, c.b));
@@ -1053,7 +1056,7 @@ export class Vehicle {
     // a blur disc fades in with speed to sell the real rotation rate
     // a readable ~2.5 rev/s spin (never strobes backwards) + a light blur disc: the wheels clearly roll
     this.wheelAngle += Math.min(speed / 0.41, 16) * dt * wheel;
-    this.wheelBlurMat.opacity = clamp((speed - 8) / 40, 0, 0.32) * wheel;
+    this.wheelBlurMat.opacity = clamp((speed - 8) / 32, 0, 0.5) * wheel;
     const tilt = p.thrusterTilt;
     const thrustAngle = tilt >= 0 ? lerp(-0.35, 0, tilt) : -0.35;
     for (const pod of this.pods) {
@@ -1112,11 +1115,16 @@ export class Vehicle {
     this.aura.visible = this.spriteOn && this.auraK > 0.02 && !this.locked;
     this.aura.material.opacity = Math.min(1, 1.15 * this.auraK); // thicker, still steady
     this.airK = p.air * clamp01((vy - 1.2) / 0.8);
-    // tyre roll for the rear render: phase advances with road speed (capped so it never strobes)
+    // tyre roll for the rear render. The tread pattern may move at most TYRE.maxStep of a block per
+    // FRAME: above ~half a block per frame the eye reads it as standing still or rolling backwards
+    // (wagon-wheel effect), which is why fast wheels used to look slow. The extra speed is sold with
+    // a longer blur smear + streaks (speedK) and tyre spray particles (Game.tyreSpray).
     {
       const u = this.sprite.material.uniforms;
-      u.spin.value = (u.spin.value + Math.min(speed, 60) * dt * 0.95) % 1000;
+      u.spin.value = (u.spin.value + Math.min(speed * dt * TYRE.blocksPerMetre, TYRE.maxStep)) % 1000;
+      u.streak.value = (u.streak.value + Math.min(speed * dt * TYRE.streaksPerMetre, TYRE.maxStep)) % 1000;
       u.spinAmt.value = clamp01(speed / 8) * (1 - p.air);
+      u.speedK.value = clamp01((speed - TYRE.blurFrom) / (TYRE.blurFull - TYRE.blurFrom)) * (1 - p.air);
     }
     this.updateSprite(vy, this.bank.rotation.z);
     this.root.visible = this.visibleBlink;
@@ -1128,6 +1136,19 @@ export class Vehicle {
     out.set(0, -0.2, 0);
     return pod.fx.localToWorld(out);
   }
+  /** World position where a rear tyre (side −1 left / +1 right) meets the road — for tyre spray. */
+  rearTyreWorld(side: -1 | 1, out: THREE.Vector3) {
+    if (this.spriteOn) {
+      out.set(side * TYRE.spriteX, TYRE.spriteY, 0);
+      this.sprite.localToWorld(out);
+    } else {
+      const pod = this.pods.find((q) => !q.front && q.side === side) ?? this.pods[0];
+      pod.pivot.getWorldPosition(out);
+    }
+    out.y = 0.05;
+    return out;
+  }
+
   /** World position where wheel i touches the road. */
   contactWorld(i: number, out: THREE.Vector3) {
     this.pods[i].pivot.getWorldPosition(out);

@@ -69,6 +69,31 @@ export const LEVELS: Record<SpeedLevel, { label: string; speed: number; gap: num
   hard: { label: 'HARD', speed: 1.18, gap: 0.92, score: 1.3, reward: 1.6, desc: 'Fast & tight · score ×1.3 · coins & stars ×1.6' },
 };
 
+/** points per unused boost charge still held when a track is finished (× the run's score multiplier) */
+export const LEFTOVER_POINTS = { super: 1500, hyper: 3000, escape: 1000 };
+
+/**
+ * Rolling tyres (rear render) + tyre spray. The tread may advance at most `maxStep` of a block per
+ * frame (< 0.5 or it strobes backwards); higher speed reads through blur, streaks and spray instead.
+ */
+export const TYRE = {
+  blocksPerMetre: 0.55,
+  streaksPerMetre: 0.14,
+  maxStep: 0.36,
+  /** speed (m/s) where the extra blur starts / is full */
+  blurFrom: 18,
+  blurFull: 50,
+  /** rear tyre contact point on the sprite plane (plane units, centre = 0) */
+  spriteX: 0.36,
+  spriteY: -0.47,
+  /** grit kicked up by the rear tyres while driving fast */
+  sprayFrom: 22,
+  sprayRate: 28, // particles / s per tyre at full speed
+  spraySize: 0.07,
+  sprayLife: 0.3,
+  sprayColor: 0xb9c6e6,
+};
+
 export const SPEED = {
   start: 21,
   max: 46,

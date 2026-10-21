@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { AUTOPILOT, DEBUG, HEIGHT, LANES, LEVELS, SPEED, TIMING, WORLD_LENGTH, type SpeedLevel } from './config.ts';
+import { AUTOPILOT, DEBUG, HEIGHT, LANES, LEVELS, LEFTOVER_POINTS, SPEED, TIMING, TYRE, WORLD_LENGTH, type SpeedLevel } from './config.ts';
 import { clamp, damp } from './core/math.ts';
 import { Input, type Action } from './core/Input.ts';
 import { loadSave, writeSave, type SaveData } from './core/Save.ts';
@@ -45,7 +45,7 @@ import type { ItemKey, Reward } from './meta/Daily.ts';
 import { UNLOCK_BOOSTS } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v1.16';
+const VERSION = 'v1.17';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -1314,6 +1314,31 @@ export class Game {
     this.world.player.input(a);
   }
 
+  /** grit kicked back from the rear tyres while driving fast on the road (sells the speed) */
+  private sprayAcc = 0;
+  private sprayPos = new THREE.Vector3();
+  private tyreSpray(dt: number, speed: number) {
+    const p = this.world.player;
+    if (this.state !== 'run' || p.air > 0.08 || speed < TYRE.sprayFrom) {
+      this.sprayAcc = 0;
+      return;
+    }
+    const k = clamp((speed - TYRE.sprayFrom) / (SPEED.max - TYRE.sprayFrom), 0, 1);
+    this.sprayAcc += dt * TYRE.sprayRate * (0.3 + 0.7 * k);
+    while (this.sprayAcc >= 1) {
+      this.sprayAcc -= 1;
+      for (const side of [-1, 1] as const) {
+        const q = this.vehicle.rearTyreWorld(side, this.sprayPos);
+        this.particles.emit(
+          q.x + (Math.random() - 0.5) * 0.12, q.y, q.z + 0.05,
+          side * (0.3 + Math.random() * 0.9), 0.5 + Math.random() * 1.3, 1 + Math.random() * 3,
+          TYRE.sprayColor, TYRE.spraySize * (0.7 + Math.random() * 0.6), TYRE.sprayLife * (0.7 + Math.random() * 0.6),
+          { locked: true, drag: 2, grav: 9 },
+        );
+      }
+    }
+  }
+
   /** the very first, generic pilot training (strict step-by-step flow) */
   private get isBasicTraining() {
     return this.tutorialMode && !this.trainWorld && !this.tut.title;
@@ -1329,8 +1354,14 @@ export class Game {
       return;
     }
     if (this.tutorialMode) {
-      if (this.tutPrompting && !this.tutAccept('rocket')) return;
-      if (!this.tutPrompting && this.isBasicTraining) return;
+      if (this.tutPrompting) {
+        if (!this.tutAccept('rocket')) return;
+      } else if (this.isBasicTraining || this.tut.steps.slice(this.tutStep).some((s) => s.need === 'rocket')) {
+        // too early: the charge is needed for the blockade ahead — say so instead of ignoring the tap
+        this.ui.rocketWait();
+        this.audio.play('bump');
+        return;
+      }
     }
     const p = this.world.player;
     if (p.canJump) this.launchSuperJump(r.hyperJumps > 0);
@@ -2068,7 +2099,35 @@ export class Game {
     this.ui.toast(`${ICON.heart} RESPAWN · ${this.run.lives} ${this.run.lives === 1 ? 'life' : 'lives'} left`, 'var(--red)');
   }
 
+  /** unused Roadster / HYPER / SOS charges at the finish line → bonus points (shown on the result) */
+  private leftover: { pts: number; items: string } | null = null;
+  private cashLeftovers() {
+    this.leftover = null;
+    const r = this.run;
+    const parts: string[] = [];
+    let pts = 0;
+    const add = (n: number, each: number, name: string) => {
+      if (n <= 0) return;
+      pts += n * each;
+      parts.push(`${n}× ${name}`);
+    };
+    add(r.superJumps, LEFTOVER_POINTS.super, 'Roadster Jump');
+    add(r.hyperJumps, LEFTOVER_POINTS.hyper, 'HYPER JUMP');
+    add(r.escapes, LEFTOVER_POINTS.escape, 'Sky Escape');
+    if (pts <= 0) return;
+    const total = Math.round(pts * r.scoreMul);
+    r.score += total;
+    r.superJumps = r.hyperJumps = r.escapes = 0;
+    this.leftover = { pts: total, items: parts.join(' + ') };
+    window.setTimeout(() => {
+      this.ui.pop(`+${total.toLocaleString('en-US')}`, '#c9a8ff', 'UNUSED BOOSTS', -18);
+      this.ui.toast(`${ICON.rocket} Unused boosts → points · ${parts.join(' + ')} = +${total.toLocaleString('en-US')}`, '#9b6bff');
+      this.audio.play('combo');
+    }, 900);
+  }
+
   private onFinish() {
+    if (!this.tutorialMode && this.course) this.cashLeftovers();
     this.setState('finish');
     this.input.enabled = false;
     this.rig.mode = 'garage';
@@ -2123,6 +2182,7 @@ export class Game {
       speedBonus,
       level: lv.label,
       hasNext: COURSES.indexOf(c) < COURSES.length - 1,
+      leftover: this.leftover,
     });
     this.ui.show('finish');
     this.lastResult = { coins: run.coins, reward, doubled: false };
@@ -2192,6 +2252,7 @@ export class Game {
       this.track.update(w.dist);
     }
     if (this.state !== 'dying' && this.state !== 'gameover') this.vehicle.update(p, dt, w.speed, turbo);
+    this.tyreSpray(dt, w.speed);
     this.obstacleViews.update(w.obstacles, this.time, dt);
     this.pickupViews.update(w.pickups, this.time, this.rig.camera.quaternion);
     const scroll = this.state === 'countdown' ? 0 : w.speed;

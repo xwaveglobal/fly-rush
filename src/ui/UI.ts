@@ -274,6 +274,7 @@ export class UI {
         <div class="res-top"><button class="icon-btn sm" data-a="home" aria-label="Close">${ICON.close}</button><img class="res-logo" src="${logoUrl}" alt="" /><button class="icon-btn sm" data-a="share" aria-label="Share">${ICON.share}</button></div>
         <div class="finish-title">FINISH! <small class="label" data-k="ftrack">Future City</small></div>
         <div class="scoreline"><div class="stars big" data-k="fstars"></div><div class="final" data-k="ffinal">0</div><div class="newbest" data-k="fnewbest">${ICON.trophy} NEW BEST!</div></div>
+        <div class="leftover" data-k="fleft" hidden>${ICON.rocket}<span>Unused boosts</span><small data-k="flefttxt"></small><b data-k="fleftpts">+0</b></div>
         <div class="stats mini">
           <div class="stat"><span class="label">Time</span><span class="v">${ICON.flag}<span data-k="ftime">0</span></span></div>
           <div class="stat"><span class="label">Coins</span><span class="v">${ICON.coin}<span data-k="fcoins">0</span></span></div>
@@ -484,8 +485,8 @@ export class UI {
         <div class="powers" data-h="powers"></div>
         <div class="danger" data-k="danger" hidden><div class="dg-arrow" data-k="dgarrow"></div><div class="dg-txt" data-k="dgtxt">SWIPE</div></div>
       </div>
-      <button class="rocketbtn hit" data-a="rocket" data-k="rocketbtn" hidden aria-label="Roadster Jump">${ICON.rocket}<span data-k="rocketlbl">ROADSTER</span><em data-k="rocketcnt">1</em></button>
-      <button class="sos hit" data-a="sos" data-k="sosbtn" hidden aria-label="Sky Escape">${ICON.sos}<span>SOS</span><em data-k="soscnt">1</em></button>
+      <button class="rocketbtn hit" data-a="rocket" data-k="rocketbtn" hidden aria-label="Roadster Jump">${ICON.rocket}<span data-k="rocketlbl" data-h="rocketlbl">ROADSTER</span><em data-k="rocketcnt" data-h="rocketcnt">1</em></button>
+      <button class="sos hit" data-a="sos" data-k="sosbtn" hidden aria-label="Sky Escape">${ICON.sos}<span>SOS</span><em data-k="soscnt" data-h="soscnt">1</em></button>
       <div class="mission panel"><div class="t"><span data-h="mtext">—</span><span data-h="mprog"></span></div><div class="track"><i data-h="mbar"></i></div></div>
     </section>
 
@@ -876,7 +877,7 @@ export class UI {
     const rockets = run.hyperJumps + run.superJumps;
     if (rb.hidden !== rockets <= 0) rb.hidden = rockets <= 0;
     rb.classList.toggle('hyper', run.hyperJumps > 0);
-    this.hset('rocketlbl', run.hyperJumps > 0 ? 'HYPER' : 'ROADSTER');
+    this.hset('rocketlbl', this.rocketReady || rb.classList.contains('call') ? 'TAP!' : run.hyperJumps > 0 ? 'HYPER' : 'ROADSTER');
     this.hset('rocketcnt', String(rockets));
     const sos = $(this.root, '[data-k="sosbtn"]');
     if (sos.hidden !== run.escapes <= 0) sos.hidden = run.escapes <= 0;
@@ -1183,7 +1184,7 @@ export class UI {
     this.hset('tmarks', o.marks.map((m) => `<s style="left:${((m / o.length) * 100).toFixed(2)}%"></s>`).join(''), true);
   }
 
-  finish(o: { track: string; stars: number; score: number; isBest: boolean; time: number; coins: number; coinTarget: number; lost: number; reward: number; hasNext: boolean; rewards: RunRewards | null; speedBonus: number; level: string }) {
+  finish(o: { track: string; stars: number; score: number; isBest: boolean; time: number; coins: number; coinTarget: number; lost: number; reward: number; hasNext: boolean; rewards: RunRewards | null; speedBonus: number; level: string; leftover?: { pts: number; items: string } | null }) {
     this.setAll('ftrack', o.track);
     $(this.root, '[data-k="fstars"]').innerHTML = this.starsHtml(o.stars);
     this.setAll('ffinal', fmt(o.score));
@@ -1193,6 +1194,12 @@ export class UI {
     this.setAll('fcoins', `${fmt(o.coins)}`);
     this.setAll('flost', `${o.lost}`);
     this.setAll('freward', `+${fmt(o.reward)}`);
+    const lo = $(this.root, '[data-k="fleft"]');
+    lo.hidden = !o.leftover;
+    if (o.leftover) {
+      this.setAll('fleftpts', `+${fmt(o.leftover.pts)}`);
+      this.setAll('flefttxt', o.leftover.items);
+    }
     const rule = (ok: boolean, t: string) => `<span class="srule ${ok ? 'got' : ''}"><i>${ok ? '★' : '☆'}</i>${t}</span>`;
     $(this.root, '[data-k="frules"]').innerHTML =
       rule(true, 'Finish') + rule(o.lost === 0, 'No lives lost') + rule(o.coins >= o.coinTarget, `${o.coinTarget} coins`);
@@ -1740,7 +1747,20 @@ export class UI {
     }, 260);
   }
 
+  /** the ROADSTER button lights up (steady glow + "TAP!") when a jump is the way through */
+  private rocketReady = false;
+  /** training: ROADSTER tapped before the blockade — nudge the button and explain */
+  rocketWait() {
+    const b = $(this.root, '[data-k="rocketbtn"]');
+    b.classList.remove('wait');
+    void b.offsetWidth;
+    b.classList.add('wait');
+    this.toast(`${ICON.rocket} Save it! Tap ROADSTER when the button lights up`, '#9b6bff');
+  }
+
   danger(hint: string | null) {
+    this.rocketReady = hint === 'rocket';
+    $(this.root, '[data-k="rocketbtn"]').classList.toggle('ready', this.rocketReady);
     const d = $(this.root, '[data-k="danger"]');
     d.classList.remove('ok');
     const sos = $(this.root, '[data-k="sosbtn"]');

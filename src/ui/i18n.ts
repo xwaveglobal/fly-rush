@@ -52,6 +52,8 @@ const T: [string, string, string, string, string, string][] = [
   ['Near miss', 'Frôlé', 'ニアミス', 'Por um triz', 'Knapp', 'Roce'],
   ['Time', 'Temps', 'タイム', 'Tempo', 'Zeit', 'Tiempo'],
   ['Lives lost', 'Vies perdues', '失ったライフ', 'Vidas perdidas', 'Verlorene Leben', 'Vidas perdidas'],
+  ['Unused boosts', 'Bonus inutilisés', '未使用ブースト', 'Boosts não usados', 'Ungenutzte Boosts', 'Potenciadores sin usar'],
+  ['TAP!', 'TAPE !', 'タップ!', 'TOQUE!', 'TIPPEN!', '¡TOCA!'],
   ['Reward', 'Récompense', '報酬', 'Prêmio', 'Belohnung', 'Premio'],
   ['Rewards', 'Récompenses', '報酬', 'Prêmios', 'Belohnungen', 'Premios'],
   ['How rank works', 'Comment marche le rang', 'ランクの仕組み', 'Como funciona o rank', 'So funktioniert der Rang', 'Cómo funciona el rango'],
