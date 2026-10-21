@@ -47,7 +47,7 @@ import type { ItemKey, Reward } from './meta/Daily.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v1.18.9';
+const VERSION = 'v1.19';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -128,6 +128,7 @@ export class Game {
   speedLines = new SpeedLines();
   rings = new RingPulses();
   debris = new Debris();
+  private speedBlurS = 0;
   /** game-over: the car render breaks into shards */
   shatter = new CarShatter();
   shield = makeShield();
@@ -1374,29 +1375,9 @@ export class Game {
 
   /** grit kicked back from the rear tyres while driving fast on the road (sells the speed) */
   private sprayAcc = 0;
-  private dustAcc = 0;
   private sprayPos = new THREE.Vector3();
   private tyreSpray(dt: number, speed: number) {
     const p = this.world.player;
-    const dk = clamp((speed - TYRE.dustFrom) / (SPEED.max - TYRE.dustFrom), 0, 1);
-    if (this.state === 'run' && p.air < 0.08 && speed > TYRE.dustFrom) {
-      // option D: soft dust puffs kicked back from each rear tyre's contact patch
-      if (TYRE.spinFx) {
-        this.dustAcc += dt * TYRE.dustRate * (0.35 + 0.65 * dk);
-        while (this.dustAcc >= 1) {
-          this.dustAcc -= 1;
-          for (const side of [-1, 1] as const) {
-            const q = this.vehicle.rearTyreWorld(side, this.sprayPos);
-            this.smoke.emit(
-              q.x + side * 0.1 + (Math.random() - 0.5) * 0.15, 0.22 + Math.random() * 0.1, q.z + 0.15,
-              side * (0.4 + Math.random() * 1.0), 0.4 + Math.random() * 0.7, 1.5 + Math.random() * 2.5,
-              TYRE.dustColor, TYRE.dustSize * (0.7 + Math.random() * 0.6), TYRE.dustLife * (0.7 + Math.random() * 0.6),
-              { locked: true, drag: 1.8, grow: 1.3 },
-            );
-          }
-        }
-      }
-    }
     if (this.state !== 'run' || p.air > 0.08 || speed < TYRE.sprayFrom) {
       this.sprayAcc = 0;
       return;
@@ -2394,7 +2375,14 @@ export class Game {
     this.portal.update(dt);
 
     // speed lines
-    const wantLines = (turbo ? 1 : this.state === 'run' ? speedFactor * 0.45 : 0) * (this.save.settings.comfort !== false ? 0.65 : 1);
+    // side speed streaks: always a little while racing, more with speed, most in Turbo
+    const comfortK = this.save.settings.comfort !== false ? 0.75 : 1;
+    const wantLines = (turbo ? 1 : this.state === 'run' ? 0.18 + speedFactor * 0.55 : 0) * comfortK;
+    // velocity-based edge blur (High quality): grows with speed, extra in Turbo; light shake in Turbo
+    const blurWant = this.state === 'run' ? (0.016 + speedFactor * 0.04 + turbo * 0.05) * comfortK : 0;
+    this.speedBlurS += (blurWant - this.speedBlurS) * damp(4, dt);
+    this.renderer.setSpeedBlur(this.speedBlurS);
+    this.rig.rumble = turbo && this.state === 'run' ? 0.16 * comfortK : 0;
     this.speedLines.intensity += (wantLines - this.speedLines.intensity) * damp(3, dt);
     this.speedLines.update(dt, w.speed, this.scenery.accent);
 

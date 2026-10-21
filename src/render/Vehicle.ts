@@ -8,6 +8,27 @@ import { mergeByMaterial } from './merge.ts';
 import type { Player } from '../gameplay/Player.ts';
 import x1Back from '../assets/images/car/x1-back.webp';
 import x1BackBoost from '../assets/images/car/x1-back-boost.webp';
+import x1TyreFx from '../assets/images/car/x1-tyrefx.png';
+import x1Tread from '../assets/images/car/x1-tread.png';
+
+/** tread mask (R) + original tyre shading (G) for the rear render, and the tileable tread texture */
+let _fx: THREE.Texture | null = null;
+let _tread: THREE.Texture | null = null;
+function tyreFxTex() {
+  if (_fx) return _fx;
+  _fx = new THREE.TextureLoader().load(x1TyreFx);
+  _fx.colorSpace = THREE.NoColorSpace;
+  return _fx;
+}
+function treadTex() {
+  if (_tread) return _tread;
+  _tread = new THREE.TextureLoader().load(x1Tread);
+  _tread.colorSpace = THREE.NoColorSpace;
+  _tread.wrapS = THREE.ClampToEdgeWrapping;
+  _tread.wrapT = THREE.RepeatWrapping;
+  _tread.anisotropy = 4;
+  return _tread;
+}
 import x1BackLeft from '../assets/images/car/x1-backleft.webp';
 import x1BackRight from '../assets/images/car/x1-backright.webp';
 import x1Left from '../assets/images/car/x1-left.webp';
@@ -260,7 +281,13 @@ export class Vehicle {
     this.boostHold = Math.max(this.boostHold, 0.55 * k); // hold the boost look briefly, then release smoothly
   }
   private boostHold = 0;
-  private jitterSign = 1;
+  private treadPhase = 0;
+  private treadBlurS = 0;
+  private suspY = 0;
+  private suspV = 0;
+  private bumpT = 0;
+  private prevAir = 0;
+  private prevLane = 1;
   /** comet light trails orbiting the rear tyres */
   private orbits: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>[] = [];
   private orbitMat!: THREE.ShaderMaterial;
@@ -607,10 +634,11 @@ export class Vehicle {
       this.spriteTex[i] = t;
     });
     const mat = new THREE.ShaderMaterial({
-      uniforms: { map: { value: this.spriteTex[0] }, fade: { value: 1 }, tint: { value: new THREE.Color(0xffffff) }, tintAmt: { value: 0 }, dim: { value: 1 }, gain: { value: 1 }, spin: { value: 0 }, streak: { value: 0 }, spinAmt: { value: 0 }, speedK: { value: 0 }, hot: { value: 0 }, rearView: { value: 1 } },
+      uniforms: { map: { value: this.spriteTex[0] }, fade: { value: 1 }, fxMap: { value: tyreFxTex() }, treadMap: { value: treadTex() }, treadScroll: { value: 0 }, treadBlur: { value: 0 }, treadOn: { value: 1 }, uvYScale: { value: 1 }, tint: { value: new THREE.Color(0xffffff) }, tintAmt: { value: 0 }, dim: { value: 1 }, gain: { value: 1 }, spin: { value: 0 }, streak: { value: 0 }, spinAmt: { value: 0 }, speedK: { value: 0 }, hot: { value: 0 }, rearView: { value: 1 } },
       vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
       fragmentShader: `uniform sampler2D map; uniform vec3 tint; uniform float tintAmt; uniform float dim; uniform float gain;
-        uniform float spin; uniform float streak; uniform float spinAmt; uniform float speedK; uniform float hot; uniform float rearView; uniform float fade; varying vec2 vUv;
+        uniform float spin; uniform float streak; uniform float spinAmt; uniform float speedK; uniform float hot; uniform float rearView; uniform float fade;
+        uniform sampler2D fxMap; uniform sampler2D treadMap; uniform float treadScroll; uniform float treadBlur; uniform float treadOn; uniform float uvYScale; varying vec2 vUv;
         void main(){
           vec4 c = texture2D(map, vUv);
           if (c.a < 0.02) discard;
@@ -618,23 +646,27 @@ export class Vehicle {
           float lt = step(vUv.x, ${TYRE.maskX.toFixed(3)}) * step(vUv.y, ${TYRE.maskY.toFixed(3)});
           float rt = step(${(1 - TYRE.maskX).toFixed(3)}, vUv.x) * step(vUv.y, ${TYRE.maskY.toFixed(3)});
           float tyre = (lt + rt) * rearView;
-          // OPTION D — spinning rear tyres seen from behind (owner's pick):
-          // 1) the tread smears vertically (grooves → continuous lines), more with speed
-          // 2) soft light/dark bands slide down the rubber (rolling), 3) a glint races down the shoulder
-          float lum0 = dot(c.rgb, vec3(0.333));
-          float rub = smoothstep(0.42, 0.22, lum0) * tyre;           // rubber only (not diffuser / metal)
-          if (rub > 0.01 && spinAmt > 0.01) {
-            float o = (0.006 + 0.03 * speedK) * spinAmt;
-            vec3 acc = c.rgb;
-            for (int k = 1; k <= 6; k++) acc += texture2D(map, vUv + vec2(0.0, o * float(k) / 6.0)).rgb;
-            vec3 sm = acc / 7.0;
-            float band = 0.5 + 0.5 * sin(vUv.y * 32.7 - spin * 6.2831853);
-            sm *= 0.86 + 0.22 * band;
-            float tx = vUv.x < 0.5 ? vUv.x / ${TYRE.maskX.toFixed(3)} : (1.0 - vUv.x) / ${TYRE.maskX.toFixed(3)};
-            float shoulder = exp(-pow((tx - 0.18) / 0.15, 2.0));
-            float gl = clamp(sin(vUv.y * 11.3 - streak * 6.2831853) * 4.0 - 3.2, 0.0, 1.0);
-            sm += vec3(0.47) * gl * shoulder * (0.5 + 0.5 * speedK);
-            c.rgb = mix(c.rgb, sm, rub * spinAmt);
+          // REAR TYRE LAYER (owner's reference): inside the tread mask the rubber is replaced by a
+          // tread texture that scrolls top → bottom with the road speed. The blur grows by speed tier
+          // (idle → run → fast → very fast → turbo); the tyre outline / sidewall stay sharp (mask is
+          // eroded away from them) and the original lighting is kept (shade channel).
+          {
+            vec2 bu = vec2(vUv.x, 1.0 - (1.0 - vUv.y) * uvYScale);
+            if (rearView > 0.5 && bu.y >= 0.0) {
+              vec4 fx = texture2D(fxMap, bu);
+              float m = fx.r * treadOn;
+              if (m > 0.004) {
+                float left = step(bu.x, 0.5);
+                float tx = mix((${TYRE.treadX1.toFixed(4)} - (1.0 - bu.x)) / ${(TYRE.treadX1 - TYRE.treadX0).toFixed(4)}, (bu.x - ${TYRE.treadX0.toFixed(4)}) / ${(TYRE.treadX1 - TYRE.treadX0).toFixed(4)}, left);
+                tx = left > 0.5 ? tx : 1.0 - tx;   // right tyre: mirrored tread
+                float py = (1.0 - bu.y) * ${TYRE.treadImgH.toFixed(1)} / ${TYRE.treadTilePx.toFixed(1)};
+                vec3 acc = vec3(0.0);
+                for (int k = 0; k < 9; k++) acc += texture2D(treadMap, vec2(clamp(tx, 0.0, 1.0), py - treadScroll - treadBlur * float(k) / 8.0)).rgb;
+                vec3 alb = acc / 9.0;
+                vec3 tr = alb * (fx.g / 0.5) * ${TYRE.treadGain.toFixed(3)};
+                c.rgb = mix(c.rgb, tr, m);
+              }
+            }
           }
           // "hot tyre" look: thin glowing lines wrap the tread and race down it
           if (hot > 0.01 && tyre > 0.5) {
@@ -676,6 +708,7 @@ export class Vehicle {
       const bm = this.sprite.material.clone();
       bm.uniforms.map.value = bt;
       bm.uniforms.fade.value = 0;
+      bm.uniforms.uvYScale.value = TYRE.boostImgH;
       this.boostSprite = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), bm);
       this.boostSprite.layers.set(OVERLAY_LAYER);
       this.boostSprite.renderOrder = 3;
@@ -1338,10 +1371,33 @@ export class Vehicle {
       u.spinAmt.value = clamp01(speed / 8) * (1 - p.air);
       u.speedK.value = clamp01((speed - TYRE.blurFrom) / (TYRE.blurFull - TYRE.blurFrom)) * (1 - p.air);
       const sx = this.sprite.scale.x, sy = this.sprite.scale.y;
-      if (!TYRE.spinFx) {
-        // tyres exactly as drawn in the render
-        u.spinAmt.value = 0;
-        u.speedK.value = 0;
+      // the old procedural tread shading is off — the tread LAYER below replaces it
+      u.spinAmt.value = 0;
+      u.speedK.value = 0;
+      // tread layer: scroll with the road (tile ≈ TYRE.treadTileM metres of tread), capped per frame so
+      // it never strobes; the blur follows the speed tiers and always covers the per-frame step
+      {
+        const kmh = speed * 3.6;
+        const tiers = TYRE.treadTiers;
+        let blur = tiers[tiers.length - 1].blur;
+        for (let i = 0; i < tiers.length - 1; i++) {
+          if (kmh <= tiers[i + 1].kmh) {
+            const f = clamp01((kmh - tiers[i].kmh) / (tiers[i + 1].kmh - tiers[i].kmh));
+            blur = tiers[i].blur + (tiers[i + 1].blur - tiers[i].blur) * f;
+            break;
+          }
+        }
+        blur += turbo * TYRE.treadTurboBlur;
+        const step = Math.min((speed / TYRE.treadTileM) * dt, TYRE.treadMaxStep);
+        this.treadPhase = (this.treadPhase + step) % 1000;
+        this.treadBlurS += (Math.max(blur, step * 0.9) - this.treadBlurS) * (1 - Math.exp(-8 * dt)); // eased tier changes
+        u.treadScroll.value = this.treadPhase;
+        u.treadBlur.value = this.treadBlurS;
+        u.treadOn.value = this.locked ? 0 : 1; // wheels keep spinning in the air (free spin)
+        const bsu2 = this.boostSprite.material.uniforms;
+        bsu2.treadScroll.value = this.treadPhase;
+        bsu2.treadBlur.value = this.treadBlurS;
+        bsu2.treadOn.value = u.treadOn.value;
       }
       const hotK = TYRE.effects ? clamp01((speed - TYRE.hotFrom) / (TYRE.hotFull - TYRE.hotFrom)) : 0;
       u.hot.value = hotK * u.rearView.value * (1 - p.air) * (this.locked ? 0 : 1);
@@ -1395,12 +1451,26 @@ export class Vehicle {
       }
     }
     this.updateSprite(vy, this.bank.rotation.z);
-    // option D: the body vibrates very slightly at speed (alternating sub-pixel offset)
-    if (TYRE.spinFx && this.spriteOn) {
-      this.jitterSign = -this.jitterSign;
-      const jk = this.sprite.material.uniforms.speedK.value;
-      this.sprite.position.x += this.jitterSign * TYRE.jitter * jk;
-      this.sprite.position.y += (this.jitterSign > 0 ? 1 : 0) * TYRE.jitter * 0.6 * jk;
+    // SUSPENSION (1–3 px): a spring on the body — road bumps at speed, a dip on lane changes,
+    // a bounce on landing.
+    if (this.spriteOn) {
+      const S = TYRE.susp;
+      const onRoad = p.air < 0.05;
+      if (this.prevAir > 0.3 && onRoad) this.suspV -= S.landKick * clamp01(this.prevAir);
+      if (p.lane !== this.prevLane) this.suspV -= S.laneKick;
+      this.prevLane = p.lane;
+      this.prevAir = p.air;
+      if (onRoad && speed > 5) {
+        this.bumpT -= dt;
+        if (this.bumpT <= 0) {
+          this.bumpT = S.bumpEvery * (0.5 + Math.random());
+          this.suspV += (Math.random() - 0.5) * 2 * S.bumpKick * clamp01(speed / 40);
+        }
+      }
+      this.suspV += (-S.k * this.suspY - S.damp * this.suspV) * dt;
+      this.suspY += this.suspV * dt;
+      this.suspY = Math.max(-S.max, Math.min(S.max, this.suspY));
+      this.sprite.position.y += this.suspY;
     }
     this.root.visible = this.visibleBlink;
   }

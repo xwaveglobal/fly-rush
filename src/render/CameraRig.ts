@@ -17,6 +17,8 @@ export class CameraRig {
   private pos = new THREE.Vector3(0, 3, 7);
   private look = new THREE.Vector3(0, 1.2, -8);
   private trauma = 0;
+  /** steady low shake floor (Turbo: light camera shake) */
+  rumble = 0;
   private time = 0;
   private baseFov = 70;
   private pushBack = 0;
@@ -141,7 +143,8 @@ export class CameraRig {
     this.camera.position.copy(this.pos);
     // trauma shake
     this.trauma = Math.max(0, this.trauma - dt * 1.6);
-    const s = this.trauma * this.trauma;
+    const tr = Math.max(this.trauma, this.rumble);
+    const s = tr * tr;
     if (s > 0) {
       this.camera.position.x += (Math.sin(t * 61.3) + Math.sin(t * 37.1)) * 0.18 * s;
       this.camera.position.y += (Math.sin(t * 53.7) + Math.sin(t * 29.9)) * 0.14 * s;

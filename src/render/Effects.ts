@@ -130,48 +130,74 @@ export class Particles {
   }
 }
 const tmpC = new THREE.Color();
+const tmpC2 = new THREE.Color();
 
 /** Streaking speed lines around the camera; intensity follows speed/turbo. */
+/**
+ * Speed streaks: long light trails rushing past along BOTH SIDES of the road (rails, building
+ * lights), plus a few in the sky. Brighter, longer and faster with speed; per-streak colour
+ * (white / world accent / red tail-light / blue) like long-exposure city traffic.
+ */
 export class SpeedLines {
   lines: THREE.LineSegments;
-  private n = 90;
-  private data: { x: number; y: number; z: number; len: number }[] = [];
+  private n = 140;
+  private data: { x: number; y: number; z: number; len: number; c: number }[] = [];
   private arr: Float32Array;
+  private col: Float32Array;
   intensity = 0;
   constructor() {
     this.arr = new Float32Array(this.n * 6);
+    this.col = new Float32Array(this.n * 6);
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(this.arr, 3).setUsage(THREE.DynamicDrawUsage));
+    geo.setAttribute('color', new THREE.BufferAttribute(this.col, 3).setUsage(THREE.DynamicDrawUsage));
     this.lines = new THREE.LineSegments(
       geo,
-      new THREE.LineBasicMaterial({ color: 0xcfefff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }),
+      new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }),
     );
     this.lines.frustumCulled = false;
-    for (let i = 0; i < this.n; i++) this.data.push(this.spawn({ x: 0, y: 0, z: 0, len: 0 }, true));
+    for (let i = 0; i < this.n; i++) this.data.push(this.spawn({ x: 0, y: 0, z: 0, len: 0, c: 0 }, true));
   }
-  private spawn(d: { x: number; y: number; z: number; len: number }, anyZ = false) {
-    const a = rng.next() * Math.PI * 2;
-    const r = rng.range(3.5, 14);
-    d.x = Math.cos(a) * r;
-    d.y = 2.5 + Math.sin(a) * r * 0.7;
-    d.z = anyZ ? rng.range(-120, 10) : rng.range(-140, -90);
-    d.len = rng.range(3, 9);
+  private spawn(d: { x: number; y: number; z: number; len: number; c: number }, anyZ = false) {
+    const side = rng.next() < 0.82;
+    if (side) {
+      // just outside the road: rails / barriers (low) and building lights (higher)
+      const s = rng.next() < 0.5 ? -1 : 1;
+      d.x = s * rng.range(5.4, 13);
+      d.y = rng.next() < 0.6 ? rng.range(0.25, 1.6) : rng.range(1.6, 7);
+    } else {
+      const a = rng.next() * Math.PI * 2;
+      const r = rng.range(5, 14);
+      d.x = Math.cos(a) * r;
+      d.y = 3 + Math.abs(Math.sin(a)) * r * 0.7;
+    }
+    d.z = anyZ ? rng.range(-140, 10) : rng.range(-160, -100);
+    d.len = rng.range(5, 16);
+    d.c = rng.next();
     return d;
   }
   update(dt: number, speed: number, color: THREE.Color) {
     const m = this.lines.material as THREE.LineBasicMaterial;
-    m.opacity = Math.min(0.75, this.intensity);
-    m.color.copy(color).lerp(tmpC.setHex(0xffffff), 0.5);
+    m.opacity = Math.min(0.85, this.intensity);
     this.lines.visible = m.opacity > 0.01;
-    const v = speed * 2.2;
+    if (!this.lines.visible) return;
+    const v = speed * 2.4;
     for (let i = 0; i < this.n; i++) {
       const d = this.data[i];
       d.z += v * dt;
       if (d.z > 12) this.spawn(d);
-      const len = d.len * (0.5 + this.intensity);
+      const len = d.len * (0.4 + this.intensity * 1.4);
       this.arr.set([d.x, d.y, d.z, d.x, d.y, d.z - len], i * 6);
+      // colour: mostly white-ish, some world accent, some red (tail lights) and blue
+      if (d.c < 0.45) tmpC.setRGB(0.9, 0.95, 1);
+      else if (d.c < 0.7) tmpC.copy(color).lerp(tmpC2.setRGB(1, 1, 1), 0.3);
+      else if (d.c < 0.86) tmpC.setRGB(1, 0.25, 0.3);
+      else tmpC.setRGB(0.3, 0.6, 1);
+      // head bright, tail fades to black (additive → transparent)
+      this.col.set([tmpC.r, tmpC.g, tmpC.b, 0, 0, 0], i * 6);
     }
     (this.lines.geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true;
+    (this.lines.geometry.attributes.color as THREE.BufferAttribute).needsUpdate = true;
   }
 }
 

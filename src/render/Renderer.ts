@@ -4,6 +4,28 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+
+/**
+ * Velocity-based motion blur: a zoom blur toward the road's vanishing point, only on the edges
+ * of the screen (road sides, buildings, rails). The centre — and the car, which is drawn later in
+ * the overlay pass — stay sharp.
+ */
+const SpeedBlurShader = {
+  uniforms: { tDiffuse: { value: null }, strength: { value: 0 }, centre: { value: new THREE.Vector2(0.5, 0.62) } },
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float strength; uniform vec2 centre; varying vec2 vUv;
+    void main(){
+      vec4 base = texture2D(tDiffuse, vUv);
+      if (strength < 0.0005) { gl_FragColor = base; return; }
+      vec2 d = vUv - centre;
+      float edge = smoothstep(0.18, 0.62, length(d * vec2(1.25, 1.0)));   // 0 in the middle, 1 at the sides
+      if (edge < 0.01) { gl_FragColor = base; return; }
+      vec4 acc = base;
+      for (int i = 1; i < 8; i++) acc += texture2D(tDiffuse, vUv - d * strength * edge * float(i) / 7.0);
+      gl_FragColor = acc / 8.0;
+    }`,
+};
 
 /** objects on this layer skip post-processing and are drawn last, pixel-exact (the car render) */
 export const OVERLAY_LAYER = 1;
@@ -19,6 +41,7 @@ export class Renderer {
   scene = new THREE.Scene();
   private composer: EffectComposer | null = null;
   private bloom: UnrealBloomPass | null = null;
+  private speedBlur: ShaderPass | null = null;
   private renderPass: RenderPass | null = null;
   quality: Quality;
   pixelRatio = 1;
@@ -74,12 +97,15 @@ export class Renderer {
         // tight, high-threshold bloom: lights glow, silhouettes stay crisp
         this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.3, 0.22, 1.0);
         this.composer.addPass(this.bloom);
+        this.speedBlur = new ShaderPass(SpeedBlurShader);
+        this.composer.addPass(this.speedBlur);
         this.composer.addPass(new OutputPass());
       }
     } else if (this.composer) {
       this.composer.dispose();
       this.composer = null;
       this.bloom = null;
+      this.speedBlur = null;
     }
     this.resize();
   }
@@ -114,6 +140,11 @@ export class Renderer {
       return true;
     }
     return false;
+  }
+
+  /** 0 … ~0.08: how far the screen edges smear toward the vanishing point (High quality only) */
+  setSpeedBlur(strength: number) {
+    if (this.speedBlur) this.speedBlur.uniforms.strength.value = strength;
   }
 
   setBloom(strength: number) {

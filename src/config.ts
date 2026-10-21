@@ -105,16 +105,27 @@ export const TYRE = {
   /** rear tyres on the X1 rear render (uv): x < maskX (and > 1 − maskX), y < maskY */
   maskX: 0.17,
   maskY: 0.5,
-  /** option D: tread smear + rolling bands + shoulder glint + dust + body vibration */
-  spinFx: true,
-  /** body vibration at full speed (sprite-plane units) */
-  jitter: 0.0022,
-  /** dust puffs behind the rear tyres */
-  dustFrom: 8,
-  dustRate: 55,
-  dustSize: 0.3,
-  dustLife: 0.45,
-  dustColor: 0xc2c8d4,
+  /** rear tread layer: tread rect on the render (uv x), image height px, tile height px / metres */
+  treadX0: 14 / 1024,
+  treadX1: 136 / 1024,
+  treadImgH: 588,
+  treadTilePx: 120,
+  treadTileM: 0.33,
+  /** max tread scroll per frame (fraction of a tile) — more would strobe */
+  treadMaxStep: 0.4,
+  treadGain: 1.0,
+  /** blur length (fraction of a tile) per speed tier, km/h: idle → run → fast → very fast */
+  treadTiers: [
+    { kmh: 0, blur: 0 },
+    { kmh: 60, blur: 0.06 },
+    { kmh: 150, blur: 0.22 },
+    { kmh: 250, blur: 0.45 },
+    { kmh: 400, blur: 0.7 },
+  ],
+  /** extra blur while Turbo runs */
+  treadTurboBlur: 0.3,
+  /** body suspension spring (metres; ~0.009 m ≈ 1 px on a phone) */
+  susp: { k: 260, damp: 16, max: 0.03, bumpEvery: 0.35, bumpKick: 0.16, laneKick: 0.22, landKick: 0.55 },
   /** tyre effects (tread motion, hot streaks, orbit trails, sparks). Off = tyres look exactly like the render */
   effects: false,
   /** speed (m/s) where the hot-tyre glow starts / is full */

@@ -16,7 +16,7 @@ import thEndless from '../assets/images/tracks/endless.jpg';
 import guide1 from '../assets/images/guide/guide-1.jpg';
 import guide2 from '../assets/images/guide/guide-2.jpg';
 import guide3 from '../assets/images/guide/guide-3.jpg';
-import { COURSES, RANK_GATE_AT, trackLock } from '../gameplay/Courses.ts';
+import { COURSES, FREE_TRACKS, RANK_GATE_AT, trackLock } from '../gameplay/Courses.ts';
 import { MISSIONS, missionById, type ActiveMission } from '../gameplay/Missions.ts';
 import type { SaveData } from '../core/Save.ts';
 import { SKINS, carVisibility } from '../render/Vehicle.ts';
@@ -1325,6 +1325,8 @@ export class UI {
     // 20 tracks in order: 1–10 unlock by score on the previous track, then the Rank-A gate, then 11–20.
     // Endless sits right after track 1 (always HARD).
     const classA = CLASSES.indexOf(this.myClass) >= CLASSES.indexOf('A');
+    // list number shown on a card: Endless takes #6, so remixes start at #7
+    const no = (i: number) => i + 1 + (i >= FREE_TRACKS ? 1 : 0);
     const card = (c: (typeof COURSES)[number], i: number) => {
       const lock = trackLock(c, s.trackBest, classA);
       const stars = s.trackStars[c.id] ?? 0;
@@ -1333,25 +1335,26 @@ export class UI {
         return `<button class="tcard tlocked dark" data-a="rankgate">
           <img src="${thumbFor(c)}" alt="" draggable="false" />
           <div class="tinfo"><b>? ? ?</b><span class="label">${fmt(c.length)} m</span><span class="tmeta">${ICON.lock}<span>Rank ${classBadge('A')}</span></span></div>
-          <span class="tbadge">${i + 1}</span></button>`;
+          <span class="tbadge">${no(i)}</span></button>`;
       }
-      const req = !lock.open && lock.why === 'score' ? `<span class="treq">${ICON.lock} Score ${fmt(lock.need)} on #${i}</span>` : '';
+      const req = !lock.open && lock.why === 'score' ? `<span class="treq">${ICON.lock} Score ${fmt(lock.need)} on #${no(i - 1)}</span>` : '';
       return `<button class="tcard ${s.track === c.id ? 'sel' : ''} ${lock.open ? '' : 'tlocked'}" data-a="track" data-id="${c.id}">
         <img src="${thumbFor(c)}" alt="" draggable="false" />
         <div class="tinfo"><b>${c.name}</b><span class="label">${fmt(c.length)} m · best ${fmt(s.trackBest[c.id] ?? 0)}</span>
         <span class="tmeta"><span class="stars">${this.starsHtml(stars)}</span><span class="diff" title="Difficulty">${diff}</span></span>${req}</div>
-        <span class="tbadge">${lock.open ? i + 1 : ICON.lock}</span>${liveTrack === c.id ? '<span class="cuptag">🏆 CUP LIVE</span>' : ''}</button>`;
+        <span class="tbadge">${lock.open ? no(i) : ICON.lock}</span>${liveTrack === c.id ? '<span class="cuptag">🏆 CUP LIVE</span>' : ''}</button>`;
     };
     const endless = `<button class="tcard endless ${s.track === 'endless' ? 'sel' : ''}" data-a="track" data-id="endless">
         <img src="${THUMBS.endless}" alt="" draggable="false" />
         <div class="tinfo"><b>Endless</b><span class="label">All worlds · no finish line · always HARD</span>
         <span class="tmeta">${ICON.trophy}<span>${fmt(s.trackBest.endless ?? s.best)}</span></span></div>
-        <span class="tbadge">∞</span>${liveTrack === 'endless' ? '<span class="cuptag">🏆 CUP LIVE</span>' : ''}</button>`;
+        <span class="tbadge">6</span>${liveTrack === 'endless' ? '<span class="cuptag">🏆 CUP LIVE</span>' : ''}</button>`;
     const gate = `<button class="rankgate ${classA ? 'open' : ''}" data-a="rankgate">${classA ? ICON.check : ICON.lock}<span class="rgt"><b>${classA ? 'RANK A GATE OPEN' : 'REACH RANK A'}</b><small>${classA ? 'Tracks 11–20 unlocked' : 'to unlock tracks 11–20 · tap to see how'}</small></span>${classBadge('A')}</button>`;
     const cards = [
-      card(COURSES[0], 0),
+      // the 5 worlds (always open), Endless at position 6, then the unlockable remixes
+      ...COURSES.slice(0, FREE_TRACKS).map((c, k) => card(c, k)),
       endless,
-      ...COURSES.slice(1, RANK_GATE_AT).map((c, k) => card(c, k + 1)),
+      ...COURSES.slice(FREE_TRACKS, RANK_GATE_AT).map((c, k) => card(c, k + FREE_TRACKS)),
       gate,
       ...COURSES.slice(RANK_GATE_AT).map((c, k) => card(c, k + RANK_GATE_AT)),
     ];
