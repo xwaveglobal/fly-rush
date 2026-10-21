@@ -20,17 +20,13 @@ export interface Product {
   art: 'coins-s' | 'coins-m' | 'coins-l' | 'coins-xl' | 'starter' | 'jumps' | 'hyper' | 'noads' | 'pass' | 'escape';
 }
 
+/** v2: the shop sells only coins (+ Remove Ads). EXP can never be bought. */
 export const PRODUCTS: Product[] = [
-  { sku: 'starter_pack', name: 'Starter Pack', desc: '3,000 coins · 3 Roadster Jumps · 1 HYPER JUMP · no interstitial ads', price: '$1.99', grant: { coins: 3000, items: { super: 3, hyper: 1 }, noAds: true, starter: true }, badge: 'ONE TIME · −80%', kind: 'special', once: true, art: 'starter' },
-  { sku: 'xwave_pass', name: 'XWAVE Pass · 30 days', desc: 'Every day: 300 coins + 1 Roadster Jump · gold name on leaderboards · ×2 daily-quest coins', price: '$4.99', grant: { passDays: 30 }, badge: 'BEST FOR DAILY PLAYERS', kind: 'special', art: 'pass' },
-  { sku: 'no_ads', name: 'Remove Ads', desc: 'No interstitial ads, forever. Rewarded ads stay optional.', price: '$2.99', grant: { noAds: true }, kind: 'special', once: true, art: 'noads' },
-  { sku: 'jump_bundle', name: 'Jump Bundle', desc: '5 Roadster Jumps + 2 HYPER JUMPs', price: '$2.99', grant: { items: { super: 5, hyper: 2 } }, kind: 'bundle', art: 'jumps' },
-  { sku: 'escape_3', name: 'Sky Escape ×4', desc: 'Emergency button: rocket straight up over everything, glide back down', price: '$0.99', grant: { items: { escape: 4 } }, kind: 'bundle', art: 'escape' },
-  { sku: 'hyper_3', name: 'Mythic HYPER ×5', desc: 'The tournament jump: 7 m high, double roll, golden trail', price: '$3.99', grant: { items: { hyper: 5 } }, badge: 'MYTHIC', kind: 'bundle', art: 'hyper' },
-  { sku: 'coins_s', name: '1,200 coins', desc: 'Handful', price: '$0.99', grant: { coins: 1200 }, kind: 'coins', art: 'coins-s' },
-  { sku: 'coins_m', name: '6,500 coins', desc: '+30% bonus', price: '$4.99', grant: { coins: 6500 }, badge: 'POPULAR', kind: 'coins', art: 'coins-m' },
-  { sku: 'coins_l', name: '14,000 coins', desc: '+40% bonus', price: '$9.99', grant: { coins: 14000 }, kind: 'coins', art: 'coins-l' },
-  { sku: 'coins_xl', name: '32,000 coins', desc: '+60% bonus', price: '$19.99', grant: { coins: 32000 }, badge: 'BEST VALUE', kind: 'coins', art: 'coins-xl' },
+  { sku: 'coins_s', name: '1,000 coins', desc: 'A handful', price: '$0.99', grant: { coins: 1000 }, kind: 'coins', art: 'coins-s' },
+  { sku: 'coins_m', name: '6,000 coins', desc: '+20% bonus', price: '$4.99', grant: { coins: 6000 }, badge: 'POPULAR', kind: 'coins', art: 'coins-m' },
+  { sku: 'coins_l', name: '13,000 coins', desc: '+30% bonus', price: '$9.99', grant: { coins: 13000 }, kind: 'coins', art: 'coins-l' },
+  { sku: 'coins_xl', name: '30,000 coins', desc: '+50% bonus', price: '$19.99', grant: { coins: 30000 }, badge: 'BEST VALUE', kind: 'coins', art: 'coins-xl' },
+  { sku: 'no_ads', name: 'Remove Ads', desc: 'No ad after a race ends, forever. Revive ads stay optional.', price: '$2.99', grant: { noAds: true }, kind: 'special', once: true, art: 'noads' },
 ];
 
 export const productBySku = (sku: string) => PRODUCTS.find((p) => p.sku === sku);

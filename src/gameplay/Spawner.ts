@@ -316,15 +316,17 @@ export class Spawner {
       }
       let kind: PickupKind = 'coin';
       if (dist >= this.nextPowerAt && i === Math.floor(n / 2)) {
+        // v2 Endless / Track 2: specials (Roadster, SOS…) and extra lives are never on the road
+        const v1 = !!this.course;
         kind = r.weighted<PickupKind>([
           { w: 3, v: 'magnet' },
           { w: 3, v: 'shield' },
           { w: 2.2, v: 'turbo' },
           { w: 2, v: 'double' },
-          { w: dist > 600 ? 1 : 0, v: 'life' },
-          { w: dist > 250 ? 2 : 0, v: 'super' },
-          { w: dist > 150 ? 2 : 0, v: 'dash' },
-          { w: dist > 400 ? 1.2 : 0, v: 'escape' },
+          { w: v1 && dist > 600 ? 1 : 0, v: 'life' },
+          { w: v1 && dist > 250 ? 2 : 0, v: 'super' },
+          { w: v1 && dist > 150 ? 2 : 0, v: 'dash' },
+          { w: v1 && dist > 400 ? 1.2 : 0, v: 'escape' },
         ]);
         this.nextPowerAt = dist + r.range(260, 420);
       }

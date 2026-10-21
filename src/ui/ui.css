@@ -1933,3 +1933,42 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .tcard .tmeta .clsb { margin-left: 4px; }
 .tcard .tmeta .xpt { width: 14px; height: 14px; }
 .rgt td, .rgt th { padding-top: 2px !important; padding-bottom: 2px !important; }
+
+/* v2 — special pick popup + Magic Bag */
+.spick { display: flex; flex-direction: column; gap: 8px; }
+.spwallet { display: flex; align-items: center; gap: 6px; font: 800 15px var(--font-body); color: #ffd23d; }
+.spwallet svg { width: 18px; height: 18px; }
+.spwallet .linkbtn { margin-left: auto; }
+.spgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.sptile { position: relative; display: grid; grid-template-columns: 34px 1fr; grid-template-rows: auto auto auto; column-gap: 8px; align-items: center; text-align: left;
+  padding: 7px 8px; border-radius: 12px; background: var(--card); border: 1px solid var(--card-rim); color: #fff; cursor: pointer; min-width: 0; }
+.sptile .spi { grid-row: 1 / span 2; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: rgba(155,107,255,.18); font: 900 18px var(--font); }
+.sptile .spi svg { width: 24px; height: 24px; }
+.sptile b { font: 900 12px var(--font); letter-spacing: .3px; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sptile small { font: 600 10px/1.2 var(--font-body); color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.sptile .cnt { position: absolute; top: 5px; right: 7px; font: 900 12px var(--font); font-style: normal; color: #ffd23d; }
+.sptile .tick { position: absolute; bottom: 6px; right: 7px; width: 16px; height: 16px; color: #3dff8b; }
+.sptile .tick svg { width: 16px; height: 16px; }
+.sptile.on { border-color: #3dff8b; box-shadow: 0 0 0 1px #3dff8b inset, 0 0 14px rgba(61,255,139,.25); }
+.sptile .out { grid-column: 1 / -1; font: 800 10px var(--font-body); font-style: normal; color: #ff9fbd; margin-top: 4px; }
+.sptile .spbuy { grid-column: 1 / -1; margin-top: 5px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 4px 6px; border-radius: 8px;
+  background: linear-gradient(180deg, #ffd23d, #f0a400); color: #3a2400; font: 900 11px var(--font-body); }
+.sptile .spbuy svg { width: 13px; height: 13px; }
+.sptile .spbuy.poor { background: linear-gradient(180deg, #ff6fa8, #c8306a); color: #fff; }
+.sptile:not(.empty) .spbuy { background: rgba(255,210,61,.14); color: #ffd23d; border: 1px solid rgba(255,210,61,.35); }
+.sptile.none { align-content: center; }
+.sptile.none .spi { color: var(--muted); }
+.spgrid.locked { grid-template-columns: repeat(4, 1fr); }
+.spgrid.locked .sptile { grid-template-columns: 1fr; grid-template-rows: auto; justify-items: center; text-align: center; padding: 6px 4px; filter: saturate(.35); opacity: .7; }
+.spgrid.locked .sptile .spi { grid-row: auto; width: 30px; height: 30px; filter: blur(.6px); }
+.spgrid.locked .sptile b { font-size: 9.5px; white-space: normal; line-height: 1.1; }
+.spgrid.locked .sptile small { display: none; }
+.spgrid.locked .sptile .lk { font-style: normal; display: flex; align-items: center; gap: 2px; margin-top: 3px; }
+.spgrid.locked .sptile .lk svg { width: 10px; height: 10px; }
+.spgrid.locked .sptile .lk .clsb { height: 15px; min-width: 22px; font-size: 8px; }
+.sprules { display: flex; gap: 6px; align-items: flex-start; padding: 7px 9px; border-radius: 10px; background: rgba(79,195,255,.1); border: 1px solid rgba(79,195,255,.3);
+  font: 600 11px/1.35 var(--font-body); color: #dbe6ff; }
+.sprules svg { width: 14px; height: 14px; flex: none; margin-top: 1px; }
+.spgo { width: 100%; }
+.spick .mhead h2 { display: flex; align-items: center; gap: 6px; }
+.spick .mhead h2 svg { width: 22px; height: 22px; flex: none; }

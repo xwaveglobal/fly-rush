@@ -60,6 +60,9 @@ export const TIMING = {
 /** Player speed levels chosen on the home screen (3 audiences: new, regular, expert). */
 export type SpeedLevel = 'easy' | 'normal' | 'hard';
 
+/** v2: everyone gets the same on-road power-up strength (no garage upgrades — EXP stays fair) */
+export const V2_POWERUPS = { engine: 2, shield: 2, magnet: 2 };
+
 /**
  * v2 EXP (docs/GAME-DESIGN.md §1). Run EXP = metres × rate[level]; the player's EXP = best run (never summed).
  * Rates are calibrated (tests/exp.test.ts) so a non-stop run reaches C / B / A / AA / AAA at

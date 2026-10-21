@@ -31,7 +31,7 @@ import { Ads, ADS } from './ads/Ads.ts';
 import { advancedScript, basicScript, boostScript, WORLD_LESSONS, type BoostKind, type TrainingScript, type TutorialStep } from './gameplay/Tutorial.ts';
 import { PASS_H, PASS_L, PASS_N } from './gameplay/types.ts';
 import { MAPS, TIER_NAME, type Tier } from './gameplay/Difficulty.ts';
-import { FAIRNESS } from './config.ts';
+import { FAIRNESS, V2_POWERUPS } from './config.ts';
 import { RANK_ORDER, rankDist, expRate, VARIANTS, type Variant } from './gameplay/Difficulty.ts';
 import type { Box, PickupKind, RowSpec } from './gameplay/types.ts';
 import { Meta, type EventResult, type RunSummary } from './meta/Meta.ts';
@@ -45,10 +45,10 @@ import { classForScore } from './meta/Rank.ts';
 import { avatarForName } from './ui/avatars.ts';
 import { productBySku, DemoStore, type Store } from './meta/Shop.ts';
 import type { ItemKey, Reward } from './meta/Daily.ts';
-import { ITEM_PRICE, UNLOCK_BOOSTS } from './meta/Daily.ts';
+import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v2.0.3';
+const VERSION = 'v2.0.4';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -264,6 +264,10 @@ export class Game {
         this.openTracks();
       },
       startTrack: (id) => this.startTrack(id),
+      pickTrack: (id) => this.openSpecialPick(id),
+      chooseSpecial: (k) => this.chooseSpecial(k),
+      buySpecial: (k) => this.buySpecial(k),
+      goRace: () => this.goRace(),
       setSpeed: (lv) => this.setSpeed(lv),
       nextTrack: () => this.afterResults(() => this.nextTrack()),
       garage: () => this.openGarage(),
@@ -413,6 +417,7 @@ export class Game {
 
     this.audio.setSfx(this.save.settings.sound);
     this.audio.setMusic(this.save.settings.music);
+    this.migrateV2();
     this.syncCarUnlocks();
     this.applySkin(this.save.vehicle);
 
@@ -1223,6 +1228,83 @@ export class Game {
     return this.save.settings.speed;
   }
 
+  /**
+   * v1 save → v2 (docs/GAME-DESIGN.md §7): coins and Roadster / HYPER / SOS stay, retired items and
+   * garage upgrades are refunded as coins, rank starts at D (EXP is measured from the first v2 run).
+   */
+  private migrateV2() {
+    if (this.save.v2) return;
+    let refund = 0;
+    for (const k of ['shield', 'turbo', 'magnet', 'double', 'life'] as ItemKey[]) {
+      refund += this.save.items[k] * V1_ITEM_PRICE[k];
+      this.save.items[k] = 0;
+    }
+    for (const k of Object.keys(this.save.upgrades) as UpgradeKey[]) {
+      for (let i = 0; i < this.save.upgrades[k]; i++) refund += upgradeCost(i);
+      this.save.upgrades[k] = 0;
+    }
+    for (const k of Object.keys(this.save.equip) as ItemKey[]) this.save.equip[k] = false;
+    this.save.wallet += refund;
+    this.save.special = this.save.items.super > 0 ? 'super' : null;
+    this.save.v2 = true;
+    this.persist();
+    if (refund > 0) window.setTimeout(() => this.ui.toast(`${ICON.coin} Sky Roadster v2 · old items & upgrades refunded: +${refund.toLocaleString('en-US')} coins`, '#ffc21a'), 2500);
+  }
+
+  /** v2: the special carried in this race (taken from the bag only when used) */
+  private carried: SpecialKey | null = null;
+  private spendCarried(k: SpecialKey) {
+    if (this.tutorialMode || this.carried !== k) return;
+    this.carried = null;
+    this.save.items[k] = Math.max(0, this.save.items[k] - 1);
+    if (this.save.items[k] <= 0 && this.save.special === k) this.save.special = null;
+    this.persist();
+  }
+
+  /** v2: before a race — pick the ONE special to carry (or buy one) */
+  private pickTrackId = 'endless';
+  openSpecialPick(trackId: string) {
+    if (trackId === 'track2' && !rankAtLeast(this.rank, 'AAA')) {
+      this.ui.toast(`${ICON.lock} Reach rank AAA to unlock Track 2`, '#ff4fd8');
+      return;
+    }
+    this.audio.play('click');
+    this.pickTrackId = trackId;
+    if (this.save.special && this.save.items[this.save.special] <= 0) this.save.special = null;
+    this.ui.specialPick(this.save, this.rank);
+  }
+  private chooseSpecial(k: string) {
+    const key = (SPECIALS as readonly string[]).includes(k) ? (k as SpecialKey) : null;
+    if (key && this.save.items[key] <= 0) return this.buySpecial(key);
+    this.save.special = this.save.special === key ? null : key;
+    this.persist();
+    this.audio.play('click');
+    this.ui.specialPick(this.save, this.rank);
+  }
+  private buySpecial(k: string) {
+    const key = k as SpecialKey;
+    const price = ITEM_PRICE[key];
+    if (!(SPECIALS as readonly string[]).includes(k) || price === undefined) return;
+    if (this.save.wallet < price) {
+      this.ui.toast(`${ICON.coin} Need ${(price - this.save.wallet).toLocaleString('en-US')} more coins`, '#ffc21a');
+      this.ui.hideOverlay('specialpick');
+      return this.openShop();
+    }
+    this.save.wallet -= price;
+    this.save.items[key]++;
+    this.save.special = key;
+    this.persist();
+    this.audio.play('power');
+    this.ui.toast(`${ICON.bag} +1 ${{ super: 'Roadster Jump', hyper: 'HYPER JUMP', escape: 'SOS' }[key]} · stored in your Magic Bag`, '#9b6bff');
+    if (this.ui.isShown('specialpick')) this.ui.specialPick(this.save, this.rank);
+    if (this.ui.isShown('bag')) this.ui.bagSync(this.save);
+    this.ui.refreshProfile(this.save);
+  }
+  private goRace() {
+    this.ui.hideOverlay('specialpick');
+    this.startTrack(this.pickTrackId);
+  }
+
   /** v2 road of the current run (Endless or Track 2) */
   private variant: Variant = 'endless';
 
@@ -1294,7 +1376,7 @@ export class Game {
     this.timeScale = this.timeScaleTarget = 1;
     this.ui.tutPrompt(null);
     const car = SKINS.find((x) => x.id === this.save.vehicle) ?? SKINS[0];
-    this.run = new Run({ ...this.save.upgrades }, LEVELS[level].score * (1 + (car.bonus ?? 0) / 100));
+    this.run = new Run({ ...V2_POWERUPS }, LEVELS[level].score * (1 + (car.bonus ?? 0) / 100)); // v2: same power-ups for everyone
     this.run.expRate = this.tutorialMode ? 0 : expRate(level, this.course ? 'endless' : this.variant);
     this.run.distance = startDist;
     this.gateShown = '';
@@ -1311,33 +1393,17 @@ export class Game {
       this.run.superJumps = 1;
       window.setTimeout(() => this.ui.toast(`${ICON.rocket} HEAD START · Shield + Roadster Jump`, '#9b6bff'), 2900);
     }
+    // v2: ONE special per race, picked before the start; it leaves the Magic Bag only when it is used
+    this.carried = null;
     if (!this.tutorialMode) {
-      const used: string[] = [];
-      for (const k of ['super', 'hyper', 'escape', 'shield', 'turbo', 'magnet', 'double', 'life'] as ItemKey[]) {
-        if (!this.save.equip[k] || this.save.items[k] <= 0) continue;
-        this.save.items[k]--;
-        this.save.equip[k] = false;
-        if (k === 'super') this.run.superJumps = Math.min(2, this.run.superJumps + 1);
+      const k = this.save.special ?? null;
+      if (k && this.save.items[k] > 0) {
+        this.carried = k;
+        if (k === 'super') this.run.superJumps = 1;
         if (k === 'hyper') this.run.hyperJumps = 1;
-        if (k === 'escape') this.run.escapes = Math.min(2, this.run.escapes + 1);
-        if (k === 'shield') {
-          this.run.shield = true;
-          this.run.shieldHits = SHIELD_HITS;
-          this.run.shieldT = this.run.durations().shield;
-        }
-        const d = this.run.durations();
-        if (k === 'turbo') this.run.turboT = d.turbo;
-        if (k === 'magnet') this.run.magnetT = d.magnet;
-        if (k === 'double') this.run.doubleT = d.double;
-        if (k === 'life') {
-          this.run.maxLives = Math.max(this.run.maxLives, 4);
-          this.run.lives = Math.min(this.run.maxLives, this.run.lives + 1);
-        }
-        used.push({ super: 'Roadster Jump', hyper: 'HYPER JUMP', escape: 'Sky Escape', shield: 'Shield', turbo: 'Turbo', magnet: 'Magnet', double: '×2 Coins', life: 'Extra Life' }[k]);
-      }
-      if (used.length) {
-        this.persist();
-        window.setTimeout(() => this.ui.toast(`${ICON.check} BOOSTS ON · ${used.join(' + ')}`, '#9b6bff'), 3300);
+        if (k === 'escape') this.run.escapes = 1;
+        const name = { super: 'Roadster Jump', hyper: 'HYPER JUMP', escape: 'SOS' }[k];
+        window.setTimeout(() => this.ui.toast(`${ICON.check} SPECIAL READY · ${name}`, '#9b6bff'), 3300);
       }
     }
     if (this.tutorialMode && this.tut.grant) {
@@ -1591,6 +1657,7 @@ export class Game {
     const p = this.world.player;
     if (!p.escape()) return;
     this.run.escapes--;
+    this.spendCarried('escape');
     this.run.invulnT = Math.max(this.run.invulnT, TIMING.escExec + TIMING.escHold + TIMING.escRecover + 0.6);
     this.superFlight = true;
     this.superRolled = true; // no roll: straight up
@@ -1612,6 +1679,7 @@ export class Game {
     if (!p.superJump(hyper)) return;
     if (hyper) this.run.hyperJumps--;
     else this.run.superJumps--;
+    this.spendCarried(hyper ? 'hyper' : 'super');
     this.run.superUsed++;
     this.vehicle.boostKick(1);
     // invulnerable for the whole flight + a short grace after touch-down

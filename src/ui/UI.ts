@@ -31,7 +31,7 @@ import { LEVELS } from '../config.ts';
 import type { Run } from '../gameplay/Run.ts';
 import type { PickupKind } from '../gameplay/types.ts';
 import type { Board, LbRow } from '../meta/Leaderboard.ts';
-import { CHECKIN, CHESTS, ITEM_PRICE, UNLOCK_BOOSTS, rewardText, rewardValue, type ItemKey, type Quest, type Reward } from '../meta/Daily.ts';
+import { CHECKIN, CHESTS, ITEM_PRICE, LOCKED_SPECIALS, SPECIALS, UNLOCK_BOOSTS, rewardText, rewardValue, type ItemKey, type Quest, type Reward, type SpecialKey } from '../meta/Daily.ts';
 import { fmtLeft, localTime, type EventInst, type Prize } from '../meta/Events.ts';
 import { PRODUCTS, type Product } from '../meta/Shop.ts';
 import type { EventResult } from '../meta/Meta.ts';
@@ -72,6 +72,11 @@ export interface UIHandlers {
   previewSkin(id: string): void;
   /** start a run on a track ('endless' or a course id) */
   startTrack(id: string): void;
+  /** v2: tapped a track → choose the one special for this race */
+  pickTrack(id: string): void;
+  chooseSpecial(k: string): void;
+  buySpecial(k: string): void;
+  goRace(): void;
   nextTrack(): void;
   setSpeed(level: 'easy' | 'normal' | 'hard'): void;
   /** open the training intro */
@@ -207,7 +212,16 @@ const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
 const $ = <T extends HTMLElement = HTMLElement>(root: ParentNode, sel: string) => root.querySelector(sel) as T;
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 const ITEM_ICON: Record<ItemKey, string> = { super: ICON.rocket, hyper: ICON.hyper, shield: ICON.shield, escape: ICON.sos, turbo: ICON.bolt, magnet: ICON.magnet, double: ICON.x2, life: ICON.heart };
-const ITEM_NAME: Record<ItemKey, string> = { super: 'Roadster Jump', hyper: 'HYPER JUMP', shield: 'Start Shield', escape: 'Sky Escape', turbo: 'Turbo Start', magnet: 'Coin Magnet', double: '×2 Coins', life: 'Extra Life' };
+const ITEM_NAME: Record<ItemKey, string> = { super: 'Roadster Jump', hyper: 'HYPER JUMP', shield: 'Start Shield', escape: 'SOS Escape', turbo: 'Turbo Start', magnet: 'Coin Magnet', double: '×2 Coins', life: 'Extra Life' };
+/** what each v2 special does, in one line */
+const SPECIAL_LINE: Record<SpecialKey, string> = { escape: 'Rocket straight up when a crash is coming', super: 'Hop over a whole block of obstacles', hyper: 'Fly high over a long stretch' };
+/** icons of the teaser specials (unlock at AAA, try them in Bonus) */
+const LOCKED_ICON: Record<string, string> = {
+  tunnel: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20V12a9 9 0 0 1 18 0v8" fill="none" stroke="#7fe6ff" stroke-width="2"/><path d="M7 20v-7a5 5 0 0 1 10 0v7" fill="none" stroke="#7fe6ff" stroke-width="1.4" opacity=".6"/><rect x="8.5" y="1.6" width="7" height="3.4" rx="1.2" fill="#fff"/></svg>`,
+  wall: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18M6 3v18" stroke="#9b6bff" stroke-width="2"/><path d="M9 16l6-4-6-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 16l6-4-6-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/></svg>`,
+  ghost: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V11a7 7 0 0 1 14 0v10l-2.4-1.8L14.3 21 12 19.2 9.7 21l-2.3-1.8z" fill="#cfe0ff" fill-opacity=".85"/><circle cx="9.5" cy="11" r="1.3" fill="#1b1450"/><circle cx="14.5" cy="11" r="1.3" fill="#1b1450"/></svg>`,
+  rail: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 6h20" stroke="#ffc21a" stroke-width="2.2" stroke-linecap="round"/><path d="M12 6v5" stroke="#fff" stroke-width="1.6"/><rect x="7" y="11" width="10" height="5" rx="2" fill="#fff"/><path d="M3 20l4-3M21 20l-4-3" stroke="#ffc21a" stroke-width="1.4" opacity=".6"/></svg>`,
+};
 
 /** 7-day check-in as a list (mock-up): Day label · reward art · amount · ✓ / 🔒; today glows */
 function checkinList(slot: number, claimedToday: boolean) {
@@ -492,6 +506,13 @@ export class UI {
       <div class="panel modal pop3" data-k="popbody"></div>
     </section>
 
+    <section id="specialpick" class="screen overlay">
+      <div class="panel modal spick">
+        <div class="mhead"><h2>${BAG_ICON} SPECIAL</h2><button class="icon-btn sm" data-a="closeov" data-v="specialpick" aria-label="Close">${ICON.close}</button></div>
+        <div data-k="spbody"></div>
+      </div>
+    </section>
+
     <section id="rankguide" class="screen overlay">
       <div class="panel modal rguide">
         <div class="mhead"><h2>${XPT} EXP &amp; RANK</h2><button class="icon-btn sm" data-a="closeov" data-v="rankguide" aria-label="Close">${ICON.close}</button></div>
@@ -698,7 +719,11 @@ export class UI {
         case 'comfort': return this.h.toggleComfort();
         case 'vibrate': return this.h.toggleVibrate();
         case 'tutskip': return this.h.skipTutorial();
-        case 'track': return this.h.startTrack(el.dataset.id!);
+        case 'track': return this.h.pickTrack(el.dataset.id!);
+        case 'spick': return this.h.chooseSpecial(el.dataset.v ?? '');
+        case 'sbuy': return this.h.buySpecial(el.dataset.v!);
+        case 'sgo': return this.h.goRace();
+        case 'slocked': return this.toast(`${ICON.lock} Opens at rank AAA · try it now in a Bonus event`, '#b7a6ff');
         case 'soon': return this.toast(`${ICON.lock} New track coming soon — keep climbing the ranks!`, '#b7a6ff');
         case 'rankgate': return this.rankGuide();
         case 'garage': return this.h.garage();
@@ -1547,44 +1572,52 @@ export class UI {
    * MAGIC BAG: every item the player owns (bag = inventory), what is equipped for the next run,
    * class locks, shop shortcuts and the rules / which item fits which track.
    */
+  hideOverlay(id: string) {
+    this.screens[id]?.classList.remove('show');
+  }
+
+  /** a special tile (pick popup + Magic Bag): owned → select / count; empty → buy with coins */
+  private specialTile(s: SaveData, k: SpecialKey, pick: boolean) {
+    const n = s.items[k];
+    const on = pick && s.special === k && n > 0;
+    const price = ITEM_PRICE[k];
+    const buy = `<span class="spbuy ${s.wallet < price ? 'poor' : ''}" data-a="sbuy" data-v="${k}" role="button">${ICON.coin}${fmt(price)} · Buy</span>`;
+    return `<div class="sptile ${k} ${on ? 'on' : ''} ${n > 0 ? '' : 'empty'}" ${pick && n > 0 ? `data-a="spick" data-v="${k}" role="button"` : ''}>
+      <span class="spi">${ITEM_ICON[k]}</span><b>${ITEM_NAME[k]}</b><small>${SPECIAL_LINE[k]}</small>
+      ${n > 0 ? `<em class="cnt">×${n}</em>${on ? `<i class="tick">${ICON.check}</i>` : ''}` : `<em class="out">Out — get one with coins</em>`}${buy}</div>`;
+  }
+  private lockedTiles() {
+    return LOCKED_SPECIALS.map((x) => `<button class="sptile locked" data-a="slocked"><span class="spi">${LOCKED_ICON[x.id]}</span><b>${x.name}</b><small>${x.desc}</small><em class="lk">${ICON.lock} ${classBadge('AAA')}</em></button>`).join('');
+  }
+  private specialRules() {
+    return `<div class="sprules">${ICON.info}<span><b>Buy as many as you like</b> — they wait in your Magic Bag. <b>Only 1 special per race.</b> It leaves the bag only if you use it.</span></div>`;
+  }
+
+  /** v2: choose the ONE special for this race (or none), buy more with coins, then GO */
+  specialPick(s: SaveData, rank: RankClass) {
+    void rank;
+    const none = `<div class="sptile none ${!s.special ? 'on' : ''}" data-a="spick" data-v="" role="button"><span class="spi">—</span><b>No special</b><small>Pure skill run</small>${!s.special ? `<i class="tick">${ICON.check}</i>` : ''}</div>`;
+    $(this.root, '[data-k="spbody"]').innerHTML = `
+      <div class="spwallet">${ICON.coin}<b>${fmt(s.wallet)}</b><button class="linkbtn" data-a="shop">Get coins ›</button></div>
+      <div class="spgrid">${SPECIALS.map((k) => this.specialTile(s, k, true)).join('')}${none}</div>
+      ${this.specialRules()}
+      <div class="bhead out"><b>Opens at ${classBadge('AAA')}</b></div>
+      <div class="spgrid locked">${this.lockedTiles()}</div>
+      <button class="btn big spgo" data-a="sgo">${ICON.play} GO</button>`;
+    this.screens.specialpick.classList.add('show');
+    this.scheduleFit();
+  }
+
   bagSync(s: SaveData) {
     this.lastSave = s;
-    const ci = CLASSES.indexOf(this.myClass);
-    const keys: ItemKey[] = ['super', 'hyper', 'escape', 'shield', 'turbo', 'magnet', 'double', 'life'];
-    const total = keys.reduce((a, k) => a + s.items[k], 0);
-    const tiles = keys.map((k) => {
-      const un = UNLOCK_BOOSTS.find((u) => u.k === k);
-      const locked = !!un && ci < CLASSES.indexOf(un.cls);
-      const n = s.items[k];
-      const on = s.equip[k] && n > 0;
-      return `<button class="bagit ${k} ${locked ? 'locked' : ''} ${on ? 'on' : ''} ${n > 0 ? '' : 'empty'}" data-a="boostinfo" data-v="${k}">
-        <span class="bi">${ITEM_ICON[k]}</span><b>${ITEM_NAME[k]}</b>
-        <small>${locked ? `${ICON.lock} class ${un!.cls}` : on ? `${ICON.check} equipped` : n > 0 ? 'tap · equip' : 'tap · get'}</small>
-        <em class="cnt">×${n}</em></button>`;
-    }).join('');
-    const tips: [string, string, string][] = [
-      ['Future City', 'Shield · Magnet', 'Traffic + crates: a Start Shield forgives one hit; Magnet for the 3rd star.'],
-      ['Cloud City', 'Roadster Jump', 'Floating platforms stack up — keep a Roadster for double rows.'],
-      ['Neon Tunnel', 'Sky Escape (SOS)', 'Laser walls give little time: SOS saves a run when no lane is open.'],
-      ['Space Zone', 'Roadster · HYPER', 'Asteroid fields block lanes — jump over a whole field.'],
-      ['Megacity', 'HYPER · Shield', 'Gates + rush-hour traffic: the hardest world, bring both.'],
-      ['Endless · Cups', 'Shield · Extra Life · ×2 Coins', 'Long runs: protection first, coins second.'],
-    ];
+    const total = SPECIALS.reduce((a, k) => a + s.items[k], 0);
     $(this.root, '[data-k="bagbody"]').innerHTML = `
-      <div class="bagsum"><span>${fmt(total)} items in your bag</span><button class="linkbtn" data-a="shop">${ICON.bag} Get more</button></div>
-      <div class="baggrid">${tiles}</div>
-      <div class="bagrules">
-        <b>Rules</b>
-        <ul>
-          <li><b>Equip</b> an item before a race: one is taken from the bag when the race starts.</li>
-          <li>On the road you can <b>hold</b> up to 2 Roadster Jumps, 1 HYPER and 2 SOS (pickups + equipped).</li>
-          <li>Roadster / HYPER / SOS still unused at the <b>finish line</b> turn into points.</li>
-          <li>Start boosts (Turbo, Magnet, ×2 Coins, Extra Life) unlock with your rank class.</li>
-          <li>Tracks with big rewards also <b>give items</b> when you finish with 2–3 stars.</li>
-        </ul>
-      </div>
-      <div class="bagtips"><b>Which item for which track?</b>${tips.map(([t, i, d]) => `<div class="bt"><span class="bt1">${t}</span><span class="bt2">${i}</span><small>${d}</small></div>`).join('')}</div>
-      <div class="sbtns"><button class="btn sm pink" data-a="shop">${ICON.bag} Shop items</button><button class="btn sm gold" data-a="freepop">${ICON.play} Free coins</button><button class="btn sm blue" data-a="play">${ICON.flag} Race</button></div>`;
+      <div class="spwallet">${ICON.coin}<b>${fmt(s.wallet)}</b><button class="linkbtn" data-a="shop">Get coins ›</button></div>
+      <div class="spgrid">${SPECIALS.map((k) => this.specialTile(s, k, false)).join('')}</div>
+      ${this.specialRules()}
+      <div class="bhead out"><b>Opens at ${classBadge('AAA')}</b></div>
+      <div class="spgrid locked">${this.lockedTiles()}</div>
+      <div class="sbtns"><button class="btn sm gold" data-a="freepop">${ICON.play} Free coins</button><button class="btn sm blue" data-a="play">${ICON.flag} Race</button></div>`;
     this.setAll('bagbadge', String(total));
   }
 
@@ -1725,7 +1758,7 @@ export class UI {
     };
     const specials = PRODUCTS.filter((p) => p.kind !== 'coins' && !(p.once && p.sku === 'starter_pack' && s.starterBought));
     const coins = PRODUCTS.filter((p) => p.kind === 'coins');
-    const inv = (['super', 'hyper', 'escape', 'shield'] as ItemKey[]).map((k) => `<span class="rchip ${k}">${ITEM_ICON[k]}×${s.items[k]}</span>`).join('');
+    const inv = (SPECIALS as readonly ItemKey[]).map((k) => `<span class="rchip ${k}">${ITEM_ICON[k]}×${s.items[k]}</span>`).join('');
     $(this.root, '[data-k="shoplist"]').innerHTML = `
       <div class="inv panel"><span class="label">Your items</span>${inv}</div>
       ${specials.map(card).join('')}

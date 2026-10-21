@@ -16,7 +16,20 @@ export const UNLOCK_BOOSTS: { k: ItemKey; cls: 'C' | 'B' | 'A' | 'AA'; price: nu
  * Coin price of ONE item bought singly (Magic Bag / item card). Deliberately above the
  * value inside real-money bundles, so bundles are always the better deal (see docs/ECONOMY.md).
  */
-export const ITEM_PRICE: Record<ItemKey, number> = { super: 400, hyper: 1200, escape: 350, shield: 300, turbo: 150, magnet: 180, double: 260, life: 400 };
+export const ITEM_PRICE: Record<ItemKey, number> = { super: 3000, hyper: 6000, escape: 2000, shield: 300, turbo: 150, magnet: 180, double: 260, life: 400 };
+/** v1 prices — only used to refund retired items when an old save moves to v2 */
+export const V1_ITEM_PRICE: Record<ItemKey, number> = { super: 400, hyper: 1200, escape: 350, shield: 300, turbo: 150, magnet: 180, double: 260, life: 400 };
+
+/** v2 special items (docs/GAME-DESIGN.md §4): bought with coins, kept in the Magic Bag, ONE per race */
+export const SPECIALS = ['escape', 'super', 'hyper'] as const;
+export type SpecialKey = (typeof SPECIALS)[number];
+/** teaser specials: shown blurred, unlock at AAA (they appear for real in Bonus events) */
+export const LOCKED_SPECIALS: { id: string; name: string; desc: string }[] = [
+  { id: 'tunnel', name: 'Tunnel Rider', desc: 'In a tunnel, drive on its roof' },
+  { id: 'wall', name: 'Wall Run', desc: 'Run along the side wall past a whole row' },
+  { id: 'ghost', name: 'Phase Ghost', desc: 'Pass through obstacles for a few seconds' },
+  { id: 'rail', name: 'Sky Rail', desc: 'Grab a rail up high and glide a whole stretch' },
+];
 
 /** coin value of a reward (used to show "worth N coins" on shop bundles) */
 export function rewardValue(r: { coins?: number; items?: Partial<Record<ItemKey, number>> }) {

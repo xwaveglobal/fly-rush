@@ -52,6 +52,10 @@ export interface SaveData {
   expWeek: number;
   /** v2: best run EXP on Track 2 (the only road to S / SS / SSS) */
   exp2Best: number;
+  /** v2: old save already converted (retired items/upgrades refunded as coins) */
+  v2?: boolean;
+  /** v2: special picked for the next race (one per race) */
+  special?: 'super' | 'hyper' | 'escape' | null;
   /** mission rewards waiting for a manual claim (auto-claim off) */
   pendingMissions: { text: string; reward: number }[];
   /** consumable items (equipped on the track screen, used in a run) */
@@ -126,8 +130,10 @@ const defaults = (): SaveData => ({
   expBest: 0,
   expWeek: 0,
   exp2Best: 0,
+  v2: true,
+  special: 'super',
   pendingMissions: [],
-  items: { super: 1, hyper: 0, shield: 0, escape: 1, turbo: 0, magnet: 0, double: 0, life: 0 },
+  items: { super: 1, hyper: 0, shield: 0, escape: 0, turbo: 0, magnet: 0, double: 0, life: 0 },
   equip: { super: false, hyper: false, shield: false, escape: false, turbo: false, magnet: false, double: false, life: false },
   weekKey: '',
   weekBest: 0,
@@ -183,6 +189,8 @@ export function loadSave(): SaveData {
       vehicle: LEGACY_CAR[p.vehicle as string] ?? (typeof p.vehicle === 'string' ? p.vehicle : d.vehicle),
       // older saves may hold an auto-detected LOW: start on HIGH once, then respect the player's choice
       ...(p.settingsRev !== SETTINGS_REV ? { settingsRev: SETTINGS_REV } : {}),
+      // a save written by v1 has no v2 flag → Game converts it once
+      v2: p.v2 === true,
     };
   } catch {
     return d;
