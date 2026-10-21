@@ -1215,12 +1215,17 @@ export class Vehicle {
       u.spinAmt.value = clamp01(speed / 8) * (1 - p.air);
       u.speedK.value = clamp01((speed - TYRE.blurFrom) / (TYRE.blurFull - TYRE.blurFrom)) * (1 - p.air);
       const sx = this.sprite.scale.x, sy = this.sprite.scale.y;
-      const hotK = clamp01((speed - TYRE.hotFrom) / (TYRE.hotFull - TYRE.hotFrom));
+      if (!TYRE.effects) {
+        // tyres exactly as drawn in the render: no tread motion, glow or trails
+        u.spinAmt.value = 0;
+        u.speedK.value = 0;
+      }
+      const hotK = TYRE.effects ? clamp01((speed - TYRE.hotFrom) / (TYRE.hotFull - TYRE.hotFrom)) : 0;
       u.hot.value = hotK * u.rearView.value * (1 - p.air) * (this.locked ? 0 : 1);
       const ou = this.orbitMat.uniforms;
       ou.rot.value = (ou.rot.value + Math.min((speed / TYRE.radius) * dt * TYRE.orbitSpeed, 1.2)) % (Math.PI * 200);
       ou.k.value = hotK;
-      ou.amt.value = (0.25 + 0.75 * hotK) * clamp01(speed / 10) * u.rearView.value * (1 - p.air) * (this.locked ? 0 : 1) * u.dim.value;
+      ou.amt.value = (TYRE.effects ? 1 : 0) * (0.25 + 0.75 * hotK) * clamp01(speed / 10) * u.rearView.value * (1 - p.air) * (this.locked ? 0 : 1) * u.dim.value;
       for (const g of this.orbits) {
         g.visible = this.spriteOn && ou.amt.value > 0.02;
         g.position.set(g.userData.side * TYRE.glowX, TYRE.glowY, 0.002);

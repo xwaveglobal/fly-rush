@@ -103,8 +103,10 @@ export const TYRE = {
   /** wheel radius (m) — drives how fast the light trails circle the tyres */
   radius: 0.36,
   /** rear tyres on the X1 rear render (uv): x < maskX (and > 1 − maskX), y < maskY */
-  maskX: 0.15,
-  maskY: 0.48,
+  maskX: 0.17,
+  maskY: 0.46,
+  /** tyre effects (tread motion, hot streaks, orbit trails, sparks). Off = tyres look exactly like the render */
+  effects: false,
   /** speed (m/s) where the hot-tyre glow starts / is full */
   hotFrom: 14,
   hotFull: 40,

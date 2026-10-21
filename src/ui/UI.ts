@@ -255,7 +255,6 @@ export class UI {
     this.pops.appendChild(this.notices);
     const ban = $(this.root, '#banner');
     this.notices.appendChild(ban);
-    ban.addEventListener('animationend', () => ban.classList.remove('show'));
     this.bind();
     // translations: re-apply to anything newly rendered (HUD numbers are skipped)
     const tmo = new MutationObserver((recs) => {
@@ -523,8 +522,8 @@ export class UI {
         </div>
       </div>
       <div class="row2">
-        <div class="hearts" data-h="hearts"></div>
         <div class="speed"><div class="label">Speed <span data-h="kmh">0</span> km/h</div><div class="track"><i data-h="speedbar"></i></div></div>
+        <div class="hearts" data-h="hearts"></div>
       </div>
       <div class="trackbar panel" data-h="trackbar" hidden>
         <div class="t"><span data-h="tsection">START AREA</span><span data-h="tdist">0 / 3,200 m</span></div>
@@ -1073,41 +1072,72 @@ export class UI {
    */
   private notices!: HTMLElement;
   private placeNotices() {
+    // the slot sits right under the score row / track bar, above the road (never mid-screen)
     const root = this.root.getBoundingClientRect();
     let bottom = 0;
-    for (const sel of ['#hud .row', '#hud .row2', '#hud [data-h="trackbar"]', '#hud .hudline']) {
+    for (const sel of ['#hud .row', '#hud .row2', '#hud [data-h="trackbar"]']) {
       const el = this.root.querySelector<HTMLElement>(sel);
       if (!el || el.hidden || !el.offsetParent) continue;
-      if (sel === '#hud .hudline' && !Array.from(el.children).some((c) => (c as HTMLElement).offsetHeight > 4 && !(c as HTMLElement).hidden)) continue;
       bottom = Math.max(bottom, el.getBoundingClientRect().bottom - root.top);
     }
-    this.notices.style.top = bottom > 0 ? `${Math.round(bottom + 8)}px` : '';
+    this.notices.style.top = bottom > 0 ? `${Math.round(bottom + 6)}px` : '';
+  }
+
+  /**
+   * ONE notice box at a time: section banners and toasts queue up and take turns in the same slot,
+   * so the road is never covered by a stack of boxes. A full queue drops the oldest waiting notice.
+   */
+  private noticeQ: ({ kind: 'toast'; html: string; color: string } | { kind: 'banner'; w: string; n: string })[] = [];
+  private noticeTimer = 0;
+  private noticeCur = '';
+  private pumpNotice() {
+    if (this.noticeTimer || !this.noticeQ.length) return;
+    const n = this.noticeQ.shift()!;
+    this.placeNotices();
+    this.notices.querySelectorAll('.toast').forEach((e) => e.remove());
+    const ban = $(this.root, '#banner');
+    ban.classList.remove('show');
+    let ms: number;
+    if (n.kind === 'banner') {
+      this.noticeCur = `b:${n.w}|${n.n}`;
+      this.setAll('bw', n.w);
+      this.setAll('bn', n.n);
+      void ban.offsetWidth;
+      ban.classList.add('show');
+      ms = 1900;
+    } else {
+      this.noticeCur = `t:${n.html}`;
+      const el = document.createElement('div');
+      el.className = 'toast panel';
+      el.style.borderColor = n.color;
+      el.innerHTML = n.html;
+      ms = Math.min(3800, 2200 + Math.max(0, el.textContent!.length - 40) * 25);
+      if (this.noticeQ.length) ms = Math.min(ms, 1800); // others are waiting: keep it moving
+      el.style.animationDuration = `${ms}ms`;
+      this.notices.appendChild(el);
+    }
+    this.noticeTimer = window.setTimeout(() => {
+      this.noticeTimer = 0;
+      this.noticeCur = '';
+      this.notices.querySelectorAll('.toast').forEach((e) => e.remove());
+      ban.classList.remove('show');
+      this.pumpNotice();
+    }, ms);
+  }
+  private pushNotice(n: (typeof this.noticeQ)[number]) {
+    const key = n.kind === 'banner' ? `b:${n.w}|${n.n}` : `t:${n.html}`;
+    if (key === this.noticeCur || this.noticeQ.some((q) => (q.kind === 'banner' ? `b:${q.w}|${q.n}` : `t:${q.html}`) === key)) return;
+    this.noticeQ.push(n);
+    while (this.noticeQ.length > 2) this.noticeQ.shift();
+    this.pumpNotice();
   }
 
   toast(html: string, color = 'var(--cyan)') {
-    const live = Array.from(this.notices.querySelectorAll<HTMLElement>('.toast'));
-    if (live.some((t) => t.dataset.html === html)) return; // same message already on screen
-    if (live.length >= 2) live[0].remove();
-    this.placeNotices();
-    const el = document.createElement('div');
-    el.className = 'toast panel';
-    el.dataset.html = html;
-    el.style.borderColor = color;
-    el.innerHTML = html;
-    const ms = Math.min(4200, 2700 + Math.max(0, el.textContent!.length - 40) * 25);
-    el.style.animationDuration = `${ms}ms`;
-    this.notices.appendChild(el);
-    window.setTimeout(() => el.remove(), ms + 50);
+    this.pushNotice({ kind: 'toast', html, color });
   }
 
   banner(world: string, name: string) {
-    const b = $(this.root, '#banner');
-    this.placeNotices();
-    this.setAll('bw', world);
-    this.setAll('bn', name);
-    b.classList.remove('show');
-    void b.offsetWidth;
-    b.classList.add('show');
+    this.pushNotice({ kind: 'banner', w: world, n: name });
   }
 
   /** comfort: softer full-screen flashes */

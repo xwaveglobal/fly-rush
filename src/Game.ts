@@ -46,7 +46,7 @@ import type { ItemKey, Reward } from './meta/Daily.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v1.18.3';
+const VERSION = 'v1.18.4';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -1386,7 +1386,7 @@ export class Game {
         this.particles.emit(
           q.x + (Math.random() - 0.5) * 0.12, q.y, q.z + 0.05,
           side * (0.3 + Math.random() * 0.9), 0.5 + Math.random() * 1.3, 1 + Math.random() * 3,
-          Math.random() < 0.3 + 0.5 * k ? TYRE.sparkColor : TYRE.sprayColor, TYRE.spraySize * (0.7 + Math.random() * 0.6), TYRE.sprayLife * (0.7 + Math.random() * 0.6),
+          TYRE.effects && Math.random() < 0.3 + 0.5 * k ? TYRE.sparkColor : TYRE.sprayColor, TYRE.spraySize * (0.7 + Math.random() * 0.6), TYRE.sprayLife * (0.7 + Math.random() * 0.6),
           { locked: true, drag: 2, grav: 9 },
         );
       }

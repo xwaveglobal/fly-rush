@@ -1887,3 +1887,9 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .th-sec > .btn { align-self: stretch; }
 .pinfo .pworth { display: inline-flex; align-items: center; gap: 3px; margin-top: 2px; font: 800 10.5px var(--font-body); font-style: normal; color: #7dffb0; }
 .pinfo .pworth svg { width: 12px; height: 12px; }
+
+/* v1.18.4 — speed top-left (hearts move right); a single notice slot right under the HUD */
+#hud .row2 .speed { text-align: left; }
+#hud .row2 .speed .label { text-align: left; }
+#notices { gap: 0; }
+#notices .toast { padding: 6px 12px; font-size: 13px; }
