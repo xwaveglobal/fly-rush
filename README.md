@@ -187,6 +187,16 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v2.0.2 changes (v2 step 2 — difficulty phases & rank gates)
+
+- **Endless difficulty climbs by rank phase** (`PHASES` in `gameplay/Difficulty.ts`), measured in EXP so every speed level meets the same phase at the same minute:
+  D single blockers · C two-lane blocks + beams/barriers · B combos, vehicle + blocker, lasers, platforms · A one safe lane, mega gates, road +6 % · AA rhythm chains, road +10 % · AAA everything, road +14 %.
+- **Rank gates**: the last 30 s before each new rank is the hardest stretch (next phase's mix, hard tiers ×1.45) with a "RANK GATE" strip + notice on the HUD; 8 s of easier road after it.
+- Rank thresholds re-calibrated for the phase speed-ups: AA 26,000 · AAA 40,000 EXP.
+- No Roadster car-blockade on Endless (no obstacle there needs a special item).
+- Test shortcut: `?rank=B` (C/B/A/AA/AAA) starts Endless just before that rank gate; that run's EXP is not saved.
+- `tests/phases.test.ts`: whole ladder D→AAA reachable on all speed levels, difficulty rising phase by phase, gates harder than their phase, autopilot drives 240 km through all gates with 0 crashes.
+
 ## v2.0.1 changes (v2 step 1 — EXP & rank)
 
 v2 redesign per `docs/GAME-DESIGN.md` (the old game lives on the `v1` branch).

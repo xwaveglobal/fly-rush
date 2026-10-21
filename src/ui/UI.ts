@@ -526,6 +526,7 @@ export class UI {
         <div class="speed"><div class="label">Speed <span data-h="kmh">0</span> km/h</div><div class="track"><i data-h="speedbar"></i></div></div>
         <div class="hearts" data-h="hearts"></div>
       </div>
+      <div class="gatebar" data-h="gatebar" hidden><b>RANK GATE</b><span data-h="gatenext"></span><div class="track"><i data-h="gatefill"></i></div></div>
       <div class="trackbar panel" data-h="trackbar" hidden>
         <div class="t"><span data-h="tsection">START AREA</span><span data-h="tdist">0 / 3,200 m</span></div>
         <div class="track"><i data-h="tbar"></i><b data-h="tmarks"></b></div>
@@ -948,6 +949,16 @@ export class UI {
     if (!el) return;
     if (html) el.innerHTML = v;
     else el.textContent = v;
+  }
+
+  /** v2: rank-gate strip under the HUD (null = hidden) */
+  gateHud(g: { next: RankClass; k: number } | null) {
+    const el = this.root.querySelector<HTMLElement>('[data-h="gatebar"]');
+    if (!el) return;
+    el.hidden = !g;
+    if (!g) return;
+    this.hset('gatenext', classBadge(g.next), true);
+    this.root.querySelector<HTMLElement>('[data-h="gatefill"]')!.style.width = `${Math.min(100, Math.max(0, g.k * 100)).toFixed(1)}%`;
   }
 
   resetHud() {

@@ -68,7 +68,7 @@ export type SpeedLevel = 'easy' | 'normal' | 'hard';
 export const EXP = {
   rate: { easy: 0.2, normal: 0.23, hard: 0.4 } as Record<SpeedLevel, number>,
   /** EXP needed for each rank */
-  rank: { D: 0, C: 3000, B: 8000, A: 15000, AA: 25000, AAA: 38000 },
+  rank: { D: 0, C: 3000, B: 8000, A: 15000, AA: 26000, AAA: 40000 },
   /** design targets (minutes of non-stop HARD) — shown in the rank guide, checked by the test */
   hardMinutes: { D: 0, C: 3, B: 7, A: 12, AA: 20, AAA: 30 },
   timeMul: { easy: 3, normal: 2, hard: 1 } as Record<SpeedLevel, number>,

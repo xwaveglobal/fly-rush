@@ -18,7 +18,7 @@ The player pilots a flying car through a neon sky-city: swipe left/right to chan
 npm install
 npm run dev            # http://localhost:5173 (also on LAN for phone testing)
 npm run typecheck
-npm test               # fairness + difficulty + air-lane tests (Node 22+)
+npm test               # fairness + difficulty + air-lane + EXP calibration + rank-phase tests (Node 22+)
 npm run build          # dist/ (multi-file static build)
 npm run build:single   # dist/index.html, everything inlined (one shareable file)
 node scripts/build-esbuild.mjs [--single]   # fallback build without Vite

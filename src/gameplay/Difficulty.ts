@@ -1,6 +1,6 @@
 import type { PatternKey } from './Courses.ts';
 import type { WorldId } from './Spawner.ts';
-import type { SpeedLevel } from '../config.ts';
+import { EXP, type SpeedLevel } from '../config.ts';
 
 /**
  * OBSTACLE DIFFICULTY SYSTEM
@@ -135,3 +135,71 @@ export function tierWeights(cfg: MapDifficultyConfig, progress: number, inWarmup
 }
 
 export const patternOf = (k: PatternKey) => PATTERNS[k];
+
+
+// ===================================================================== v2 ENDLESS PHASES
+/**
+ * v2 Endless (docs/GAME-DESIGN.md §1): difficulty climbs by RANK PHASE, measured in EXP so every
+ * speed level meets the same phase at the same point of its time line (Hard 3 min = Normal 6 = Easy 9).
+ *
+ *  D  → C   single blockers, wide gaps — learn left / right / up / down
+ *  C  → B   two-lane blocks, first overhead beams / low barriers (vertical moves)
+ *  B  → A   combos: hard rows chained, vehicle + blocker, laser gates, sliding platforms
+ *  A  → AA  one safe lane, mega gates (one door), road speed +6 %
+ *  AA → AAA rhythm chains at the fairness limit, road speed +10 %
+ *  AAA      everything at once, road speed +14 %
+ *
+ * The last GATE.seconds before each new rank is a RANK GATE (next phase's mix, pushed harder);
+ * right after it comes a short BREATHER. Every row still passes the reachability validator, and no
+ * row ever needs a special item.
+ */
+export const RANK_ORDER = ['D', 'C', 'B', 'A', 'AA', 'AAA'] as const;
+export type PhaseRank = (typeof RANK_ORDER)[number];
+
+export interface PhaseConfig extends Omit<MapDifficultyConfig, 'world' | 'target' | 'warmup'> {
+  rank: PhaseRank;
+  /** road speed multiplier (eased in over the first `speedEase` metres of the phase) */
+  speed: number;
+  /** pattern weight multipliers — the phase's "signature" obstacles */
+  boost: Partial<Record<PatternKey, number>>;
+}
+
+export const PHASES: PhaseConfig[] = [
+  { rank: 'D', tiers: [0.9, 0.1, 0, 0], maxBlockers: 1, minGap: 1.25, slack: 0.28, maxConsecutiveHard: 0, recovery: 0.5, density: 0.9, movingSpeed: 0.7, speed: 1, boost: { crate: 1.4, barrier: 1.2, ring: 1.2 } },
+  { rank: 'C', tiers: [0.45, 0.55, 0, 0], maxBlockers: 2, minGap: 1.1, slack: 0.22, maxConsecutiveHard: 0, recovery: 0.5, density: 0.95, movingSpeed: 0.8, speed: 1, boost: { low2: 1.8, beam: 1.6, crateBeam: 1.5 } },
+  { rank: 'B', tiers: [0.25, 0.5, 0.25, 0], maxBlockers: 2, minGap: 0.98, slack: 0.18, maxConsecutiveHard: 2, recovery: 0.42, density: 1, movingSpeed: 0.95, speed: 1.03, boost: { trafficMix: 2, laser: 1.6, platform: 1.6, crateBeam: 1.3 } },
+  { rank: 'A', tiers: [0.12, 0.43, 0.33, 0.12], maxBlockers: 2, minGap: 0.9, slack: 0.15, maxConsecutiveHard: 2, recovery: 0.4, density: 1, movingSpeed: 1.05, speed: 1.06, boost: { gate: 2.2, low2: 1.4, laser: 1.3 } },
+  { rank: 'AA', tiers: [0.06, 0.36, 0.4, 0.18], maxBlockers: 2, minGap: 0.84, slack: 0.13, maxConsecutiveHard: 3, recovery: 0.36, density: 1, movingSpeed: 1.15, speed: 1.1, boost: { trafficMix: 1.5, laser: 1.5, gate: 1.6 } },
+  { rank: 'AAA', tiers: [0.04, 0.3, 0.44, 0.22], maxBlockers: 2, minGap: 0.8, slack: 0.12, maxConsecutiveHard: 3, recovery: 0.34, density: 1, movingSpeed: 1.2, speed: 1.14, boost: { gate: 1.8, laser: 1.6, trafficMix: 1.6 } },
+];
+
+/** first phase (index into PHASES) in which a pattern may appear on Endless */
+export const PHASE_UNLOCK: Record<PatternKey, number> = {
+  crate: 0, barrier: 0, ring: 0, beam: 0, asteroid: 0, traffic: 0,
+  low2: 1, crateBeam: 1, asteroid2: 1,
+  trafficMix: 2, laser: 2, platform: 2, drone: 2, wall3: 9,
+  gate: 3,
+};
+
+export const GATE = {
+  /** seconds of rank gate before each new rank */
+  seconds: 30,
+  /** seconds of easier road right after a gate */
+  breather: 8,
+  /** gate pushes the next phase's hard tiers by this factor */
+  hardBoost: 1.45,
+  /** metres over which a phase's speed is eased in */
+  speedEase: 600,
+};
+
+/** EXP-equivalent of a distance at a speed level */
+export const expAtDist = (d: number, level: SpeedLevel) => Math.max(0, d) * EXP.rate[level];
+/** distance at which a rank is reached at a speed level */
+export const rankDist = (i: number, level: SpeedLevel) => EXP.rank[RANK_ORDER[Math.min(i, RANK_ORDER.length - 1)]] / EXP.rate[level];
+/** phase index (0 = D … 5 = AAA) at a distance */
+export function phaseAt(d: number, level: SpeedLevel) {
+  const e = expAtDist(d, level);
+  let i = 0;
+  for (let k = 1; k < RANK_ORDER.length; k++) if (e >= EXP.rank[RANK_ORDER[k]]) i = k;
+  return i;
+}

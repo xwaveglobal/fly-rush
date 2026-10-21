@@ -29,7 +29,9 @@ Không có gì khác để tích luỹ.
 | AAA | 30 phút | 60 phút | 90 phút |
 
 - Giữ đúng tỉ lệ **thời gian**: Normal chậm ×2, Easy chậm ×3 so với Hard. Vì Easy/Normal chạy chậm hơn, hệ số EXP thực tế ≈ Easy ×1 · Normal ×1.2 · Hard ×2 (hiệu chỉnh bằng mô phỏng cho khớp số phút).
-- Ngưỡng EXP cụ thể (`RANK_EXP` trong `config.ts`) tính bằng mô phỏng theo đường cong tốc độ thật, làm tròn số đẹp.
+- Ngưỡng EXP (`EXP.rank` trong `config.ts`, đã tính bằng mô phỏng): C 3.000 · B 8.000 · A 15.000 · AA 26.000 · AAA 40.000.
+- Tốc độ đường tăng theo giai đoạn: B +3 %, A +6 %, AA +10 %, AAA +14 % (đã tính vào ngưỡng EXP).
+- Thử nhanh: thêm `?rank=B` (C/B/A/AA/AAA) vào link để vào Endless ngay trước Cổng hạng đó (lượt này không lưu EXP).
 
 ### Chiến thuật tăng độ khó (rõ nét theo từng giai đoạn)
 

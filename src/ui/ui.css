@@ -1919,3 +1919,10 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 #hud .scorebox .rankp:empty { display: none; }
 #hud .scorebox .rankp .clsb { height: 22px; min-width: 24px; font-size: 12px; }
 .rchip.bolt { display: none !important; }
+#hud .gatebar { margin-top: 8px; display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 12px;
+  background: linear-gradient(90deg, rgba(255,40,100,.32), rgba(120,20,80,.25)); border: 1px solid rgba(255,90,138,.6); }
+#hud .gatebar[hidden] { display: none; }
+#hud .gatebar b { font: 900 12px var(--font); letter-spacing: 1.2px; color: #ff9fbd; font-style: italic; }
+#hud .gatebar .track { height: 6px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; }
+#hud .gatebar .track i { display: block; height: 100%; background: linear-gradient(90deg, #ff5a8a, #ffc21a); }
+#hud .gatebar .clsb { height: 20px; min-width: 22px; font-size: 11px; }

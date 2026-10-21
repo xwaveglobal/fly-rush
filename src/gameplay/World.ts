@@ -89,7 +89,8 @@ export class World {
     this.spawner = new Spawner(new Rng(seed));
   }
 
-  reset(seed?: number, course: Course | null = null, level: SpeedLevel = 'normal') {
+  /** @param startDist start the run further down the road (tests / debug "jump to a rank") */
+  reset(seed?: number, course: Course | null = null, level: SpeedLevel = 'normal', startDist = 0) {
     this.spawner.course = course;
     this.spawner.speedMul = LEVELS[level].speed;
     this.spawner.gapMul = LEVELS[level].gap;
@@ -100,12 +101,12 @@ export class World {
     this.pickups.length = 0;
     this.upcoming.length = 0;
     if (seed !== undefined) this.spawner.rng = new Rng(seed);
-    this.spawner.reset(0);
+    this.spawner.reset(startDist);
     this.player.reset(1);
-    this.dist = 0;
+    this.dist = startDist;
     this.time = 0;
-    this.speed = this.spawner.speed(0);
-    this.world = this.spawner.worldAt(0);
+    this.speed = this.spawner.speed(startDist);
+    this.world = this.spawner.worldAt(startDist);
   }
 
   /** Clear everything near the car (used after a respawn). */

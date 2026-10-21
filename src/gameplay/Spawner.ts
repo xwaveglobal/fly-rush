@@ -8,7 +8,7 @@ import { sectionAt, type Course, type PatternKey } from './Courses.ts';
 import { PASS_ALL, PASS_N } from './types.ts';
 /** extra seconds after a jump/duck row: land, settle, see the next obstacle */
 const VERTICAL_RECOVERY = 0.7;
-import { MAPS, LEVEL_RULES, PATTERNS, tierWeights, type Tier } from './Difficulty.ts';
+import { MAPS, LEVEL_RULES, PATTERNS, tierWeights, type Tier, type MapDifficultyConfig, PHASES, PHASE_UNLOCK, GATE, RANK_ORDER, rankDist, phaseAt, type PhaseRank } from './Difficulty.ts';
 import type { SpeedLevel } from '../config.ts';
 
 /** Base speed is a pure function of distance so spawn timing can be predicted exactly. */
@@ -57,9 +57,54 @@ export class Spawner {
   private get off() {
     return this.course?.diffOffset ?? 0;
   }
-  /** Base speed at a run distance, including the course's difficulty offset. */
+  /** Base speed at a run distance, including the course's difficulty offset (and, on Endless, the rank phase). */
   speed(d: number) {
-    return speedAt(d + this.off) * this.speedMul;
+    return speedAt(d + this.off) * this.speedMul * (this.course ? 1 : this.phaseSpeed(d));
+  }
+
+  /** v2 Endless: road speed multiplier of the rank phase, eased in after each new rank */
+  phaseSpeed(d: number) {
+    const i = phaseAt(d, this.level);
+    if (i === 0) return PHASES[0].speed;
+    const k = Math.min(1, Math.max(0, (d - rankDist(i, this.level)) / GATE.speedEase));
+    return PHASES[i - 1].speed + (PHASES[i].speed - PHASES[i - 1].speed) * k;
+  }
+
+  /**
+   * v2 Endless: where on the rank ladder distance d is.
+   *  gate     — the last GATE.seconds before rank `next` (hardest stretch of the phase)
+   *  breather — a few seconds of easier road right after a new rank
+   */
+  zoneAt(d: number): { phase: number; kind: 'normal' | 'gate' | 'breather'; next: PhaseRank | null; from: number; to: number } {
+    const lv = this.level;
+    const i = phaseAt(d, lv);
+    if (i + 1 < RANK_ORDER.length) {
+      const to = rankDist(i + 1, lv);
+      const from = to - GATE.seconds * speedAt(to) * this.speedMul * PHASES[i].speed;
+      if (d >= from) return { phase: i, kind: 'gate', next: RANK_ORDER[i + 1], from, to };
+    }
+    if (i > 0) {
+      const at = rankDist(i, lv);
+      const end = at + GATE.breather * speedAt(at) * this.speedMul * PHASES[i].speed;
+      if (d < end) return { phase: i, kind: 'breather', next: null, from: at, to: end };
+    }
+    return { phase: i, kind: 'normal', next: null, from: 0, to: 0 };
+  }
+
+  /** v2 Endless: difficulty config at distance d (phase / gate / breather) */
+  private phaseCfg(d: number, world: WorldId): MapDifficultyConfig {
+    const z = this.zoneAt(d);
+    if (z.kind === 'gate') {
+      const nx = PHASES[Math.min(PHASES.length - 1, z.phase + 1)];
+      const t = [...nx.tiers] as [number, number, number, number];
+      t[2] *= GATE.hardBoost;
+      t[3] *= GATE.hardBoost;
+      const sum = t[0] + t[1] + t[2] + t[3];
+      return { ...nx, world, target: 10, tiers: t.map((x) => x / sum) as [number, number, number, number], maxConsecutiveHard: nx.maxConsecutiveHard + 1, density: 1, warmup: 0 };
+    }
+    const ph = PHASES[z.phase];
+    if (z.kind === 'breather') return { ...ph, world, target: 2, tiers: [0.75, 0.25, 0, 0], maxConsecutiveHard: 0, density: 0.7, minGap: ph.minGap * 1.2, warmup: 0 };
+    return { ...ph, world, target: 2 + z.phase * 1.6, warmup: 250 };
   }
   worldAt(d: number): WorldId {
     return this.course ? this.course.world : worldAt(d);
@@ -83,6 +128,11 @@ export class Spawner {
   /** map config + progress through the map at distance d */
   mapAt(d: number) {
     const world = this.worldAt(d);
+    if (!this.course) {
+      // v2 Endless: the rank phase sets the difficulty; the world only changes the scenery / pattern set
+      const cfg = this.phaseCfg(d, world);
+      return { world, cfg, progress: 0.5, warmup: d < cfg.warmup };
+    }
     const cfg = MAPS[world];
     const c = this.course;
     const local = c ? d : d % WORLD_LENGTH;
@@ -432,6 +482,15 @@ export class Spawner {
     // tier-first: pick a tier by the map's distribution, then a pattern of that tier
     const map = this.mapAt(real);
     const tw = tierWeights(map.cfg, map.progress, map.warmup, LEVEL_RULES[this.level].tierShift);
+    if (!this.course) {
+      // v2 Endless: patterns unlock phase by phase; each phase boosts its signature obstacles
+      const z = this.zoneAt(real);
+      const ph = z.kind === 'gate' ? Math.min(PHASES.length - 1, z.phase + 1) : z.phase;
+      for (const p of patterns) {
+        if (PHASE_UNLOCK[p.k] > ph) p.w = 0;
+        else p.w *= PHASES[ph].boost[p.k] ?? 1;
+      }
+    }
     const usable = patterns.filter((p) => p.w > 0 && PATTERNS[p.k].worlds.includes(world) && PATTERNS[p.k].tier <= maxTier);
     const tiers: { w: number; v: Tier }[] = [];
     for (const t of [1, 2, 3, 4] as Tier[]) {

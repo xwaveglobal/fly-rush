@@ -32,6 +32,7 @@ import { advancedScript, basicScript, boostScript, WORLD_LESSONS, type BoostKind
 import { PASS_H, PASS_L, PASS_N } from './gameplay/types.ts';
 import { MAPS, TIER_NAME, type Tier } from './gameplay/Difficulty.ts';
 import { FAIRNESS } from './config.ts';
+import { RANK_ORDER, rankDist } from './gameplay/Difficulty.ts';
 import type { Box, PickupKind, RowSpec } from './gameplay/types.ts';
 import { Meta, type EventResult, type RunSummary } from './meta/Meta.ts';
 import { schedule, fmtLeft, localTime, prizesFor, cupFor } from './meta/Events.ts';
@@ -47,7 +48,7 @@ import type { ItemKey, Reward } from './meta/Daily.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v2.0.1';
+const VERSION = 'v2.0.2';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -192,6 +193,10 @@ export class Game {
   private runRank: RankClass = 'D';
   /** v2: personal-best EXP already beaten in this run (notice shown once) */
   private runBeatBest = false;
+  /** run started with ?rank=… (test shortcut) — its EXP is not saved */
+  private debugStart = false;
+  /** last rank gate announced in this run */
+  private gateShown = '';
   private menuDist = 0;
   private tmpV = new THREE.Vector3();
   private frameTimes: number[] = [];
@@ -945,6 +950,16 @@ export class Game {
   /** v2: in-run notices when the run's EXP reaches a new rank / beats the personal best */
   private expMilestones(run: Run) {
     if (this.tutorialMode || this.state !== 'run' || run.expRate <= 0) return;
+    if (!this.course) {
+      const z = this.world.spawner.zoneAt(this.world.dist);
+      this.ui.gateHud(z.kind === 'gate' && z.next ? { next: z.next, k: (this.world.dist - z.from) / Math.max(1, z.to - z.from) } : null);
+      if (z.kind === 'gate' && z.next && this.gateShown !== z.next) {
+        this.gateShown = z.next;
+        this.ui.toast(`${XPT_ICON} RANK GATE ${z.next} · hardest stretch, hold on!`, '#ff5a8a');
+        this.audio.play('beep');
+        this.vibrate([30, 60, 30]);
+      }
+    }
     const exp = run.exp;
     const rc = classFor(exp);
     if (rc !== this.runRank) {
@@ -975,7 +990,7 @@ export class Game {
       jumps: run.superUsed,
       rings: run.rings,
       finished,
-      exp: run.exp,
+      exp: this.debugStart ? 0 : run.exp,
     };
     this.prevExpBest = this.save.expBest;
     const done = this.meta.recordRun(sum);
@@ -1238,7 +1253,11 @@ export class Game {
     this.audio.play('click');
     this.clearRunVisuals();
     const level = this.runLevel;
-    this.world.reset(Math.floor(Math.random() * 1e9), this.course, level);
+    // test shortcut: ?rank=B starts Endless just before the B rank gate (that run's EXP is not saved)
+    const want = !this.course && !this.tutorialMode ? /[?&]rank=(C|B|A|AA|AAA)\b/.exec(location.search)?.[1] : undefined;
+    const startDist = want ? Math.max(0, rankDist(RANK_ORDER.indexOf(want as (typeof RANK_ORDER)[number]), level) - 2600) : 0;
+    this.debugStart = startDist > 0;
+    this.world.reset(Math.floor(Math.random() * 1e9), this.course, level, startDist);
     this.tutStep = 0;
     this.tutHint = 0;
     this.tutPrompting = false;
@@ -1247,6 +1266,8 @@ export class Game {
     const car = SKINS.find((x) => x.id === this.save.vehicle) ?? SKINS[0];
     this.run = new Run({ ...this.save.upgrades }, LEVELS[level].score * (1 + (car.bonus ?? 0) / 100));
     this.run.expRate = this.tutorialMode ? 0 : EXP.rate[level];
+    this.run.distance = startDist;
+    this.gateShown = '';
     this.runRank = 'D';
     this.runBeatBest = this.save.expBest <= 0;
     this.superFlight = false;
@@ -1360,6 +1381,7 @@ export class Game {
   }
 
   private clearRunVisuals() {
+    this.ui.gateHud(null);
     this.vehicle.resetFx();
     this.shatter.clear();
     this.particles.clear();
@@ -1994,6 +2016,7 @@ export class Game {
       return;
     }
     if (this.state !== 'run' || this.tutorialMode || !charged || w.dist < this.nextBlockadeAt) return;
+    if (!this.course) return; // v2 Endless: no row ever needs a special item
     this.blockade = w.spawner.injectBlockade();
     this.blockadeWarned = false;
     this.nextBlockadeAt = w.dist + 520;
