@@ -260,6 +260,7 @@ export class Vehicle {
     this.boostHold = Math.max(this.boostHold, 0.55 * k); // hold the boost look briefly, then release smoothly
   }
   private boostHold = 0;
+  private jitterSign = 1;
   /** comet light trails orbiting the rear tyres */
   private orbits: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>[] = [];
   private orbitMat!: THREE.ShaderMaterial;
@@ -617,24 +618,24 @@ export class Vehicle {
           float lt = step(vUv.x, ${TYRE.maskX.toFixed(3)}) * step(vUv.y, ${TYRE.maskY.toFixed(3)});
           float rt = step(${(1 - TYRE.maskX).toFixed(3)}, vUv.x) * step(vUv.y, ${TYRE.maskY.toFixed(3)});
           float tyre = (lt + rt) * rearView;
-          // vertical motion blur over the spinning tyres (5 taps) — longer smear the faster the car goes
-          if (tyre > 0.5 && spinAmt > 0.01) {
-            float o = 0.012 * spinAmt * (1.0 + 2.2 * speedK);
-            vec3 b1 = texture2D(map, vUv + vec2(0.0, o)).rgb;
-            vec3 b2 = texture2D(map, vUv - vec2(0.0, o)).rgb;
-            vec3 b3 = texture2D(map, vUv + vec2(0.0, 2.0 * o)).rgb;
-            vec3 b4 = texture2D(map, vUv - vec2(0.0, 2.0 * o)).rgb;
-            c.rgb = mix(c.rgb, (c.rgb + b1 + b2 + b3 + b4) / 5.0, 0.8 * spinAmt);
+          // OPTION D — spinning rear tyres seen from behind (owner's pick):
+          // 1) the tread smears vertically (grooves → continuous lines), more with speed
+          // 2) soft light/dark bands slide down the rubber (rolling), 3) a glint races down the shoulder
+          float lum0 = dot(c.rgb, vec3(0.333));
+          float rub = smoothstep(0.42, 0.22, lum0) * tyre;           // rubber only (not diffuser / metal)
+          if (rub > 0.01 && spinAmt > 0.01) {
+            float o = (0.006 + 0.03 * speedK) * spinAmt;
+            vec3 acc = c.rgb;
+            for (int k = 1; k <= 6; k++) acc += texture2D(map, vUv + vec2(0.0, o * float(k) / 6.0)).rgb;
+            vec3 sm = acc / 7.0;
+            float band = 0.5 + 0.5 * sin(vUv.y * 32.7 - spin * 6.2831853);
+            sm *= 0.86 + 0.22 * band;
+            float tx = vUv.x < 0.5 ? vUv.x / ${TYRE.maskX.toFixed(3)} : (1.0 - vUv.x) / ${TYRE.maskX.toFixed(3)};
+            float shoulder = exp(-pow((tx - 0.18) / 0.15, 2.0));
+            float gl = clamp(sin(vUv.y * 11.3 - streak * 6.2831853) * 4.0 - 3.2, 0.0, 1.0);
+            sm += vec3(0.47) * gl * shoulder * (0.5 + 0.5 * speedK);
+            c.rgb = mix(c.rgb, sm, rub * spinAmt);
           }
-          float lum = dot(c.rgb, vec3(0.333));
-          float rub = smoothstep(0.62, 0.25, lum);
-          // tread blocks racing down the tyre (bigger blocks, softened as the smear grows)
-          float f = fract(vUv.y * 14.0 + spin);
-          float band = smoothstep(0.0, 0.22, f) * smoothstep(0.66, 0.44, f);
-          c.rgb = mix(c.rgb, c.rgb * (0.3 + 1.3 * band), tyre * rub * spinAmt * (1.0 - 0.3 * speedK));
-          // long motion streaks sliding over the rubber (racing tyre at speed), brighter when fast
-          float g = fract(vUv.y * 5.0 + streak);
-          c.rgb += vec3(0.34, 0.2, 0.1) * (0.6 + 0.8 * speedK) * tyre * rub * spinAmt * smoothstep(0.7, 0.96, g) * smoothstep(1.0, 0.97, g);
           // "hot tyre" look: thin glowing lines wrap the tread and race down it
           if (hot > 0.01 && tyre > 0.5) {
             float tx = vUv.x < 0.5 ? vUv.x / ${TYRE.maskX.toFixed(3)} : (1.0 - vUv.x) / ${TYRE.maskX.toFixed(3)};   // 0 = outer edge … 1 = inner
@@ -651,8 +652,6 @@ export class Vehicle {
             vec3 hotC = mix(vec3(1.0, 0.42, 0.08), vec3(1.0, 0.92, 0.75), clamp(hl * 0.7, 0.0, 1.0));
             c.rgb += hotC * (hl * 1.1 + edgeGlow * 0.55) * hot * spinAmt;
           }
-          // lateral blur hint at the tyre edge
-          c.rgb += vec3(0.05) * tyre * spinAmt * (1.0 - rub);
           float mx = max(c.r, max(c.g, c.b)); float mn = min(c.r, min(c.g, c.b));
           float l = dot(c.rgb, vec3(0.299, 0.587, 0.114));
           // body paint = bright, unsaturated pixels → recolour for the other colourways
@@ -1339,8 +1338,8 @@ export class Vehicle {
       u.spinAmt.value = clamp01(speed / 8) * (1 - p.air);
       u.speedK.value = clamp01((speed - TYRE.blurFrom) / (TYRE.blurFull - TYRE.blurFrom)) * (1 - p.air);
       const sx = this.sprite.scale.x, sy = this.sprite.scale.y;
-      if (!TYRE.effects) {
-        // tyres exactly as drawn in the render: no tread motion, glow or trails
+      if (!TYRE.spinFx) {
+        // tyres exactly as drawn in the render
         u.spinAmt.value = 0;
         u.speedK.value = 0;
       }
@@ -1396,6 +1395,13 @@ export class Vehicle {
       }
     }
     this.updateSprite(vy, this.bank.rotation.z);
+    // option D: the body vibrates very slightly at speed (alternating sub-pixel offset)
+    if (TYRE.spinFx && this.spriteOn) {
+      this.jitterSign = -this.jitterSign;
+      const jk = this.sprite.material.uniforms.speedK.value;
+      this.sprite.position.x += this.jitterSign * TYRE.jitter * jk;
+      this.sprite.position.y += (this.jitterSign > 0 ? 1 : 0) * TYRE.jitter * 0.6 * jk;
+    }
     this.root.visible = this.visibleBlink;
   }
 

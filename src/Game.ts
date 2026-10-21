@@ -47,7 +47,7 @@ import type { ItemKey, Reward } from './meta/Daily.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v1.18.8';
+const VERSION = 'v1.18.9';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -1374,9 +1374,29 @@ export class Game {
 
   /** grit kicked back from the rear tyres while driving fast on the road (sells the speed) */
   private sprayAcc = 0;
+  private dustAcc = 0;
   private sprayPos = new THREE.Vector3();
   private tyreSpray(dt: number, speed: number) {
     const p = this.world.player;
+    const dk = clamp((speed - TYRE.dustFrom) / (SPEED.max - TYRE.dustFrom), 0, 1);
+    if (this.state === 'run' && p.air < 0.08 && speed > TYRE.dustFrom) {
+      // option D: soft dust puffs kicked back from each rear tyre's contact patch
+      if (TYRE.spinFx) {
+        this.dustAcc += dt * TYRE.dustRate * (0.35 + 0.65 * dk);
+        while (this.dustAcc >= 1) {
+          this.dustAcc -= 1;
+          for (const side of [-1, 1] as const) {
+            const q = this.vehicle.rearTyreWorld(side, this.sprayPos);
+            this.smoke.emit(
+              q.x + side * 0.1 + (Math.random() - 0.5) * 0.15, 0.22 + Math.random() * 0.1, q.z + 0.15,
+              side * (0.4 + Math.random() * 1.0), 0.4 + Math.random() * 0.7, 1.5 + Math.random() * 2.5,
+              TYRE.dustColor, TYRE.dustSize * (0.7 + Math.random() * 0.6), TYRE.dustLife * (0.7 + Math.random() * 0.6),
+              { locked: true, drag: 1.8, grow: 1.3 },
+            );
+          }
+        }
+      }
+    }
     if (this.state !== 'run' || p.air > 0.08 || speed < TYRE.sprayFrom) {
       this.sprayAcc = 0;
       return;

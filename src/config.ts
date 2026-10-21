@@ -104,7 +104,17 @@ export const TYRE = {
   radius: 0.36,
   /** rear tyres on the X1 rear render (uv): x < maskX (and > 1 − maskX), y < maskY */
   maskX: 0.17,
-  maskY: 0.46,
+  maskY: 0.5,
+  /** option D: tread smear + rolling bands + shoulder glint + dust + body vibration */
+  spinFx: true,
+  /** body vibration at full speed (sprite-plane units) */
+  jitter: 0.0022,
+  /** dust puffs behind the rear tyres */
+  dustFrom: 8,
+  dustRate: 55,
+  dustSize: 0.3,
+  dustLife: 0.45,
+  dustColor: 0xc2c8d4,
   /** tyre effects (tread motion, hot streaks, orbit trails, sparks). Off = tyres look exactly like the render */
   effects: false,
   /** speed (m/s) where the hot-tyre glow starts / is full */
