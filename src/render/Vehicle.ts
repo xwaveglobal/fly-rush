@@ -634,34 +634,29 @@ export class Vehicle {
       vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
       fragmentShader: `uniform float rot; uniform float blur; uniform float amt; uniform vec3 glow; uniform float dim; varying vec2 vUv;
         const float N = ${TYRE.spokes.toFixed(1)};
-        float spokes(float a, float r){
-          // 2N thin twin spokes; widen + soften with blur (rotational smear)
-          float k = abs(cos((a - rot) * N * 0.5));
-          float w = mix(0.86, 0.35, blur);
-          return smoothstep(w, w + 0.1 + 0.4 * blur, k) * smoothstep(0.18, 0.26, r) * smoothstep(0.80, 0.72, r);
+        // one spoke set at angle offset o: thin lines, widened by the rotational blur
+        float spokes(float a, float o){
+          float k = abs(cos((a - rot - o) * N * 0.5));
+          float w = mix(0.93, 0.55, blur);
+          return smoothstep(w, w + 0.05 + 0.3 * blur, k);
         }
         void main(){
           vec2 p = vUv * 2.0 - 1.0;
           float r = length(p);
           if (r > 1.0) discard;
           float a = atan(p.y, p.x);
-          vec3 c = vec3(0.025, 0.03, 0.045);                       // tyre rubber
-          float rim = smoothstep(0.86, 0.82, r);                    // metal rim
-          c = mix(c, vec3(0.16, 0.18, 0.22), rim);
-          float lip = smoothstep(0.86, 0.83, r) * smoothstep(0.76, 0.80, r);
-          c += vec3(0.55, 0.6, 0.7) * lip;
-          // spokes: average of 3 angular taps across the blur span
-          float sp = (spokes(a, r) + spokes(a + blur * 0.18, r) + spokes(a - blur * 0.18, r)) / 3.0;
-          c = mix(c, vec3(0.78, 0.82, 0.9), sp * (1.0 - 0.45 * blur));
-          // fast spin: concentric light streaks + glowing brake disc ring
-          float streak = smoothstep(0.02, 0.0, abs(fract(r * 7.0 - rot * 0.15) - 0.5) - 0.42) * blur;
-          c += vec3(0.5, 0.55, 0.65) * streak * 0.35 * rim;
-          float disc = smoothstep(0.3, 0.27, r) * smoothstep(0.12, 0.16, r);
-          c += glow * disc * (0.35 + 0.65 * blur);
-          float hub = smoothstep(0.12, 0.08, r);
-          c = mix(c, glow * 1.3 + 0.2, hub);
-          float edge = smoothstep(1.0, 0.94, r);
-          gl_FragColor = vec4(c * dim, edge * amt);
+          // no disc: only the spokes (and their smear) are drawn over the tyre of the render
+          float span = 0.5 * blur * 6.2831 / N;            // smear across up to half a spoke gap
+          float sp = 0.0;
+          for (int t = 0; t < 5; t++) sp += spokes(a, span * (float(t) / 4.0 - 0.5));
+          sp /= 5.0;
+          float band = smoothstep(0.14, 0.24, r) * smoothstep(0.98, 0.86, r);
+          // fast spin: radial speed streaks sliding around + a faint hub glow
+          float streak = pow(abs(sin((a - rot * 1.7) * 3.0)), 24.0) * blur;
+          vec3 col = mix(vec3(0.82, 0.86, 0.95), glow, 0.25) * (1.0 + 0.4 * blur);
+          float alpha = (sp * (0.85 - 0.25 * blur) + streak * 0.45) * band;
+          alpha += smoothstep(0.16, 0.05, r) * 0.55;       // small hub cap
+          gl_FragColor = vec4(col * dim, clamp(alpha, 0.0, 1.0) * amt);
         }`,
       transparent: true,
       depthWrite: false,

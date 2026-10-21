@@ -101,9 +101,9 @@ export const TYRE = {
   sprayLife: 0.3,
   sprayColor: 0xb9c6e6,
   /** spoked rims over the rear tyres: count, wheel radius (m), max spin step per frame (× spoke gap) */
-  spokes: 10,
+  spokes: 24,
   radius: 0.36,
-  rimMaxStep: 0.42,
+  rimMaxStep: 0.45,
   /** rim disc placement on the sprite plane (centre = 0), diameter in metres, horizontal squash */
   rimX: 0.41,
   rimY: -0.3,
