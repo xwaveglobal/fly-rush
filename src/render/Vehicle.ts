@@ -237,6 +237,25 @@ export class Vehicle {
   /** always show the high-res rear render (cameras stay behind the car) */
   rearOnly = true;
   private sprite!: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
+  /** hexagon energy dome (shield) drawn behind the car, and rear boost light jets */
+  private dome!: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
+  private boostJets: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>[] = [];
+  private boostMat!: THREE.ShaderMaterial;
+  /** 0..1 shield visibility target (set by the game), current value, hit flash */
+  shieldTarget = 0;
+  private shieldK = 0;
+  private shieldHitK = 0;
+  /** 0..1 boost burst target (turbo / launch), current value */
+  boostTarget = 0;
+  private boostK = 0;
+  /** flash the dome when it absorbs a hit */
+  shieldHit() {
+    this.shieldHitK = 1;
+  }
+  /** a short burst of rear light (speed-up moments) */
+  boostKick(k = 1) {
+    this.boostK = Math.max(this.boostK, k);
+  }
   /** comet light trails orbiting the rear tyres */
   private orbits: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>[] = [];
   private orbitMat!: THREE.ShaderMaterial;
@@ -645,6 +664,78 @@ export class Vehicle {
     this.sprite.visible = false;
     this.sprite.layers.set(OVERLAY_LAYER);
     this.squashG.add(this.sprite);
+    // SHIELD: a translucent hexagon dome over the car (behind it), fresnel-bright rim, shimmering cells
+    this.dome = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
+      uniforms: { t: { value: 0 }, k: { value: 0 }, hit: { value: 0 } },
+      vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      fragmentShader: `uniform float t; uniform float k; uniform float hit; varying vec2 vUv;
+        // distance to the nearest hexagon edge (pointy-top hex grid)
+        float hexEdge(vec2 p){
+          const vec2 s = vec2(1.0, 1.7320508);
+          vec4 hC = floor(vec4(p, p - vec2(0.5, 1.0)) / s.xyxy) + 0.5;
+          vec4 h = vec4(p - hC.xy * s, p - (hC.zw + 0.5) * s);
+          vec2 q = dot(h.xy, h.xy) < dot(h.zw, h.zw) ? h.xy : h.zw;
+          q = abs(q);
+          return 0.5 - max(dot(q, s * 0.5), q.x);
+        }
+        void main(){
+          vec2 p = vec2(vUv.x * 2.0 - 1.0, vUv.y);           // dome: centre bottom, radius 1
+          float e = length(vec2(p.x, p.y * 1.02));
+          if (e > 1.0 || p.y < 0.0) discard;
+          float rim = smoothstep(0.62, 1.0, e);                 // fresnel: bright at the edge
+          float edge = smoothstep(0.985, 0.93, e);
+          // hex cells on the curved surface (squeezed towards the rim like a sphere)
+          vec2 hp = vec2(p.x, p.y) / (1.15 - 0.55 * e * e) * 4.2 + vec2(0.0, -t * 0.25);
+          float he = hexEdge(hp);
+          float lines = smoothstep(0.06, 0.0, he) * (0.25 + 0.75 * rim);
+          float shimmer = 0.5 + 0.5 * sin(t * 2.4 + hp.x * 1.3 + hp.y * 2.1);
+          float sparkle = smoothstep(0.995, 1.0, sin(hp.x * 13.0 + t * 3.0) * sin(hp.y * 11.0 - t * 2.0)) * rim;
+          vec3 col = mix(vec3(0.25, 0.6, 1.0), vec3(0.85, 0.95, 1.0), rim * 0.7 + hit * 0.5);
+          float a = (0.06 + rim * 0.55 + lines * (0.35 + 0.25 * shimmer) + sparkle * 0.8) * edge;
+          a += smoothstep(0.9, 1.0, e) * edge * 0.6;            // glowing outline
+          a *= k * (1.0 + hit * 1.5);
+          gl_FragColor = vec4(col * a, 1.0);
+        }`,
+      transparent: true,
+      depthWrite: false,
+      depthTest: false,
+      blending: THREE.AdditiveBlending,
+    }));
+    this.dome.layers.set(OVERLAY_LAYER);
+    this.dome.renderOrder = 1;
+    this.dome.visible = false;
+    this.sprite.add(this.dome);
+    // BOOST: two light jets bursting out of the rear diffuser towards the camera
+    this.boostMat = new THREE.ShaderMaterial({
+      uniforms: { t: { value: 0 }, k: { value: 0 } },
+      vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      fragmentShader: `uniform float t; uniform float k; varying vec2 vUv;
+        void main(){
+          // vUv.y = 1 at the nozzle, 0 at the tip of the flame
+          float y = 1.0 - vUv.y;
+          float x = (vUv.x - 0.5) * 2.0;
+          float w = mix(0.55, 0.12, y) * (0.85 + 0.15 * sin(t * 40.0 + y * 12.0));
+          float body = smoothstep(w, w * 0.2, abs(x)) * smoothstep(1.0, 0.55 * k + 0.2, y);
+          float core = smoothstep(w * 0.45, 0.0, abs(x)) * smoothstep(0.7, 0.0, y);
+          float flick = 0.8 + 0.2 * sin(t * 57.0 + y * 30.0) * sin(t * 33.0);
+          vec3 col = mix(vec3(0.2, 0.55, 1.0), vec3(0.95, 0.98, 1.0), core);
+          float a = (body * 0.8 + core) * flick * k;
+          gl_FragColor = vec4(col * a, 1.0);
+        }`,
+      transparent: true,
+      depthWrite: false,
+      depthTest: false,
+      blending: THREE.AdditiveBlending,
+    });
+    for (const side of [-1, 1]) {
+      const j = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.boostMat);
+      j.userData.side = side;
+      j.layers.set(OVERLAY_LAYER);
+      j.renderOrder = 12;
+      j.visible = false;
+      this.sprite.add(j);
+      this.boostJets.push(j);
+    }
     // glowing comet trails orbit each rear tyre (additive light, like a hot
     // racing tyre at speed). Smooth arcs never strobe, so they may turn as fast as the wheel.
     this.orbitMat = new THREE.ShaderMaterial({
@@ -743,6 +834,14 @@ export class Vehicle {
     this.squashG.add(this.aura);
   }
 
+  /** what the game-over shatter needs: current texture, tint and the sprite's world matrix */
+  shatterSource() {
+    if (!this.spriteOn) return null;
+    this.sprite.updateWorldMatrix(true, false);
+    const u = this.sprite.material.uniforms;
+    return { tex: u.map.value as THREE.Texture, tint: u.tint.value as THREE.Color, tintAmt: u.tintAmt.value as number, matrix: this.sprite.matrixWorld.clone() };
+  }
+
   get usesSprite() {
     return this.spriteOn;
   }
@@ -789,6 +888,7 @@ export class Vehicle {
       this.jetMat.depthTest = !over;
     }
     this.sprite.renderOrder = over ? 10 : 2;
+    this.dome.renderOrder = over ? 9 : 1;
     this.aura.renderOrder = over ? 11 : 4;
     // billboard: world orientation = camera orientation, rolled with the car's bank / barrel roll
     this.squashG.updateWorldMatrix(true, false);
@@ -1233,6 +1333,28 @@ export class Vehicle {
         g.visible = this.spriteOn && ou.amt.value > 0.02;
         g.position.set(g.userData.side * TYRE.glowX, TYRE.glowY, 0.002);
         g.scale.set((TYRE.glowD * TYRE.glowSquash) / sx, TYRE.glowD / sy, 1);
+      }
+    }
+    // shield dome + boost jets (sprite-local: the sprite plane is 1×1)
+    {
+      this.shieldK += (this.shieldTarget - this.shieldK) * (1 - Math.exp(-7 * dt));
+      this.shieldHitK = Math.max(0, this.shieldHitK - dt * 2.5);
+      const du = this.dome.material.uniforms;
+      du.t.value += dt;
+      du.k.value = this.shieldK * (this.locked ? 0 : 1);
+      du.hit.value = this.shieldHitK;
+      this.dome.visible = this.spriteOn && (this.shieldK > 0.02 || this.shieldHitK > 0.02);
+      this.dome.scale.set(1.34, 1.62, 1);
+      this.dome.position.set(0, -0.5 + 0.81 - 0.06, -0.001);
+      this.boostK = Math.max(this.boostK - dt * 1.6, this.boostTarget);
+      const bu = this.boostMat.uniforms;
+      bu.t.value += dt;
+      bu.k.value = Math.min(1, this.boostK) * (this.locked ? 0 : 1);
+      const len = 0.35 + 0.45 * Math.min(1, this.boostK);
+      for (const j of this.boostJets) {
+        j.visible = this.spriteOn && this.boostK > 0.02 && this.sprite.material.uniforms.rearView.value > 0.5;
+        j.scale.set(0.16, len, 1);
+        j.position.set(j.userData.side * 0.2, -0.3 - len / 2, 0.003);
       }
     }
     this.updateSprite(vy, this.bank.rotation.z);

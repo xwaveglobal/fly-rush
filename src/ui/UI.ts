@@ -241,6 +241,7 @@ export class UI {
   private hudCache: Record<string, string> = {};
   private pops: HTMLElement;
   private garageIndex = 0;
+  private fastTapT = -1e9;
 
   constructor(parent: HTMLElement, private h: UIHandlers) {
     this.root = document.createElement('div');
@@ -747,8 +748,11 @@ export class UI {
         case 'ranktab': return this.h.rankTab(el.dataset.v as 'week' | 'all');
         case 'claimresults': return this.h.claimResults();
         case 'share': return this.h.share();
-        case 'sos': return this.h.sos();
-        case 'rocket': return this.h.rocket();
+        case 'sos':
+        case 'rocket':
+          // already fired on touch-down (see pointerdown below); a click alone (mouse / keyboard) still works
+          if (performance.now() - this.fastTapT < 600) return;
+          return a === 'sos' ? this.h.sos() : this.h.rocket();
         case 'rocketfix': return this.h.rocketFix(el.dataset.v!);
         case 'avpick': return this.h.setAvatar(Number(el.dataset.i));
         case 'avrand': return this.h.randomAvatar();
@@ -820,6 +824,17 @@ export class UI {
         default:
           if (a.startsWith('up-')) this.h.upgrade(a.slice(3) as UpgradeKey);
       }
+    });
+    // ROADSTER / SOS fire the instant the finger touches the button (no wait for touch-end / click)
+    this.root.addEventListener('pointerdown', (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLElement>('[data-a="rocket"], [data-a="sos"]');
+      if (!b || b.hidden) return;
+      e.preventDefault();
+      this.fastTapT = performance.now();
+      b.classList.add('pressed');
+      window.setTimeout(() => b.classList.remove('pressed'), 140);
+      if (b.dataset.a === 'sos') this.h.sos();
+      else this.h.rocket();
     });
     // stop HUD/overlay touches from becoming swipes
     this.root.addEventListener('touchstart', (e) => {
@@ -997,11 +1012,13 @@ export class UI {
     }
   }
 
+  /** in-run score pops share ONE spot: a new pop replaces the previous one (no stacked, overlapping text) */
   pop(text: string, color = '#ffffff', sub = '', offsetY = 0) {
+    void offsetY;
+    this.pops.querySelectorAll('.pop').forEach((p) => p.remove());
     const el = document.createElement('div');
     el.className = 'pop';
     el.style.color = color;
-    el.style.top = `${40 + offsetY}%`;
     el.innerHTML = `${text}${sub ? `<small>${sub}</small>` : ''}`;
     this.pops.appendChild(el);
     window.setTimeout(() => el.remove(), 1100);
@@ -1057,6 +1074,7 @@ export class UI {
 
   /** special item picked up: big title + icon zooms out toward the player and fades (≈1 s, no flash) */
   bigPickup(label: string, color: string, icon: string, sub = '') {
+    this.pops.querySelectorAll('.pop, .bigpick').forEach((p) => p.remove()); // one big title at a time
     const el = document.createElement('div');
     el.className = 'bigpick';
     el.style.setProperty('--pc', color);

@@ -12,6 +12,7 @@ import { speedAt, worldAt, WORLDS, type WorldId } from './gameplay/Spawner.ts';
 import { Renderer } from './render/Renderer.ts';
 import { CameraRig } from './render/CameraRig.ts';
 import { Vehicle, SKINS, carVisibility } from './render/Vehicle.ts';
+import { CarShatter } from './render/Shatter.ts';
 import { Track } from './render/Track.ts';
 import { Scenery } from './render/Scenery.ts';
 import { ObstacleViews } from './render/ObstacleViews.ts';
@@ -46,7 +47,7 @@ import type { ItemKey, Reward } from './meta/Daily.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v1.18.5';
+const VERSION = 'v1.18.6';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -127,6 +128,8 @@ export class Game {
   speedLines = new SpeedLines();
   rings = new RingPulses();
   debris = new Debris();
+  /** game-over: the car render breaks into shards */
+  shatter = new CarShatter();
   shield = makeShield();
   portal = makePortal();
   private autopilot = AUTOPILOT ? new Autopilot() : null;
@@ -207,7 +210,7 @@ export class Game {
     this.particles = new Particles(this.renderer.pixelRatio);
     this.smoke = new Particles(this.renderer.pixelRatio, false);
     this.renderer.scene.add(this.smoke.points);
-    scene.add(this.particles.points, this.speedLines.lines, this.rings.group, this.debris.group, this.shield.mesh, this.portal.group, this.startArch, this.finishArch);
+    scene.add(this.particles.points, this.speedLines.lines, this.rings.group, this.debris.group, this.shatter.group, this.shield.mesh, this.portal.group, this.startArch, this.finishArch);
 
     this.world.hooks = {
       spawnObstacle: (o) => this.obstacleViews.spawn(o),
@@ -1340,6 +1343,7 @@ export class Game {
   }
 
   private clearRunVisuals() {
+    this.shatter.clear();
     this.particles.clear();
     this.smoke.clear();
     this.debris.clear();
@@ -1539,6 +1543,7 @@ export class Game {
     if (hyper) this.run.hyperJumps--;
     else this.run.superJumps--;
     this.run.superUsed++;
+    this.vehicle.boostKick(1);
     // invulnerable for the whole flight + a short grace after touch-down
     const flight = hyper
       ? TIMING.superAntic + TIMING.hyperExec + TIMING.hyperHold + TIMING.hyperRecover
@@ -1738,7 +1743,9 @@ export class Game {
       if (step === 3) {
         // (no ground roll — the car only flips in the air)
         this.rig.shake(0.15);
-      }
+        this.vehicle.boostKick(1); // launch: light bursts out of the rear
+        this.vibrate(25);
+      } else this.vibrate(8);
     }
     const p = this.world.player;
     p.update(dt);
@@ -1871,7 +1878,7 @@ export class Game {
     }
     // rocket button pressed mid-air: launch on touchdown
     if (this.rocketQueuedT >= 0 && this.state === 'run') {
-      if (this.time - this.rocketQueuedT > 0.6) this.rocketQueuedT = -1;
+      if (this.time - this.rocketQueuedT > 1.0) this.rocketQueuedT = -1;
       else if (this.world.player.canJump && (run.superJumps > 0 || run.hyperJumps > 0)) {
         this.rocketQueuedT = -1;
         this.launchSuperJump(run.hyperJumps > 0);
@@ -2064,8 +2071,10 @@ export class Game {
           }
           // big pickup title zooms out toward the player (steady glow, no screen flash)
           this.ui.bigPickup(POWER_LABEL[k], '#' + POWER_COLORS[k].toString(16).padStart(6, '0'), POWER_ICON[k], k === 'shield' ? `blocks ${SHIELD_HITS} hits` : POWER_SUB[k]);
+          if (k !== 'turbo') this.vibrate(14);
           if (k === 'turbo') {
-            this.vibrate(30);
+            this.vibrate([40, 30, 40]);
+            this.vehicle.boostKick(1);
             this.rig.shake(0.25);
             this.rig.fovKick += 6;
           }
@@ -2080,21 +2089,26 @@ export class Game {
           if (s) this.ui.flyTo(s.x, s.y, XPT_ICON, 'bolts', 120);
           this.audio.play('near', { pan: clamp(f.x / 4, -1, 1) });
           this.ui.pop('NEAR MISS', '#b6ff2e', `+${Math.round(f.points)}`, 6);
+          this.vibrate(10);
           for (let i = 0; i < 4; i++) this.particles.emit(f.x * 0.6, f.y, -1, 0, 0, 14, 0xb6ff2e, 0.1, 0.2, { drag: 1 });
           this.rig.fovKick += 2;
           break;
         }
         case 'ring':
           this.audio.play('ring');
+          this.vibrate(8);
           this.ui.pop('RING', '#4fc3ff', `+${Math.round(f.points)}`, 2);
           this.rings.spawn(this.tmpV.copy(this.vehicle.root.position), 0x39b6ff, 3, 0.5);
           break;
         case 'combo':
           this.audio.play('combo');
-          this.ui.pop(`COMBO x${f.mult}`, '#ffc21a', '', -12);
+          // only whole multipliers get a pop (x2, x3, x4) — fewer interruptions
+          if (Number.isInteger(f.mult)) this.ui.pop(`COMBO x${f.mult}`, '#ffc21a', '', -12);
           break;
         case 'shieldBreak': {
           this.audio.play('shieldBreak');
+          this.vehicle.shieldHit();
+          this.vibrate([30, 40, 30]);
           this.rig.shake(0.35);
           this.particles.burst(this.vehicle.root.position.x, this.vehicle.root.position.y, 0, 30, 0x3d9bff, 9, 0.3, 0.5);
           const left = this.run.shield ? this.run.shieldHits : 0;
@@ -2122,7 +2136,8 @@ export class Game {
   }
 
   /** one short haptic tap (fly, flip, booster, turbo, crash) — Settings ▸ Vibration */
-  private vibrate(ms: number) {
+  /** haptics (Android / supported browsers; iOS Safari ignores it). Pattern = [on, off, on, …] ms */
+  private vibrate(ms: number | number[]) {
     if (this.save.settings.vibrate === false || this.autopilot) return;
     try {
       navigator.vibrate?.(ms);
@@ -2148,19 +2163,26 @@ export class Game {
     this.input.enabled = false;
     const pos = this.vehicle.root.position.clone();
     const skin = SKINS.find((s) => s.id === this.save.vehicle) ?? SKINS[0];
-    this.debris.explode(pos, skin.body, skin.glow);
+    // final crash: the car itself breaks apart (shatter); a survivable hit keeps the small debris burst
+    if (!final) this.debris.explode(pos, skin.body, skin.glow);
     this.particles.burst(pos.x, pos.y, pos.z, 36, 0xd8742a, 10, 0.55, 0.8, { grav: 4 });
     this.particles.burst(pos.x, pos.y, pos.z, 30, 0x555a66, 4, 1.2, 1.3, { drag: 1.5, up: 2 });
     this.audio.play('crash');
     window.setTimeout(() => this.audio.play('explode'), 60);
-    this.rig.shake(0.45);
-    this.vibrate(40);
+    this.rig.shake(final ? 0.7 : 0.45);
+    // heavy, ragged rumble on the final crash; one solid hit otherwise
+    this.vibrate(final ? [90, 40, 140, 50, 60] : [70]);
+    if (final) {
+      this.shatter.burst(this.vehicle);
+      this.vehicle.root.visible = false;
+    }
     this.ui.tutorial(false);
     if (final) this.rig.mode = 'crash';
     this.audio.intensity = 0;
   }
 
   private respawn() {
+    this.shatter.clear();
     const w = this.world;
     const p = w.player;
     this.setState('respawn');
@@ -2175,6 +2197,8 @@ export class Game {
     for (let i = 0; i < 4; i++) window.setTimeout(() => this.rings.spawn(c.clone(), 0x39b6ff, 2.5 + i * 0.6, 0.6, i % 2 === 0), i * 90);
     this.particles.burst(c.x, c.y, 0, 60, 0x6fd2ff, 6, 0.35, 0.7);
     this.audio.play('respawn');
+    this.vibrate(20);
+    this.vehicle.boostKick(0.8);
     this.ui.toast(`${ICON.heart} RESPAWN · ${this.run.lives} ${this.run.lives === 1 ? 'life' : 'lives'} left`, 'var(--red)');
   }
 
@@ -2350,6 +2374,7 @@ export class Game {
     this.smoke.update(dt, scroll);
     this.rings.update(dt, scroll);
     this.debris.update(dt, this.state === 'run' ? this.world.speed : 0);
+    this.shatter.update(dt);
     this.portal.update(dt);
 
     // speed lines
@@ -2361,7 +2386,10 @@ export class Game {
     const sh = this.shield;
     // the X1 render shows protection as its own calm aura; the mote cloud is only for 3D bodies
     sh.mesh.visible = !!run && run.shield && this.state !== 'dying' && !this.vehicle.usesSprite;
-    this.vehicle.auraTarget = run && this.state !== 'dying' && (run.shield || run.turboT > 0 || run.magnetActive || run.doubleT > 0 || this.world.player.isSuper) ? 1 : 0;
+    // the shield is the hexagon dome; the soft aura is for the other power-ups
+    this.vehicle.auraTarget = run && this.state !== 'dying' && (run.turboT > 0 || run.magnetActive || run.doubleT > 0 || this.world.player.isSuper) ? 1 : 0;
+    this.vehicle.shieldTarget = run && this.state !== 'dying' && run.shield ? 1 : 0;
+    this.vehicle.boostTarget = run && this.state === 'run' && run.turboT > 0 ? 1 : 0;
     if (sh.mesh.visible) {
       sh.mesh.position.copy(this.vehicle.root.position);
       sh.mesh.quaternion.copy(this.vehicle.root.quaternion);
