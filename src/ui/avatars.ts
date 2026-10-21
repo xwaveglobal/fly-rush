@@ -1,84 +1,68 @@
 /**
- * Procedural racing-helmet avatars (pure SVG strings, no image files).
- * Each avatar = a race helmet in 3/4 view with a livery (stripes / chevrons / split / flames),
- * an iridescent visor, a racing number and a pit-board background (carbon, checker or speed lines).
+ * Procedural avatars (pure SVG strings, no image files): racing emblem badges.
  * A new pilot gets a random one; it can be changed or re-rolled in the profile.
  */
 import { CLASS_COLOR, type RankClass } from '../meta/Rank.ts';
 
-// v1.18 — front-facing racing pilot portraits: glossy helmet with a city-reflecting visor,
-// livery, racing suit with collar + team stripe, and a neon team-colour backdrop.
-const SHELLS = ['#f4f6fb', '#16181f', '#e01b33', '#1d4dff', '#ffcf1f', '#7a3dff', '#0fb862', '#ff6a12', '#ff4fd8', '#22c8ff'];
-const ACCENTS = ['#ff2240', '#ffd21f', '#22d1ff', '#ffffff', '#111522', '#ff4fd8', '#3dff8b', '#ff8a1f'];
-const VISORS: [string, string, string][] = [
-  ['#7fe3ff', '#1a5bff', '#140a40'],
-  ['#ffd27a', '#ff2d6a', '#2a0820'],
-  ['#fff07a', '#ff7a1a', '#2a1200'],
-  ['#8affc8', '#0aa4ff', '#04203a'],
-  ['#e0b0ff', '#a03cff', '#1a0638'],
-  ['#e8f6ff', '#6a8cff', '#0a1238'],
+// v2.1 — owner: the helmet portraits looked bad. New set: clean racing emblems (badge style) —
+// 16 emblems × 2 colour schemes = 32 avatars (same count, so saved avatar indices stay valid).
+const PALETTES: [string, string, string][] = [
+  ['#2a7bff', '#0a1a5c', '#7fe3ff'], ['#9b4dff', '#2a0a5c', '#e0b0ff'], ['#ff3b6b', '#5c0a24', '#ffb0c4'], ['#11b8a6', '#04403a', '#8affe8'],
+  ['#ff8a1f', '#5c2a04', '#ffd27a'], ['#ffcf1f', '#5c4304', '#fff3a0'], ['#22c8ff', '#043a5c', '#c4f2ff'], ['#3dd16b', '#0a4a22', '#b6ffcf'],
 ];
-const BG_HUES = ['#1d6dff', '#9b4dff', '#ff3b7a', '#11b8a6', '#ff8a1f', '#3a5bff', '#d04dff', '#16c25a'];
-const LIVERIES = ['twin', 'wide', 'chevron', 'flame', 'split', 'stars', 'bolt', 'race'] as const;
+const W = '#ffffff';
+/** emblem paths drawn in a 64×64 box, centred on 32,32 */
+const EMBLEMS: string[] = [
+  // bolt
+  `<path d="M35 10L19 36h11l-4 18 19-28H33z" fill="${W}"/>`,
+  // flame
+  `<path d="M32 9c3 8 13 12 13 25a13 13 0 0 1-26 0c0-7 4-10 6-14 1 5 3 7 5 8-1-7 0-13 2-19z" fill="${W}"/><path d="M32 36c2 3 6 5 6 10a6 6 0 0 1-12 0c0-3 3-5 6-10z" fill="#000" opacity=".25"/>`,
+  // star
+  `<path d="M32 10l6.5 13.4 14.8 2-10.7 10.3 2.6 14.6L32 43.4l-13.2 6.9 2.6-14.6-10.7-10.3 14.8-2z" fill="${W}"/>`,
+  // crown
+  `<path d="M14 44l-3-22 11 9 10-15 10 15 11-9-3 22z" fill="${W}"/><rect x="14" y="46" width="36" height="5" rx="2" fill="${W}"/>`,
+  // wings
+  `<path d="M32 26c-6-7-15-9-23-7 4 3 6 5 7 8-4 0-6 1-8 3 5 1 9 3 11 6-3 1-4 2-5 4 7 0 13-2 18-7zM32 26c6-7 15-9 23-7-4 3-6 5-7 8 4 0 6 1 8 3-5 1-9 3-11 6 3 1 4 2 5 4-7 0-13-2-18-7z" fill="${W}"/><circle cx="32" cy="34" r="5" fill="${W}"/>`,
+  // planet
+  `<circle cx="32" cy="32" r="12" fill="${W}"/><ellipse cx="32" cy="32" rx="22" ry="7" fill="none" stroke="${W}" stroke-width="3.5" transform="rotate(-20 32 32)"/>`,
+  // diamond
+  `<path d="M20 22h24l7 9-19 23-19-23z" fill="${W}"/><path d="M13 31h38M26 22l6 9 6-9M32 31v23" stroke="#000" stroke-opacity=".22" stroke-width="2" fill="none"/>`,
+  // comet
+  `<circle cx="40" cy="24" r="9" fill="${W}"/><path d="M33 31L12 52M36 34L18 54M30 28L10 44" stroke="${W}" stroke-width="4" stroke-linecap="round" opacity=".85"/>`,
+  // chevron shield
+  `<path d="M32 9l19 7v14c0 12-8 20-19 25-11-5-19-13-19-25V16z" fill="${W}"/><path d="M22 28l10-7 10 7M22 38l10-7 10 7" stroke="#000" stroke-opacity=".3" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
+  // rocket
+  `<path d="M32 8c8 6 11 16 9 28H23c-2-12 1-22 9-28z" fill="${W}"/><circle cx="32" cy="24" r="4" fill="#000" opacity=".3"/><path d="M23 30l-7 10 8-2zM41 30l7 10-8-2z" fill="${W}"/><path d="M27 40h10l-5 13z" fill="#ffd23d"/>`,
+  // steering wheel
+  `<circle cx="32" cy="32" r="19" fill="none" stroke="${W}" stroke-width="5"/><circle cx="32" cy="32" r="5" fill="${W}"/><path d="M13 30h14M37 30h14M32 37v14" stroke="${W}" stroke-width="5"/>`,
+  // chequered flag
+  `<path d="M16 10v46" stroke="${W}" stroke-width="3.5" stroke-linecap="round"/><path d="M18 12h30v24H18z" fill="${W}"/><path d="M18 12h7.5v6H18zM33 12h7.5v6H33zM25.5 18H33v6h-7.5zM40.5 18H48v6h-7.5zM18 24h7.5v6H18zM33 24h7.5v6H33zM25.5 30H33v6h-7.5zM40.5 30H48v6h-7.5z" fill="#000" opacity=".55"/>`,
+  // target
+  `<circle cx="32" cy="32" r="18" fill="none" stroke="${W}" stroke-width="4"/><circle cx="32" cy="32" r="10" fill="none" stroke="${W}" stroke-width="4"/><circle cx="32" cy="32" r="3.5" fill="${W}"/><path d="M32 8v10M32 46v10M8 32h10M46 32h10" stroke="${W}" stroke-width="3"/>`,
+  // mountain peaks
+  `<path d="M8 50l16-26 8 12 6-9 18 23z" fill="${W}"/><path d="M24 24l-4 7 4-2 4 2zM38 27l-3 5 3-1 3 1z" fill="#000" opacity=".25"/><circle cx="46" cy="16" r="5" fill="${W}"/>`,
+  // speedometer
+  `<path d="M12 42a20 20 0 1 1 40 0" fill="none" stroke="${W}" stroke-width="5" stroke-linecap="round"/><path d="M32 42l12-14" stroke="${W}" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="42" r="4.5" fill="${W}"/><path d="M16 28l3 2M32 20v4M48 28l-3 2" stroke="${W}" stroke-width="3" stroke-linecap="round"/>`,
+  // trophy
+  `<path d="M22 12h20v10a10 10 0 0 1-20 0z" fill="${W}"/><path d="M22 15h-6c0 7 3 10 7 11M42 15h6c0 7-3 10-7 11" fill="none" stroke="${W}" stroke-width="3"/><path d="M29 32h6v9h-6z" fill="${W}"/><rect x="22" y="41" width="20" height="6" rx="2" fill="${W}"/>`,
+];
 
 export const AVATAR_COUNT = 32;
 
-const lum = (hex: string) => {
-  const n = parseInt(hex.slice(1), 16);
-  return (0.3 * (n >> 16) + 0.59 * ((n >> 8) & 255) + 0.11 * (n & 255)) / 255;
-};
-
 export function avatarSvg(i: number) {
-  const n = ((i % AVATAR_COUNT) + AVATAR_COUNT) % AVATAR_COUNT;
-  const shell = SHELLS[n % SHELLS.length];
-  let acc = ACCENTS[(n * 3 + 1) % ACCENTS.length];
-  if (acc === shell || Math.abs(lum(acc) - lum(shell)) < 0.2) acc = lum(shell) > 0.5 ? '#111522' : '#ffd21f';
-  const [v1, v2, v3] = VISORS[(n * 5 + 2) % VISORS.length];
-  const hue = BG_HUES[(n * 7 + 3) % BG_HUES.length];
-  const liv = LIVERIES[(n + Math.floor(n / SHELLS.length)) % LIVERIES.length];
-  const suit = lum(shell) > 0.6 ? '#1b2238' : shell;
-  const num = String(((n * 37 + 7) % 98) + 1);
-  const numFill = lum(shell) > 0.55 ? '#111522' : '#ffffff';
-  const id = `v${n}`;
-  const helmet = 'M13 34C13 18 21 8 32 8s19 10 19 26c0 8-3 14-8 17H21c-5-3-8-9-8-17z';
-  const livery: Record<(typeof LIVERIES)[number], string> = {
-    twin: `<path d="M28.5 8v20M35.5 8v20" stroke="${acc}" stroke-width="3"/>`,
-    wide: `<path d="M27 7h10v22H27z" fill="${acc}"/><path d="M29 7v22M35 7v22" stroke="${shell}" stroke-width="1"/>`,
-    chevron: `<path d="M16 16l16 9 16-9M15 22l17 9 17-9" stroke="${acc}" stroke-width="3" fill="none" stroke-linejoin="round"/>`,
-    flame: `<path d="M13 40c3-1 4-5 3-9 3 2 4 5 4 8 1-4 3-8 2-13 4 3 5 8 4 14h12c-1-6 0-11 4-14-1 5 1 9 2 13 0-3 1-6 4-8-1 4 0 8 3 9v6H13z" fill="${acc}"/>`,
-    split: `<path d="M32 6v46H10V6z" fill="${acc}"/>`,
-    stars: `<path d="M22 15l1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5zM42 15l1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z" fill="${acc}"/>`,
-    bolt: `<path d="M35 7l-9 13h6l-4 9 11-14h-6l4-8z" fill="${acc}"/>`,
-    race: `<path d="M12 27h40v4H12z" fill="${acc}"/><path d="M12 32h40" stroke="${acc}" stroke-width="1" opacity=".7"/>`,
-  };
+  const k = ((i % AVATAR_COUNT) + AVATAR_COUNT) % AVATAR_COUNT;
+  const emblem = EMBLEMS[k % EMBLEMS.length];
+  const [c1, c2, hi] = PALETTES[(k * 3 + Math.floor(k / EMBLEMS.length) * 5) % PALETTES.length];
+  const id = `av${k}`;
   return `<svg viewBox="0 0 64 64" class="avsvg" aria-hidden="true"><defs>
-<radialGradient id="bg${id}" cx="50%" cy="38%" r="70%"><stop offset="0" stop-color="${hue}"/><stop offset=".55" stop-color="${hue}" stop-opacity=".45"/><stop offset="1" stop-color="#05071a"/></radialGradient>
-<linearGradient id="sh${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".6"/><stop offset=".35" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient>
-<linearGradient id="vi${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${v1}"/><stop offset=".5" stop-color="${v2}"/><stop offset="1" stop-color="${v3}"/></linearGradient>
-<linearGradient id="su${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${suit}"/><stop offset="1" stop-color="#05060c"/></linearGradient>
-<clipPath id="hc${id}"><path d="${helmet}"/></clipPath><clipPath id="vc${id}"><rect x="17" y="23" width="30" height="15" rx="7"/></clipPath></defs>
-<rect width="64" height="64" fill="url(#bg${id})"/>
-<path d="M-2 14l28-10M40 62l30-14M-4 50l14-5" stroke="#fff" stroke-opacity=".12" stroke-width="3" stroke-linecap="round"/>
-<circle cx="32" cy="30" r="25" fill="none" stroke="${hue}" stroke-opacity=".55" stroke-width="1.2"/>
-<path d="M4 64c2-9 12-14 28-14s26 5 28 14z" fill="url(#su${id})"/>
-<path d="M22 51l10 7 10-7" fill="none" stroke="${acc}" stroke-width="2.4" stroke-linejoin="round"/>
-<path d="M10 64c1-5 3-8 6-10M54 64c-1-5-3-8-6-10" stroke="${acc}" stroke-width="2" fill="none" opacity=".8"/>
-<rect x="24" y="48" width="16" height="5" rx="2" fill="#0a0c14"/>
-<path d="${helmet}" fill="${shell}"/>
-<g clip-path="url(#hc${id})">${livery[liv]}<rect width="64" height="64" fill="url(#sh${id})"/></g>
-<path d="${helmet}" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="1"/>
-<rect x="15.5" y="21.5" width="33" height="18" rx="8.5" fill="#05060c"/>
-<rect x="17" y="23" width="30" height="15" rx="7" fill="url(#vi${id})"/>
-<g clip-path="url(#vc${id})" opacity=".55"><path d="M17 35h3v-4h2v-5h3v6h2v-3h3v5h2v-7h3v4h2v-2h3v6h3v5H17z" fill="#05061a"/></g>
-<path d="M20 26.5c4-2.4 13-3 20-1" stroke="#fff" stroke-opacity=".85" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-<path d="M41 33l3-5" stroke="#fff" stroke-opacity=".5" stroke-width="1.4" stroke-linecap="round"/>
-<path d="M26 44h12l-2 4h-8z" fill="#0b0d14"/><path d="M28 45.5h8M29 47h6" stroke="${acc}" stroke-width=".9"/>
-<text x="32" y="19" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-style="italic" font-size="7.5" fill="${numFill}" text-anchor="middle">${num}</text>
-<path d="M14 30C15 17 22 9 32 9" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="1.4" stroke-linecap="round"/>
-</svg>`;
+    <radialGradient id="${id}g" cx="35%" cy="28%" r="80%"><stop offset="0" stop-color="${hi}"/><stop offset=".45" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></radialGradient>
+    <filter id="${id}s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="1.6" stdDeviation="1.2" flood-color="#000" flood-opacity=".45"/></filter></defs>
+    <circle cx="32" cy="32" r="31" fill="url(#${id}g)"/>
+    <circle cx="32" cy="32" r="27.5" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="1.5"/>
+    <path d="M10 22a24 24 0 0 1 44 0" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width="5" stroke-linecap="round"/>
+    <g filter="url(#${id}s)" transform="translate(32 32) scale(.78) translate(-32 -32)">${emblem}</g></svg>`;
 }
 
-/** stable avatar for a sample rival */
 export function avatarForName(name: string) {
   let h = 7;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;

@@ -92,6 +92,8 @@ export const OBSTACLE_FX = { pulse: 1 };
 
 export interface ObstacleView {
   type: ObstacleType;
+  /** pool key (type, or theme:type for Bonus-road props) */
+  key?: string;
   group: THREE.Group;
   update(o: LiveObstacle, t: number, dt: number): void;
   setup(o: LiveObstacle): void;
@@ -590,9 +592,149 @@ function build(type: ObstacleType): ObstacleView {
   return { type, group, update, setup };
 }
 
+// ------------------------------------------------------------------ v2 Bonus-road props
+/** Bonus places get everyday props with the SAME silhouettes / hitboxes as the neon ones:
+ *  crate = lane block (hop over) · barrier = low (hop over) · beam = overhead (duck) · traffic = vehicle (switch lane) */
+export type PropTheme = 'desert' | 'forest' | 'country' | 'sea';
+const THEMED: ObstacleType[] = ['crate', 'barrier', 'beam', 'traffic'];
+const PM = (() => {
+  const m = (color: number, extra: THREE.MeshStandardMaterialParameters = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.8, metalness: 0.05, flatShading: true, ...extra });
+  return {
+    rock: m(0xa86a44), rockDark: m(0x7a4a30), barrel: m(0xc0392b, { metalness: 0.4, roughness: 0.5 }), barrelBand: m(0x2a2a2a), cactus: m(0x3f8f4a),
+    wood: m(0x8a5a32), woodDark: m(0x5a3a20), leaf: m(0x2f6b34), bark: m(0x6a4a2e), sign: m(0xf2c94c),
+    hay: m(0xe0c060), fence: m(0xf2efe6), barnRed: m(0xb8342a), tractorGreen: m(0x3a8a3a), tractorRed: m(0xc0392b),
+    buoyRed: m(0xe03a2a), white: m(0xf4f4f4), rope: m(0xc8a870), hullBlue: m(0x2a6ab0), sand: m(0xe2ad6a),
+    tyre: m(0x1a1a1a), glass: m(0x203040, { metalness: 0.6, roughness: 0.2 }), truckSand: m(0xd9b27a), truckWhite: m(0xe8e8e8),
+  };
+})();
+
+function buildThemed(type: ObstacleType, theme: PropTheme): ObstacleView {
+  const group = new THREE.Group();
+  const add = (geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z = 0, rx = 0, ry = 0, rz = 0) => {
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(x, y, z);
+    mesh.rotation.set(rx, ry, rz);
+    group.add(mesh);
+    return mesh;
+  };
+  const edge = (mesh: THREE.Mesh) => group.add(outline(mesh));
+  const vehicle = (body: THREE.Material, cab: THREE.Material, load?: (g: THREE.Group) => void) => {
+    // simple truck seen from behind/front: chassis, cab, wheels — same footprint as a road car
+    const ch = add(new THREE.BoxGeometry(2.0, 0.9, 4.2), body, 0, 0.75);
+    edge(ch);
+    add(new THREE.BoxGeometry(1.9, 1.0, 1.5), cab, 0, 1.6, 1.2);
+    add(new THREE.BoxGeometry(1.7, 0.5, 0.05), PM.glass, 0, 1.75, 1.96);
+    for (const sx of [-1, 1]) for (const sz of [-1.3, 1.3]) add(new THREE.CylinderGeometry(0.42, 0.42, 0.35, 12), PM.tyre, sx * 1.0, 0.42, sz, 0, 0, Math.PI / 2);
+    if (load) load(group);
+  };
+  switch (type) {
+    case 'crate': {
+      if (theme === 'desert') {
+        const r = add(new THREE.IcosahedronGeometry(1.05, 0), PM.rock, 0, 0.85, 0, 0.3, 0.7, 0);
+        r.scale.set(1.2, 0.85, 1.05);
+        edge(r);
+        add(new THREE.IcosahedronGeometry(0.5, 0), PM.rockDark, 0.8, 0.35, 0.3);
+      } else if (theme === 'forest') {
+        for (let i = 0; i < 3; i++) {
+          const l = add(new THREE.CylinderGeometry(0.42, 0.42, 2.3, 10), PM.wood, 0, 0.42 + (i === 2 ? 0.75 : 0), 0, 0, 0, Math.PI / 2);
+          l.position.x = i === 2 ? 0 : (i ? 0.45 : -0.45);
+          if (i === 0) edge(l);
+        }
+        add(new THREE.CylinderGeometry(0.43, 0.43, 0.05, 10), PM.sign, 0, 1.17, 1.16, Math.PI / 2);
+      } else if (theme === 'country') {
+        const b = add(new THREE.BoxGeometry(1.7, 0.85, 1.2), PM.hay, 0, 0.43);
+        edge(b);
+        add(new THREE.BoxGeometry(1.5, 0.8, 1.1), PM.hay, 0, 1.25, 0, 0, 0.15);
+        add(new THREE.BoxGeometry(1.72, 0.06, 1.22), PM.woodDark, 0, 0.6);
+      } else {
+        const c = add(new THREE.BoxGeometry(1.7, 1.7, 1.7), PM.wood, 0, 0.85);
+        edge(c);
+        add(new THREE.TorusGeometry(0.55, 0.12, 8, 18), PM.buoyRed, 0, 1.0, 0.9);
+      }
+      break;
+    }
+    case 'barrier': {
+      if (theme === 'desert') {
+        for (const x of [-0.85, 0, 0.85]) {
+          const b = add(new THREE.CylinderGeometry(0.4, 0.4, 1.25, 14), PM.barrel, x, 0.62);
+          if (x === 0) edge(b);
+          add(new THREE.CylinderGeometry(0.41, 0.41, 0.08, 14), PM.barrelBand, x, 0.9);
+        }
+      } else if (theme === 'forest') {
+        const l = add(new THREE.CylinderGeometry(0.48, 0.55, 2.8, 12), PM.bark, 0, 0.55, 0, 0, 0, Math.PI / 2);
+        edge(l);
+        add(new THREE.ConeGeometry(0.5, 1.0, 7), PM.leaf, 1.25, 1.0, 0, 0, 0, -0.6);
+      } else if (theme === 'country') {
+        for (const x of [-1.2, 0, 1.2]) add(new THREE.BoxGeometry(0.16, 1.4, 0.16), PM.fence, x, 0.7);
+        for (const y of [0.45, 0.95, 1.3]) {
+          const r = add(new THREE.BoxGeometry(2.7, 0.14, 0.08), PM.fence, 0, y);
+          if (y === 0.95) edge(r);
+        }
+      } else {
+        const line = add(new THREE.CylinderGeometry(0.04, 0.04, 2.7, 6), PM.rope, 0, 0.9, 0, 0, 0, Math.PI / 2);
+        edge(line);
+        for (const x of [-1.0, 0, 1.0]) {
+          add(new THREE.SphereGeometry(0.42, 14, 10), x === 0 ? PM.white : PM.buoyRed, x, 0.75);
+          add(new THREE.CylinderGeometry(0.06, 0.06, 0.6, 6), PM.white, x, 1.35);
+        }
+      }
+      break;
+    }
+    case 'beam': {
+      // overhead block: underside at ~1.0 m (duck under), posts at the lane edges
+      const postMat = theme === 'sea' ? PM.white : theme === 'country' ? PM.barnRed : PM.wood;
+      for (const sx of [-1, 1]) add(new THREE.BoxGeometry(0.3, 6.2, 0.35), postMat, 1.38 * sx, 3.1);
+      if (theme === 'desert') {
+        const s2 = add(new THREE.BoxGeometry(2.6, 1.2, 0.25), PM.sign, 0, 1.75);
+        edge(s2);
+        add(new THREE.BoxGeometry(2.8, 0.25, 0.4), PM.woodDark, 0, 1.08);
+        add(new THREE.ConeGeometry(0.35, 0.5, 3), PM.barrel, 0, 1.75, 0.15, 0, 0, Math.PI);
+      } else if (theme === 'forest') {
+        const t = add(new THREE.CylinderGeometry(0.5, 0.6, 3.0, 12), PM.bark, 0, 1.55, 0, 0, 0, Math.PI / 2);
+        edge(t);
+        add(new THREE.ConeGeometry(1.0, 1.6, 7), PM.leaf, 0.3, 2.6, 0);
+      } else if (theme === 'country') {
+        const top = add(new THREE.BoxGeometry(2.8, 1.3, 0.5), PM.barnRed, 0, 1.75);
+        edge(top);
+        add(new THREE.BoxGeometry(2.6, 0.12, 0.52), PM.fence, 0, 1.12);
+        add(new THREE.BoxGeometry(1.8, 0.7, 0.4), PM.hay, 0, 2.7);
+      } else {
+        const deck = add(new THREE.BoxGeometry(2.8, 0.9, 1.2), PM.white, 0, 1.5);
+        edge(deck);
+        add(new THREE.TorusGeometry(0.4, 0.1, 8, 18), PM.buoyRed, 0, 1.5, 0.62);
+      }
+      break;
+    }
+    case 'traffic': {
+      if (theme === 'desert') vehicle(PM.truckSand, PM.truckSand, () => add(new THREE.BoxGeometry(1.9, 0.5, 2.4), PM.rockDark, 0, 1.45, -0.8));
+      else if (theme === 'forest') vehicle(PM.woodDark, PM.tractorGreen, () => {
+        for (const x of [-0.5, 0, 0.5]) add(new THREE.CylinderGeometry(0.28, 0.28, 2.6, 8), PM.wood, x, 1.5, -0.6, Math.PI / 2);
+      });
+      else if (theme === 'country') {
+        const body = add(new THREE.BoxGeometry(1.6, 1.0, 2.4), PM.tractorRed, 0, 1.1);
+        edge(body);
+        add(new THREE.BoxGeometry(1.4, 1.1, 1.2), PM.glass, 0, 2.1, -0.3);
+        for (const sx of [-1, 1]) {
+          add(new THREE.CylinderGeometry(0.9, 0.9, 0.5, 16), PM.tyre, sx * 1.0, 0.9, -0.7, 0, 0, Math.PI / 2);
+          add(new THREE.CylinderGeometry(0.5, 0.5, 0.4, 14), PM.tyre, sx * 0.9, 0.5, 1.0, 0, 0, Math.PI / 2);
+        }
+      } else vehicle(PM.truckWhite, PM.hullBlue, () => {
+        const hull = add(new THREE.BoxGeometry(1.6, 0.7, 3.2), PM.hullBlue, 0, 1.55, -0.5);
+        hull.scale.set(1, 1, 1);
+        add(new THREE.CylinderGeometry(0.06, 0.06, 2.4, 6), PM.white, 0, 2.9, -0.5);
+      });
+      break;
+    }
+  }
+  mergeByMaterial(group, new Set());
+  return { type, group, update: () => {}, setup: () => {} };
+}
+
 /** Pools one view type per obstacle type; attaches/detaches from the scene. */
 export class ObstacleViews {
-  private pools = new Map<ObstacleType, Pool<ObstacleView>>();
+  /** v2 Bonus road: everyday props for the place (null = neon city props) */
+  theme: PropTheme | null = null;
+  private pools = new Map<string, Pool<ObstacleView>>();
   private active = new Map<number, ObstacleView>();
   guides: Guides;
 
@@ -600,13 +742,24 @@ export class ObstacleViews {
     this.guides = new Guides(parent);
   }
 
-  private pool(type: ObstacleType) {
-    let p = this.pools.get(type);
+  private pool(type: ObstacleType, theme: PropTheme | null = null) {
+    const th = theme && THEMED.includes(type) ? theme : null;
+    const key = th ? `${th}:${type}` : type;
+    let p = this.pools.get(key);
     if (!p) {
-      p = new Pool(() => build(type));
-      this.pools.set(type, p);
+      p = new Pool(() => {
+        const v = th ? buildThemed(type, th) : build(type);
+        v.key = key;
+        return v;
+      });
+      this.pools.set(key, p);
     }
     return p;
+  }
+  private poolOf(v: ObstacleView) {
+    const k = v.key ?? v.type;
+    const i = k.indexOf(':');
+    return i > 0 ? this.pool(v.type, k.slice(0, i) as PropTheme) : this.pool(v.type);
   }
 
   prewarm() {
@@ -617,7 +770,7 @@ export class ObstacleViews {
   }
 
   spawn(o: LiveObstacle) {
-    const v = this.pool(o.spec.type).acquire();
+    const v = this.pool(o.spec.type, this.theme).acquire();
     v.setup(o);
     v.group.visible = true;
     this.parent.add(v.group);
@@ -632,7 +785,7 @@ export class ObstacleViews {
     if (!v) return;
     this.parent.remove(v.group);
     this.active.delete(o.id);
-    this.pool(o.spec.type).release(v);
+    this.poolOf(v).release(v);
   }
 
   hide(o: LiveObstacle) {
@@ -661,7 +814,7 @@ export class ObstacleViews {
   clear() {
     for (const [, v] of this.active) {
       this.parent.remove(v.group);
-      this.pool(v.type).release(v);
+      this.poolOf(v).release(v);
     }
     this.active.clear();
     this.guides.clear();

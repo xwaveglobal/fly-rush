@@ -19,7 +19,7 @@ import { Vehicle, SKINS, carVisibility } from './render/Vehicle.ts';
 import { CarShatter } from './render/Shatter.ts';
 import { Track } from './render/Track.ts';
 import { Scenery } from './render/Scenery.ts';
-import { ObstacleViews } from './render/ObstacleViews.ts';
+import { type PropTheme, ObstacleViews } from './render/ObstacleViews.ts';
 import { PickupViews, POWER_COLORS } from './render/PickupViews.ts';
 import { READABILITY, COMFORT } from './render/Readability.ts';
 import { setObstacleContrast, OBSTACLE_FX } from './render/ObstacleViews.ts';
@@ -1566,6 +1566,7 @@ export class Game {
     this.showcaseK = null;
     this.showcaseT = 0;
     this.ui.bonusHud = !!this.course?.bonus;
+    this.obstacleViews.theme = this.course?.bonus ? (this.course.world as PropTheme) : null;
     if (!this.tutorialMode && !this.course?.bonus) {
       const k = this.save.special ?? null;
       if (k && this.save.items[k] > 0) {
