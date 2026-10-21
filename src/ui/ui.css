@@ -1815,3 +1815,4 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .ckrow.got .ckst { color: #3dff8b; }
 .ckrow.today { border: 1.5px solid #4fe0ff; background: linear-gradient(90deg, rgba(40,150,220,.45), rgba(20,60,140,.5)); box-shadow: 0 0 14px rgba(79,224,255,.35); }
 .ckrow.lock .ckbody { filter: saturate(.6) brightness(.8); }
+#start .profile .tierb { display: none; } /* v1.18: class shows once (chip next to the name), not twice */
