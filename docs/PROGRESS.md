@@ -10,6 +10,8 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 **Interim (removed in later steps)**: cups, track stars, 20 courses, upgrades, old items still exist; cups no longer give rank points. Track 2's S/SS/SSS ranks are not in `CLASSES` yet (step 3).
 
+**Links**: v2 test build = NEW artifact https://claude.ai/artifact/ENuX27c3FrNtRSEYtkXETG (publish `builds/sky-roadster-v2.html`). The old artifact QFASRhp6EQAWvJdu7Djwxr stays v1.
+
 **Next**: step 2 — difficulty phases by distance + rank gates.
 
 ---
