@@ -343,7 +343,6 @@ export class UI {
         <div class="tr">
           <button class="wallet" data-a="shop" aria-label="Coins · open shop">${ICON.coin}<b data-k="wallet">0</b><i class="plus" data-a="freepop" role="button" aria-label="Free coins · watch an ad">${ICON.plus}</i></button>
           <button class="icon-btn sm2 langb" data-a="lang" aria-label="Language"><span data-k="langflag">🇬🇧</span></button>
-          <button class="icon-btn sm2 bagb" data-a="bag" aria-label="Magic Bag">${BAG_ICON}<em class="badge" data-k="bagbadge" hidden>0</em></button>
           <button class="icon-btn sm2" data-a="help" aria-label="Tutorial">${TUT_ICON}</button>
           <button class="icon-btn" data-a="settings" aria-label="Settings">${ICON.gear}</button>
         </div>

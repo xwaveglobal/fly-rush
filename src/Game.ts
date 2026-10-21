@@ -47,7 +47,7 @@ import type { ItemKey, Reward } from './meta/Daily.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v1.19';
+const VERSION = 'v1.19.1';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -516,6 +516,7 @@ export class Game {
 
   /** Home screen without resetting the world (closing a modal / page). */
   showHome() {
+    this.vehicle.resetFx();
     if (this.state !== 'menu') this.setState('menu');
     this.rig.mode = 'menu';
     this.meta.rollover();
@@ -1344,6 +1345,7 @@ export class Game {
   }
 
   private clearRunVisuals() {
+    this.vehicle.resetFx();
     this.shatter.clear();
     this.particles.clear();
     this.smoke.clear();
@@ -2392,8 +2394,11 @@ export class Game {
     sh.mesh.visible = !!run && run.shield && this.state !== 'dying' && !this.vehicle.usesSprite;
     // the shield is the hexagon dome; the soft aura is for the other power-ups
     // (Turbo and rockets use the flames + smoke render instead of the aura — no double glow)
-    this.vehicle.auraTarget = run && this.state !== 'dying' && (run.magnetActive || run.doubleT > 0) ? 1 : 0;
-    this.vehicle.shieldTarget = run && this.state !== 'dying' && run.shield ? 1 : 0;
+    // power-up visuals only while actually racing (never on the game-over / menu screens: the
+    // last run's shield or turbo used to stay glowing around the car on the next run)
+    const racing = !!run && (this.state === 'run' || this.state === 'respawn' || this.state === 'countdown');
+    this.vehicle.auraTarget = racing && (run.magnetActive || run.doubleT > 0) ? 1 : 0;
+    this.vehicle.shieldTarget = racing && run.shield ? 1 : 0;
     // boost look while Turbo runs or a Roadster / HYPER / SOS rocket is climbing
     this.vehicle.boostTarget = run && this.state === 'run' && (run.turboT > 0 || (this.world.player.isSuper && this.world.player.vphase !== 'recover')) ? 1 : 0;
     if (sh.mesh.visible) {

@@ -6,6 +6,10 @@ import { glowTexture, roadTexture } from './textures.ts';
 const ROAD_LEN = 300;
 const ROAD_NEAR = 30;
 const TILE = 12; // metres per road texture tile
+/** side wall: post spacing (m) and height (m) */
+const WALL_RIB = 4;
+const WALL_H = 1.25;
+const tmpWhite = new THREE.Color(0xffffff);
 
 /** Wrap a scrolling object into [near - range, near). */
 export const wrapZ = (base: number, dist: number, range: number, near: number) => {
@@ -34,6 +38,9 @@ export class Track {
   roadMat: THREE.MeshStandardMaterial;
   railGlowMat: THREE.MeshBasicMaterial;
   accent = new THREE.Color(0x39b6ff);
+  private wallTexL!: THREE.Texture;
+  private wallTexR!: THREE.Texture;
+  private wallMats: THREE.MeshBasicMaterial[] = [];
 
   constructor() {
     this.roadTex = roadTexture().clone();
@@ -90,6 +97,46 @@ export class Track {
       under.rotation.y = (Math.PI / 2) * -s;
       under.position.set(4.71 * s, -0.6, ROAD_NEAR - ROAD_LEN / 2);
       this.group.add(under);
+    }
+
+    // SIDE WALLS: tinted glass barrier panels on top of the rails with steel posts every
+    // WALL_RIB metres and a light strip. They scroll with the road: the posts flashing past at the
+    // edge of the screen are the strongest cue of speed (like a highway sound wall).
+    {
+      const wc = document.createElement('canvas');
+      wc.width = 128;
+      wc.height = 64;
+      const w = wc.getContext('2d')!;
+      const grd = w.createLinearGradient(0, 0, 0, 64);
+      grd.addColorStop(0, 'rgba(40,70,120,0.55)');
+      grd.addColorStop(1, 'rgba(8,14,30,0.78)');
+      w.fillStyle = grd;
+      w.fillRect(0, 0, 128, 64);
+      w.fillStyle = 'rgba(255,255,255,0.95)'; // top light strip
+      w.fillRect(0, 2, 128, 4);
+      w.fillStyle = 'rgba(255,255,255,0.35)'; // mid dashed strip
+      w.fillRect(18, 34, 90, 2);
+      w.fillStyle = '#1b2234'; // steel post
+      w.fillRect(0, 0, 12, 64);
+      w.fillStyle = '#8a97b3';
+      w.fillRect(2, 0, 3, 64);
+      const wallTex = new THREE.CanvasTexture(wc);
+      wallTex.colorSpace = THREE.SRGBColorSpace;
+      wallTex.wrapS = THREE.RepeatWrapping;
+      wallTex.anisotropy = 8;
+      this.wallTexL = wallTex;
+      this.wallTexR = wallTex.clone();
+      this.wallTexR.needsUpdate = true;
+      for (const [s2, tex] of [[-1, this.wallTexL], [1, this.wallTexR]] as const) {
+        tex.repeat.set(ROAD_LEN / WALL_RIB, 1);
+        const mat = new THREE.MeshBasicMaterial({ map: tex, color: 0xffffff, transparent: true, depthWrite: false, side: THREE.DoubleSide });
+        this.wallMats.push(mat);
+        const wall = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_LEN, WALL_H), mat);
+        wall.rotation.y = (Math.PI / 2) * -s2;
+        wall.position.set(4.5 * s2, 0.55 + WALL_H / 2, ROAD_NEAR - ROAD_LEN / 2);
+        wall.renderOrder = 1;
+        this.group.add(wall);
+      }
     }
 
     // lamp posts — instanced (2 meshes + 1 Points for the glows, whatever the count)
@@ -154,6 +201,8 @@ export class Track {
     this.railGlowMat.color.copy(c);
     this.ringMat.color.copy(c);
     this.sideGlowMat.color.copy(c);
+    // walls take a light tint of the world's accent (strip + glass)
+    for (const m of this.wallMats) m.color.copy(c).lerp(tmpWhite, 0.55);
   }
 
   /** Apply a world's readability profile (lane glow, road tone, reflections, rail glow). */
@@ -175,6 +224,9 @@ export class Track {
   update(dist: number) {
     this.roadTex.offset.y = (dist / TILE) % 1;
     this.railTex.offset.y = (dist / 8) % 1;
+    // walls: the two planes face opposite ways, so their texture runs in opposite directions
+    this.wallTexL.offset.x = -((dist / WALL_RIB) % 1);
+    this.wallTexR.offset.x = (dist / WALL_RIB) % 1;
     const lampRange = Math.ceil(ROAD_LEN / this.lampSpacing) * this.lampSpacing;
     const gp = this.lampGlows.geometry.attributes.position as THREE.BufferAttribute;
     this.lampSlots.forEach((l, i) => {

@@ -187,6 +187,13 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v1.19.1 changes
+
+- **Magic Bag** only in Profile (home top bar freed for the avatar chip).
+- **Fix**: dying with Turbo / Shield no longer leaves a glow or dome on the car after restart (`Vehicle.resetFx`, FX targets only while racing).
+- **Side walls**: glass barrier with light strips and posts on both road edges, scrolling with speed.
+- **Rear tyres** (owner's realistic-rotation prompt, done in Three.js): tread layers masked from the original PNG, scroll exactly synced to ground speed / tyre circumference (both wheels identical), blur only on the tread (outline sharp), free spin decay in the air, landing kick, accel/brake pitch, 1–3 px suspension, restrained turbo rumble. Tyre grit removed.
+
 ## v1.18 changes
 
 - **Notices**: toasts and section banners share one lane under the HUD (max 2 toasts), long text wraps.

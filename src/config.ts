@@ -96,7 +96,7 @@ export const TYRE = {
   spriteY: -0.48,
   /** grit kicked up by the rear tyres while driving fast */
   sprayFrom: 22,
-  sprayRate: 28, // particles / s per tyre at full speed
+  sprayRate: 0, // tyre grit off: no smoke / dust on the tyres (owner's brief)
   spraySize: 0.07,
   sprayLife: 0.3,
   sprayColor: 0xb9c6e6,
@@ -125,7 +125,7 @@ export const TYRE = {
   /** extra blur while Turbo runs */
   treadTurboBlur: 0.3,
   /** body suspension spring (metres; ~0.009 m ≈ 1 px on a phone) */
-  susp: { k: 260, damp: 16, max: 0.03, bumpEvery: 0.35, bumpKick: 0.16, laneKick: 0.22, landKick: 0.55 },
+  susp: { k: 260, damp: 16, max: 0.03, bumpEvery: 0.35, bumpKick: 0.16, laneKick: 0.22, landKick: 0.55, pitchK: 0.0016, pitchMax: 0.012 },
   /** tyre effects (tread motion, hot streaks, orbit trails, sparks). Off = tyres look exactly like the render */
   effects: false,
   /** speed (m/s) where the hot-tyre glow starts / is full */

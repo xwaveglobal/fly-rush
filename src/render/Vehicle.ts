@@ -272,6 +272,23 @@ export class Vehicle {
   /** 0..1 boost burst target (turbo / launch), current value */
   boostTarget = 0;
   private boostK = 0;
+  /** clear every power-up visual instantly (new run / back to menu) */
+  resetFx() {
+    this.auraTarget = 0;
+    this.auraK = 0;
+    this.shieldTarget = 0;
+    this.shieldK = 0;
+    this.shieldHitK = 0;
+    this.boostTarget = 0;
+    this.boostK = 0;
+    this.boostHold = 0;
+    this.dome.visible = false;
+    this.boostSprite.visible = false;
+    this.aura.visible = false;
+    this.sprite.material.uniforms.fade.value = 1;
+    this.boostSprite.material.uniforms.fade.value = 0;
+    this.suspY = this.suspV = 0;
+  }
   /** flash the dome when it absorbs a hit */
   shieldHit() {
     this.shieldHitK = 1;
@@ -282,6 +299,9 @@ export class Vehicle {
   }
   private boostHold = 0;
   private treadPhase = 0;
+  private wheelV = 0;
+  private prevSpeed = 0;
+  private accS = 0;
   private treadBlurS = 0;
   private suspY = 0;
   private suspV = 0;
@@ -1377,7 +1397,10 @@ export class Vehicle {
       // tread layer: scroll with the road (tile ≈ TYRE.treadTileM metres of tread), capped per frame so
       // it never strobes; the blur follows the speed tiers and always covers the per-frame step
       {
-        const kmh = speed * 3.6;
+        // wheel speed: driven by the road on the ground; in the air the wheels spin free and slow down
+        const onRoadW = p.air < 0.05;
+        this.wheelV = onRoadW ? speed : this.wheelV * Math.exp(-0.45 * dt);
+        const kmh = this.wheelV * 3.6;
         const tiers = TYRE.treadTiers;
         let blur = tiers[tiers.length - 1].blur;
         for (let i = 0; i < tiers.length - 1; i++) {
@@ -1388,15 +1411,18 @@ export class Vehicle {
           }
         }
         blur += turbo * TYRE.treadTurboBlur;
-        const step = Math.min((speed / TYRE.treadTileM) * dt, TYRE.treadMaxStep);
+        // exact ground-speed sync: tread surface moves at v; one tile = TYRE.treadTileM metres of tread
+        const step = (this.wheelV / TYRE.treadTileM) * dt;
         this.treadPhase = (this.treadPhase + step) % 1000;
-        this.treadBlurS += (Math.max(blur, step * 0.9) - this.treadBlurS) * (1 - Math.exp(-8 * dt)); // eased tier changes
+        this.treadBlurS += (blur - this.treadBlurS) * (1 - Math.exp(-8 * dt)); // eased tier changes
+        // the smear always covers what the tread travelled this frame → never strobes or runs backwards
+        const blurNow = Math.min(1.2, Math.max(this.treadBlurS, step));
         u.treadScroll.value = this.treadPhase;
-        u.treadBlur.value = this.treadBlurS;
+        u.treadBlur.value = blurNow;
         u.treadOn.value = this.locked ? 0 : 1; // wheels keep spinning in the air (free spin)
         const bsu2 = this.boostSprite.material.uniforms;
         bsu2.treadScroll.value = this.treadPhase;
-        bsu2.treadBlur.value = this.treadBlurS;
+        bsu2.treadBlur.value = blurNow;
         bsu2.treadOn.value = u.treadOn.value;
       }
       const hotK = TYRE.effects ? clamp01((speed - TYRE.hotFrom) / (TYRE.hotFull - TYRE.hotFrom)) : 0;
@@ -1467,7 +1493,12 @@ export class Vehicle {
           this.suspV += (Math.random() - 0.5) * 2 * S.bumpKick * clamp01(speed / 40);
         }
       }
-      this.suspV += (-S.k * this.suspY - S.damp * this.suspV) * dt;
+      // acceleration squats the rear, braking lifts it (body pitch seen from behind = small y offset)
+      const acc = (speed - this.prevSpeed) / Math.max(dt, 1e-3);
+      this.prevSpeed = speed;
+      this.accS += (acc - this.accS) * (1 - Math.exp(-5 * dt));
+      const rest = Math.max(-S.pitchMax, Math.min(S.pitchMax, -this.accS * S.pitchK));
+      this.suspV += (-S.k * (this.suspY - rest) - S.damp * this.suspV) * dt;
       this.suspY += this.suspV * dt;
       this.suspY = Math.max(-S.max, Math.min(S.max, this.suspY));
       this.sprite.position.y += this.suspY;
