@@ -3,6 +3,8 @@ import { ICON } from './icons.ts';
 import { AVATAR_COUNT, avatarForName, avatarSvg, classCorner } from './avatars.ts';
 import { CLASSES, CLASS_COLOR, CLASS_MIN, XP_RULES, XPT, classBadge, classFor as classOfBolts, classForScore, type RankClass, type XpGain } from '../meta/Rank.ts';
 import logoUrl from '../assets/images/sky-roadster-logo.webp';
+import appIcon from '../assets/images/app-icon.webp';
+import { amount, calendarGift, coinFace, coinPile, friends, giftBox, megaphone, phonePlus, shareNodes, starBig, tapMarks, wifiRobot } from './art.ts';
 import loadingUrl from '../assets/images/loading.jpg';
 import thFuture from '../assets/images/tracks/future-city.jpg';
 import thTunnel from '../assets/images/tracks/neon-tunnel.jpg';
@@ -200,6 +202,21 @@ const $ = <T extends HTMLElement = HTMLElement>(root: ParentNode, sel: string) =
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 const ITEM_ICON: Record<ItemKey, string> = { super: ICON.rocket, hyper: ICON.hyper, shield: ICON.shield, escape: ICON.sos, turbo: ICON.bolt, magnet: ICON.magnet, double: ICON.x2, life: ICON.heart };
 const ITEM_NAME: Record<ItemKey, string> = { super: 'Roadster Jump', hyper: 'HYPER JUMP', shield: 'Start Shield', escape: 'Sky Escape', turbo: 'Turbo Start', magnet: 'Coin Magnet', double: '×2 Coins', life: 'Extra Life' };
+
+/** 7-day check-in as a list (mock-up): Day label · reward art · amount · ✓ / 🔒; today glows */
+function checkinList(slot: number, claimedToday: boolean) {
+  const rows = CHECKIN.map((r, i) => {
+    const got = i < slot || (claimedToday && i === slot);
+    const today = i === slot && !claimedToday;
+    const items = Object.entries(r.items ?? {}).filter(([, n]) => n) as [ItemKey, number][];
+    // item days get a wide art strip (like the car tiles in the mock-up); coin days an icon + amount
+    const body = items.length
+      ? `<span class="ckart ${items[0][0]}">${items.map(([k, n]) => `<span class="ckit">${ITEM_ICON[k]}<span class="ckn">${ITEM_NAME[k]}${n > 1 ? ` ×${n}` : ''}</span></span>`).join('')}${r.coins ? `<span class="ckc">${coinFace(18)}<b>x${fmt(r.coins)}</b></span>` : ''}</span>`
+      : `<span class="ckcoin">${coinFace(26)}<b>x${fmt(r.coins ?? 0)}</b></span>`;
+    return `<div class="ckrow ${got ? 'got' : ''} ${today ? 'today' : ''} ${!got && !today ? 'lock' : ''}"><span class="ckday">Day ${i + 1}</span><span class="ckbody">${body}</span><i class="ckst">${got ? ICON.check : today ? '' : ICON.lock}</i></div>`;
+  }).join('');
+  return `<div class="cklist">${rows}</div>`;
+}
 
 function rewardChips(r: Reward) {
   const out: string[] = [];
@@ -727,6 +744,13 @@ export class UI {
           this.toast(`${ICON.lock} Hidden world · reach class ${el.dataset.v} to reveal it`, 'var(--purple, #9b6bff)');
           return;
         case 'popa': return this.h.popAction(el.dataset.v!);
+        case 'popgo': {
+          // entry popup shortcuts (after the reward is claimed)
+          this.closePopup();
+          const v = el.dataset.v!;
+          const go: Record<string, () => void> = { daily: () => this.h.daily(), shop: () => this.h.shop(), garage: () => this.h.garage(), help: () => this.h.help(), play: () => this.h.play(), events: () => this.h.events() };
+          return go[v]?.();
+        }
         case 'freepop': return this.h.freePop();
         case 'perk': return this.h.perk(el.dataset.v!);
         case 'buyboost': return this.h.buyBoost(el.dataset.v!);
@@ -1528,11 +1552,7 @@ export class UI {
 
   dailySync(o: { slot: number; claimedToday: boolean; streak: number; quests: (Quest & { progress: number; done: boolean; claimed: boolean })[]; pts: number; chests: number[]; resetIn: string; pass: { active: boolean; claimed: boolean; days: number } }) {
     this.setAll('cistreak', `Streak ${o.streak} / 7`);
-    $(this.root, '[data-k="cigrid"]').innerHTML = CHECKIN.map((r, i) => {
-      const got = i < o.slot || (o.claimedToday && i === o.slot);
-      const today = i === o.slot && !o.claimedToday;
-      return `<div class="ci ${got ? 'got' : ''} ${today ? 'today' : ''} ${i === 6 ? 'big' : ''}"><span class="d">Day ${i + 1}</span>${r.items?.hyper ? ICON.hyper : r.items?.super ? ICON.rocket : r.items?.shield ? ICON.shield : ICON.coin}<small>${rewardText(r).replace(' coins', '')}</small>${got ? `<i class="ok">${ICON.check}</i>` : ''}</div>`;
-    }).join('');
+    $(this.root, '[data-k="cigrid"]').innerHTML = checkinList(o.slot, o.claimedToday);
     const btn = $(this.root, '[data-k="cibtn"]');
     btn.toggleAttribute('disabled', o.claimedToday);
     btn.innerHTML = o.claimedToday ? `${ICON.check} Come back tomorrow` : `${ICON.gift} Claim day ${o.slot + 1}`;
@@ -1702,88 +1722,110 @@ export class UI {
     if (kind === 'daily') {
       const slot = Number(d.slot);
       const claimed = !!d.claimed;
-      const rows = CHECKIN.map((r, i) => {
-        const got = i < slot || (claimed && i === slot);
-        const today = i === slot && !claimed;
-        const ic = r.items?.hyper ? `<span class="p3it hyper">${ICON.hyper}</span>` : r.items?.super ? `<span class="p3it super">${ICON.rocket}</span>` : r.items?.shield ? `<span class="p3it shield">${ICON.shield}${ICON.sos}</span>` : `<span class="p3it coin">${ICON.coin}</span>`;
-        return `<div class="p3d ${got ? 'got' : ''} ${today ? 'today' : ''} ${!got && !today ? 'lock' : ''}"><span class="dl">Day ${i + 1}</span>${ic}<span class="dr">${rewardChips(r)}</span><i class="st">${got ? ICON.check : today ? '' : ICON.lock}</i></div>`;
-      }).join('');
-      html = head(ICON.calendar, 'DAILY REWARD', 'blue') + `<div class="p3days">${rows}</div>` +
+      html = head(calendarGift(44), 'DAILY REWARD', 'art') + checkinList(slot, claimed) +
         (claimed ? `<button class="btn big ghost" disabled>${ICON.check} Come back tomorrow</button>` : `<button class="btn big blue" data-a="popa" data-v="claimdaily">CLAIM</button>`) +
         `<div class="label p3foot">Streak ${Number(d.streak)} / 7 · missing a day restarts at Day 1</div>`;
     } else if (kind === 'ad') {
       const left = Number(d.left);
       html = head(ICON.play, 'WATCH AD REWARD', 'gold') +
-        `<div class="p3art"><span class="chestbox">${ICON.gift}</span><span class="coins3">${ICON.coin}${ICON.coin}${ICON.coin}</span></div>
-        <p class="p3t">Watch an ad to get</p><div class="p3amt">${ICON.coin}<b>×${fmt(Number(d.amount))}</b></div>` +
+        `<p class="p3t">Watch an ad to get</p><div class="rpbig">${coinPile(230, 126)}${amount(`x${fmt(Number(d.amount))}`, 'xl')}</div>` +
         (left > 0 ? `<button class="btn big gold" data-a="popa" data-v="watchad">${ICON.play} WATCH AD</button>` : `<button class="btn big ghost" disabled>${ICON.clock} Come back tomorrow</button>`) +
         `<div class="label p3foot">${left > 0 ? `${left} left today` : 'All free rewards used today'}</div>`;
     } else if (kind !== 'gift') {
       html = this.perkPopup(kind, d, head);
     } else {
-      html = head(ICON.gift, 'WELCOME BACK', 'pink') +
-        `<p class="p3t">Welcome back, pilot!<br/>Here's a gift for you.</p>
-        <div class="p3art gift"><span class="chestbox">${ICON.gift}</span><span class="coins3">${ICON.coin}${ICON.coin}${ICON.coin}</span></div>
-        <div class="p3amt">${ICON.coin}<b>×${fmt(Number(d.coins))}</b><span class="p3plus">+ <span class="rchip shield">${ICON.shield}×${Number(d.shield)}</span></span></div>
-        <button class="btn big gold" data-a="popa" data-v="gift">${ICON.gift} CLAIM</button>`;
+      html = head(giftBox(46), 'REVISIT GIFT', 'art') +
+        `<p class="p3t">Welcome back!<br/>Here's a gift for you!</p>
+        <div class="rpbig">${coinPile(230, 126)}${amount(`x${fmt(Number(d.coins))}`, 'xl')}</div>
+        ${Number(d.shield) ? `<div class="rpplus">+ <span class="rchip shield">${ICON.shield}×${Number(d.shield)} Start Shield</span></div>` : ''}
+        <button class="btn big gold" data-a="popa" data-v="gift">CLAIM</button>`;
     }
     $(this.root, '[data-k="popbody"]').innerHTML = html;
     this.screens.popup.classList.add('show');
   }
 
   private perkPopup(kind: string, d: Record<string, unknown>, head: (icon: string, title: string, cls: string) => string) {
-    const step = (n: number, text: string, done: boolean, extra = '') => `<div class="p3s ${done ? 'done' : ''}"><i>${done ? ICON.check : n}</i><div><span>${text}</span>${extra}</div></div>`;
-    const amt = (n: unknown) => `<div class="p3art small"><span class="coins3">${ICON.coin}${ICON.coin}${ICON.coin}</span><b class="p3x">×${fmt(Number(n))}</b></div>`;
+    // illustrated step cards (mock-up style): purple number, caption, art strip under it
+    const step = (n: number, text: string, done: boolean, art = '') =>
+      `<div class="rps ${done ? 'done' : ''}"><i class="rpn">${done ? ICON.check : n}</i><div class="rpb"><span>${text}</span>${art ? `<div class="rpa">${art}</div>` : ''}</div></div>`;
+    const coinBanner = (n: unknown) => `<div class="rpcoins">${coinPile(150, 72)}${amount(`x${fmt(Number(n))}`)}</div>`;
+    const hand = `<span class="rphand">${ICON.hand}</span>`;
+    const av = Number(d.avatar ?? 0);
     switch (kind) {
       case 'entry': {
         const st = d.entrySteps as boolean[];
         const all = st.every(Boolean);
         const done = !!d.entry;
-        return head(ICON.gift, 'ENTRY REWARD', 'gold') +
-          `<div class="p3steps">${step(1, 'Open your pilot profile', st[0])}${step(2, 'Set your pilot name', st[1])}${step(3, 'Pick a racing helmet', st[2])}${step(4, 'Claim your reward', done, amt(d.entryReward))}</div>` +
-          (done ? `<button class="btn big ghost" disabled>${ICON.check} Claimed</button>` : all ? `<button class="btn big gold" data-a="popa" data-v="entry">CLAIM</button>` : `<button class="btn big blue" data-a="profile">${ICON.user} OPEN PROFILE</button>`);
+        const name = esc(String(d.name || 'Pilot name'));
+        const explore = [
+          ['daily', ICON.calendar, 'Daily'], ['shop', ICON.bag, 'Shop'], ['garage', ICON.engine, 'Garage'],
+          ['help', TUT_ICON, 'Tutorial'], ['play', ICON.flag, 'Race'], ['events', ICON.cup, 'Cups'],
+        ];
+        return head(giftBox(46), 'ENTRY REWARD', 'art') +
+          `<div class="rpsteps">
+            ${step(1, 'Open your pilot profile', st[0], `<div class="rprow"><span class="rptile plus">${ICON.plus}</span><span class="rptile chat">${ICON.user}<em>99+</em></span><span class="rptile ava on">${avatarSvg(av)}${tapMarks()}</span></div>`)}
+            ${step(2, 'Set your pilot name', st[1], `<div class="rpbanner"><img src="${logoUrl}" alt="" /><span class="rpname">${name}</span><span class="rpmenu">≡</span></div>`)}
+            ${step(3, 'Pick your racing helmet', st[2], `<div class="rpcard"><img src="${carZenith}" alt="" /><span class="rphelm">${avatarSvg(av)}</span>${hand}${tapMarks('r')}</div>`)}
+            ${step(4, 'Claim your rewards', done, coinBanner(d.entryReward))}
+          </div>` +
+          (done
+            ? `<div class="rpdone">${ICON.check} Reward claimed — explore Sky Roadster</div>
+               <div class="rpgo">${explore.map(([a, ic, t]) => `<button data-a="popgo" data-v="${a}"><span>${ic}</span><b>${t}</b></button>`).join('')}</div>`
+            : all ? `<button class="btn big gold" data-a="popa" data-v="entry">CLAIM</button>` : `<button class="btn big blue" data-a="profile">${ICON.user} OPEN PROFILE</button>`);
       }
       case 'launch': {
         const sa = !!d.standalone;
         const done = !!d.launch;
-        return head(MEGA_ICON, 'LAUNCH REWARD', 'blue') +
-          `<div class="p3steps">${step(1, 'Add Sky Roadster to your Home Screen', sa, `<button class="btn sm blue" data-a="popa" data-v="go:addscreen">${ICON.play} GO</button>`)}${step(2, 'Open it from the Home Screen icon', sa)}${step(3, 'Claim your rewards', done, amt(d.launchReward))}</div>` +
+        return head(megaphone(46), 'LAUNCH REWARD', 'art') +
+          `<div class="rpsteps">
+            ${step(1, 'Click the button below', sa, `<div class="rpgobtn"><button class="btn blue" data-a="popa" data-v="go:addscreen">${ICON.play} GO</button>${hand}${tapMarks('r')}</div>`)}
+            ${step(2, 'Open Sky Roadster from your Home Screen', sa, `<div class="rpapps"><span class="rpgrid"><i></i><i></i><i></i><i></i></span><span class="rparrow">→</span><img class="rpicon" src="${appIcon}" alt="" /></div>`)}
+            ${step(3, 'Claim your rewards', done, coinBanner(d.launchReward))}
+          </div>` +
           (done ? `<button class="btn big ghost" disabled>${ICON.check} Claimed</button>` : sa ? `<button class="btn big gold" data-a="popa" data-v="launch">CLAIM</button>` : `<button class="btn big blue" data-a="popa" data-v="go:addscreen">GO</button>`);
       }
       case 'share': {
         const done = !!d.shareToday;
-        return head(ICON.share, 'SHARE REWARDS', 'green') +
-          `<div class="p3art"><span class="coins3 big">${ICON.coin}${ICON.coin}${ICON.coin}</span><b class="p3x big">+${fmt(Number(d.shareReward))}</b></div>
-          <p class="p3t">Share Sky Roadster to get free coins!</p>` +
+        return head(shareNodes(46), 'SHARE REWARDS', 'art') +
+          `<div class="rpbig">${coinPile(230, 126)}${amount(`+${fmt(Number(d.shareReward))}`, 'xl')}</div>
+          <p class="p3t">Share to get free coins!</p>` +
           (done ? `<button class="btn big ghost" disabled>${ICON.check} Shared today · back tomorrow</button>` : `<button class="btn big green" data-a="popa" data-v="share">${ICON.share} SHARE</button>`) +
           `<button class="linkbtn center" data-a="popa" data-v="go:invite">Invite friends instead →</button>`;
       }
       case 'invite': {
         const done = !!d.inviteToday;
-        return head(`<svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="3.4" fill="#fff"/><circle cx="16.5" cy="9" r="2.8" fill="#cfe0ff"/><path d="M2 20c.6-4 3-6 6-6s5.4 2 6 6zM13 20c.3-2.8 1.9-4.6 4-4.6S21.4 17 22 20z" fill="#fff"/></svg>`, 'INVITE FRIENDS', 'blue') +
-          `<p class="p3t">Invite friends to race and you both get rewards!</p>
-          <div class="p3inv"><div><span class="who">YOU</span>${ICON.coin}<b>×${fmt(Number(d.inviteReward))}</b></div><span class="lnk">🔗</span><div><span class="who">FRIEND</span>${ICON.coin}<b>×${fmt(Number(d.inviteReward))}</b></div></div>` +
+        const side = (who: string) => `<div class="rpinv"><span class="rpppl">${friends(70)}</span><span class="rpinvc">${coinFace(30)}</span><b>${who}</b>${amount(`x${fmt(Number(d.inviteReward))}`, 'sm')}</div>`;
+        return head(friends(42, '#4fc3ff'), 'INVITE FRIENDS', 'art') +
+          `<p class="p3t">Invite friends to play<br/>and get rewards!</p>
+          <div class="rpinvrow">${side('YOU')}<span class="rplink">🔗</span>${side('FRIEND')}</div>` +
           (done ? `<button class="btn big ghost" disabled>${ICON.check} Invite sent today</button>` : `<button class="btn big green" data-a="popa" data-v="invite">🔗 INVITE</button>`) +
-          `<div class="label p3foot">${Number(d.invites)} friends invited · the friend bonus is paid when online accounts launch</div>`;
+          `<div class="label p3foot">${Number(d.invites)} friends invited</div>`;
       }
       case 'rate':
-        return head(`<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z" fill="#ffd23d"/></svg>`, 'RATE US', 'gold') +
+        return head(starBig(40), 'RATE US', 'art') +
           `<p class="p3t">Enjoying Sky Roadster?<br/>Give us a 5-star rating!</p>
-          <div class="p3stars">${[1, 2, 3, 4, 5].map((n) => `<button data-a="popa" data-v="rate${n}" aria-label="${n} stars">★</button>`).join('')}</div>
+          <div class="rpstars">${[1, 2, 3, 4, 5].map((n) => `<button data-a="popa" data-v="rate${n}" aria-label="${n} stars">${starBig(44)}</button>`).join('')}</div>
           <button class="btn big blue" data-a="popa" data-v="rate5">RATE NOW</button>
-          <button class="btn ghost sm" data-a="closeov" data-v="popup">NOT NOW</button>`;
+          <button class="btn big dark" data-a="closeov" data-v="popup">NOT NOW</button>`;
       case 'addscreen': {
         const can = !!d.canInstall;
         const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        return head(`<svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5" fill="none" stroke="#fff" stroke-width="2"/><path d="M12 8v7M8.5 11.5h7" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>`, 'ADD TO SCREEN', 'blue') +
-          `<p class="p3t">Add Sky Roadster to your Home Screen for faster access!</p>
-          <div class="p3steps">${ios ? step(1, 'Tap <b>Share</b> in Safari', false) + step(2, 'Select <b>Add to Home Screen</b>', false) : step(1, 'Tap the browser menu <b>⋮</b>', false) + step(2, 'Select <b>Install app</b> / <b>Add to Home screen</b>', false)}${step(3, 'Find Sky Roadster on your Home Screen', false)}</div>` +
+        const sheet = [
+          [`<span class="rpsq on">${ICON.plus}</span>`, 'Add to<br/>Home Screen'], [`<span class="rpsq">${ICON.share}</span>`, 'Share'],
+          [`<span class="rpsq">🔗</span>`, 'Copy Link'], [`<span class="rpsq">•••</span>`, 'More'],
+        ];
+        return head(phonePlus(44), 'ADD TO SCREEN', 'art') +
+          `<p class="p3t">Add Sky Roadster to your<br/>Home Screen for faster access!</p>
+          <div class="rpphone"><i class="notch"></i><div class="rpsheet">${sheet.map(([ic, t]) => `<span>${ic}<small>${t}</small></span>`).join('')}</div>
+            <ol class="rpol">${ios ? '<li>Tap <b>Share</b></li><li>Select <b>Add to Home Screen</b></li>' : '<li>Tap the browser menu <b>⋮</b></li><li>Select <b>Install app</b> / <b>Add to Home screen</b></li>'}<li>Find Sky Roadster on your Home Screen</li></ol></div>` +
           (can ? `<button class="btn big blue" data-a="popa" data-v="install">INSTALL NOW</button>` : `<button class="btn big blue" data-a="closeov" data-v="popup">GOT IT</button>`);
       }
       default:
-        return head(`<svg viewBox="0 0 24 24"><path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="19" r="1.6" fill="#fff"/><path d="M3 3l18 18" stroke="#ff4d5e" stroke-width="2.4" stroke-linecap="round"/></svg>`, 'NO CONNECTION', 'red') +
-          `<p class="p3t">Please check your internet connection and try again.<br/><small>You can still race offline — cups and rankings sync when you're back.</small></p>
-          <button class="btn big blue" data-a="popa" data-v="retry">${ICON.retry} RETRY</button>`;
+        return head(`<svg viewBox="0 0 24 24"><path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="19" r="1.6" fill="#fff"/></svg>`, 'NO CONNECTION', 'red') +
+          `<p class="p3t">Please check your internet<br/>connection and try again.</p>
+          <div class="rpbig robot">${wifiRobot(200, 132)}</div>
+          <button class="btn big blue" data-a="popa" data-v="retry">${ICON.retry} RETRY</button>
+          <div class="label p3foot">You can still race offline — cups sync when you're back.</div>`;
     }
   }
 
@@ -1791,8 +1833,9 @@ export class UI {
     for (const [k, st] of Object.entries(o)) {
       const b = this.root.querySelector<HTMLElement>(`[data-k="pk-${k}"]`);
       if (!b) continue;
-      // one-off rewards disappear once claimed; share stays (daily)
-      b.hidden = st === 'done' && k !== 'share';
+      // Entry stays after it is claimed (its popup then links to Daily / Shop / Garage / Tutorial / Race / Cups);
+      // Launch disappears once claimed; Share is daily
+      b.hidden = st === 'done' && k === 'launch';
       b.classList.toggle('done', st === 'done');
       const e = b.querySelector<HTMLElement>('.badge');
       if (e) e.hidden = st !== 'ready';

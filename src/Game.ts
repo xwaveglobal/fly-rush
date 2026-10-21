@@ -709,7 +709,7 @@ export class Game {
 
   private openPerk(kind: PerkKind, click = false) {
     if (click) this.audio.play('click');
-    this.ui.popup(kind, { ...this.perkState(), entryReward: PERK.entry, launchReward: PERK.launch, shareReward: PERK.share, inviteReward: PERK.invite });
+    this.ui.popup(kind, { ...this.perkState(), avatar: this.save.avatar, name: this.save.name, entryReward: PERK.entry, launchReward: PERK.launch, shareReward: PERK.share, inviteReward: PERK.invite });
   }
 
   private grantCoins(n: number, title: string) {
