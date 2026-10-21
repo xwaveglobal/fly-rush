@@ -58,7 +58,22 @@ Status: **chốt, chưa code** (round 2 added 2026-10-22 02:08 — section F). F
 - **F9. Revive popup:** no "how to avoid" tip, minimal text, focus on the button + revives left.
 - **F10. Cars:** the car in `docs/assets-inbox/car-rank-C-rear.png` (1536×1024, background is a baked-in checkerboard → must be cut out) becomes the **rank C** car. Cars for **B and above are black silhouettes** (not visible until unlocked). Ladder becomes D Zenith · C new car · B · A · AA · AAA.
 
-## Open questions for the owner
+## Owner answers (2026-10-22 02:11)
+1. **Average EXP** only on OTHER pilots' cards; the player's own profile shows **best** only. Rank / leaderboard stay on best run.
+2. Special prices OK: **SOS 1,200 · Roadster 1,800 · HYPER 4,000**.
+3. Rank-C car name: Claude picks → **XWAVE Vega**. B → AAA stay Volt · Phantom · Inferno · Nexus.
+
+## G. Endless variety (owner request 02:11)
+- **G1. No repeats before AAA.** Today 5 worlds loop every 5 km (≈ 2 min). New: a **12-world ladder** tied to EXP (same minutes on every speed level) — **2 worlds per rank phase**, each ending in that phase's rank gate; only after AAA does the ladder start again.
+  - D: Future City → Neon Harbor · C: Cloud City → Solar Farms · B: Neon Tunnel → Crystal Canyon · A: Space Zone → Asteroid Belt · AA: XWAVE Megacity → Storm Front · AAA: Volcano Core → Aurora Ice.
+  - 7 new sceneries (Neon Harbor, Solar Farms, Crystal Canyon, Asteroid Belt, Storm Front, Volcano Core, Aurora Ice).
+- **G2. New obstacles per phase** (signature of each rank, all through the fairness validator; built on the existing low / high / full / moving hitboxes so `ObstacleRules.ts` stays the single source):
+  - C: road-works barrier + cone line (low), sign gantry (high).
+  - B: rolling container (moving lane block), double laser fence.
+  - A: lane-switching truck (sweeps 2 lanes, like the sliding platform), drop-gate.
+  - AA: crusher pillars (full block, alternating), storm debris.
+  - AAA: lava jets / ice walls (timed open lane), mixed combos.
+## (answered) questions
 1. F3 "Average EXP": shown on the pilot card only, or should rank / leaderboard use average too? (Design today: rank = best single run.)
 2. A8 special prices: SOS 1,200 · Roadster 1,800 · HYPER 4,000 OK?
 3. F10: name of the rank-C car? Cars B → AAA keep Volt / Phantom / Inferno / Nexus?
