@@ -1728,7 +1728,7 @@ export class UI {
     } else if (kind === 'ad') {
       const left = Number(d.left);
       html = head(ICON.play, 'WATCH AD REWARD', 'gold') +
-        `<p class="p3t">Watch an ad to get</p><div class="rpbig">${coinPile(230, 126)}${amount(`x${fmt(Number(d.amount))}`, 'xl')}</div>` +
+        `<p class="p3t">Watch an ad to get</p><div class="pzbig">${coinPile(230, 126)}${amount(`x${fmt(Number(d.amount))}`, 'xl')}</div>` +
         (left > 0 ? `<button class="btn big gold" data-a="popa" data-v="watchad">${ICON.play} WATCH AD</button>` : `<button class="btn big ghost" disabled>${ICON.clock} Come back tomorrow</button>`) +
         `<div class="label p3foot">${left > 0 ? `${left} left today` : 'All free rewards used today'}</div>`;
     } else if (kind !== 'gift') {
@@ -1736,8 +1736,8 @@ export class UI {
     } else {
       html = head(giftBox(46), 'REVISIT GIFT', 'art') +
         `<p class="p3t">Welcome back!<br/>Here's a gift for you!</p>
-        <div class="rpbig">${coinPile(230, 126)}${amount(`x${fmt(Number(d.coins))}`, 'xl')}</div>
-        ${Number(d.shield) ? `<div class="rpplus">+ <span class="rchip shield">${ICON.shield}×${Number(d.shield)} Start Shield</span></div>` : ''}
+        <div class="pzbig">${coinPile(230, 126)}${amount(`x${fmt(Number(d.coins))}`, 'xl')}</div>
+        ${Number(d.shield) ? `<div class="pzplus">+ <span class="rchip shield">${ICON.shield}×${Number(d.shield)} Start Shield</span></div>` : ''}
         <button class="btn big gold" data-a="popa" data-v="gift">CLAIM</button>`;
     }
     $(this.root, '[data-k="popbody"]').innerHTML = html;
@@ -1747,9 +1747,9 @@ export class UI {
   private perkPopup(kind: string, d: Record<string, unknown>, head: (icon: string, title: string, cls: string) => string) {
     // illustrated step cards (mock-up style): purple number, caption, art strip under it
     const step = (n: number, text: string, done: boolean, art = '') =>
-      `<div class="rps ${done ? 'done' : ''}"><i class="rpn">${done ? ICON.check : n}</i><div class="rpb"><span>${text}</span>${art ? `<div class="rpa">${art}</div>` : ''}</div></div>`;
-    const coinBanner = (n: unknown) => `<div class="rpcoins">${coinPile(150, 72)}${amount(`x${fmt(Number(n))}`)}</div>`;
-    const hand = `<span class="rphand">${ICON.hand}</span>`;
+      `<div class="pzs ${done ? 'done' : ''}"><i class="pzn">${done ? ICON.check : n}</i><div class="pzb"><span>${text}</span>${art ? `<div class="pza">${art}</div>` : ''}</div></div>`;
+    const coinBanner = (n: unknown) => `<div class="pzcoins">${coinPile(150, 72)}${amount(`x${fmt(Number(n))}`)}</div>`;
+    const hand = `<span class="pzhand">${ICON.hand}</span>`;
     const av = Number(d.avatar ?? 0);
     switch (kind) {
       case 'entry': {
@@ -1762,24 +1762,24 @@ export class UI {
           ['help', TUT_ICON, 'Tutorial'], ['play', ICON.flag, 'Race'], ['events', ICON.cup, 'Cups'],
         ];
         return head(giftBox(46), 'ENTRY REWARD', 'art') +
-          `<div class="rpsteps">
-            ${step(1, 'Open your pilot profile', st[0], `<div class="rprow"><span class="rptile plus">${ICON.plus}</span><span class="rptile chat">${ICON.user}<em>99+</em></span><span class="rptile ava on">${avatarSvg(av)}${tapMarks()}</span></div>`)}
-            ${step(2, 'Set your pilot name', st[1], `<div class="rpbanner"><img src="${logoUrl}" alt="" /><span class="rpname">${name}</span><span class="rpmenu">≡</span></div>`)}
-            ${step(3, 'Pick your racing helmet', st[2], `<div class="rpcard"><img src="${carZenith}" alt="" /><span class="rphelm">${avatarSvg(av)}</span>${hand}${tapMarks('r')}</div>`)}
+          `<div class="pzsteps">
+            ${step(1, 'Open your pilot profile', st[0], `<div class="pzrow"><span class="pztile plus">${ICON.plus}</span><span class="pztile chat">${ICON.user}<em>99+</em></span><span class="pztile ava on">${avatarSvg(av)}${tapMarks()}</span></div>`)}
+            ${step(2, 'Set your pilot name', st[1], `<div class="pzbanner"><img src="${logoUrl}" alt="" /><span class="pzname">${name}</span><span class="pzmenu">≡</span></div>`)}
+            ${step(3, 'Pick your racing helmet', st[2], `<div class="pzcard"><img src="${carZenith}" alt="" /><span class="pzhelm">${avatarSvg(av)}</span>${hand}${tapMarks('r')}</div>`)}
             ${step(4, 'Claim your rewards', done, coinBanner(d.entryReward))}
           </div>` +
           (done
-            ? `<div class="rpdone">${ICON.check} Reward claimed — explore Sky Roadster</div>
-               <div class="rpgo">${explore.map(([a, ic, t]) => `<button data-a="popgo" data-v="${a}"><span>${ic}</span><b>${t}</b></button>`).join('')}</div>`
+            ? `<div class="pzdone">${ICON.check} Reward claimed — explore Sky Roadster</div>
+               <div class="pzgo">${explore.map(([a, ic, t]) => `<button data-a="popgo" data-v="${a}"><span>${ic}</span><b>${t}</b></button>`).join('')}</div>`
             : all ? `<button class="btn big gold" data-a="popa" data-v="entry">CLAIM</button>` : `<button class="btn big blue" data-a="profile">${ICON.user} OPEN PROFILE</button>`);
       }
       case 'launch': {
         const sa = !!d.standalone;
         const done = !!d.launch;
         return head(megaphone(46), 'LAUNCH REWARD', 'art') +
-          `<div class="rpsteps">
-            ${step(1, 'Click the button below', sa, `<div class="rpgobtn"><button class="btn blue" data-a="popa" data-v="go:addscreen">${ICON.play} GO</button>${hand}${tapMarks('r')}</div>`)}
-            ${step(2, 'Open Sky Roadster from your Home Screen', sa, `<div class="rpapps"><span class="rpgrid"><i></i><i></i><i></i><i></i></span><span class="rparrow">→</span><img class="rpicon" src="${appIcon}" alt="" /></div>`)}
+          `<div class="pzsteps">
+            ${step(1, 'Click the button below', sa, `<div class="pzgobtn"><button class="btn blue" data-a="popa" data-v="go:addscreen">${ICON.play} GO</button>${hand}${tapMarks('r')}</div>`)}
+            ${step(2, 'Open Sky Roadster from your Home Screen', sa, `<div class="pzapps"><span class="pzgrid"><i></i><i></i><i></i><i></i></span><span class="pzarrow">→</span><img class="pzicon" src="${appIcon}" alt="" /></div>`)}
             ${step(3, 'Claim your rewards', done, coinBanner(d.launchReward))}
           </div>` +
           (done ? `<button class="btn big ghost" disabled>${ICON.check} Claimed</button>` : sa ? `<button class="btn big gold" data-a="popa" data-v="launch">CLAIM</button>` : `<button class="btn big blue" data-a="popa" data-v="go:addscreen">GO</button>`);
@@ -1787,43 +1787,43 @@ export class UI {
       case 'share': {
         const done = !!d.shareToday;
         return head(shareNodes(46), 'SHARE REWARDS', 'art') +
-          `<div class="rpbig">${coinPile(230, 126)}${amount(`+${fmt(Number(d.shareReward))}`, 'xl')}</div>
+          `<div class="pzbig">${coinPile(230, 126)}${amount(`+${fmt(Number(d.shareReward))}`, 'xl')}</div>
           <p class="p3t">Share to get free coins!</p>` +
           (done ? `<button class="btn big ghost" disabled>${ICON.check} Shared today · back tomorrow</button>` : `<button class="btn big green" data-a="popa" data-v="share">${ICON.share} SHARE</button>`) +
           `<button class="linkbtn center" data-a="popa" data-v="go:invite">Invite friends instead →</button>`;
       }
       case 'invite': {
         const done = !!d.inviteToday;
-        const side = (who: string) => `<div class="rpinv"><span class="rpppl">${friends(70)}</span><span class="rpinvc">${coinFace(30)}</span><b>${who}</b>${amount(`x${fmt(Number(d.inviteReward))}`, 'sm')}</div>`;
+        const side = (who: string) => `<div class="pzinv"><span class="pzppl">${friends(70)}</span><span class="pzinvc">${coinFace(30)}</span><b>${who}</b>${amount(`x${fmt(Number(d.inviteReward))}`, 'sm')}</div>`;
         return head(friends(42, '#4fc3ff'), 'INVITE FRIENDS', 'art') +
           `<p class="p3t">Invite friends to play<br/>and get rewards!</p>
-          <div class="rpinvrow">${side('YOU')}<span class="rplink">🔗</span>${side('FRIEND')}</div>` +
+          <div class="pzinvrow">${side('YOU')}<span class="pzlink">🔗</span>${side('FRIEND')}</div>` +
           (done ? `<button class="btn big ghost" disabled>${ICON.check} Invite sent today</button>` : `<button class="btn big green" data-a="popa" data-v="invite">🔗 INVITE</button>`) +
           `<div class="label p3foot">${Number(d.invites)} friends invited</div>`;
       }
       case 'rate':
         return head(starBig(40), 'RATE US', 'art') +
           `<p class="p3t">Enjoying Sky Roadster?<br/>Give us a 5-star rating!</p>
-          <div class="rpstars">${[1, 2, 3, 4, 5].map((n) => `<button data-a="popa" data-v="rate${n}" aria-label="${n} stars">${starBig(44)}</button>`).join('')}</div>
+          <div class="pzstars">${[1, 2, 3, 4, 5].map((n) => `<button data-a="popa" data-v="rate${n}" aria-label="${n} stars">${starBig(44)}</button>`).join('')}</div>
           <button class="btn big blue" data-a="popa" data-v="rate5">RATE NOW</button>
           <button class="btn big dark" data-a="closeov" data-v="popup">NOT NOW</button>`;
       case 'addscreen': {
         const can = !!d.canInstall;
         const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
         const sheet = [
-          [`<span class="rpsq on">${ICON.plus}</span>`, 'Add to<br/>Home Screen'], [`<span class="rpsq">${ICON.share}</span>`, 'Share'],
-          [`<span class="rpsq">🔗</span>`, 'Copy Link'], [`<span class="rpsq">•••</span>`, 'More'],
+          [`<span class="pzsq on">${ICON.plus}</span>`, 'Add to<br/>Home Screen'], [`<span class="pzsq">${ICON.share}</span>`, 'Share'],
+          [`<span class="pzsq">🔗</span>`, 'Copy Link'], [`<span class="pzsq">•••</span>`, 'More'],
         ];
         return head(phonePlus(44), 'ADD TO SCREEN', 'art') +
           `<p class="p3t">Add Sky Roadster to your<br/>Home Screen for faster access!</p>
-          <div class="rpphone"><i class="notch"></i><div class="rpsheet">${sheet.map(([ic, t]) => `<span>${ic}<small>${t}</small></span>`).join('')}</div>
-            <ol class="rpol">${ios ? '<li>Tap <b>Share</b></li><li>Select <b>Add to Home Screen</b></li>' : '<li>Tap the browser menu <b>⋮</b></li><li>Select <b>Install app</b> / <b>Add to Home screen</b></li>'}<li>Find Sky Roadster on your Home Screen</li></ol></div>` +
+          <div class="pzphone"><i class="notch"></i><div class="pzsheet">${sheet.map(([ic, t]) => `<span>${ic}<small>${t}</small></span>`).join('')}</div>
+            <ol class="pzol">${ios ? '<li>Tap <b>Share</b></li><li>Select <b>Add to Home Screen</b></li>' : '<li>Tap the browser menu <b>⋮</b></li><li>Select <b>Install app</b> / <b>Add to Home screen</b></li>'}<li>Find Sky Roadster on your Home Screen</li></ol></div>` +
           (can ? `<button class="btn big blue" data-a="popa" data-v="install">INSTALL NOW</button>` : `<button class="btn big blue" data-a="closeov" data-v="popup">GOT IT</button>`);
       }
       default:
         return head(`<svg viewBox="0 0 24 24"><path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="19" r="1.6" fill="#fff"/></svg>`, 'NO CONNECTION', 'red') +
           `<p class="p3t">Please check your internet<br/>connection and try again.</p>
-          <div class="rpbig robot">${wifiRobot(200, 132)}</div>
+          <div class="pzbig robot">${wifiRobot(200, 132)}</div>
           <button class="btn big blue" data-a="popa" data-v="retry">${ICON.retry} RETRY</button>
           <div class="label p3foot">You can still race offline — cups sync when you're back.</div>`;
     }

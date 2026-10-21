@@ -1720,79 +1720,79 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .art-amt.sm { font-size: 22px; -webkit-text-stroke-width: 1.5px; }
 
 /* numbered steps with art strips */
-.rpsteps { display: flex; flex-direction: column; gap: 6px; text-align: left; }
-.rps { position: relative; display: grid; grid-template-columns: 28px 1fr; gap: 8px; align-items: start; }
-.rps:not(:last-child)::before { content: ''; position: absolute; left: 13px; top: 28px; bottom: -8px; width: 2px; background: rgba(150,120,255,.35); }
-.rpn { position: relative; z-index: 1; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font: 900 14px var(--font-body); font-style: normal; color: #fff;
+.pzsteps { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.pzs { position: relative; display: grid; grid-template-columns: 28px 1fr; gap: 8px; align-items: start; }
+.pzs:not(:last-child)::before { content: ''; position: absolute; left: 13px; top: 28px; bottom: -8px; width: 2px; background: rgba(150,120,255,.35); }
+.pzn { position: relative; z-index: 1; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font: 900 14px var(--font-body); font-style: normal; color: #fff;
   background: linear-gradient(180deg, #9a72ff, #5b2fe6); box-shadow: 0 0 0 2px rgba(255,255,255,.18), 0 0 10px rgba(140,100,255,.6); }
-.rpn svg { width: 15px; height: 15px; }
-.rps.done .rpn { background: linear-gradient(180deg, #45e08a, #13a556); }
-.rpb { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-.rpb > span { font: 700 13px var(--font-body); color: #fff; padding-top: 5px; }
-.rpa { position: relative; display: flex; align-items: center; justify-content: center; min-height: 54px; padding: 6px 8px; border-radius: 12px;
+.pzn svg { width: 15px; height: 15px; }
+.pzs.done .pzn { background: linear-gradient(180deg, #45e08a, #13a556); }
+.pzb { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.pzb > span { font: 700 13px var(--font-body); color: #fff; padding-top: 5px; }
+.pza { position: relative; display: flex; align-items: center; justify-content: center; min-height: 54px; padding: 6px 8px; border-radius: 12px;
   background: linear-gradient(180deg, rgba(40,46,120,.9), rgba(22,26,80,.9)); border: 1px solid rgba(140,120,255,.35); }
-.rprow { display: flex; gap: 16px; align-items: center; }
-.rptile { position: relative; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #0e1338; border: 1.5px solid rgba(255,255,255,.18); }
-.rptile svg { width: 22px; height: 22px; }
-.rptile.plus { border-color: transparent; background: linear-gradient(#0e1338,#0e1338) padding-box, linear-gradient(90deg,#ff4fd8,#4fc3ff) border-box; }
-.rptile.chat em { position: absolute; top: -7px; right: -12px; padding: 1px 4px; border-radius: 8px; background: #ff3b5c; font: 800 9px var(--font-body); font-style: normal; color: #fff; }
-.rptile.ava { border-radius: 50%; width: 44px; height: 44px; overflow: visible; border: 2.5px solid #ff4fd8; box-shadow: 0 0 0 2px #ffd23d; }
-.rptile.ava > svg:first-child { width: 40px; height: 40px; border-radius: 50%; }
-.rptile .art-tap, .rpa .art-tap { position: absolute; top: -12px; right: -16px; }
-.rpa .art-tap.r { top: -4px; right: 6px; }
-.rpbanner { width: 100%; display: flex; align-items: center; gap: 8px; }
-.rpbanner img { height: 34px; width: auto; }
-.rpbanner .rpname { flex: 1; font: 900 15px var(--font); font-style: italic; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rpbanner .rpmenu { width: 32px; height: 32px; border-radius: 9px; background: #fff; color: #1a1f55; display: grid; place-items: center; font: 900 18px var(--font-body); }
-.rpcard { position: relative; width: 150px; height: 64px; }
-.rpcard img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; border: 1px solid rgba(255,255,255,.25); }
-.rpcard .rphelm { position: absolute; left: -10px; bottom: -6px; width: 38px; height: 38px; border-radius: 50%; overflow: hidden; border: 2px solid #fff; }
-.rpcard .rphelm svg { width: 100%; height: 100%; }
-.rphand { position: absolute; right: -6px; bottom: -10px; width: 30px; height: 30px; color: #fff; filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)); }
-.rphand svg { width: 30px; height: 30px; }
-.rpcoins { position: relative; width: 100%; height: 72px; display: grid; place-items: center; border-radius: 10px; overflow: hidden;
+.pzrow { display: flex; gap: 16px; align-items: center; }
+.pztile { position: relative; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #0e1338; border: 1.5px solid rgba(255,255,255,.18); }
+.pztile svg { width: 22px; height: 22px; }
+.pztile.plus { border-color: transparent; background: linear-gradient(#0e1338,#0e1338) padding-box, linear-gradient(90deg,#ff4fd8,#4fc3ff) border-box; }
+.pztile.chat em { position: absolute; top: -7px; right: -12px; padding: 1px 4px; border-radius: 8px; background: #ff3b5c; font: 800 9px var(--font-body); font-style: normal; color: #fff; }
+.pztile.ava { border-radius: 50%; width: 44px; height: 44px; overflow: visible; border: 2.5px solid #ff4fd8; box-shadow: 0 0 0 2px #ffd23d; }
+.pztile.ava > svg:first-child { width: 40px; height: 40px; border-radius: 50%; }
+.pztile .art-tap, .pza .art-tap { position: absolute; top: -12px; right: -16px; }
+.pza .art-tap.r { top: -4px; right: 6px; }
+.pzbanner { width: 100%; display: flex; align-items: center; gap: 8px; }
+.pzbanner img { height: 34px; width: auto; }
+.pzbanner .pzname { flex: 1; font: 900 15px var(--font); font-style: italic; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pzbanner .pzmenu { width: 32px; height: 32px; border-radius: 9px; background: #fff; color: #1a1f55; display: grid; place-items: center; font: 900 18px var(--font-body); }
+.pzcard { position: relative; width: 150px; height: 64px; }
+.pzcard img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; border: 1px solid rgba(255,255,255,.25); }
+.pzcard .pzhelm { position: absolute; left: -10px; bottom: -6px; width: 38px; height: 38px; border-radius: 50%; overflow: hidden; border: 2px solid #fff; }
+.pzcard .pzhelm svg { width: 100%; height: 100%; }
+.pzhand { position: absolute; right: -6px; bottom: -10px; width: 30px; height: 30px; color: #fff; filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)); }
+.pzhand svg { width: 30px; height: 30px; }
+.pzcoins { position: relative; width: 100%; height: 72px; display: grid; place-items: center; border-radius: 10px; overflow: hidden;
   background: radial-gradient(circle at 40% 60%, rgba(255,190,40,.35), rgba(120,60,255,.25) 60%, rgba(40,20,120,.3)); }
-.rpcoins .art-pile { position: absolute; left: 4px; bottom: -2px; }
-.rpcoins .art-amt { position: absolute; right: 14px; bottom: 10px; }
-.rpgobtn { position: relative; width: 100%; }
-.rpgobtn .btn { width: 100%; height: 42px; font-size: 18px; }
-.rpgobtn .rphand { right: 4px; bottom: -14px; }
-.rpapps { display: flex; align-items: center; gap: 16px; }
-.rpgrid { width: 46px; height: 46px; border-radius: 12px; background: #0e1338; border: 1px solid rgba(255,255,255,.15); display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 7px; }
-.rpgrid i { border-radius: 4px; background: #ffd23d; } .rpgrid i:nth-child(2) { background: #ff4d5e; } .rpgrid i:nth-child(3) { background: #4fc3ff; } .rpgrid i:nth-child(4) { background: #9aa6bd; }
-.rparrow { font: 900 24px var(--font-body); color: #c6a8ff; }
-.rpicon { width: 56px; height: 56px; border-radius: 14px; border: 2px solid #4fc3ff; box-shadow: 0 0 12px rgba(79,195,255,.5); }
-.rpbig { position: relative; width: 100%; height: 140px; display: grid; place-items: center; }
-.rpbig .art-amt { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); white-space: nowrap; }
-.rpbig.robot { height: 132px; }
-.rpplus { font: 700 12px var(--font-body); color: #dbe6ff; }
-.rpdone { padding: 8px 10px; border-radius: 12px; background: rgba(47,211,107,.14); border: 1px solid rgba(47,211,107,.5); color: #b8ffd4; font: 800 13px var(--font-body); display: flex; gap: 6px; align-items: center; justify-content: center; }
-.rpdone svg { width: 16px; height: 16px; }
-.rpgo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-.rpgo button { appearance: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 4px; border-radius: 12px; color: #fff;
+.pzcoins .art-pile { position: absolute; left: 4px; bottom: -2px; }
+.pzcoins .art-amt { position: absolute; right: 14px; bottom: 10px; }
+.pzgobtn { position: relative; width: 100%; }
+.pzgobtn .btn { width: 100%; height: 42px; font-size: 18px; }
+.pzgobtn .pzhand { right: 4px; bottom: -14px; }
+.pzapps { display: flex; align-items: center; gap: 16px; }
+.pzgrid { width: 46px; height: 46px; border-radius: 12px; background: #0e1338; border: 1px solid rgba(255,255,255,.15); display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 7px; }
+.pzgrid i { border-radius: 4px; background: #ffd23d; } .pzgrid i:nth-child(2) { background: #ff4d5e; } .pzgrid i:nth-child(3) { background: #4fc3ff; } .pzgrid i:nth-child(4) { background: #9aa6bd; }
+.pzarrow { font: 900 24px var(--font-body); color: #c6a8ff; }
+.pzicon { width: 56px; height: 56px; border-radius: 14px; border: 2px solid #4fc3ff; box-shadow: 0 0 12px rgba(79,195,255,.5); }
+.pzbig { position: relative; width: 100%; height: 140px; display: grid; place-items: center; }
+.pzbig .art-amt { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+.pzbig.robot { height: 132px; }
+.pzplus { font: 700 12px var(--font-body); color: #dbe6ff; }
+.pzdone { padding: 8px 10px; border-radius: 12px; background: rgba(47,211,107,.14); border: 1px solid rgba(47,211,107,.5); color: #b8ffd4; font: 800 13px var(--font-body); display: flex; gap: 6px; align-items: center; justify-content: center; }
+.pzdone svg { width: 16px; height: 16px; }
+.pzgo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.pzgo button { appearance: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 4px; border-radius: 12px; color: #fff;
   background: linear-gradient(180deg, rgba(79,195,255,.18), rgba(60,50,160,.25)); border: 1px solid rgba(140,160,255,.35); }
-.rpgo button span svg { width: 22px; height: 22px; }
-.rpgo button b { font: 800 12px var(--font-body); }
-.rpinvrow { display: flex; align-items: center; gap: 6px; }
-.rpinv { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px 6px; border-radius: 14px;
+.pzgo button span svg { width: 22px; height: 22px; }
+.pzgo button b { font: 800 12px var(--font-body); }
+.pzinvrow { display: flex; align-items: center; gap: 6px; }
+.pzinv { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px 6px; border-radius: 14px;
   background: radial-gradient(circle at 50% 30%, rgba(170,120,255,.6), rgba(70,40,180,.5) 70%); border: 1px solid rgba(190,160,255,.5); }
-.rpinv .rpppl svg { width: 64px; height: 50px; }
-.rpinv .rpinvc { margin-top: -18px; }
-.rpinv b:not(.art-amt) { font: 900 11px var(--font-body); color: #fff; letter-spacing: 1px; }
-.rplink { font-size: 26px; filter: drop-shadow(0 0 6px #4fc3ff); }
-.rpstars { display: flex; justify-content: center; gap: 4px; }
-.rpstars button { appearance: none; background: none; border: 0; padding: 0; cursor: pointer; }
-.rpstars svg { width: 44px; height: 44px; filter: drop-shadow(0 3px 4px rgba(0,0,0,.4)); }
-.rpphone { position: relative; padding: 16px 8px 8px; border-radius: 20px; border: 2px solid rgba(160,180,255,.45); background: #0d1236; }
-.rpphone .notch { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); width: 46px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.2); }
-.rpsheet { display: flex; justify-content: space-around; margin-bottom: 6px; }
-.rpsheet > span { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-.rpsheet small { font: 600 9.5px/1.15 var(--font-body); color: #c9d8f5; text-align: center; }
-.rpsq { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; background: #1a2050; color: #fff; font: 800 12px var(--font-body); }
-.rpsq svg { width: 20px; height: 20px; }
-.rpsq.on { background: linear-gradient(180deg, #4f7bff, #2a3fd6); border: 1.5px solid #9fc0ff; }
-.rpol { margin: 0; padding: 6px 4px 0 22px; text-align: left; font: 600 12px/1.6 var(--font-body); color: #fff; border-top: 1px solid rgba(255,255,255,.1); }
-.rpol li::marker { color: #4fc3ff; font-weight: 900; }
+.pzinv .pzppl svg { width: 64px; height: 50px; }
+.pzinv .pzinvc { margin-top: -18px; }
+.pzinv b:not(.art-amt) { font: 900 11px var(--font-body); color: #fff; letter-spacing: 1px; }
+.pzlink { font-size: 26px; filter: drop-shadow(0 0 6px #4fc3ff); }
+.pzstars { display: flex; justify-content: center; gap: 4px; }
+.pzstars button { appearance: none; background: none; border: 0; padding: 0; cursor: pointer; }
+.pzstars svg { width: 44px; height: 44px; filter: drop-shadow(0 3px 4px rgba(0,0,0,.4)); }
+.pzphone { position: relative; padding: 16px 8px 8px; border-radius: 20px; border: 2px solid rgba(160,180,255,.45); background: #0d1236; }
+.pzphone .notch { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); width: 46px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.2); }
+.pzsheet { display: flex; justify-content: space-around; margin-bottom: 6px; }
+.pzsheet > span { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.pzsheet small { font: 600 9.5px/1.15 var(--font-body); color: #c9d8f5; text-align: center; }
+.pzsq { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; background: #1a2050; color: #fff; font: 800 12px var(--font-body); }
+.pzsq svg { width: 20px; height: 20px; }
+.pzsq.on { background: linear-gradient(180deg, #4f7bff, #2a3fd6); border: 1.5px solid #9fc0ff; }
+.pzol { margin: 0; padding: 6px 4px 0 22px; text-align: left; font: 600 12px/1.6 var(--font-body); color: #fff; border-top: 1px solid rgba(255,255,255,.1); }
+.pzol li::marker { color: #4fc3ff; font-weight: 900; }
 
 /* 7-day check-in list (popup + Daily page) */
 .cigrid { display: block !important; }
