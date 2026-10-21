@@ -89,6 +89,10 @@ Bỏ toàn bộ 20 đường cũ, sao ★ của đường, mở đường bằng
 - Special **không nhặt được** trên đường EXP; phải đổi bằng coin và trang bị trước khi đua.
 - **Mỗi lượt chỉ mang 1 special.** Khi bấm vào đường đua → popup chọn special (hoặc "Không dùng").
 - Người chơi mới được tặng **1 Roadster**.
+- **Hết special trong túi Magic** → ô special đó (trong túi và trong popup chọn trước khi đua) hiện chỉ dẫn rõ: "Hết — đổi bằng coin" + giá + nút **Mua**. Ghi rõ luật ngay tại đó:
+  - **Mua bao nhiêu cũng được, cất vào túi Magic** (để dành dùng dần).
+  - **Mỗi lượt đua chỉ dùng được 1 cái.**
+  - Không đủ coin → nút dẫn sang Shop mua coin.
 - **Special chưa mở** (hiện tên + ảnh, làm mờ, "Mở ở hạng AAA") để gây hấp dẫn, ví dụ:
   - **Tunnel Rider** — vào đường hầm thì xe chạy trên nóc hầm
   - **Wall Run** — chạy dọc thành đường vượt cả hàng chướng ngại
