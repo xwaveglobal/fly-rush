@@ -607,14 +607,13 @@ export class UI {
 
     <section id="continue" class="screen overlay">
       <div class="panel cont-panel">
-        <div class="title">CONTINUE?</div>
+        <div class="title">REVIVE?</div>
         <div class="cont-ring"><svg viewBox="0 0 120 120"><circle class="bg" cx="60" cy="60" r="52"/><circle class="fg" data-k="contring" cx="60" cy="60" r="52"/></svg><b data-k="contsec">7</b></div>
         <div class="tipbox" data-k="ctip" hidden></div>
-        <p class="tut-lead">Keep your score and distance. You respawn right where you crashed.</p>
-        <button class="btn big gold" data-a="contad">${ICON.play} Ad · Continue</button>
-        <button class="btn blue" data-a="contcoins"><span class="price">${ICON.coin}<b data-k="contcost">300</b></span>&nbsp;Continue</button>
-        <button class="btn sm pink" data-a="contshop" data-k="contshop" hidden>${ICON.bag} Get coins</button>
-        <button class="btn ghost sm" data-a="contno">No thanks</button>
+        <p class="tut-lead">Keep your EXP and distance — you respawn right where you crashed.</p>
+        <p class="contleft" data-k="contleft"></p>
+        <button class="btn big gold" data-a="contad">${ICON.play} Watch ad · Revive</button>
+        <button class="btn ghost sm" data-a="contno">No thanks · end race</button>
       </div>
     </section>
 
@@ -1438,12 +1437,10 @@ export class UI {
     el.innerHTML = `<span class="tip-ic">${ic}</span><span class="tip-t"><b>How to avoid the ${esc(t.what)}</b>${esc(t.text)}</span>`;
   }
 
-  continueOffer(o: { adOk: boolean; cost: number; canAfford: boolean; tip?: CrashTip | null }) {
+  /** v2: revive by rewarded ad (max 2 per race); the 3rd crash ends the race */
+  continueOffer(o: { left: number; tip?: CrashTip | null }) {
     this.tipHtml($(this.root, '[data-k="ctip"]'), o.tip ?? null);
-    $(this.root, '[data-a="contad"]').hidden = !o.adOk;
-    this.setAll('contcost', String(o.cost));
-    $(this.root, '[data-a="contcoins"]').toggleAttribute('disabled', !o.canAfford);
-    $(this.root, '[data-k="contshop"]').hidden = o.canAfford;
+    $(this.root, '[data-k="contleft"]').innerHTML = `Revives left: <b>${o.left} / 2</b> · the 3rd crash sends you back to Start`;
     this.continueTick(1, 7);
     this.show('hud', 'continue');
   }

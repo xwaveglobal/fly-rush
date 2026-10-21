@@ -1972,3 +1972,5 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .spgo { width: 100%; }
 .spick .mhead h2 { display: flex; align-items: center; gap: 6px; }
 .spick .mhead h2 svg { width: 22px; height: 22px; flex: none; }
+.cont-panel .contleft { margin: 0; font: 700 13px/1.35 var(--font-body); color: #ffc9da; text-align: center; }
+.cont-panel .contleft b { color: #fff; }

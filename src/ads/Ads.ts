@@ -16,18 +16,18 @@ export type InterPlacement = 'between_runs';
 export const ADS = {
   enabled: true,
   /** interstitial at most once every N finished runs … */
-  interstitialEveryRuns: 3,
+  interstitialEveryRuns: 1, // v2: an ad after each race that ends (Remove Ads turns it off)
   /** … and never more often than this many seconds */
-  interstitialMinGapSec: 120,
+  interstitialMinGapSec: 45,
   /** players' first runs are ad-free */
-  noInterstitialBeforeRun: 3,
+  noInterstitialBeforeRun: 2,
   /** no interstitial right after the player chose to watch a rewarded ad */
-  rewardedGraceSec: 60,
+  rewardedGraceSec: 30,
   freeCoinsPerDay: 5,
   freeCoinsAmount: 100,
-  /** continue (revive) by coins instead of an ad: cost doubles each use in a run */
+  /** v1 only — v2 revives are by rewarded ad only (docs/GAME-DESIGN.md §6) */
   continueCoinCost: 300,
-  /** max continues per run (ad or coins) */
+  /** max revives per race (v2: rewarded ad each); the 3rd crash ends the race */
   maxContinues: 2,
   continueSeconds: 7,
 };

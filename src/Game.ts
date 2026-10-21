@@ -48,7 +48,7 @@ import type { ItemKey, Reward } from './meta/Daily.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v2.0.4';
+const VERSION = 'v2.0.5';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -153,7 +153,6 @@ export class Game {
   // ---- monetisation (rewarded / interstitial)
   ads!: Ads;
   private continuesUsed = 0;
-  private adContinueUsed = false;
   private nextBoost = false;
   private lastResult = { coins: 0, reward: 0, doubled: false };
   /** first-run pilot training */
@@ -627,8 +626,7 @@ export class Game {
       this.holdContinue = true;
       this.returnTo = () => {
         this.holdContinue = false;
-        const cost = ADS.continueCoinCost * Math.pow(2, this.continuesUsed);
-        this.ui.continueOffer({ adOk: !this.adContinueUsed, cost, canAfford: this.save.wallet + this.run.coins >= cost, tip: this.lastTip });
+        this.ui.continueOffer({ left: ADS.maxContinues - this.continuesUsed, tip: this.lastTip });
         this.ui.continueTick(Math.max(0, 1 - this.stateT / ADS.continueSeconds), ADS.continueSeconds - this.stateT);
       };
     } else if (this.state === 'garage') this.returnTo = () => this.openGarage();
@@ -1054,11 +1052,13 @@ export class Game {
 
   /** Out of lives: offer a rewarded continue (or coins) before the game-over screen. */
   private offerContinue() {
-    const cost = ADS.continueCoinCost * Math.pow(2, this.continuesUsed);
-    if (this.tutorialMode || this.continuesUsed >= ADS.maxContinues) return this.gameOver();
+    if (this.tutorialMode || this.continuesUsed >= ADS.maxContinues) {
+      if (!this.tutorialMode) this.ui.toast(`${ICON.retry} 3rd crash — back to Start`, '#ff5a8a');
+      return this.gameOver();
+    }
     this.setState('continue');
     this.input.enabled = false;
-    this.ui.continueOffer({ adOk: !this.adContinueUsed, cost, canAfford: this.save.wallet + this.run.coins >= cost, tip: this.lastTip });
+    this.ui.continueOffer({ left: ADS.maxContinues - this.continuesUsed, tip: this.lastTip });
     this.audio.play('beep');
   }
 
@@ -1067,7 +1067,6 @@ export class Game {
     const t = this.stateT;
     const ok = await this.ads.rewarded('continue');
     if (ok) {
-      this.adContinueUsed = true;
       this.doContinue();
     } else {
       this.stateT = t; // the countdown resumes where it was
@@ -1076,6 +1075,7 @@ export class Game {
 
   private continueByCoins() {
     if (this.state !== 'continue') return;
+    return; // v2: revives are by rewarded ad only
     const cost = ADS.continueCoinCost * Math.pow(2, this.continuesUsed);
     // spend this run's coins first, then the wallet
     const fromRun = Math.min(this.run.coins, cost);
@@ -1093,7 +1093,7 @@ export class Game {
     this.ui.show('hud');
     this.respawn();
     this.run.invulnT = Math.max(this.run.invulnT, 3);
-    this.ui.toast(`${ICON.heart} CONTINUE! Keep going`, 'var(--gold)');
+    this.ui.toast(`${ICON.heart} REVIVED · ${ADS.maxContinues - this.continuesUsed} revive${ADS.maxContinues - this.continuesUsed === 1 ? "" : "s"} left`, 'var(--gold)');
   }
 
   private async adDouble() {
@@ -1426,7 +1426,6 @@ export class Game {
     }
     this.livesLost = 0;
     this.continuesUsed = 0;
-    this.adContinueUsed = false;
     this.finishShown = false;
     this.runTime = 0;
     this.sectionName = '';

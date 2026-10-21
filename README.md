@@ -187,6 +187,11 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v2.0.5 changes (v2 step 5 — revive & ads)
+
+- **Revive only by rewarded ad, max 2 per race** ("Revives left 2 / 2 · the 3rd crash sends you back to Start"). Coin continues are gone.
+- The race-end interstitial now follows every finished race (after the first 2 runs, ≥45 s apart, 30 s grace after a rewarded ad); **Remove Ads** turns it off.
+
 ## v2.0.4 changes (v2 step 4 — specials & coins)
 
 - **Specials** (SOS 2,000 · Roadster 3,000 · HYPER 6,000 coins): bought with coins, kept in the Magic Bag, **one per race**, picked in a popup when you tap a track (or "No special"). The special leaves the bag only if you use it. Empty slot → "Out — get one with coins" + Buy (not enough coins → shop). New players get 1 Roadster.
