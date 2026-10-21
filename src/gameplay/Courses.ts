@@ -30,6 +30,10 @@ export interface Course {
   /** coin reward for finishing */
   reward: number;
   sections: Section[];
+  /** best score needed on the PREVIOUS track to unlock this one (0 = open) */
+  unlockScore?: number;
+  /** rank class gate (tracks 11–20 need class A) */
+  needClass?: 'A';
 }
 
 /**
@@ -37,7 +41,7 @@ export interface Course {
  * world. Track 1 follows the "Level 1 — Full Track" plan (9 sections, 3,200 m).
  * Endless mode is `null` — the original rotating-world run.
  */
-export const COURSES: Course[] = [
+const BASE: Course[] = [
   {
     id: 'future-city',
     name: 'Future City',
@@ -125,6 +129,61 @@ export const COURSES: Course[] = [
     ],
   },
 ];
+
+/**
+ * 20 tracks = the 5 hand-made worlds (tier 0) + 3 harder remixes of each (tiers 1–3).
+ * A remix is longer, starts further along the difficulty curve and leans harder on the
+ * world's signature obstacles. Unlocks: a target score on the previous track; tracks 11–20
+ * additionally need rank class A (the "Rank A gate").
+ */
+const REMIX: string[][] = [
+  ['Night Rush', 'Storm Front', 'Overclock', 'Meteor Rain', 'Rush Hour'],
+  ['Hyperloop', 'Thunder Peaks', 'Red Zone', 'Black Hole', 'Lockdown'],
+  ['Zero Gravity', 'Skyfall', 'Core Breach', 'Supernova', 'XWAVE Legend'],
+];
+function remix(b: Course, tier: number, name: string): Course {
+  const k = 1 + 0.18 * tier; // longer track
+  const len = Math.round((b.length * k) / 100) * 100;
+  const sc = len / b.length;
+  return {
+    ...b,
+    id: `${b.id}-${tier + 1}`,
+    name: `${b.name.replace('XWAVE ', '')} · ${name}`,
+    length: len,
+    diffOffset: b.diffOffset + 1500 * tier,
+    difficulty: Math.min(5, b.difficulty + tier),
+    coinTarget: Math.round((b.coinTarget * sc + 10 * tier) / 10) * 10,
+    reward: Math.round((b.reward * (1 + 0.6 * tier)) / 50) * 50,
+    sections: b.sections.map((x, i) => ({
+      ...x,
+      name: i === 0 ? x.name : i === b.sections.length - 1 ? 'Final Sprint' : x.name,
+      from: Math.round(x.from * sc),
+      to: Math.round(x.to * sc),
+      bias: Object.fromEntries(Object.entries(x.bias ?? {}).map(([kk, v]) => [kk, (v as number) * (1 + 0.25 * tier)])),
+    })),
+  };
+}
+export const COURSES: Course[] = [...BASE, ...REMIX.flatMap((names, t) => BASE.map((b, i) => remix(b, t + 1, names[i])))].map((c, i, all) => ({
+  ...c,
+  // score to beat on the previous track ≈ 1.5 points per metre of it (rounded)
+  unlockScore: i === 0 ? 0 : Math.round((all[i - 1].length * 1.5) / 500) * 500,
+  needClass: i >= 10 ? 'A' : undefined,
+}));
+
+/** the Rank-A gate sits before this track index */
+export const RANK_GATE_AT = 10;
+
+export type TrackLock = { open: true } | { open: false; why: 'score'; need: number; prev: Course } | { open: false; why: 'class' };
+/** is track `c` playable for this player? (best scores per track id, current rank class index ≥ A?) */
+export function trackLock(c: Course, best: Record<string, number>, hasClassA: boolean): TrackLock {
+  const i = COURSES.indexOf(c);
+  if (i <= 0) return { open: true };
+  if (c.needClass && !hasClassA) return { open: false, why: 'class' };
+  const prev = COURSES[i - 1];
+  const need = c.unlockScore ?? 0;
+  if ((best[prev.id] ?? 0) >= need) return { open: true };
+  return { open: false, why: 'score', need, prev };
+}
 
 export const courseById = (id: string | null | undefined) => COURSES.find((c) => c.id === id) ?? null;
 

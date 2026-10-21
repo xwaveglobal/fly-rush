@@ -13,7 +13,7 @@ import thEndless from '../assets/images/tracks/endless.jpg';
 import guide1 from '../assets/images/guide/guide-1.jpg';
 import guide2 from '../assets/images/guide/guide-2.jpg';
 import guide3 from '../assets/images/guide/guide-3.jpg';
-import { COURSES } from '../gameplay/Courses.ts';
+import { COURSES, RANK_GATE_AT, trackLock } from '../gameplay/Courses.ts';
 import { MISSIONS, missionById, type ActiveMission } from '../gameplay/Missions.ts';
 import type { SaveData } from '../core/Save.ts';
 import { SKINS, carVisibility } from '../render/Vehicle.ts';
@@ -36,6 +36,8 @@ import type { EventResult } from '../meta/Meta.ts';
 import type { CrashTip } from '../gameplay/CrashTip.ts';
 import { LANGS, getLang, setLang, translateTree, type Lang } from './i18n.ts';
 
+/** track thumbnail: remixes reuse their world's art */
+const thumbFor = (c: { id: string }) => THUMBS[c.id] ?? THUMBS[c.id.replace(/-\d+$/, '')] ?? THUMBS.endless;
 const THUMBS: Record<string, string> = {
   endless: thEndless,
   'future-city': thFuture,
@@ -664,7 +666,19 @@ export class UI {
         case 'comfort': return this.h.toggleComfort();
         case 'vibrate': return this.h.toggleVibrate();
         case 'tutskip': return this.h.skipTutorial();
-        case 'track': return this.h.startTrack(el.dataset.id!);
+        case 'track': {
+          const id = el.dataset.id!;
+          const c = COURSES.find((x) => x.id === id);
+          if (c) {
+            const lock = trackLock(c, this.lastSave?.trackBest ?? {}, CLASSES.indexOf(this.myClass) >= CLASSES.indexOf('A'));
+            if (!lock.open) {
+              this.toast(lock.why === 'score' ? `${ICON.lock} Score ${fmt(lock.need)} on ${lock.prev.name} to unlock ${c.name}` : `${ICON.lock} Reach rank class A to unlock tracks 11–20`, '#ffc21a');
+              return;
+            }
+          }
+          return this.h.startTrack(id);
+        }
+        case 'rankgate': return this.rankGuide();
         case 'garage': return this.h.garage();
         case 'missions': return this.h.missions();
         case 'home': return this.h.home();
@@ -1195,7 +1209,9 @@ export class UI {
     return Array.from({ length: of }, (_, i) => `<i class="${i < n ? 'on' : ''}">★</i>`).join('');
   }
 
+  private lastSave: SaveData | null = null;
   tracksSync(s: SaveData, liveTrack?: string) {
+    this.lastSave = s;
     const boost = (k: ItemKey) => {
       const n = s.items[k];
       const on = s.equip[k] && n > 0;
@@ -1209,37 +1225,38 @@ export class UI {
       return `<button class="boost ${u.k} lockedb" data-a="boostinfo" data-v="${u.k}">${ITEM_ICON[u.k]}<span><b>${ITEM_NAME[u.k]}</b><small>${ICON.lock} class ${classBadge(u.cls)}</small></span></button>`;
     };
     $(this.root, '[data-k="boosts"]').innerHTML = (['super', 'hyper', 'escape', 'shield'] as ItemKey[]).map(boost).join('') + UNLOCK_BOOSTS.map(locked).join('');
-    // worlds ordered by difficulty (1 → 5), Endless is World 6, then hidden worlds that unlock by class
-    const byDiff = [...COURSES].sort((a, b) => a.difficulty - b.difficulty || COURSES.indexOf(a) - COURSES.indexOf(b));
-    const myCls = this.myClass;
-    const mystery: { cls: RankClass; hint: string }[] = [
-      { cls: 'A', hint: 'Signal detected beyond the clouds…' },
-      { cls: 'AA', hint: 'Something glows under the ocean…' },
-      { cls: 'AAA', hint: 'Only legends have seen it.' },
-    ];
-    const cards = [
-      ...byDiff.map((c, i) => {
-        const stars = s.trackStars[c.id] ?? 0;
-        const diff = Array.from({ length: 5 }, (_, k) => `<i class="${k < c.difficulty ? 'on' : ''}"></i>`).join('');
-        return `<button class="tcard ${s.track === c.id ? 'sel' : ''}" data-a="track" data-id="${c.id}">
-          <img src="${THUMBS[c.id]}" alt="" draggable="false" />
-          <div class="tinfo"><b>${c.name}</b><span class="label">${fmt(c.length)} m · ${c.sections.length} sections</span>
-          <span class="tmeta"><span class="stars">${this.starsHtml(stars)}</span><span class="diff" title="Difficulty">${diff}</span></span></div>
-          <span class="tbadge">${i + 1}</span><span class="wlabel">WORLD ${i + 1}</span>${liveTrack === c.id ? '<span class="cuptag">🏆 CUP LIVE</span>' : ''}</button>`;
-      }),
-      `<button class="tcard endless ${s.track === 'endless' ? 'sel' : ''}" data-a="track" data-id="endless">
+    // 20 tracks in order: 1–10 unlock by score on the previous track, then the Rank-A gate, then 11–20.
+    // Endless sits right after track 1 (always HARD).
+    const classA = CLASSES.indexOf(this.myClass) >= CLASSES.indexOf('A');
+    const card = (c: (typeof COURSES)[number], i: number) => {
+      const lock = trackLock(c, s.trackBest, classA);
+      const stars = s.trackStars[c.id] ?? 0;
+      const diff = Array.from({ length: 5 }, (_, k) => `<i class="${k < c.difficulty ? 'on' : ''}"></i>`).join('');
+      if (!lock.open && lock.why === 'class') {
+        return `<button class="tcard tlocked dark" data-a="rankgate">
+          <img src="${thumbFor(c)}" alt="" draggable="false" />
+          <div class="tinfo"><b>? ? ?</b><span class="label">${fmt(c.length)} m</span><span class="tmeta">${ICON.lock}<span>Rank ${classBadge('A')}</span></span></div>
+          <span class="tbadge">${i + 1}</span></button>`;
+      }
+      const req = !lock.open && lock.why === 'score' ? `<span class="treq">${ICON.lock} Score ${fmt(lock.need)} on #${i}</span>` : '';
+      return `<button class="tcard ${s.track === c.id ? 'sel' : ''} ${lock.open ? '' : 'tlocked'}" data-a="track" data-id="${c.id}">
+        <img src="${thumbFor(c)}" alt="" draggable="false" />
+        <div class="tinfo"><b>${c.name}</b><span class="label">${fmt(c.length)} m · best ${fmt(s.trackBest[c.id] ?? 0)}</span>
+        <span class="tmeta"><span class="stars">${this.starsHtml(stars)}</span><span class="diff" title="Difficulty">${diff}</span></span>${req}</div>
+        <span class="tbadge">${lock.open ? i + 1 : ICON.lock}</span>${liveTrack === c.id ? '<span class="cuptag">🏆 CUP LIVE</span>' : ''}</button>`;
+    };
+    const endless = `<button class="tcard endless ${s.track === 'endless' ? 'sel' : ''}" data-a="track" data-id="endless">
         <img src="${THUMBS.endless}" alt="" draggable="false" />
-        <div class="tinfo"><b>Endless</b><span class="label">All worlds · no finish line · hardest</span>
+        <div class="tinfo"><b>Endless</b><span class="label">All worlds · no finish line · always HARD</span>
         <span class="tmeta">${ICON.trophy}<span>${fmt(s.trackBest.endless ?? s.best)}</span></span></div>
-        <span class="tbadge">∞</span><span class="wlabel">WORLD 6</span>${liveTrack === 'endless' ? '<span class="cuptag">🏆 CUP LIVE</span>' : ''}</button>`,
-      ...mystery.map((m, k) => {
-        const open = CLASSES.indexOf(myCls) >= CLASSES.indexOf(m.cls);
-        return `<button class="tcard mystery" data-a="mystery" data-v="${m.cls}">
-          <div class="mq">?</div>
-          <div class="tinfo"><b>${open ? 'Coming soon' : '? ? ?'}</b><span class="label">${m.hint}</span>
-          <span class="tmeta">${ICON.lock}<span>Reach class ${classBadge(m.cls)} to reveal</span></span></div>
-          <span class="tbadge">${ICON.lock}</span><span class="wlabel">WORLD ${7 + k}</span></button>`;
-      }),
+        <span class="tbadge">∞</span>${liveTrack === 'endless' ? '<span class="cuptag">🏆 CUP LIVE</span>' : ''}</button>`;
+    const gate = `<button class="rankgate ${classA ? 'open' : ''}" data-a="rankgate">${classA ? ICON.check : ICON.lock}<span class="rgt"><b>${classA ? 'RANK A GATE OPEN' : 'REACH RANK A'}</b><small>${classA ? 'Tracks 11–20 unlocked' : 'to unlock tracks 11–20 · tap to see how'}</small></span>${classBadge('A')}</button>`;
+    const cards = [
+      card(COURSES[0], 0),
+      endless,
+      ...COURSES.slice(1, RANK_GATE_AT).map((c, k) => card(c, k + 1)),
+      gate,
+      ...COURSES.slice(RANK_GATE_AT).map((c, k) => card(c, k + RANK_GATE_AT)),
     ];
     $(this.root, '[data-k="tracklist"]').innerHTML = cards.join('');
     this.scheduleFit();

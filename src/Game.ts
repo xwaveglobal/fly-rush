@@ -22,7 +22,7 @@ import { Audio } from './audio/Audio.ts';
 import { AssetLoader } from './assets/AssetLoader.ts';
 import { UI, UPGRADE_MAX, upgradeCost, type UpgradeKey } from './ui/UI.ts';
 import { ICON } from './ui/icons.ts';
-import { COURSES, courseById, sectionAt, type Course } from './gameplay/Courses.ts';
+import { COURSES, courseById, sectionAt, trackLock, type Course } from './gameplay/Courses.ts';
 import { makeArch } from './render/Arches.ts';
 import { rowMasks } from './gameplay/ObstacleRules.ts';
 import { Ads, ADS } from './ads/Ads.ts';
@@ -924,7 +924,7 @@ export class Game {
     const cup = this.meta.myCup();
     const inCup = !!cup && cup.cup.track === sum.track;
     const stars = finished && this.course ? this.save.trackStars[this.course.id] ?? 0 : 0;
-    const xp = xpForRun(run.score, run.nearMiss, finished, stars, inCup, LEVELS[this.save.settings.speed].reward);
+    const xp = xpForRun(run.score, run.nearMiss, finished, stars, inCup, LEVELS[this.runLevel].reward);
     this.meta.addBolts(xp.total);
     void this.syncDb(run.score, inCup && cup ? cup.key : null);
     const after = classFor(this.save.bolts);
@@ -1134,6 +1134,13 @@ export class Game {
     this.openMissions();
   }
 
+  /** difficulty of the current run: training = easy, Endless = always HARD, tracks = the player's pick */
+  private get runLevel(): SpeedLevel {
+    if (this.tutorialMode) return 'easy';
+    if (!this.course) return 'hard';
+    return this.save.settings.speed;
+  }
+
   startTrack(id: string) {
     this.tutorialMode = false;
     this.save.track = id;
@@ -1145,8 +1152,12 @@ export class Game {
   nextTrack() {
     const i = this.course ? COURSES.indexOf(this.course) : -1;
     const next = COURSES[i + 1];
-    if (next) this.startTrack(next.id);
-    else this.openTracks();
+    const lock = next && trackLock(next, this.save.trackBest, CLASSES.indexOf(classFor(this.save.bolts)) >= CLASSES.indexOf('A'));
+    if (next && lock && lock.open) this.startTrack(next.id);
+    else {
+      if (lock && !lock.open) this.ui.toast(lock.why === 'score' ? `${ICON.lock} Score ${lock.need.toLocaleString('en-US')} here to unlock ${next.name}` : `${ICON.lock} Reach rank class A to unlock tracks 11–20`, '#ffc21a');
+      this.openTracks();
+    }
   }
 
   openMissions() {
@@ -1162,7 +1173,7 @@ export class Game {
     this.audio.startMusic();
     this.audio.play('click');
     this.clearRunVisuals();
-    const level = this.tutorialMode ? 'easy' : this.save.settings.speed;
+    const level = this.runLevel;
     this.world.reset(Math.floor(Math.random() * 1e9), this.course, level);
     this.tutStep = 0;
     this.tutHint = 0;
@@ -1881,7 +1892,7 @@ export class Game {
 
     // ---- HUD (throttled)
     if (Math.floor(this.time * 20) !== Math.floor((this.time - dt) * 20)) {
-      this.ui.updateHud(run, w.speed, SPEED.max * SPEED.turboMul * LEVELS[this.save.settings.speed].speed, this.missions.active[0]);
+      this.ui.updateHud(run, w.speed, SPEED.max * SPEED.turboMul * LEVELS[this.runLevel].speed, this.missions.active[0]);
       if (c) this.ui.trackHud({ section: this.sectionName, dist: w.dist, length: c.length, marks: c.sections.slice(1).map((s) => s.from) });
     }
   }
@@ -2181,7 +2192,7 @@ export class Game {
     this.finishShown = true;
     this.missions.endRun();
     const stars = 1 + (this.livesLost === 0 ? 1 : 0) + (run.coins >= c.coinTarget ? 1 : 0);
-    const lv = LEVELS[this.save.settings.speed];
+    const lv = LEVELS[this.runLevel];
     const reward = Math.round((c.reward * stars * lv.reward) / 3 / 10) * 10;
     const speedBonus = Math.round(run.coins * (lv.reward - 1));
     const score = Math.floor(run.score);
@@ -2229,7 +2240,7 @@ export class Game {
     const tid = this.course?.id ?? 'endless';
     this.save.trackBest[tid] = Math.max(score, this.save.trackBest[tid] ?? 0);
     this.save.bestDistance = Math.max(this.save.bestDistance, Math.floor(run.distance));
-    const lvg = LEVELS[this.save.settings.speed];
+    const lvg = LEVELS[this.runLevel];
     const speedBonus = Math.round(run.coins * (lvg.reward - 1));
     this.save.wallet += run.coins + speedBonus;
     this.save.totalRuns++;

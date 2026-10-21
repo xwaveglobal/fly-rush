@@ -1687,3 +1687,16 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 #garage .upg .nm small { display: none; }
 #garage .upg .pips i { width: 8px !important; }
 #garage .upg .btn.sm { height: 28px !important; min-width: 0; width: 100%; padding: 0 6px !important; font-size: 12px !important; }
+/* v1.18 — 20 tracks: score-locked cards, dark class-locked cards, Rank A gate */
+.tcard.tlocked img { filter: grayscale(.7) brightness(.55); }
+.tcard.tlocked.dark img { filter: brightness(.12); }
+.tcard .treq { display: inline-flex; align-items: center; gap: 4px; font: 800 10.5px var(--font-body); color: #ffe08a; margin-top: 2px; }
+.tcard .treq svg { width: 11px; height: 11px; }
+.rankgate { appearance: none; cursor: pointer; width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; color: #fff; text-align: left;
+  background: linear-gradient(90deg, rgba(155,107,255,.28), rgba(255,194,26,.18)); border: 1px dashed rgba(255,210,61,.7); font-family: var(--font); }
+.rankgate > svg { width: 22px; height: 22px; flex: none; color: #ffd23d; }
+.rankgate .rgt { flex: 1; display: flex; flex-direction: column; }
+.rankgate b { font-size: 14px; font-style: italic; letter-spacing: .5px; }
+.rankgate small { font: 600 11px var(--font-body); color: #c9d8f5; }
+.rankgate.open { border-style: solid; border-color: rgba(47,211,107,.6); background: rgba(47,211,107,.12); }
+.rankgate.open > svg { color: #2fd36b; }
