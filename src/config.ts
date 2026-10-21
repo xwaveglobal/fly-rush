@@ -64,6 +64,17 @@ export type SpeedLevel = 'easy' | 'normal' | 'hard';
 export const V2_POWERUPS = { engine: 2, shield: 2, magnet: 2 };
 
 /**
+ * v2 coin economy (docs/GAME-DESIGN.md §4): coin lines on the road. Specials cost 2,000–6,000, so
+ * coins are scarce on Endless (~40 / min for a good player) and generous on Bonus roads.
+ */
+export const COIN_LINES = {
+  endless: { skip: 0.62, max: 5 },
+  bonus: { skip: 0.4, max: 6 },
+  /** old courses (v1) */
+  course: { skip: 0.18, max: 8 },
+};
+
+/**
  * v2 EXP (docs/GAME-DESIGN.md §1). Run EXP = metres × rate[level]; the player's EXP = best run (never summed).
  * Rates are calibrated (tests/exp.test.ts) so a non-stop run reaches C / B / A / AA / AAA at
  * 3 / 7 / 12 / 20 / 30 min on HARD, ×2 that time on NORMAL and ×3 on EASY.

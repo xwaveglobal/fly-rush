@@ -1992,3 +1992,4 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .bn-rules span { display: block; line-height: 1.35; }
 .bn-rules span svg { display: inline-block; vertical-align: -3px; margin-right: 6px; }
 #hud .scorebox.exp .label svg { width: 13px; height: 13px; }
+.panel.pass[hidden], #hud .mission[hidden] { display: none !important; }

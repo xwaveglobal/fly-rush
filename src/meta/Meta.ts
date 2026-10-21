@@ -169,6 +169,7 @@ export class Meta {
       score: Math.floor(r.score),
       finish: r.finished ? 1 : 0,
       rings: r.rings,
+      exp: Math.floor(r.exp),
     };
     for (const q of questsFor(this.s.dailyDay)) {
       const v = add[q.stat];

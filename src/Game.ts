@@ -6,7 +6,7 @@ import { Input, type Action } from './core/Input.ts';
 import { loadSave, writeSave, type SaveData } from './core/Save.ts';
 import { World, type WorldEvent } from './gameplay/World.ts';
 import { Run, type Feedback, SHIELD_HITS } from './gameplay/Run.ts';
-import { MissionTracker, type MissionStat } from './gameplay/Missions.ts';
+import { MissionTracker } from './gameplay/Missions.ts';
 import { Autopilot } from './gameplay/Autopilot.ts';
 import { Spawner, speedAt, worldAt, WORLDS, type WorldId } from './gameplay/Spawner.ts';
 import { BONUS, BONUS_NAME, BONUS_SECTIONS, bonusState } from './meta/Bonus.ts';
@@ -48,11 +48,11 @@ import { hashStr } from './meta/Leaderboard.ts';
 import { classForScore } from './meta/Rank.ts';
 import { avatarForName } from './ui/avatars.ts';
 import { productBySku, DemoStore, type Store } from './meta/Shop.ts';
-import type { ItemKey, Reward } from './meta/Daily.ts';
+import type { ItemKey, QuestStat, Reward } from './meta/Daily.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v2.0.7';
+const VERSION = 'v2.0.8';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -293,7 +293,7 @@ export class Game {
       setSpeed: (lv) => this.setSpeed(lv),
       nextTrack: () => this.afterResults(() => this.nextTrack()),
       garage: () => this.openGarage(),
-      missions: () => this.openMissions(),
+      missions: () => this.openDaily(), // v2: Daily + Missions merged
       home: () => {
         const back = this.returnTo;
         this.returnTo = null;
@@ -1251,6 +1251,12 @@ export class Game {
    * garage upgrades are refunded as coins, rank starts at D (EXP is measured from the first v2 run).
    */
   private migrateV2() {
+    // v2: Missions merged into Daily — rewards still waiting go to the wallet
+    if (this.save.pendingMissions.length) {
+      this.save.wallet += this.save.pendingMissions.reduce((a, m) => a + m.reward, 0);
+      this.save.pendingMissions = [];
+      this.persist();
+    }
     if (this.save.v2) return;
     let refund = 0;
     for (const k of ['shield', 'turbo', 'magnet', 'double', 'life'] as ItemKey[]) {
@@ -1397,6 +1403,23 @@ export class Game {
     }
   }
 
+  /** v2: the HUD strip shows the next unfinished daily mission, with this race's live progress */
+  private hudQuest: { text: string; stat: QuestStat; mode: 'sum' | 'max'; base: number; target: number } | null = null;
+  private pickHudQuest() {
+    const q = this.tutorialMode ? undefined : this.meta.quests().find((x) => !x.done);
+    this.hudQuest = q ? { text: q.text, stat: q.stat, mode: q.mode, base: q.progress, target: q.target } : null;
+  }
+  private questHud(run: Run) {
+    const q = this.hudQuest;
+    if (!q) return null;
+    const live: Record<QuestStat, number> = {
+      runs: 0, coins: run.coins, distance: Math.floor(run.distance), near: run.nearMiss, powerups: run.powerups,
+      jumps: run.superUsed, score: Math.floor(run.score), finish: 0, rings: run.rings, exp: run.exp,
+    };
+    const v = live[q.stat];
+    return { text: q.text, progress: Math.min(q.target, q.mode === 'max' ? Math.max(q.base, v) : q.base + v), target: q.target };
+  }
+
   /** v2 road of the current run (Endless or Track 2) */
   private variant: Variant = 'endless';
 
@@ -1525,6 +1548,7 @@ export class Game {
     this.runTime = 0;
     this.sectionName = '';
     this.missions.beginRun();
+    this.pickHudQuest();
     this.runMissionsDone = [];
     this.applySkin(this.save.vehicle);
     this.vehicle.resetPose();
@@ -1751,6 +1775,7 @@ export class Game {
     const p = this.world.player;
     if (!p.escape()) return;
     this.run.escapes--;
+    this.run.superUsed++; // counts for "use a special"
     this.spendCarried('escape');
     this.run.invulnT = Math.max(this.run.invulnT, TIMING.escExec + TIMING.escHold + TIMING.escRecover + 0.6);
     this.superFlight = true;
@@ -2041,7 +2066,7 @@ export class Game {
       st.ups = p.stats.ups;
       st.downs = p.stats.downs;
       st.lanes = p.stats.lanes;
-      this.missions.update(st as Record<MissionStat, number>);
+      void st; // v2: Daily + Missions are merged (daily missions update at the end of a race)
     }
 
     // ---- car blockades: the Roadster Jump showcase
@@ -2173,7 +2198,7 @@ export class Game {
 
     // ---- HUD (throttled)
     if (Math.floor(this.time * 20) !== Math.floor((this.time - dt) * 20)) {
-      this.ui.updateHud(run, w.speed, SPEED.max * SPEED.turboMul * LEVELS[this.runLevel].speed, this.missions.active[0]);
+      this.ui.updateHud(run, w.speed, SPEED.max * SPEED.turboMul * LEVELS[this.runLevel].speed, this.questHud(run));
       this.expMilestones(run);
       if (c) this.ui.trackHud({ section: this.sectionName, dist: w.dist, length: c.length, marks: c.sections.slice(1).map((s) => s.from) });
     }

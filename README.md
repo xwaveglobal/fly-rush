@@ -187,6 +187,13 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v2.0.8 changes (v2 step 8 — daily missions & coin balance)
+
+- **Daily + Missions merged**: one daily list (4 missions a day, chests at 30 / 70 / 100 pts) that pays coins; the home "Missions" button opens it. The in-race strip shows the next unfinished daily mission with live progress. The old per-run mission system no longer pays (waiting rewards were moved to the wallet).
+- 7-day check-in pays coins 100 → 400, day 7 = 600 coins + 1 Roadster Jump. New missions: "Earn 1,500 EXP in one race", "Use a special" (SOS counts), "Drive 5,000 m"…
+- Coin balance (`COIN_LINES` in config): Endless ≈ 25–40 coins / min before the speed-level coin bonus (a special costs 2,000–6,000), Bonus roads ≈ 2× denser.
+- XWAVE Pass row hidden; new UI text translated (FR / JA / PT / DE / ES).
+
 ## v2.0.7 changes (v2 step 7 — Bonus events replace cups)
 
 - **Bonus** opens every 2 hours (local 00:00, 02:00, …) for 60 minutes, in a new everyday place each time: **Desert Highway · Pine Forest · Country Road · Ocean Causeway** (new daylight scenery: scrolling sand / grass / fields / sea ground, cacti, mesas, pines, barns, windmills, palm islets, boats, a lighthouse). `meta/Bonus.ts`, `BONUS_WORLDS`.

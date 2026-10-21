@@ -43,17 +43,18 @@ export interface Reward {
   items?: Partial<Record<ItemKey, number>>;
 }
 
+/** v2: daily check-in pays coins (day 7 adds a Roadster Jump to the Magic Bag) */
 export const CHECKIN: Reward[] = [
   { coins: 100 },
   { coins: 150 },
-  { items: { shield: 1, escape: 1 } },
+  { coins: 200 },
   { coins: 250 },
-  { items: { super: 1 }, coins: 100 },
+  { coins: 300 },
   { coins: 400 },
-  { items: { hyper: 1 }, coins: 500 },
+  { coins: 600, items: { super: 1 } },
 ];
 
-export type QuestStat = 'runs' | 'coins' | 'distance' | 'near' | 'powerups' | 'jumps' | 'score' | 'finish' | 'rings';
+export type QuestStat = 'runs' | 'coins' | 'distance' | 'near' | 'powerups' | 'jumps' | 'score' | 'finish' | 'rings' | 'exp';
 
 export interface Quest {
   id: string;
@@ -66,15 +67,15 @@ export interface Quest {
   coins: number;
 }
 
+/** v2: daily missions (Daily + Missions merged) — they pay coins */
 const POOL: Quest[] = [
-  { id: 'runs3', text: 'Play 3 runs', stat: 'runs', target: 3, mode: 'sum', pts: 20, coins: 60 },
-  { id: 'coins150', text: 'Collect 150 coins', stat: 'coins', target: 150, mode: 'sum', pts: 25, coins: 80 },
-  { id: 'dist2k', text: 'Drive 2,000 m in total', stat: 'distance', target: 2000, mode: 'sum', pts: 25, coins: 80 },
+  { id: 'runs3', text: 'Play 3 races', stat: 'runs', target: 3, mode: 'sum', pts: 20, coins: 80 },
+  { id: 'coins150', text: 'Collect 150 coins', stat: 'coins', target: 150, mode: 'sum', pts: 25, coins: 100 },
+  { id: 'dist5k', text: 'Drive 5,000 m in total', stat: 'distance', target: 5000, mode: 'sum', pts: 25, coins: 100 },
+  { id: 'exp1500', text: 'Earn 1,500 EXP in one race', stat: 'exp', target: 1500, mode: 'max', pts: 30, coins: 120 },
   { id: 'near12', text: 'Get 12 near misses', stat: 'near', target: 12, mode: 'sum', pts: 25, coins: 80 },
   { id: 'power4', text: 'Grab 4 power-ups', stat: 'powerups', target: 4, mode: 'sum', pts: 25, coins: 80 },
-  { id: 'jump1', text: 'Use a Roadster Jump', stat: 'jumps', target: 1, mode: 'sum', pts: 30, coins: 100 },
-  { id: 'score3k', text: 'Score 3,000 in one run', stat: 'score', target: 3000, mode: 'max', pts: 30, coins: 100 },
-  { id: 'finish1', text: 'Finish any track', stat: 'finish', target: 1, mode: 'sum', pts: 30, coins: 120 },
+  { id: 'jump1', text: 'Use a special', stat: 'jumps', target: 1, mode: 'sum', pts: 30, coins: 120 },
   { id: 'rings6', text: 'Fly through 6 energy rings', stat: 'rings', target: 6, mode: 'sum', pts: 25, coins: 80 },
 ];
 
@@ -88,9 +89,9 @@ export function questsFor(day: string): Quest[] {
 }
 
 export const CHESTS: { pts: number; reward: Reward }[] = [
-  { pts: 30, reward: { coins: 150 } },
-  { pts: 70, reward: { coins: 200, items: { super: 1, escape: 1 } } },
-  { pts: 100, reward: { coins: 400, items: { super: 2 } } },
+  { pts: 30, reward: { coins: 100 } },
+  { pts: 70, reward: { coins: 150 } },
+  { pts: 100, reward: { coins: 250 } },
 ];
 
 export const rewardText = (r: Reward) => {

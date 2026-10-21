@@ -4,6 +4,25 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-22 — v2.0.3 → v2.0.8: v2 steps 3–8 done (owner: "auto làm đủ hết")
+
+**Done** (details in README per version):
+- 3 Tracks & cars: Endless + Mega Rush (Track 2, opens at AAA, ranks S/SS/SSS) + 3 "coming soon"; cars unlock by rank only; Endless uses the chosen speed level.
+- 4 Specials & coins: one special per race (popup on track tap), buy with coins, Magic Bag rules, AAA teaser specials, coin-only shop, v1 refunds (`save.v2`).
+- 5 Revive by rewarded ad (max 2), interstitial after each race unless Remove Ads.
+- 6 New ~60 s training on first Play.
+- 7 Bonus events every 2 h (desert / forest / country / sea scenery, 30-min road with finish, coins only, auto-firing specials incl. Wall Run / Tunnel Rider / Sky Rail / Phase Ghost) — replaces cups.
+- 8 Daily + Missions merged (coins), coin balance.
+
+**Still in the code but unused** (safe to delete later): old cups (`meta/Events.ts`, events screen), 20 courses (`gameplay/Courses.ts` except the Course type), `MissionTracker`, garage upgrades, XWAVE Pass / bundle code paths.
+
+**Notes / next**
+- Owner to send rear PNGs of Volt / Phantom / Inferno / Nexus (cars are still tints of Zenith).
+- Bonus obstacles still use the neon city props; themed props (rocks, logs, buoys…) would make the places feel more real.
+- All checks were headless (0.5 fps); test feel on a phone: `?rank=A` etc. on localhost.
+
+---
+
 ## 2026-10-22 — v2.0.2: v2 step 2 (difficulty phases & rank gates)
 
 **Done**: GAME-DESIGN §8 step 2 — see README "v2.0.2". Code: `PHASES`/`PHASE_UNLOCK`/`GATE`/`phaseAt`/`rankDist` in `gameplay/Difficulty.ts`; `Spawner.zoneAt`/`phaseSpeed`/`phaseCfg` (Endless only — old courses still use `MAPS`); `World.reset(..., startDist)`; HUD gate strip `UI.gateHud`; `tests/phases.test.ts` in `npm test`.

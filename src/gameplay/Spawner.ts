@@ -1,4 +1,4 @@
-import { HEIGHT, SPEED, WORLD_LENGTH, FAIRNESS } from '../config.ts';
+import { HEIGHT, SPEED, WORLD_LENGTH, FAIRNESS, COIN_LINES } from '../config.ts';
 import { clamp01, lerp } from '../core/math.ts';
 import { Rng } from '../core/Rng.ts';
 import { START_STATE, step, lanesOf, modeIn, MODE_H, MODE_L, stateBit } from './Fairness.ts';
@@ -304,9 +304,10 @@ export class Spawner {
     const lane = this.coinLane;
     const mode = modeIn(reach, lane);
     const gap = row.dist - prevDist;
-    if (gap < 14 || r.chance(0.18)) return; // sometimes leave space empty
+    const cl = this.course ? (this.course.bonus ? COIN_LINES.bonus : COIN_LINES.course) : COIN_LINES.endless;
+    if (gap < 14 || r.chance(cl.skip)) return; // sometimes leave space empty
     const spacing = 3.2;
-    const n = Math.min(8, Math.floor((gap * 0.7) / spacing));
+    const n = Math.min(cl.max, Math.floor((gap * 0.7) / spacing));
     const masked = row.masks[lane] !== PASS_ALL;
     for (let i = 0; i < n; i++) {
       const dist = row.dist - (n - 1 - i) * spacing - (masked ? 0 : 6);

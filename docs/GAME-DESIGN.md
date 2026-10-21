@@ -55,7 +55,7 @@ Không có gì khác để tích luỹ.
 | Đường | Mở khoá | Ghi chú |
 |---|---|---|
 | **Endless** | mở sẵn | đường EXP chính, D → AAA |
-| **Đường 2** | đạt **AAA** | khó hơn, thêm hạng S / SS / SSS. Trước khi mở: hiện mờ + "Đạt AAA để mở" |
+| **Đường 2 · Mega Rush** | đạt **AAA** | bắt đầu khó hơn 2 giai đoạn, EXP ×1,25, hạng S 65.000 / SS 85.000 / SSS 110.000. Trước khi mở: hiện mờ + "Đạt AAA để mở" |
 | Đường 3, 4, 5 | — | chỉ hiện tên + ảnh mờ + "Sắp mở" để gây tò mò |
 | **Bonus** (sự kiện) | mở theo giờ | xem mục 5 |
 
@@ -155,7 +155,7 @@ rank stars / bolts / X-points · sao ★ đường đua · 20 đường cũ · c
 
 ---
 
-## 8. Kế hoạch code (mỗi bước đều chơi được trên `main`)
+## 8. Kế hoạch code (mỗi bước đều chơi được trên `main`) — ĐÃ XONG v2.0.1 → v2.0.8
 
 1. **EXP & hạng**: `RANK_EXP`, EXP trên HUD, logo hạng, profile, bảng xếp hạng EXP, chuyển save.
 2. **Độ khó theo giai đoạn + Cổng hạng**: spawner theo quãng đường, test công bằng cho từng giai đoạn, mô phỏng số phút.

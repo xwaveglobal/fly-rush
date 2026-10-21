@@ -986,7 +986,7 @@ export class UI {
     this.hudCache = {};
   }
 
-  updateHud(run: Run, speed: number, maxSpeed: number, mission: ActiveMission | undefined) {
+  updateHud(run: Run, speed: number, maxSpeed: number, mission: { text: string; progress: number; target: number } | null) {
     // v2: the big number is the run's EXP; the plate next to it is the rank that EXP has reached
     if (this.bonusHud) {
       // v2 Bonus road: coins only — the big number is the coins collected
@@ -1039,12 +1039,13 @@ export class UI {
       .join('');
     this.hset('powers', html, true);
 
+    const mpanel = this.root.querySelector<HTMLElement>('#hud .mission');
+    if (mpanel) mpanel.hidden = !mission;
     if (mission) {
-      const def = missionById(mission.id)!;
-      this.hset('mtext', def.text);
-      this.hset('mprog', `${fmt(mission.progress)}/${fmt(def.target)}`);
+      this.hset('mtext', mission.text);
+      this.hset('mprog', `${fmt(mission.progress)}/${fmt(mission.target)}`);
       const mb = this.root.querySelector<HTMLElement>('[data-h="mbar"]')!;
-      const mw = `${Math.min(100, (mission.progress / def.target) * 100).toFixed(0)}%`;
+      const mw = `${Math.min(100, (mission.progress / mission.target) * 100).toFixed(0)}%`;
       if (mb.style.width !== mw) mb.style.width = mw;
     }
   }
@@ -1724,6 +1725,7 @@ export class UI {
     btn.toggleAttribute('disabled', o.claimedToday);
     btn.innerHTML = o.claimedToday ? `${ICON.check} Come back tomorrow` : `${ICON.gift} Claim day ${o.slot + 1}`;
     const pr = $(this.root, '[data-k="passrow"]');
+    pr.hidden = true; // v2: no XWAVE Pass (the shop sells only coins)
     pr.innerHTML = o.pass.active
       ? `<div class="passin">${ICON.crown}<div><b>XWAVE Pass</b><small>${o.pass.days} days left · 300 coins + 1 Roadster Jump every day</small></div><button class="btn sm gold" data-a="claimpass" ${o.pass.claimed ? 'disabled' : ''}>${o.pass.claimed ? 'Claimed' : 'Claim'}</button></div>`
       : `<div class="passin">${ICON.crown}<div><b>XWAVE Pass</b><small>300 coins + Roadster Jump every day · ×2 quest coins</small></div><button class="btn sm gold" data-a="buy" data-sku="xwave_pass">$4.99</button></div>`;
