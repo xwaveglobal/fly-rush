@@ -314,7 +314,7 @@ export class UI {
         <div class="res-top"><button class="icon-btn sm" data-a="home" aria-label="Close">${ICON.close}</button><img class="res-logo" src="${logoUrl}" alt="" /><button class="icon-btn sm" data-a="share" aria-label="Share">${ICON.share}</button></div>
         <div class="finish-title">FINISH! <small class="label" data-k="ftrack">Future City</small></div>
         <div class="scoreline"><div class="stars big" data-k="fstars"></div><div class="final" data-k="ffinal">0</div><div class="newbest" data-k="fnewbest">${ICON.trophy} NEW BEST!</div></div>
-        <div class="leftover bonus" data-k="fbonus" hidden>${ICON.bag}<span>Track bonus</span><small data-k="fbonustxt"></small><b>BAG</b></div>
+        <div class="leftover bonus" data-k="fbonus" hidden>${BAG_ICON}<span>Track bonus</span><small data-k="fbonustxt"></small><b>BAG</b></div>
         <div class="leftover" data-k="fleft" hidden>${ICON.rocket}<span>Unused boosts</span><small data-k="flefttxt"></small><b data-k="fleftpts">+0</b></div>
         <div class="stats mini">
           <div class="stat"><span class="label">Time</span><span class="v">${ICON.flag}<span data-k="ftime">0</span></span></div>
