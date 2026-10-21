@@ -47,7 +47,7 @@ import type { ItemKey, Reward } from './meta/Daily.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v1.18.6';
+const VERSION = 'v1.18.7';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -2387,9 +2387,11 @@ export class Game {
     // the X1 render shows protection as its own calm aura; the mote cloud is only for 3D bodies
     sh.mesh.visible = !!run && run.shield && this.state !== 'dying' && !this.vehicle.usesSprite;
     // the shield is the hexagon dome; the soft aura is for the other power-ups
-    this.vehicle.auraTarget = run && this.state !== 'dying' && (run.turboT > 0 || run.magnetActive || run.doubleT > 0 || this.world.player.isSuper) ? 1 : 0;
+    // (Turbo and rockets use the flames + smoke render instead of the aura — no double glow)
+    this.vehicle.auraTarget = run && this.state !== 'dying' && (run.magnetActive || run.doubleT > 0) ? 1 : 0;
     this.vehicle.shieldTarget = run && this.state !== 'dying' && run.shield ? 1 : 0;
-    this.vehicle.boostTarget = run && this.state === 'run' && run.turboT > 0 ? 1 : 0;
+    // boost look while Turbo runs or a Roadster / HYPER / SOS rocket is climbing
+    this.vehicle.boostTarget = run && this.state === 'run' && (run.turboT > 0 || (this.world.player.isSuper && this.world.player.vphase !== 'recover')) ? 1 : 0;
     if (sh.mesh.visible) {
       sh.mesh.position.copy(this.vehicle.root.position);
       sh.mesh.quaternion.copy(this.vehicle.root.quaternion);

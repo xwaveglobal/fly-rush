@@ -7,6 +7,7 @@ import { glowTexture, logoTexture, rearBadgeTexture, treadTexture, wheelBlurText
 import { mergeByMaterial } from './merge.ts';
 import type { Player } from '../gameplay/Player.ts';
 import x1Back from '../assets/images/car/x1-back.webp';
+import x1BackBoost from '../assets/images/car/x1-back-boost.webp';
 import x1BackLeft from '../assets/images/car/x1-backleft.webp';
 import x1BackRight from '../assets/images/car/x1-backright.webp';
 import x1Left from '../assets/images/car/x1-left.webp';
@@ -241,6 +242,8 @@ export class Vehicle {
   private dome!: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
   private boostJets: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>[] = [];
   private boostMat!: THREE.ShaderMaterial;
+  /** the boost (flames + smoke) version of the rear render */
+  private boostSprite!: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
   /** 0..1 shield visibility target (set by the game), current value, hit flash */
   shieldTarget = 0;
   private shieldK = 0;
@@ -254,8 +257,9 @@ export class Vehicle {
   }
   /** a short burst of rear light (speed-up moments) */
   boostKick(k = 1) {
-    this.boostK = Math.max(this.boostK, k);
+    this.boostHold = Math.max(this.boostHold, 0.55 * k); // hold the boost look briefly, then release smoothly
   }
+  private boostHold = 0;
   /** comet light trails orbiting the rear tyres */
   private orbits: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>[] = [];
   private orbitMat!: THREE.ShaderMaterial;
@@ -602,10 +606,10 @@ export class Vehicle {
       this.spriteTex[i] = t;
     });
     const mat = new THREE.ShaderMaterial({
-      uniforms: { map: { value: this.spriteTex[0] }, tint: { value: new THREE.Color(0xffffff) }, tintAmt: { value: 0 }, dim: { value: 1 }, gain: { value: 1 }, spin: { value: 0 }, streak: { value: 0 }, spinAmt: { value: 0 }, speedK: { value: 0 }, hot: { value: 0 }, rearView: { value: 1 } },
+      uniforms: { map: { value: this.spriteTex[0] }, fade: { value: 1 }, tint: { value: new THREE.Color(0xffffff) }, tintAmt: { value: 0 }, dim: { value: 1 }, gain: { value: 1 }, spin: { value: 0 }, streak: { value: 0 }, spinAmt: { value: 0 }, speedK: { value: 0 }, hot: { value: 0 }, rearView: { value: 1 } },
       vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
       fragmentShader: `uniform sampler2D map; uniform vec3 tint; uniform float tintAmt; uniform float dim; uniform float gain;
-        uniform float spin; uniform float streak; uniform float spinAmt; uniform float speedK; uniform float hot; uniform float rearView; varying vec2 vUv;
+        uniform float spin; uniform float streak; uniform float spinAmt; uniform float speedK; uniform float hot; uniform float rearView; uniform float fade; varying vec2 vUv;
         void main(){
           vec4 c = texture2D(map, vUv);
           if (c.a < 0.02) discard;
@@ -654,7 +658,7 @@ export class Vehicle {
           // body paint = bright, unsaturated pixels → recolour for the other colourways
           float body = smoothstep(0.34, 0.12, (mx - mn) / max(mx, 0.01)) * smoothstep(0.16, 0.42, l);
           vec3 col = mix(c.rgb, tint * (0.18 + l * 1.25) + vec3(0.06) * l, body * tintAmt);
-          gl_FragColor = vec4(col * gain * dim, c.a);
+          gl_FragColor = vec4(col * gain * dim, c.a * fade);
         }`,
       transparent: true,
       depthWrite: false,
@@ -664,6 +668,23 @@ export class Vehicle {
     this.sprite.visible = false;
     this.sprite.layers.set(OVERLAY_LAYER);
     this.squashG.add(this.sprite);
+    // BOOST LOOK: the same studio render with blue exhaust flames + smoke (owner's art). Same width,
+    // same top edge; the image runs further down for the smoke. Cross-faded in while boosting.
+    {
+      const bt = new THREE.TextureLoader().load(x1BackBoost);
+      bt.colorSpace = THREE.NoColorSpace;
+      bt.anisotropy = 4;
+      const bm = this.sprite.material.clone();
+      bm.uniforms.map.value = bt;
+      bm.uniforms.fade.value = 0;
+      this.boostSprite = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), bm);
+      this.boostSprite.layers.set(OVERLAY_LAYER);
+      this.boostSprite.renderOrder = 3;
+      this.boostSprite.visible = false;
+      this.boostSprite.scale.set(1, TYRE.boostImgH, 1);
+      this.boostSprite.position.set(0, 0.5 - TYRE.boostImgH / 2, 0.0005);
+      this.sprite.add(this.boostSprite);
+    }
     // SHIELD: a translucent hexagon dome over the car (behind it), fresnel-bright rim, shimmering cells
     this.dome = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
       uniforms: { t: { value: 0 }, k: { value: 0 }, hit: { value: 0 } },
@@ -693,7 +714,7 @@ export class Vehicle {
           vec3 col = mix(vec3(0.25, 0.6, 1.0), vec3(0.85, 0.95, 1.0), rim * 0.7 + hit * 0.5);
           float a = (0.06 + rim * 0.55 + lines * (0.35 + 0.25 * shimmer) + sparkle * 0.8) * edge;
           a += smoothstep(0.9, 1.0, e) * edge * 0.6;            // glowing outline
-          a *= k * (1.0 + hit * 1.5);
+          a *= max(k, hit * 0.9) * (1.0 + hit * 1.5);
           gl_FragColor = vec4(col * a, 1.0);
         }`,
       transparent: true,
@@ -1346,13 +1367,30 @@ export class Vehicle {
       this.dome.visible = this.spriteOn && (this.shieldK > 0.02 || this.shieldHitK > 0.02);
       this.dome.scale.set(1.34, 1.62, 1);
       this.dome.position.set(0, -0.5 + 0.81 - 0.06, -0.001);
-      this.boostK = Math.max(this.boostK - dt * 1.6, this.boostTarget);
+      // smooth envelope: quick attack (~0.12 s), soft release (~0.5 s) — no hard image pops
+      this.boostHold = Math.max(0, this.boostHold - dt);
+      const bTarget = Math.max(this.boostTarget, this.boostHold > 0 ? 1 : 0);
+      this.boostK += (bTarget - this.boostK) * (1 - Math.exp(-(bTarget > this.boostK ? TYRE.boostAttack : TYRE.boostRelease) * dt));
       const bu = this.boostMat.uniforms;
       bu.t.value += dt;
       bu.k.value = Math.min(1, this.boostK) * (this.locked ? 0 : 1);
       const len = 0.35 + 0.45 * Math.min(1, this.boostK);
+      // swap to the flames + smoke render while boosting (cross-fade), rear view only
+      const su = this.sprite.material.uniforms;
+      const e = clamp01(this.boostK);
+      const bk = su.rearView.value > 0.5 ? e * e * (3 - 2 * e) : 0; // smoothstep cross-fade
+      const bsu = this.boostSprite.material.uniforms;
+      bsu.fade.value = bk;
+      bsu.tint.value.copy(su.tint.value);
+      bsu.tintAmt.value = su.tintAmt.value;
+      bsu.dim.value = su.dim.value;
+      su.fade.value = 1 - bk;
+      this.boostSprite.visible = this.spriteOn && bk > 0.01;
+      this.boostSprite.renderOrder = this.sprite.renderOrder + 1;
+      // the engines push: a tiny high-frequency shimmy while boosting (sub-pixel → feels like vibration)
+      this.boostSprite.position.x = Math.sin(bu.t.value * 63) * 0.0025 * bk;
       for (const j of this.boostJets) {
-        j.visible = this.spriteOn && this.boostK > 0.02 && this.sprite.material.uniforms.rearView.value > 0.5;
+        j.visible = false; // replaced by the boost render
         j.scale.set(0.16, len, 1);
         j.position.set(j.userData.side * 0.2, -0.3 - len / 2, 0.003);
       }

@@ -117,6 +117,11 @@ export const TYRE = {
   glowY: -0.26,
   glowD: 0.66,
   glowSquash: 0.5,
+  /** boost render height relative to the normal rear render (same width, same top edge) */
+  boostImgH: 954 / 740,
+  /** boost look envelope rates (1/s): attack when it starts, release when it ends */
+  boostAttack: 9,
+  boostRelease: 3,
   /** at speed the tyre spray turns into orange sparks */
   sparkColor: 0xff8a2a,
 };
