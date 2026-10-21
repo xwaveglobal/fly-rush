@@ -92,34 +92,28 @@ export const TYRE = {
   blurFrom: 18,
   blurFull: 50,
   /** rear tyre contact point on the sprite plane (plane units, centre = 0) */
-  spriteX: 0.36,
-  spriteY: -0.47,
+  spriteX: 0.43,
+  spriteY: -0.48,
   /** grit kicked up by the rear tyres while driving fast */
   sprayFrom: 22,
   sprayRate: 28, // particles / s per tyre at full speed
   spraySize: 0.07,
   sprayLife: 0.3,
   sprayColor: 0xb9c6e6,
-  /** spoked rims over the rear tyres: count, wheel radius (m), max spin step per frame (× spoke gap) */
-  spokes: 24,
+  /** wheel radius (m) — drives how fast the light trails circle the tyres */
   radius: 0.36,
-  rimMaxStep: 0.45,
-  /** rim disc placement on the sprite plane (centre = 0), diameter in metres, horizontal squash */
-  rimX: 0.41,
-  rimY: -0.3,
-  rimD: 0.42,
-  rimSquash: 0.42,
-  /** 'streaks' = hot glowing tyres with light trails orbiting them (owner's reference); 'spokes' = spoked rims */
-  style: 'streaks' as 'streaks' | 'spokes',
+  /** rear tyres on the X1 rear render (uv): x < maskX (and > 1 − maskX), y < maskY */
+  maskX: 0.15,
+  maskY: 0.48,
   /** speed (m/s) where the hot-tyre glow starts / is full */
   hotFrom: 14,
   hotFull: 40,
   /** orbit trail speed relative to the wheel's real spin */
   orbitSpeed: 0.35,
   /** orbit glow placement on the sprite plane, diameter (m), horizontal squash */
-  glowX: 0.42,
-  glowY: -0.3,
-  glowD: 0.62,
+  glowX: 0.43,
+  glowY: -0.26,
+  glowD: 0.66,
   glowSquash: 0.5,
   /** at speed the tyre spray turns into orange sparks */
   sparkColor: 0xff8a2a,

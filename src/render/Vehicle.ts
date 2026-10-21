@@ -236,10 +236,7 @@ export class Vehicle {
   /** always show the high-res rear render (cameras stay behind the car) */
   rearOnly = true;
   private sprite!: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
-  /** spoked rims drawn over the two rear tyres of the X1 render (rear view only) */
-  private rims: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>[] = [];
-  private rimMat!: THREE.ShaderMaterial;
-  /** comet light trails orbiting the rear tyres (TYRE.style = 'streaks') */
+  /** comet light trails orbiting the rear tyres */
   private orbits: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>[] = [];
   private orbitMat!: THREE.ShaderMaterial;
   private spriteTex: THREE.Texture[] = [];
@@ -592,8 +589,8 @@ export class Vehicle {
           vec4 c = texture2D(map, vUv);
           if (c.a < 0.02) discard;
           // rolling tyres (rear view): tread bands scroll down the two rear tyres so the wheels visibly spin
-          float lt = step(vUv.x, 0.175) * step(vUv.y, 0.44);
-          float rt = step(0.825, vUv.x) * step(vUv.y, 0.44);
+          float lt = step(vUv.x, ${TYRE.maskX.toFixed(3)}) * step(vUv.y, ${TYRE.maskY.toFixed(3)});
+          float rt = step(${(1 - TYRE.maskX).toFixed(3)}, vUv.x) * step(vUv.y, ${TYRE.maskY.toFixed(3)});
           float tyre = (lt + rt) * rearView;
           // vertical motion blur over the spinning tyres (5 taps) — longer smear the faster the car goes
           if (tyre > 0.5 && spinAmt > 0.01) {
@@ -613,10 +610,10 @@ export class Vehicle {
           // long motion streaks sliding over the rubber (racing tyre at speed), brighter when fast
           float g = fract(vUv.y * 5.0 + streak);
           c.rgb += vec3(0.34, 0.2, 0.1) * (0.6 + 0.8 * speedK) * tyre * rub * spinAmt * smoothstep(0.7, 0.96, g) * smoothstep(1.0, 0.97, g);
-          // "hot tyre" look (TYRE.style = streaks): thin glowing lines wrap the tread and race down it
+          // "hot tyre" look: thin glowing lines wrap the tread and race down it
           if (hot > 0.01 && tyre > 0.5) {
-            float tx = vUv.x < 0.5 ? vUv.x / 0.175 : (1.0 - vUv.x) / 0.175;   // 0 = outer edge … 1 = inner
-            float ty = vUv.y / 0.44;
+            float tx = vUv.x < 0.5 ? vUv.x / ${TYRE.maskX.toFixed(3)} : (1.0 - vUv.x) / ${TYRE.maskX.toFixed(3)};   // 0 = outer edge … 1 = inner
+            float ty = vUv.y / ${TYRE.maskY.toFixed(3)};
             float hl = 0.0;
             for (int i = 0; i < 6; i++) {
               float fi = float(i);
@@ -645,42 +642,7 @@ export class Vehicle {
     this.sprite.renderOrder = 2;
     this.sprite.visible = false;
     this.squashG.add(this.sprite);
-    // spoked rims: a disc per rear tyre, seen at an angle (ellipse). Spokes turn by at most
-    // TYRE.rimMaxStep of a spoke gap per frame (always reads as rolling forward), and a rotational
-    // blur + light streaks grow with speed so the wheels look like they spin flat out.
-    this.rimMat = new THREE.ShaderMaterial({
-      uniforms: { rot: { value: 0 }, blur: { value: 0 }, amt: { value: 0 }, glow: { value: new THREE.Color(0x39b6ff) }, dim: { value: 1 } },
-      vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-      fragmentShader: `uniform float rot; uniform float blur; uniform float amt; uniform vec3 glow; uniform float dim; varying vec2 vUv;
-        const float N = ${TYRE.spokes.toFixed(1)};
-        // one spoke set at angle offset o: thin lines, widened by the rotational blur
-        float spokes(float a, float o){
-          float k = abs(cos((a - rot - o) * N * 0.5));
-          float w = mix(0.93, 0.55, blur);
-          return smoothstep(w, w + 0.05 + 0.3 * blur, k);
-        }
-        void main(){
-          vec2 p = vUv * 2.0 - 1.0;
-          float r = length(p);
-          if (r > 1.0) discard;
-          float a = atan(p.y, p.x);
-          // no disc: only the spokes (and their smear) are drawn over the tyre of the render
-          float span = 0.5 * blur * 6.2831 / N;            // smear across up to half a spoke gap
-          float sp = 0.0;
-          for (int t = 0; t < 5; t++) sp += spokes(a, span * (float(t) / 4.0 - 0.5));
-          sp /= 5.0;
-          float band = smoothstep(0.14, 0.24, r) * smoothstep(0.98, 0.86, r);
-          // fast spin: radial speed streaks sliding around + a faint hub glow
-          float streak = pow(abs(sin((a - rot * 1.7) * 3.0)), 24.0) * blur;
-          vec3 col = mix(vec3(0.82, 0.86, 0.95), glow, 0.25) * (1.0 + 0.4 * blur);
-          float alpha = (sp * (0.85 - 0.25 * blur) + streak * 0.45) * band;
-          alpha += smoothstep(0.16, 0.05, r) * 0.55;       // small hub cap
-          gl_FragColor = vec4(col * dim, clamp(alpha, 0.0, 1.0) * amt);
-        }`,
-      transparent: true,
-      depthWrite: false,
-    });
-    // TYRE.style = 'streaks': glowing comet trails orbit each rear tyre (additive light, like a hot
+    // glowing comet trails orbit each rear tyre (additive light, like a hot
     // racing tyre at speed). Smooth arcs never strobe, so they may turn as fast as the wheel.
     this.orbitMat = new THREE.ShaderMaterial({
       uniforms: { rot: { value: 0 }, amt: { value: 0 }, k: { value: 0 } },
@@ -720,14 +682,6 @@ export class Vehicle {
       g.visible = false;
       this.sprite.add(g);
       this.orbits.push(g);
-    }
-    for (const side of [-1, 1]) {
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.rimMat);
-      m.userData.side = side;
-      m.renderOrder = 3;
-      m.visible = false;
-      this.sprite.add(m);
-      this.rims.push(m);
     }
     // soft contact shadow so the car sits on the road
     const sc = document.createElement('canvas');
@@ -827,7 +781,6 @@ export class Vehicle {
     const over = this.airK > 0.55;
     if (this.sprite.material.depthTest === over) {
       this.sprite.material.depthTest = !over;
-      this.rimMat.depthTest = !over;
       this.orbitMat.depthTest = !over;
       this.aura.material.depthTest = !over;
       this.jetMat.depthTest = !over;
@@ -1261,33 +1214,17 @@ export class Vehicle {
       u.streak.value = (u.streak.value + Math.min(speed * dt * TYRE.streaksPerMetre, TYRE.maxStep)) % 1000;
       u.spinAmt.value = clamp01(speed / 8) * (1 - p.air);
       u.speedK.value = clamp01((speed - TYRE.blurFrom) / (TYRE.blurFull - TYRE.blurFrom)) * (1 - p.air);
-      // rims: real wheel speed is ω = v / r; the drawn step is capped below half a spoke gap per frame
-      const gap = (Math.PI * 2) / TYRE.spokes;
-      const step = Math.min((speed / TYRE.radius) * dt, gap * TYRE.rimMaxStep);
-      const ru = this.rimMat.uniforms;
-      ru.rot.value = (ru.rot.value + step) % (Math.PI * 2);
-      ru.blur.value = clamp01(((speed / TYRE.radius) * dt) / gap - 0.15) * (1 - p.air);
-      ru.amt.value = u.rearView.value * (1 - p.air) * (this.locked ? 0 : 1);
-      ru.dim.value = u.dim.value;
-      ru.glow.value.setHex(this.skin.glow);
       const sx = this.sprite.scale.x, sy = this.sprite.scale.y;
-      const streaks = TYRE.style === 'streaks';
       const hotK = clamp01((speed - TYRE.hotFrom) / (TYRE.hotFull - TYRE.hotFrom));
-      u.hot.value = streaks ? hotK * u.rearView.value * (1 - p.air) * (this.locked ? 0 : 1) : 0;
+      u.hot.value = hotK * u.rearView.value * (1 - p.air) * (this.locked ? 0 : 1);
       const ou = this.orbitMat.uniforms;
       ou.rot.value = (ou.rot.value + Math.min((speed / TYRE.radius) * dt * TYRE.orbitSpeed, 1.2)) % (Math.PI * 200);
       ou.k.value = hotK;
-      ou.amt.value = streaks ? (0.25 + 0.75 * hotK) * clamp01(speed / 10) * u.rearView.value * (1 - p.air) * (this.locked ? 0 : 1) * u.dim.value : 0;
+      ou.amt.value = (0.25 + 0.75 * hotK) * clamp01(speed / 10) * u.rearView.value * (1 - p.air) * (this.locked ? 0 : 1) * u.dim.value;
       for (const g of this.orbits) {
         g.visible = this.spriteOn && ou.amt.value > 0.02;
         g.position.set(g.userData.side * TYRE.glowX, TYRE.glowY, 0.002);
         g.scale.set((TYRE.glowD * TYRE.glowSquash) / sx, TYRE.glowD / sy, 1);
-      }
-      for (const m of this.rims) {
-        m.visible = !streaks && this.spriteOn && ru.amt.value > 0.02;
-        // sprite-local placement (the sprite plane is 1×1, scaled to the car)
-        m.position.set(m.userData.side * TYRE.rimX, TYRE.rimY, 0.001);
-        m.scale.set((TYRE.rimD * TYRE.rimSquash) / sx, TYRE.rimD / sy, 1);
       }
     }
     this.updateSprite(vy, this.bank.rotation.z);
