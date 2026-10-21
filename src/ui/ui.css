@@ -1974,3 +1974,21 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .spick .mhead h2 svg { width: 22px; height: 22px; flex: none; }
 .cont-panel .contleft { margin: 0; font: 700 13px/1.35 var(--font-body); color: #ffc9da; text-align: center; }
 .cont-panel .contleft b { color: #fff; }
+
+/* v2 — Bonus event card */
+.bonusm { display: flex; flex-direction: column; gap: 10px; }
+.bonusm .mhead h2 { display: flex; align-items: center; gap: 6px; }
+.bonusm .mhead h2 svg { width: 22px; height: 22px; }
+.bn-hero { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 16px 10px 12px; border-radius: 16px; text-align: center;
+  background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--cc) 55%, transparent), rgba(10,14,40,.6)); border: 1px solid color-mix(in srgb, var(--cc) 60%, transparent); }
+.bn-hero .bn-ic { font-size: 46px; line-height: 1; }
+.bn-hero b { font: 900 22px var(--font); font-style: italic; letter-spacing: .5px; }
+.bn-hero small { font: 700 12px var(--font-body); color: #dbe6ff; display: flex; align-items: center; gap: 6px; }
+.bn-rules { display: flex; flex-direction: column; gap: 6px; }
+.bn-rules span { display: flex; align-items: center; gap: 7px; padding: 6px 9px; border-radius: 10px; background: var(--card); border: 1px solid var(--card-rim); font: 600 12px var(--font-body); color: #dbe6ff; }
+.bn-rules span svg { width: 16px; height: 16px; flex: none; }
+.bn-rules span b { color: #fff; }
+.bn-next { text-align: center; }
+.bn-rules span { display: block; line-height: 1.35; }
+.bn-rules span svg { display: inline-block; vertical-align: -3px; margin-right: 6px; }
+#hud .scorebox.exp .label svg { width: 13px; height: 13px; }

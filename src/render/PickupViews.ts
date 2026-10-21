@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Pool } from '../core/Pool.ts';
 import type { LivePickup } from '../gameplay/World.ts';
 import type { PickupKind } from '../gameplay/types.ts';
-import { coinFaceTexture, glowTexture, iconTexture } from './textures.ts';
+import { coinFaceTexture, glowTexture, iconTexture, labelTexture } from './textures.ts';
 
 const MAX_COINS = 220;
 
@@ -105,6 +105,11 @@ export const POWER_COLORS: Record<Exclude<PickupKind, 'coin'>, number> = {
   super: 0x9b6bff,
   dash: 0x2ee6c8,
   escape: 0xff5a3c,
+  hyper: 0xffc21a,
+  ghost: 0xcfe0ff,
+  wall: 0x9b6bff,
+  rail: 0xffc21a,
+  tunnel: 0x5ee6ff,
 };
 
 interface PowerView {
@@ -180,6 +185,23 @@ function buildPower(kind: Exclude<PickupKind, 'coin'>): PowerView {
       icon = new THREE.Mesh(
         new THREE.PlaneGeometry(1.1, 1.1),
         new THREE.MeshBasicMaterial({ map: iconTexture('2x'), transparent: true, side: THREE.DoubleSide, toneMapped: false, depthWrite: false }),
+      );
+      break;
+    }
+    case 'hyper': {
+      const g = new THREE.Group();
+      g.add(new THREE.Mesh(extrude(rocketShape()), mat));
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.06, 8, 32), new THREE.MeshBasicMaterial({ color: 0xfff3a0, toneMapped: false }));
+      g.add(ring);
+      icon = g;
+      break;
+    }
+    default: {
+      // Bonus showcase specials: a labelled badge
+      const label = { ghost: 'GHOST', wall: 'WALL', rail: 'RAIL', tunnel: 'ROOF' }[kind as 'ghost' | 'wall' | 'rail' | 'tunnel'] ?? '?';
+      icon = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.3, 1.3),
+        new THREE.MeshBasicMaterial({ map: labelTexture(label, color), transparent: true, side: THREE.DoubleSide, toneMapped: false, depthWrite: false }),
       );
       break;
     }

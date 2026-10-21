@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import type { WorldId } from '../gameplay/Spawner.ts';
 import { damp } from '../core/math.ts';
 import { Rng } from '../core/Rng.ts';
-import { billboardTexture, cloudSeaTexture, cloudTexture, glowTexture, logoTexture, starfieldTexture, windowsTexture } from './textures.ts';
+import { billboardTexture, cloudSeaTexture, cloudTexture, glowTexture, groundTexture, logoTexture, starfieldTexture, windowsTexture } from './textures.ts';
+import type { BonusWorld } from '../gameplay/Spawner.ts';
 import { wrapZ } from './Track.ts';
 import { bakeVertexColors } from './merge.ts';
 
@@ -43,6 +44,23 @@ export const LOOKS: Record<WorldId, ThemeLook> = {
   space: {
     skyTop: 0x000005, skyMid: 0x050a22, skyBottom: 0x101a4a, fog: 0x070c26, fogNear: 80, fogFar: 380,
     hemiSky: 0x8fb4ff, hemiGround: 0x101530, hemi: 0.9, sun: 0xc8dcff, sunI: 2.0, accent: 0x5ad1ff, stars: 1, cloudSea: 0, cloudTint: 0x2a3a7a, openAir: false,
+  },
+  // ---- v2 Bonus roads: daylight, everyday places
+  desert: {
+    skyTop: 0x2f78d6, skyMid: 0x8fc4f0, skyBottom: 0xffe0b0, fog: 0xf0d2a8, fogNear: 90, fogFar: 420,
+    hemiSky: 0xfff2dc, hemiGround: 0xc08850, hemi: 1.25, sun: 0xfff0d0, sunI: 2.6, accent: 0xff8a2a, stars: 0, cloudSea: 0, cloudTint: 0xffffff, openAir: true,
+  },
+  forest: {
+    skyTop: 0x2a6ac8, skyMid: 0x86b8e8, skyBottom: 0xd8ecf0, fog: 0xa8c8c0, fogNear: 60, fogFar: 330,
+    hemiSky: 0xe6f6ff, hemiGround: 0x3a6a3a, hemi: 1.15, sun: 0xfff4d8, sunI: 2.2, accent: 0x3dff8b, stars: 0, cloudSea: 0, cloudTint: 0xffffff, openAir: true,
+  },
+  country: {
+    skyTop: 0x3a86e0, skyMid: 0x9fd0f6, skyBottom: 0xf6f0d0, fog: 0xd6e6d8, fogNear: 90, fogFar: 420,
+    hemiSky: 0xffffff, hemiGround: 0x7a9a4a, hemi: 1.2, sun: 0xfff6dc, sunI: 2.4, accent: 0xffc21a, stars: 0, cloudSea: 0, cloudTint: 0xffffff, openAir: true,
+  },
+  sea: {
+    skyTop: 0x1a6ad8, skyMid: 0x7ac0f4, skyBottom: 0xe8f6ff, fog: 0xb8dcf0, fogNear: 100, fogFar: 460,
+    hemiSky: 0xf0faff, hemiGround: 0x2a6a9a, hemi: 1.2, sun: 0xfff8e8, sunI: 2.5, accent: 0x2fd3ff, stars: 0, cloudSea: 0, cloudTint: 0xffffff, openAir: true,
   },
   mega: {
     skyTop: 0x0b1440, skyMid: 0x3a3c9a, skyBottom: 0xff9a7a, fog: 0x5a5aa8, fogNear: 60, fogFar: 330,
@@ -483,6 +501,224 @@ function buildSpace(): Theme {
   };
 }
 
+// ------------------------------------------------------------------ v2 Bonus roads
+const std = (color: number, extra: THREE.MeshStandardMaterialParameters = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.85, flatShading: true, ...extra });
+
+/** low causeway world: a scrolling textured ground just under the road + props on both sides */
+function buildBonus(id: BonusWorld): Theme {
+  const rng = new Rng(id.length * 101 + 7);
+  const group = new THREE.Group();
+  const GROUND_Y = -5;
+  const tex = groundTexture(id).clone();
+  tex.needsUpdate = true;
+  const tile = id === 'country' ? 60 : 24;
+  tex.repeat.set(600 / tile, 900 / tile);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(600, 900), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95 }));
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.set(0, GROUND_Y, -420);
+  group.add(ground);
+  // road embankment: a dark strip under the deck so the road reads as a causeway
+  const bank = new THREE.Mesh(new THREE.BoxGeometry(12, 4.6, 900), std(id === 'sea' ? 0x8a8f99 : 0x6a5a48));
+  bank.position.set(0, GROUND_Y + 2.1, -420);
+  group.add(bank);
+
+  const near = new Scroller(480);
+  const far = new Scroller(620);
+  const spin: THREE.Object3D[] = [];
+  const side = (i: number) => (i % 2 ? 1 : -1);
+  const place = (o: THREE.Object3D, i: number, x0: number, x1: number, sc: Scroller, range: number, y = GROUND_Y) => {
+    o.position.set(side(i) * rng.range(x0, x1), y, 0);
+    o.rotation.y = rng.range(0, Math.PI * 2);
+    group.add(o);
+    sc.add(o, rng.range(0, range));
+  };
+
+  if (id === 'desert') {
+    const cactusM = std(0x3f8f4a);
+    for (let i = 0; i < 26; i++) {
+      const c = new THREE.Group();
+      const h = rng.range(2.5, 5);
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, h, 7), cactusM);
+      trunk.position.y = h / 2;
+      c.add(trunk);
+      for (const s of [-1, 1]) {
+        if (rng.chance(0.3)) continue;
+        const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 1.6, 6), cactusM);
+        arm.position.set(s * 0.7, h * rng.range(0.45, 0.7), 0);
+        c.add(arm);
+        const elbow = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.6, 6), cactusM);
+        elbow.rotation.z = Math.PI / 2;
+        elbow.position.set(s * 0.45, arm.position.y - 0.7, 0);
+        c.add(elbow);
+      }
+      place(c, i, 8, 40, near, 480);
+    }
+    const duneM = std(0xe2ad6a);
+    for (let i = 0; i < 14; i++) {
+      const d = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), duneM);
+      d.scale.set(rng.range(10, 22), rng.range(2, 5), rng.range(8, 16));
+      place(d, i, 22, 90, near, 480);
+    }
+    const mesaM = std(0xc0683a);
+    for (let i = 0; i < 8; i++) {
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(rng.range(14, 24), rng.range(20, 30), rng.range(18, 36), 7), mesaM);
+      place(m, i, 110, 220, far, 620, GROUND_Y + 8);
+    }
+  } else if (id === 'forest') {
+    const leaf = [std(0x2f6b34), std(0x3d8040), std(0x24572b)];
+    const trunkM = std(0x6a4a2e);
+    const cone = new THREE.ConeGeometry(1, 1, 7);
+    for (let i = 0; i < 70; i++) {
+      const t = new THREE.Group();
+      const h = rng.range(6, 13);
+      const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.35, h * 0.3, 6), trunkM);
+      tr.position.y = h * 0.15;
+      t.add(tr);
+      for (let k = 0; k < 3; k++) {
+        const c = new THREE.Mesh(cone, leaf[(i + k) % 3]);
+        c.scale.set(h * (0.32 - k * 0.07), h * 0.42, h * (0.32 - k * 0.07));
+        c.position.y = h * (0.42 + k * 0.2);
+        t.add(c);
+      }
+      place(t, i, 7.5, 55, near, 480);
+    }
+    const hillM = std(0x3a7040);
+    for (let i = 0; i < 8; i++) {
+      const h = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), hillM);
+      h.scale.set(rng.range(50, 90), rng.range(20, 40), rng.range(40, 70));
+      place(h, i, 120, 220, far, 620, GROUND_Y - 6);
+    }
+  } else if (id === 'country') {
+    const barnM = std(0xb8342a);
+    const roofM = std(0x4a3a36);
+    const whiteM = std(0xf2efe6);
+    for (let i = 0; i < 8; i++) {
+      const b = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.BoxGeometry(8, 5, 6), barnM);
+      body.position.y = 2.5;
+      b.add(body);
+      const roof = new THREE.Mesh(new THREE.CylinderGeometry(4.6, 4.6, 6.2, 3, 1, false), roofM);
+      roof.rotation.set(Math.PI / 2, 0, Math.PI / 2);
+      roof.scale.set(1, 1, 0.55);
+      roof.position.y = 6;
+      b.add(roof);
+      const door = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 3.2), whiteM);
+      door.position.set(0, 1.6, 3.01);
+      b.add(door);
+      place(b, i, 20, 60, near, 480);
+    }
+    const hayM = std(0xe0c060);
+    for (let i = 0; i < 22; i++) {
+      const h = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1.4, 12), hayM);
+      h.rotation.z = Math.PI / 2;
+      place(h, i, 8, 45, near, 480, GROUND_Y + 1);
+    }
+    const leafM = std(0x4f8f3a);
+    for (let i = 0; i < 20; i++) {
+      const t = new THREE.Group();
+      const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 3, 6), std(0x6a4a2e));
+      tr.position.y = 1.5;
+      t.add(tr);
+      const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(2.4, 0), leafM);
+      crown.position.y = 4.4;
+      t.add(crown);
+      place(t, i, 9, 60, near, 480);
+    }
+    // windmills (blades turn)
+    for (let i = 0; i < 4; i++) {
+      const w = new THREE.Group();
+      const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.8, 22, 8), whiteM);
+      tower.position.y = 11;
+      w.add(tower);
+      const hub = new THREE.Group();
+      hub.position.set(0, 22, 0.9);
+      for (let k = 0; k < 3; k++) {
+        const blade = new THREE.Mesh(new THREE.BoxGeometry(0.5, 9, 0.15), whiteM);
+        blade.position.y = 4.5;
+        const arm = new THREE.Group();
+        arm.rotation.z = (k * Math.PI * 2) / 3;
+        arm.add(blade);
+        hub.add(arm);
+      }
+      w.add(hub);
+      spin.push(hub);
+      place(w, i, 50, 110, far, 620);
+      w.rotation.y = 0;
+    }
+  } else {
+    // sea: palm islets, boats, a lighthouse
+    const sandM = std(0xf0d8a0);
+    const palmM = std(0x3a9a4a);
+    const trunkM = std(0x8a6a44);
+    for (let i = 0; i < 12; i++) {
+      const is = new THREE.Group();
+      const sand = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), sandM);
+      sand.scale.set(rng.range(6, 12), 1.6, rng.range(6, 10));
+      is.add(sand);
+      for (let k = 0; k < 2; k++) {
+        const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 6, 6), trunkM);
+        tr.position.set(k * 2 - 1, 3, 0);
+        tr.rotation.z = (k ? -1 : 1) * 0.2;
+        is.add(tr);
+        const crown = new THREE.Mesh(new THREE.ConeGeometry(2.4, 1.2, 7), palmM);
+        crown.position.set(k * 2 - 1 + (k ? -0.6 : 0.6), 6.2, 0);
+        is.add(crown);
+      }
+      place(is, i, 18, 80, near, 480, GROUND_Y + 0.2);
+    }
+    const hullM = std(0xf4f4f4);
+    const sailM = std(0xfff6e0, { side: THREE.DoubleSide });
+    for (let i = 0; i < 8; i++) {
+      const b = new THREE.Group();
+      const hull = new THREE.Mesh(new THREE.BoxGeometry(2, 1, 6), hullM);
+      hull.position.y = 0.5;
+      b.add(hull);
+      const sail = new THREE.Mesh(new THREE.ConeGeometry(2, 6, 3), sailM);
+      sail.position.y = 4;
+      b.add(sail);
+      place(b, i, 14, 70, near, 480, GROUND_Y + 0.1);
+      spin.push(b);
+    }
+    const lh = new THREE.Group();
+    const towerM = std(0xffffff);
+    const stripeM = std(0xe0302a);
+    for (let k = 0; k < 4; k++) {
+      const seg = new THREE.Mesh(new THREE.CylinderGeometry(1.6 - k * 0.2, 1.8 - k * 0.2, 4, 10), k % 2 ? stripeM : towerM);
+      seg.position.y = 2 + k * 4;
+      lh.add(seg);
+    }
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(1.2, 10, 8), new THREE.MeshBasicMaterial({ color: 0xfff3a0, toneMapped: false }));
+    lamp.position.y = 17.5;
+    lh.add(lamp);
+    place(lh, 1, 40, 60, far, 620);
+  }
+
+  // a few fluffy clouds everywhere
+  const clouds = new Scroller(520);
+  const cm = new THREE.SpriteMaterial({ map: cloudTexture(), color: 0xffffff, transparent: true, opacity: 0.85, depthWrite: false, fog: true });
+  for (let i = 0; i < 14; i++) {
+    const c = new THREE.Sprite(cm);
+    c.position.set(side(i) * rng.range(30, 160), rng.range(30, 70), 0);
+    c.scale.setScalar(rng.range(30, 60));
+    group.add(c);
+    clouds.add(c, rng.range(0, 520));
+  }
+
+  return {
+    group,
+    update(dist, t) {
+      tex.offset.y = (dist / tile) % 1;
+      near.update(dist, t);
+      far.update(dist * 0.5, t);
+      clouds.update(dist * 0.2, t);
+      for (const s of spin) {
+        if (id === 'country') s.rotation.z = t * 0.9;
+        else s.position.y = GROUND_Y + 0.1 + Math.sin(t * 1.3 + s.position.x) * 0.15;
+      }
+    },
+  };
+}
+
 /**
  * Sky dome, cloud sea, lights and the five themed scenery sets. Themes are
  * built lazily the first time they're needed; transitions blend sky/fog/light.
@@ -576,7 +812,13 @@ export class Scenery {
   private ensure(id: WorldId) {
     let t = this.themes.get(id);
     if (!t) {
-      t = id === 'city' ? buildCity(false) : id === 'mega' ? buildCity(true) : id === 'tunnel' ? buildTunnel() : id === 'cloud' ? buildCloud() : buildSpace();
+      t =
+        id === 'city' ? buildCity(false)
+        : id === 'mega' ? buildCity(true)
+        : id === 'tunnel' ? buildTunnel()
+        : id === 'cloud' ? buildCloud()
+        : id === 'space' ? buildSpace()
+        : buildBonus(id);
       t.group.visible = false;
       this.group.add(t.group);
       this.themes.set(id, t);

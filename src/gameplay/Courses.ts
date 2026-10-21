@@ -34,6 +34,8 @@ export interface Course {
   unlockScore?: number;
   /** rank class gate (tracks 11–20 need class A) */
   needClass?: 'A';
+  /** v2 Bonus event road: coins only, specials on the road fire by themselves */
+  bonus?: boolean;
 }
 
 /**

@@ -49,7 +49,9 @@ export interface RowSpec {
   occludes?: boolean;
 }
 
-export type PickupKind = 'coin' | 'shield' | 'magnet' | 'turbo' | 'double' | 'life' | 'super' | 'dash' | 'escape';
+export type PickupKind = 'coin' | 'shield' | 'magnet' | 'turbo' | 'double' | 'life' | 'super' | 'dash' | 'escape'
+  // v2 Bonus-road specials: fire by themselves on pickup (showcase of the AAA specials)
+  | 'hyper' | 'ghost' | 'wall' | 'rail' | 'tunnel';
 
 export interface PickupSpec {
   kind: PickupKind;

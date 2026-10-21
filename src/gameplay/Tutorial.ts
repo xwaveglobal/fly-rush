@@ -188,6 +188,10 @@ export const WORLD_LESSONS: Record<WorldId, { name: string; lessons: string[] }>
   cloud: { name: 'Cloud City', lessons: ['crate', 'platform', 'ring', 'beam', 'traffic'] },
   space: { name: 'Space Zone', lessons: ['asteroid', 'laserLow', 'asteroid', 'ring', 'crate'] },
   mega: { name: 'XWAVE Megacity', lessons: ['traffic', 'gate', 'laserHigh', 'laserBlock', 'beam'] },
+  desert: { name: 'Desert Highway', lessons: ['crate', 'traffic', 'barrier', 'ring'] },
+  forest: { name: 'Pine Forest', lessons: ['crate', 'beam', 'barrier', 'ring'] },
+  country: { name: 'Country Road', lessons: ['traffic', 'crate', 'barrier', 'ring'] },
+  sea: { name: 'Ocean Causeway', lessons: ['crate', 'beam', 'traffic', 'ring'] },
 };
 
 export function advancedScript(world: WorldId): TrainingScript {

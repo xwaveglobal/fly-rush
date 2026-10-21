@@ -35,17 +35,18 @@ export interface PatternDef {
   worlds: WorldId[];
 }
 
-const ALL: WorldId[] = ['city', 'cloud', 'tunnel', 'space', 'mega'];
+const BONUS_ROADS: WorldId[] = ['desert', 'forest', 'country', 'sea'];
+const ALL: WorldId[] = ['city', 'cloud', 'tunnel', 'space', 'mega', ...BONUS_ROADS];
 
 export const PATTERNS: Record<PatternKey, PatternDef> = {
-  crate: { key: 'crate', id: 'P01', name: 'Single blocker · 2 safe lanes', tier: 1, actions: ['left', 'right', 'up'], minGap: 0, recovery: 0, occludes: false, worlds: ['city', 'cloud', 'tunnel', 'space', 'mega'] },
+  crate: { key: 'crate', id: 'P01', name: 'Single blocker · 2 safe lanes', tier: 1, actions: ['left', 'right', 'up'], minGap: 0, recovery: 0, occludes: false, worlds: ALL },
   barrier: { key: 'barrier', id: 'P03', name: 'Low barrier · fly up or switch', tier: 1, actions: ['up', 'left', 'right'], minGap: 0, recovery: 0, occludes: false, worlds: ALL },
   ring: { key: 'ring', id: 'P06', name: 'Energy ring · coin route', tier: 1, actions: ['none'], minGap: 0, recovery: 0, occludes: false, worlds: ALL },
   asteroid: { key: 'asteroid', id: 'P11', name: 'Asteroid · switch lane', tier: 1, actions: ['left', 'right'], minGap: 0, recovery: 0, occludes: false, worlds: ['space'] },
   beam: { key: 'beam', id: 'P04', name: 'Overhead beam · fly down', tier: 2, actions: ['down', 'left', 'right'], minGap: 0, recovery: 0, occludes: false, worlds: ALL },
   low2: { key: 'low2', id: 'P02', name: 'Two blockers · 1 safe lane', tier: 2, actions: ['left', 'right', 'up'], minGap: 0.75, recovery: 0, occludes: false, worlds: ALL },
-  traffic: { key: 'traffic', id: 'P12', name: 'Oncoming vehicle', tier: 2, actions: ['left', 'right'], minGap: 0.75, recovery: 0, occludes: false, worlds: ['city', 'cloud', 'space', 'mega'] },
-  trafficMix: { key: 'trafficMix', id: 'P13', name: 'Vehicle + blocker', tier: 2, actions: ['left', 'right', 'up', 'down'], minGap: 0.8, recovery: 0.15, occludes: false, worlds: ['city', 'mega'] },
+  traffic: { key: 'traffic', id: 'P12', name: 'Oncoming vehicle', tier: 2, actions: ['left', 'right'], minGap: 0.75, recovery: 0, occludes: false, worlds: ['city', 'cloud', 'space', 'mega', ...BONUS_ROADS] },
+  trafficMix: { key: 'trafficMix', id: 'P13', name: 'Vehicle + blocker', tier: 2, actions: ['left', 'right', 'up', 'down'], minGap: 0.8, recovery: 0.15, occludes: false, worlds: ['city', 'mega', 'desert', 'country'] },
   crateBeam: { key: 'crateBeam', id: 'P05', name: 'Alternating blockers', tier: 2, actions: ['left', 'right', 'up', 'down'], minGap: 0.75, recovery: 0, occludes: false, worlds: ALL },
   asteroid2: { key: 'asteroid2', id: 'P14', name: 'Two asteroids · 1 safe lane', tier: 2, actions: ['left', 'right'], minGap: 0.8, recovery: 0.1, occludes: false, worlds: ['space'] },
   drone: { key: 'drone', id: 'P07', name: 'Moving drone · predictable sweep', tier: 2, actions: ['left', 'right', 'up'], minGap: 0.8, recovery: 0.1, occludes: false, worlds: [] }, // drone removed from the game (no spawns)
@@ -85,6 +86,11 @@ export const MAPS: Record<WorldId, MapDifficultyConfig> = {
   cloud: { world: 'cloud', target: 4, tiers: [0.62, 0.35, 0.03, 0], maxBlockers: 2, minGap: 1.08, slack: 0.22, maxConsecutiveHard: 1, recovery: 0.5, density: 0.95, movingSpeed: 0.8, warmup: 200 },
   tunnel: { world: 'tunnel', target: 5, tiers: [0.42, 0.43, 0.15, 0], maxBlockers: 2, minGap: 0.98, slack: 0.19, maxConsecutiveHard: 1, recovery: 0.45, density: 1, movingSpeed: 0.9, warmup: 150 },
   space: { world: 'space', target: 7, tiers: [0.3, 0.42, 0.23, 0.05], maxBlockers: 2, minGap: 0.9, slack: 0.15, maxConsecutiveHard: 2, recovery: 0.4, density: 1, movingSpeed: 1, warmup: 120 },
+  // Bonus roads: lively but friendly (coins + showcase specials are the point)
+  desert: { world: 'desert', target: 4, tiers: [0.55, 0.42, 0.03, 0], maxBlockers: 2, minGap: 1.05, slack: 0.22, maxConsecutiveHard: 1, recovery: 0.5, density: 0.9, movingSpeed: 0.8, warmup: 250 },
+  forest: { world: 'forest', target: 4, tiers: [0.55, 0.42, 0.03, 0], maxBlockers: 2, minGap: 1.05, slack: 0.22, maxConsecutiveHard: 1, recovery: 0.5, density: 0.9, movingSpeed: 0.8, warmup: 250 },
+  country: { world: 'country', target: 4, tiers: [0.55, 0.42, 0.03, 0], maxBlockers: 2, minGap: 1.05, slack: 0.22, maxConsecutiveHard: 1, recovery: 0.5, density: 0.9, movingSpeed: 0.8, warmup: 250 },
+  sea: { world: 'sea', target: 4, tiers: [0.55, 0.42, 0.03, 0], maxBlockers: 2, minGap: 1.05, slack: 0.22, maxConsecutiveHard: 1, recovery: 0.5, density: 0.9, movingSpeed: 0.8, warmup: 250 },
   mega: { world: 'mega', target: 8, tiers: [0.2, 0.37, 0.33, 0.1], maxBlockers: 2, minGap: 0.84, slack: 0.13, maxConsecutiveHard: 2, recovery: 0.4, density: 1, movingSpeed: 1.1, warmup: 120 },
 };
 

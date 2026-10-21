@@ -8,7 +8,11 @@ import { World, type WorldEvent } from './gameplay/World.ts';
 import { Run, type Feedback, SHIELD_HITS } from './gameplay/Run.ts';
 import { MissionTracker, type MissionStat } from './gameplay/Missions.ts';
 import { Autopilot } from './gameplay/Autopilot.ts';
-import { speedAt, worldAt, WORLDS, type WorldId } from './gameplay/Spawner.ts';
+import { Spawner, speedAt, worldAt, WORLDS, type WorldId } from './gameplay/Spawner.ts';
+import { BONUS, BONUS_NAME, BONUS_SECTIONS, bonusState } from './meta/Bonus.ts';
+
+/** Bonus roads start a little into the difficulty curve (friendly, but not empty) */
+const BONUS_DIFF_OFFSET = 900;
 import { Renderer } from './render/Renderer.ts';
 import { CameraRig } from './render/CameraRig.ts';
 import { Vehicle, SKINS, carVisibility } from './render/Vehicle.ts';
@@ -48,7 +52,7 @@ import type { ItemKey, Reward } from './meta/Daily.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v2.0.6';
+const VERSION = 'v2.0.7';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -66,6 +70,10 @@ const WORLD_NAMES: Record<WorldId, string> = {
   cloud: 'CLOUD CITY',
   space: 'SPACE ZONE',
   mega: 'XWAVE MEGACITY',
+  desert: 'DESERT HIGHWAY',
+  forest: 'PINE FOREST',
+  country: 'COUNTRY ROAD',
+  sea: 'OCEAN CAUSEWAY',
 };
 
 const POWER_LABEL: Record<Exclude<PickupKind, 'coin'>, string> = {
@@ -77,6 +85,11 @@ const POWER_LABEL: Record<Exclude<PickupKind, 'coin'>, string> = {
   super: 'ROADSTER JUMP',
   dash: 'AIR DASH',
   escape: 'SKY ESCAPE',
+  hyper: 'HYPER JUMP',
+  ghost: 'PHASE GHOST',
+  wall: 'WALL RUN',
+  rail: 'SKY RAIL',
+  tunnel: 'TUNNEL RIDER',
 };
 
 const POWER_SUB: Record<Exclude<PickupKind, 'coin'>, string> = {
@@ -88,6 +101,11 @@ const POWER_SUB: Record<Exclude<PickupKind, 'coin'>, string> = {
   super: 'tap ROADSTER to launch',
   dash: 'flip across 2 lanes',
   escape: 'tap SOS to fly up',
+  hyper: 'fires by itself',
+  ghost: 'through everything · AAA special',
+  wall: 'along the wall · AAA special',
+  rail: 'glide the sky rail · AAA special',
+  tunnel: 'ride the roof · AAA special',
 };
 
 const POWER_ICON: Record<Exclude<PickupKind, 'coin'>, string> = {
@@ -99,6 +117,11 @@ const POWER_ICON: Record<Exclude<PickupKind, 'coin'>, string> = {
   super: ICON.rocket,
   dash: ICON.dash,
   escape: ICON.sos,
+  hyper: ICON.hyper,
+  ghost: ICON.shield,
+  wall: ICON.dash,
+  rail: ICON.rocket,
+  tunnel: ICON.rocket,
 };
 
 /**
@@ -280,7 +303,8 @@ export class Game {
       settings: () => this.openSettings(),
       closeModal: () => this.showHome(),
       daily: () => this.openDaily(),
-      events: () => this.openEvents(),
+      events: () => this.openBonus(),
+      bonusGo: () => this.startBonus(),
       ranks: () => this.openRanks(),
       shop: () => this.openShop(),
       guide: () => {
@@ -521,11 +545,7 @@ export class Game {
     this.audio.intensity = 0;
     this.returnTo = null;
     this.showHome();
-    this.pendingRes = this.meta.pendingResults();
-    if (this.pendingRes.length) {
-      this.ui.eventResults(this.pendingRes);
-      this.ui.show('start', 'eventres');
-    }
+    this.pendingRes = []; // v2: cups are gone (Bonus events pay at the finish line)
   }
 
   /** Home screen without resetting the world (closing a modal / page). */
@@ -536,9 +556,7 @@ export class Game {
     this.meta.rollover();
     this.ui.refreshProfile(this.save);
     this.ui.freeCoins(this.freeCoinsLeft(), ADS.freeCoinsAmount);
-    const cup = this.meta.myCup();
-    const next = this.meta.nextCup();
-    const best = cup ? this.meta.cupBest(cup) : 0;
+    const bs = bonusState();
     this.ui.myClass = this.meta.cls;
     this.ui.homeSync({
       name: this.meta.name,
@@ -546,11 +564,11 @@ export class Game {
       best: this.save.best,
       avatar: this.save.avatar,
       bolts: this.save.expBest,
-      weekRank: this.save.weekBest > 0 ? this.meta.weekly().you.rank : null,
+      weekRank: this.save.expWeek > 0 ? this.meta.weekly().you.rank : null,
       dailyBadge: this.meta.dailyBadge(),
-      cup: cup
-        ? { live: true, name: cup.cup.name, div: cup.division, color: cup.cup.color, text: `ends in ${fmtLeft(cup.end - Date.now())}`, rank: best > 0 ? this.meta.cupBoard(cup).you.rank : null }
-        : { live: false, name: next.cup.name, div: next.division, color: next.cup.color, text: `starts ${localTime(next.start)} · in ${fmtLeft(next.start - Date.now())}`, rank: null },
+      bonus: bs.live
+        ? { live: true, name: BONUS_NAME[bs.live.theme], theme: bs.live.theme, text: `open · ${fmtLeft(bs.live.end - Date.now())} left` }
+        : { live: false, name: BONUS_NAME[bs.next.theme], theme: bs.next.theme, text: `opens ${localTime(bs.next.start)} · in ${fmtLeft(bs.next.start - Date.now())}` },
       sale: !this.save.starterBought,
       pass: this.meta.passActive,
     });
@@ -1184,7 +1202,7 @@ export class Game {
       k: p.k,
       need: p.need,
       best: this.save.best,
-      weekRank: this.save.weekBest > 0 ? this.meta.weekly().you.rank : null,
+      weekRank: this.save.expWeek > 0 ? this.meta.weekly().you.rank : null,
       runs: this.save.totalRuns,
       trophies: this.save.trophies,
       car: (SKINS.find((x) => x.id === this.save.vehicle) ?? SKINS[0]).name,
@@ -1305,6 +1323,80 @@ export class Game {
     this.startTrack(this.pickTrackId);
   }
 
+  // ------------------------------------------------------------- v2 Bonus events
+  openBonus() {
+    this.audio.play('click');
+    const bs = bonusState();
+    const now = Date.now();
+    this.ui.bonusSync({
+      live: !!bs.live,
+      theme: (bs.live ?? bs.next).theme,
+      name: BONUS_NAME[(bs.live ?? bs.next).theme],
+      left: bs.live ? fmtLeft(bs.live.end - now) : '',
+      opens: bs.live ? '' : `${localTime(bs.next.start)} · in ${fmtLeft(bs.next.start - now)}`,
+      next: bs.live ? `${BONUS_NAME[bs.next.theme]} · ${localTime(bs.next.start)}` : '',
+      finish: Math.round(BONUS.finishCoins * LEVELS[this.save.settings.speed].reward),
+    });
+  }
+
+  /** a 30-minute Bonus road in today's place, with a FINISH line — coins only */
+  startBonus() {
+    const bs = bonusState();
+    if (!bs.live) {
+      this.ui.toast(`${ICON.clock} Next Bonus opens ${localTime(bs.next.start)}`, '#ffc21a');
+      return;
+    }
+    this.ui.hideOverlay('bonus');
+    const level = this.save.settings.speed;
+    const theme = bs.live.theme;
+    // the finish line sits where 30 minutes of non-stop driving end (no turbo)
+    const sp = new Spawner();
+    sp.level = level;
+    sp.speedMul = LEVELS[level].speed;
+    sp.course = { id: 'probe', name: '', world: theme, length: 1, diffOffset: BONUS_DIFF_OFFSET, difficulty: 2, coinTarget: 0, reward: 0, sections: [] };
+    let d = 0;
+    for (let t = 0; t < BONUS.raceMinutes * 60; t += 0.1) d += sp.speed(d) * 0.1;
+    const length = Math.round(d / 100) * 100;
+    const names = BONUS_SECTIONS[theme];
+    const seg = length / names.length;
+    this.tutorialMode = false;
+    this.course = {
+      id: `bonus-${bs.live.key}`,
+      name: BONUS_NAME[theme],
+      world: theme,
+      length,
+      diffOffset: BONUS_DIFF_OFFSET,
+      difficulty: 2,
+      coinTarget: 0,
+      reward: BONUS.finishCoins,
+      bonus: true,
+      sections: names.map((n, i) => ({ name: n, from: Math.round(i * seg), to: Math.round((i + 1) * seg), density: i === 0 ? 0.75 : 1 })),
+    };
+    this.startRun();
+  }
+
+  /** v2 Bonus specials: picked up → fire at once (no button) */
+  private showcaseK: 'ghost' | 'wall' | 'rail' | 'tunnel' | null = null;
+  private showcaseT = 0;
+  private showcaseDur = 0;
+  private autoSpecial(k: PickupKind) {
+    if (!this.course?.bonus || this.state !== 'run') return;
+    if (k === 'super' || k === 'hyper') {
+      if (this.world.player.air > 0.05 || this.superFlight) return; // already flying: keep the charge for the button
+      this.launchSuperJump(k === 'hyper');
+      return;
+    }
+    if (k === 'ghost' || k === 'wall' || k === 'rail' || k === 'tunnel') {
+      this.showcaseK = k;
+      this.showcaseDur = this.showcaseT = { ghost: 4.5, wall: 4, rail: 5, tunnel: 4 }[k];
+      this.run.invulnT = Math.max(this.run.invulnT, this.showcaseT + 0.6);
+      this.vehicle.boostKick(0.6);
+      this.rig.fovKick += 6;
+      this.audio.play('warp');
+      this.vibrate(25);
+    }
+  }
+
   /** v2 road of the current run (Endless or Track 2) */
   private variant: Variant = 'endless';
 
@@ -1377,7 +1469,7 @@ export class Game {
     this.ui.tutPrompt(null);
     const car = SKINS.find((x) => x.id === this.save.vehicle) ?? SKINS[0];
     this.run = new Run({ ...V2_POWERUPS }, LEVELS[level].score * (1 + (car.bonus ?? 0) / 100)); // v2: same power-ups for everyone
-    this.run.expRate = this.tutorialMode ? 0 : expRate(level, this.course ? 'endless' : this.variant);
+    this.run.expRate = this.tutorialMode || this.course ? 0 : expRate(level, this.variant); // Bonus roads pay coins only
     this.run.distance = startDist;
     this.gateShown = '';
     this.runRank = 'D';
@@ -1395,7 +1487,10 @@ export class Game {
     }
     // v2: ONE special per race, picked before the start; it leaves the Magic Bag only when it is used
     this.carried = null;
-    if (!this.tutorialMode) {
+    this.showcaseK = null;
+    this.showcaseT = 0;
+    this.ui.bonusHud = !!this.course?.bonus;
+    if (!this.tutorialMode && !this.course?.bonus) {
       const k = this.save.special ?? null;
       if (k && this.save.items[k] > 0) {
         this.carried = k;
@@ -2211,6 +2306,7 @@ export class Game {
           // big pickup title zooms out toward the player (steady glow, no screen flash)
           this.ui.bigPickup(POWER_LABEL[k], '#' + POWER_COLORS[k].toString(16).padStart(6, '0'), POWER_ICON[k], k === 'shield' ? `blocks ${SHIELD_HITS} hits` : POWER_SUB[k]);
           if (k !== 'turbo') this.vibrate(14);
+          this.autoSpecial(k);
           if (k === 'turbo') {
             this.vibrate([40, 30, 40]);
             this.vehicle.boostKick(1);
@@ -2370,7 +2466,7 @@ export class Game {
     this.ui.tutorial(false);
     this.audio.play('mission');
     this.audio.intensity = 0;
-    this.ui.banner(this.tutorialMode ? 'PILOT TRAINING' : 'TRACK COMPLETE', this.tutorialMode ? 'COMPLETE!' : 'FINISH!');
+    this.ui.banner(this.tutorialMode ? 'PILOT TRAINING' : this.course?.bonus ? 'BONUS ROAD' : 'TRACK COMPLETE', this.tutorialMode ? 'COMPLETE!' : 'FINISH!');
     this.timeScale = this.timeScaleTarget = 1;
     this.ui.tutPrompt(null);
     // confetti + celebration rings
@@ -2389,6 +2485,22 @@ export class Game {
     const c = this.course!;
     this.finishShown = true;
     this.missions.endRun();
+    if (c.bonus) {
+      // v2 Bonus: finish line pays coins (× speed-level coin multiplier) — no stars, no EXP
+      const lv = LEVELS[this.runLevel];
+      const reward = Math.round((BONUS.finishCoins * lv.reward) / 10) * 10;
+      const speedBonus = Math.round(run.coins * (lv.reward - 1));
+      this.save.wallet += run.coins + speedBonus + reward;
+      this.save.totalRuns++;
+      this.recordMeta(true);
+      this.persist();
+      this.ui.finish({ rewards: null, track: `BONUS · ${c.name}`, stars: 0, score: run.coins + speedBonus + reward, isBest: false, time: this.runTime, coins: run.coins, coinTarget: 0, lost: this.livesLost, reward, speedBonus, level: lv.label, hasNext: false, bonus: true });
+      this.ui.show('finish');
+      this.lastResult = { coins: run.coins, reward, doubled: false };
+      this.ui.adButton('ad2xf', 'ready');
+      this.ads.runEnded();
+      return;
+    }
     const stars = 1 + (this.livesLost === 0 ? 1 : 0) + (run.coins >= c.coinTarget ? 1 : 0);
     const lv = LEVELS[this.runLevel];
     const reward = Math.round((c.reward * stars * lv.reward) / 3 / 10) * 10;
@@ -2468,8 +2580,8 @@ export class Game {
     this.track.setAccent(new THREE.Color(this.scenery.accent));
     this.applyReadability();
     this.track.setOpenAir(this.scenery.openAir);
-    const idx = WORLDS.indexOf(id) + 1;
-    this.ui.banner(`WORLD ${idx}`, WORLD_NAMES[id]);
+    const idx = (WORLDS as readonly WorldId[]).indexOf(id) + 1;
+    this.ui.banner(idx > 0 ? `WORLD ${idx}` : 'BONUS', WORLD_NAMES[id]);
     this.ui.flash();
     this.audio.play('warp');
     this.rig.fovKick += 10;
@@ -2496,6 +2608,16 @@ export class Game {
     if (this.state !== 'countdown') {
       this.scenery.update(w.dist, this.time, dt);
       this.track.update(w.dist);
+    }
+    // v2 Bonus showcase specials: eased in / out over the effect
+    if (this.showcaseT > 0) {
+      this.showcaseT = Math.max(0, this.showcaseT - dt);
+      if (this.showcaseT <= 0) this.showcaseK = null;
+    }
+    {
+      const el = this.showcaseDur - this.showcaseT;
+      const e = this.showcaseK ? Math.min(1, el / 0.45, this.showcaseT / 0.45) : 0;
+      this.vehicle.showcase = this.showcaseK ? { kind: this.showcaseK, e: e * e * (3 - 2 * e) } : null;
     }
     if (this.state !== 'dying' && this.state !== 'gameover') this.vehicle.update(p, dt, w.speed, turbo);
     this.tyreSpray(dt, w.speed);

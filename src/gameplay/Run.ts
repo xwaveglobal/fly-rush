@@ -225,6 +225,9 @@ export class Run {
       case 'escape':
         this.escapes = Math.min(2, this.escapes + 1);
         break;
+      case 'hyper':
+        this.hyperJumps = 1;
+        break;
       default:
         break;
     }

@@ -606,3 +606,90 @@ export function disposeTextures() {
   for (const t of cache.values()) t.dispose();
   cache.clear();
 }
+
+/** v2 Bonus roads: tiling ground textures (sand · grass · fields · water). */
+export function groundTexture(kind: 'desert' | 'forest' | 'country' | 'sea') {
+  return memo(`ground-${kind}`, () => {
+    const [c, g] = canvas(256, 256);
+    const rnd = (() => {
+      let a = kind.length * 977;
+      return () => ((a = (a * 16807) % 2147483647) / 2147483647);
+    })();
+    if (kind === 'desert') {
+      g.fillStyle = '#e8b878';
+      g.fillRect(0, 0, 256, 256);
+      // wind ripples
+      for (let y = 0; y < 256; y += 6) {
+        g.strokeStyle = y % 12 ? 'rgba(160,100,50,.18)' : 'rgba(255,240,210,.25)';
+        g.lineWidth = 2;
+        g.beginPath();
+        for (let x = 0; x <= 256; x += 8) g.lineTo(x, y + Math.sin((x / 256) * Math.PI * 4 + y * 0.3) * 3);
+        g.stroke();
+      }
+      for (let i = 0; i < 60; i++) {
+        g.fillStyle = `rgba(150,95,45,${0.1 + rnd() * 0.15})`;
+        g.fillRect(rnd() * 256, rnd() * 256, 2, 2);
+      }
+    } else if (kind === 'forest') {
+      g.fillStyle = '#3f7d3a';
+      g.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 900; i++) {
+        g.fillStyle = rnd() < 0.5 ? 'rgba(30,80,30,.35)' : 'rgba(120,170,80,.25)';
+        g.fillRect(rnd() * 256, rnd() * 256, 3, 3);
+      }
+    } else if (kind === 'country') {
+      // patchwork fields
+      const cols = ['#8fbf4a', '#c9b44a', '#6fa83d', '#d9c46a', '#5f9a3a', '#a8c85a'];
+      for (let y = 0; y < 256; y += 64)
+        for (let x = 0; x < 256; x += 128) {
+          g.fillStyle = cols[Math.floor(rnd() * cols.length)];
+          g.fillRect(x, y, 128, 64);
+          g.strokeStyle = 'rgba(0,0,0,.12)';
+          for (let k = 4; k < 64; k += 8) {
+            g.beginPath();
+            g.moveTo(x, y + k);
+            g.lineTo(x + 128, y + k);
+            g.stroke();
+          }
+        }
+      g.strokeStyle = 'rgba(70,90,40,.6)';
+      g.lineWidth = 3;
+      g.strokeRect(0, 0, 256, 256);
+    } else {
+      g.fillStyle = '#1f7fb8';
+      g.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 140; i++) {
+        const x = rnd() * 256;
+        const y = rnd() * 256;
+        g.strokeStyle = `rgba(220,245,255,${0.15 + rnd() * 0.3})`;
+        g.lineWidth = 1.5;
+        g.beginPath();
+        g.moveTo(x, y);
+        g.quadraticCurveTo(x + 6, y - 3, x + 12, y);
+        g.stroke();
+      }
+    }
+    return toTex(c, { repeat: true });
+  });
+}
+
+/** round badge with a short word (Bonus-road showcase specials) */
+export function labelTexture(text: string, color: number) {
+  return memo(`label-${text}-${color}`, () => {
+    const [c, g] = canvas(256, 256);
+    const hex = '#' + color.toString(16).padStart(6, '0');
+    g.beginPath();
+    g.arc(128, 128, 112, 0, Math.PI * 2);
+    g.fillStyle = 'rgba(10,14,40,.85)';
+    g.fill();
+    g.lineWidth = 14;
+    g.strokeStyle = hex;
+    g.stroke();
+    g.font = `900 ${text.length > 4 ? 58 : 70}px "Arial Black", Arial, sans-serif`;
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillStyle = '#ffffff';
+    g.fillText(text, 128, 134);
+    return toTex(c);
+  });
+}

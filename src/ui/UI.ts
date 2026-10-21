@@ -77,6 +77,8 @@ export interface UIHandlers {
   chooseSpecial(k: string): void;
   buySpecial(k: string): void;
   goRace(): void;
+  /** v2 Bonus event: start today's road */
+  bonusGo(): void;
   nextTrack(): void;
   setSpeed(level: 'easy' | 'normal' | 'hard'): void;
   /** open the training intro */
@@ -215,6 +217,9 @@ const ITEM_NAME: Record<ItemKey, string> = { super: 'Roadster Jump', hyper: 'HYP
 /** what each v2 special does, in one line */
 const SPECIAL_LINE: Record<SpecialKey, string> = { escape: 'Rocket straight up when a crash is coming', super: 'Hop over a whole block of obstacles', hyper: 'Fly high over a long stretch' };
 /** icons of the teaser specials (unlock at AAA, try them in Bonus) */
+/** Bonus places: card colour + emoji */
+const BONUS_COLOR: Record<string, string> = { desert: '#ff9a3c', forest: '#3dbf6a', country: '#e8c040', sea: '#2fb6ff' };
+const BONUS_EMOJI: Record<string, string> = { desert: '🌵', forest: '🌲', country: '🌾', sea: '🌊' };
 const LOCKED_ICON: Record<string, string> = {
   tunnel: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20V12a9 9 0 0 1 18 0v8" fill="none" stroke="#7fe6ff" stroke-width="2"/><path d="M7 20v-7a5 5 0 0 1 10 0v7" fill="none" stroke="#7fe6ff" stroke-width="1.4" opacity=".6"/><rect x="8.5" y="1.6" width="7" height="3.4" rx="1.2" fill="#fff"/></svg>`,
   wall: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18M6 3v18" stroke="#9b6bff" stroke-width="2"/><path d="M9 16l6-4-6-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 16l6-4-6-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/></svg>`,
@@ -361,7 +366,7 @@ export class UI {
       <div class="mid">
       <div class="rail left">
         <button class="rbtn" data-a="daily"><span class="ri g-daily">${ICON.calendar}</span><span class="rl">Daily</span><em class="badge" data-k="dailybadge" hidden>1</em></button>
-        <button class="rbtn" data-a="events"><span class="ri g-cups">${ICON.cup}</span><span class="rl">Cups</span><em class="tag live">LIVE</em></button>
+        <button class="rbtn" data-a="events"><span class="ri g-cups">${ICON.gift}</span><span class="rl">Bonus</span><em class="tag live">OPEN</em></button>
         <button class="rbtn" data-a="ranks"><span class="ri g-ranks">${ICON.podium}</span><span class="rl">Ranks</span></button>
       </div>
       <div class="rail right">
@@ -512,6 +517,13 @@ export class UI {
       </div>
     </section>
 
+    <section id="bonus" class="screen overlay">
+      <div class="panel modal bonusm">
+        <div class="mhead"><h2>${ICON.gift} BONUS</h2><button class="icon-btn sm" data-a="closeov" data-v="bonus" aria-label="Close">${ICON.close}</button></div>
+        <div data-k="bnbody"></div>
+      </div>
+    </section>
+
     <section id="rankguide" class="screen overlay">
       <div class="panel modal rguide">
         <div class="mhead"><h2>${XPT} EXP &amp; RANK</h2><button class="icon-btn sm" data-a="closeov" data-v="rankguide" aria-label="Close">${ICON.close}</button></div>
@@ -531,7 +543,7 @@ export class UI {
     <section id="hud" class="screen passthrough">
       <div class="row">
         <button class="icon-btn hit" data-a="pause" aria-label="Pause">${ICON.pause}</button>
-        <div class="scorebox panel exp"><div class="label">${XPT}EXP</div><div class="val"><span data-h="score">0</span><span class="rankp" data-h="rankp"></span></div></div>
+        <div class="scorebox panel exp"><div class="label" data-h="scorelabel">${XPT}EXP</div><div class="val"><span data-h="score">0</span><span class="rankp" data-h="rankp"></span></div></div>
         <div class="side">
           <span class="pill coins">${ICON.coin}<b data-h="coins">0</b></span>
           <span class="pill">${ICON.flag}<b data-h="dist">0 m</b></span>
@@ -718,6 +730,7 @@ export class UI {
         case 'spick': return this.h.chooseSpecial(el.dataset.v ?? '');
         case 'sbuy': return this.h.buySpecial(el.dataset.v!);
         case 'sgo': return this.h.goRace();
+        case 'bonusgo': return this.h.bonusGo();
         case 'slocked': return this.toast(`${ICON.lock} Opens at rank AAA · try it now in a Bonus event`, '#b7a6ff');
         case 'soon': return this.toast(`${ICON.lock} New track coming soon — keep climbing the ranks!`, '#b7a6ff');
         case 'rankgate': return this.rankGuide();
@@ -956,6 +969,9 @@ export class UI {
     else el.textContent = v;
   }
 
+  /** v2: HUD shows Bonus coins instead of EXP */
+  bonusHud = false;
+
   /** v2: rank-gate strip under the HUD (null = hidden) */
   gateHud(g: { next: RankClass; k: number } | null) {
     const el = this.root.querySelector<HTMLElement>('[data-h="gatebar"]');
@@ -972,8 +988,16 @@ export class UI {
 
   updateHud(run: Run, speed: number, maxSpeed: number, mission: ActiveMission | undefined) {
     // v2: the big number is the run's EXP; the plate next to it is the rank that EXP has reached
-    this.hset('score', fmt(run.exp));
-    this.hset('rankp', run.expRate > 0 ? classBadge(classOfBolts(run.exp)) : '', true);
+    if (this.bonusHud) {
+      // v2 Bonus road: coins only — the big number is the coins collected
+      this.hset('scorelabel', `${ICON.coin}BONUS COINS`, true);
+      this.hset('score', fmt(run.coins));
+      this.hset('rankp', '', true);
+    } else {
+      this.hset('scorelabel', `${XPT}EXP`, true);
+      this.hset('score', fmt(run.exp));
+      this.hset('rankp', run.expRate > 0 ? classBadge(classOfBolts(run.exp)) : '', true);
+    }
     this.hset('coins', fmt(run.coins));
     this.hset('dist', `${fmt(run.distance)} m`);
     this.hset('kmh', fmt(speed * 3.6));
@@ -1368,9 +1392,10 @@ export class UI {
     this.hset('tmarks', o.marks.map((m) => `<s style="left:${((m / o.length) * 100).toFixed(2)}%"></s>`).join(''), true);
   }
 
-  finish(o: { track: string; stars: number; score: number; isBest: boolean; time: number; coins: number; coinTarget: number; lost: number; reward: number; hasNext: boolean; rewards: RunRewards | null; speedBonus: number; level: string; leftover?: { pts: number; items: string } | null; bonusItems?: string[] }) {
+  finish(o: { track: string; stars: number; score: number; isBest: boolean; time: number; coins: number; coinTarget: number; lost: number; reward: number; hasNext: boolean; rewards: RunRewards | null; speedBonus: number; level: string; leftover?: { pts: number; items: string } | null; bonusItems?: string[]; bonus?: boolean }) {
     this.setAll('ftrack', o.track);
-    $(this.root, '[data-k="fstars"]').innerHTML = this.starsHtml(o.stars);
+    $(this.root, '[data-k="fstars"]').innerHTML = o.bonus ? '' : this.starsHtml(o.stars);
+    $(this.root, '[data-k="frules"]').hidden = !!o.bonus;
     this.setAll('ffinal', fmt(o.score));
     $(this.root, '[data-k="fnewbest"]').classList.toggle('show', o.isBest);
     const m = Math.floor(o.time / 60);
@@ -1487,7 +1512,7 @@ export class UI {
   /** the player's own class (for their avatar plate) */
   myClass: RankClass = 'D';
 
-  homeSync(o: { name: string; color: string; best: number; avatar: number; bolts: number; weekRank: number | null; dailyBadge: number; cup: { live: boolean; name: string; div: RankClass; color: string; text: string; rank: number | null }; sale: boolean; pass: boolean }) {
+  homeSync(o: { name: string; color: string; best: number; avatar: number; bolts: number; weekRank: number | null; dailyBadge: number; bonus: { live: boolean; name: string; theme: string; text: string }; sale: boolean; pass: boolean }) {
     this.setAll('pname', o.name);
     $(this.root, '[data-k="ava"]').innerHTML = avaHtml(o.avatar, this.myClass, o.pass ? 'pass' : '');
     $(this.root, '[data-k="pline"]').innerHTML = `${classBadge(this.myClass)}<span class="prank">${o.weekRank ? `#${fmt(o.weekRank)}` : '#—'}</span><span class="pbolt">${BOLT}${fmt(o.bolts)}</span>`;
@@ -1495,11 +1520,29 @@ export class UI {
     b.hidden = o.dailyBadge <= 0;
     b.textContent = String(o.dailyBadge);
     $(this.root, '[data-k="saletag"]').hidden = !o.sale;
-    const c = o.cup;
+    // v2: the strip shows the Bonus event (open now / next one)
+    const c = o.bonus;
     const strip = $(this.root, '[data-k="cupstrip"]');
-    strip.style.setProperty('--cc', c.color);
-    strip.innerHTML = `<span class="ci">${ICON.cup}</span><span class="ct"><b>${classBadge(c.div)} ${c.name}</b><small>${c.live ? '<em class="live">LIVE</em> ' : '<em class="soon">NEXT</em> '}${c.text}${c.rank ? ` · you #${fmt(c.rank)}` : ''}</small></span><span class="cgo">${ICON.chevR}</span>`;
+    strip.style.setProperty('--cc', BONUS_COLOR[c.theme] ?? '#ffc21a');
+    strip.innerHTML = `<span class="ci">${ICON.gift}</span><span class="ct"><b>BONUS · ${c.name}</b><small>${c.live ? '<em class="live">OPEN</em> ' : '<em class="soon">NEXT</em> '}${c.text} · coins</small></span><span class="cgo">${ICON.chevR}</span>`;
     this.root.querySelectorAll<HTMLElement>('.rbtn .tag.live').forEach((t) => (t.hidden = !c.live));
+  }
+
+  /** v2 Bonus event card: today's place, time left / next opening, rules, RACE */
+  bonusSync(o: { live: boolean; theme: string; name: string; left: string; opens: string; next: string; finish: number }) {
+    $(this.root, '[data-k="bnbody"]').innerHTML = `
+      <div class="bn-hero" style="--cc:${BONUS_COLOR[o.theme] ?? '#ffc21a'}" data-theme="${o.theme}"><span class="bn-ic">${BONUS_EMOJI[o.theme] ?? '🏁'}</span><b>${o.name}</b>
+        <small>${o.live ? `<em class="live">OPEN</em> ${o.left} left` : `<em class="soon">NEXT</em> ${o.opens}`}</small></div>
+      <div class="bn-rules">
+        <span>${ICON.clock}<b>30-minute road</b> with a finish line</span>
+        <span>${ICON.coin}<b>Coins only</b> · finish bonus ${ICON.coin}${fmt(o.finish)}</span>
+        <span>${ICON.rocket}<b>Specials on the road</b> fire by themselves — even the AAA ones</span>
+        <span>${ICON.gift}<b>Every 2 hours</b>, open for 60 minutes · a new place each time</span>
+      </div>
+      ${o.live ? `<button class="btn big gold" data-a="bonusgo">${ICON.play} Race the Bonus</button>` : `<button class="btn big" disabled>${ICON.lock} Opens ${o.opens}</button>`}
+      ${o.next ? `<div class="label bn-next">Next: ${o.next}</div>` : ''}`;
+    this.screens.bonus.classList.add('show');
+    this.scheduleFit();
   }
 
   /** own profile (editable) or a rival's card */

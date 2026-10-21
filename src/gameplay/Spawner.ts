@@ -18,7 +18,10 @@ export function speedAt(dist: number) {
 
 // endless world order follows the difficulty ladder: 2/10 → 4 → 6 → 8 → 9
 export const WORLDS = ['city', 'cloud', 'tunnel', 'space', 'mega'] as const;
-export type WorldId = (typeof WORLDS)[number];
+/** v2 Bonus event roads (docs/GAME-DESIGN.md §5): everyday places, one per event, rotating */
+export const BONUS_WORLDS = ['desert', 'forest', 'country', 'sea'] as const;
+export type BonusWorld = (typeof BONUS_WORLDS)[number];
+export type WorldId = (typeof WORLDS)[number] | BonusWorld;
 export const TRACK2_WORLDS: WorldId[] = ['mega', 'space', 'tunnel'];
 export const worldAt = (dist: number): WorldId => WORLDS[Math.floor(dist / WORLD_LENGTH) % WORLDS.length];
 
@@ -316,6 +319,22 @@ export class Spawner {
       }
       let kind: PickupKind = 'coin';
       if (dist >= this.nextPowerAt && i === Math.floor(n / 2)) {
+        if (this.course?.bonus) {
+          // v2 Bonus road: a parade of specials that fire by themselves (incl. the AAA teasers)
+          kind = r.weighted<PickupKind>([
+            { w: 2, v: 'magnet' },
+            { w: 1.2, v: 'double' },
+            { w: 2.2, v: 'super' },
+            { w: 1.2, v: 'hyper' },
+            { w: 1.4, v: 'ghost' },
+            { w: 1.4, v: 'wall' },
+            { w: 1.2, v: 'rail' },
+            { w: 1.2, v: 'tunnel' },
+          ]);
+          this.nextPowerAt = dist + r.range(170, 280);
+          this.pickups.push({ kind, lane, dist, y });
+          continue;
+        }
         // v2 Endless / Track 2: specials (Roadster, SOS…) and extra lives are never on the road
         const v1 = !!this.course;
         kind = r.weighted<PickupKind>([

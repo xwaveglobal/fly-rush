@@ -43,6 +43,11 @@ export const READABILITY: Record<WorldId, ReadabilityProfile> = {
   space: { roadGlow: 0.48, roadTone: 1.08, roadEnv: 0.15, rails: 0.7, edge: 0xffa03a, edgeOpacity: 1, hazardLift: 0.25, bloom: 0.28 },
   // Megacity: busy skyline → keep road glow moderate, hazards outlined
   mega: { roadGlow: 0.45, roadTone: 1, roadEnv: 0.18, rails: 0.75, edge: 0xff7a3a, edgeOpacity: 0.9, hazardLift: 0.12, bloom: 0.28 },
+  // Bonus roads: daylight scenes → calm road glow, strong hazard outlines
+  desert: { roadGlow: 0.3, roadTone: 0.92, roadEnv: 0.14, rails: 0.5, edge: 0xd8461a, edgeOpacity: 1, hazardLift: 0.08, bloom: 0.2 },
+  forest: { roadGlow: 0.32, roadTone: 0.95, roadEnv: 0.14, rails: 0.55, edge: 0xff6a1a, edgeOpacity: 1, hazardLift: 0.1, bloom: 0.2 },
+  country: { roadGlow: 0.3, roadTone: 0.92, roadEnv: 0.14, rails: 0.5, edge: 0xd8461a, edgeOpacity: 1, hazardLift: 0.08, bloom: 0.2 },
+  sea: { roadGlow: 0.34, roadTone: 0.95, roadEnv: 0.16, rails: 0.55, edge: 0xff6a1a, edgeOpacity: 1, hazardLift: 0.1, bloom: 0.22 },
 };
 
 /** Eye-comfort preset (Settings → Comfort visuals, on by default). */

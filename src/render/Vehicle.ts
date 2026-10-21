@@ -1238,6 +1238,10 @@ export class Vehicle {
   private celebrateSpeed = 9;
 
   /** Snap animation springs (after respawn / menu). */
+  /** v2 Bonus showcase special in effect (null = none); e = 0..1 envelope */
+  showcase: { kind: 'ghost' | 'wall' | 'rail' | 'tunnel'; e: number } | null = null;
+  private ghostHid = false;
+
   resetPose() {
     this.roll.snap(0);
     this.yaw.snap(0);
@@ -1264,6 +1268,32 @@ export class Vehicle {
           ? lerp(0.51, 3.35, clamp01((p.y - HEIGHT.NORMAL) / (HEIGHT.HIGH - HEIGHT.NORMAL)))
           : 3.35 + (p.y - HEIGHT.HIGH);
     this.root.position.set(p.x, vy, 0);
+    // v2 Bonus showcase specials (wall run / sky rail / tunnel roof / phase ghost)
+    const sc = this.showcase;
+    let scRoll = 0;
+    if (this.ghostHid) {
+      this.root.visible = true;
+      this.ghostHid = false;
+    }
+    if (sc && sc.e > 0) {
+      const e = sc.e;
+      const side = p.x >= 0 ? 1 : -1;
+      if (sc.kind === 'wall') {
+        this.root.position.x = lerp(p.x, side * 3.1, e);
+        this.root.position.y += 0.75 * e;
+        scRoll = -side * 0.85 * e;
+      } else if (sc.kind === 'rail') {
+        this.root.position.y += 2.3 * e + Math.sin(this.time * 2.4) * 0.15 * e;
+      } else if (sc.kind === 'tunnel') {
+        this.root.position.y += 1.9 * e;
+        scRoll = Math.PI * e;
+      } else if (sc.kind === 'ghost') {
+        if (Math.floor(this.time * 16) % 3 === 0) {
+          this.root.visible = false;
+          this.ghostHid = true;
+        }
+      }
+    }
 
     // ---- bank / yaw from lateral velocity (springs give natural overshoot on recovery)
     const laneSpeed = 2.6 / 0.19;
@@ -1285,7 +1315,7 @@ export class Vehicle {
       this.celebrate -= step;
       extraRoll = (this.celebrateTotal - this.celebrate) * this.celebrateDir;
     }
-    this.bank.rotation.set(0, this.yaw.value, this.roll.value + extraRoll);
+    this.bank.rotation.set(0, this.yaw.value, this.roll.value + extraRoll + scRoll);
     this.pitch.rotation.x = this.pitchS.value;
 
     // ---- suspension: fine road vibration when driving, slow float when airborne
