@@ -16,7 +16,7 @@ export const UNLOCK_BOOSTS: { k: ItemKey; cls: 'C' | 'B' | 'A' | 'AA'; price: nu
  * Coin price of ONE item bought singly (Magic Bag / item card). Deliberately above the
  * value inside real-money bundles, so bundles are always the better deal (see docs/ECONOMY.md).
  */
-export const ITEM_PRICE: Record<ItemKey, number> = { super: 3000, hyper: 6000, escape: 2000, shield: 300, turbo: 150, magnet: 180, double: 260, life: 400 };
+export const ITEM_PRICE: Record<ItemKey, number> = { super: 1800, hyper: 4000, escape: 1200, shield: 300, turbo: 150, magnet: 180, double: 260, life: 400 };
 /** v1 prices — only used to refund retired items when an old save moves to v2 */
 export const V1_ITEM_PRICE: Record<ItemKey, number> = { super: 400, hyper: 1200, escape: 350, shield: 300, turbo: 150, magnet: 180, double: 260, life: 400 };
 
@@ -24,11 +24,11 @@ export const V1_ITEM_PRICE: Record<ItemKey, number> = { super: 400, hyper: 1200,
 export const SPECIALS = ['escape', 'super', 'hyper'] as const;
 export type SpecialKey = (typeof SPECIALS)[number];
 /** teaser specials: shown blurred, unlock at AAA (they appear for real in Bonus events) */
-export const LOCKED_SPECIALS: { id: string; name: string; desc: string }[] = [
-  { id: 'tunnel', name: 'Tunnel Rider', desc: 'In a tunnel, drive on its roof' },
-  { id: 'wall', name: 'Wall Run', desc: 'Run along the side wall past a whole row' },
-  { id: 'ghost', name: 'Phase Ghost', desc: 'Pass through obstacles for a few seconds' },
-  { id: 'rail', name: 'Sky Rail', desc: 'Grab a rail up high and glide a whole stretch' },
+export const LOCKED_SPECIALS: { id: string; name: string; short: string; desc: string }[] = [
+  { id: 'tunnel', name: 'Tunnel Rider', short: 'Tunnel', desc: 'In a tunnel, drive on its roof' },
+  { id: 'wall', name: 'Wall Run', short: 'Wall', desc: 'Run along the side wall past a whole row' },
+  { id: 'ghost', name: 'Phase Ghost', short: 'Ghost', desc: 'Pass through obstacles for a few seconds' },
+  { id: 'rail', name: 'Sky Rail', short: 'Rail', desc: 'Grab a rail up high and glide a whole stretch' },
 ];
 
 /** coin value of a reward (used to show "worth N coins" on shop bundles) */
@@ -67,16 +67,18 @@ export interface Quest {
   coins: number;
 }
 
-/** v2: daily missions (Daily + Missions merged) — they pay coins */
+/** v2: daily missions (Daily + Missions merged) — coins only */
 const POOL: Quest[] = [
-  { id: 'runs3', text: 'Play 3 races', stat: 'runs', target: 3, mode: 'sum', pts: 20, coins: 80 },
-  { id: 'coins150', text: 'Collect 150 coins', stat: 'coins', target: 150, mode: 'sum', pts: 25, coins: 100 },
-  { id: 'dist5k', text: 'Drive 5,000 m in total', stat: 'distance', target: 5000, mode: 'sum', pts: 25, coins: 100 },
-  { id: 'exp1500', text: 'Earn 1,500 EXP in one race', stat: 'exp', target: 1500, mode: 'max', pts: 30, coins: 120 },
-  { id: 'near12', text: 'Get 12 near misses', stat: 'near', target: 12, mode: 'sum', pts: 25, coins: 80 },
-  { id: 'power4', text: 'Grab 4 power-ups', stat: 'powerups', target: 4, mode: 'sum', pts: 25, coins: 80 },
-  { id: 'jump1', text: 'Use a special', stat: 'jumps', target: 1, mode: 'sum', pts: 30, coins: 120 },
-  { id: 'rings6', text: 'Fly through 6 energy rings', stat: 'rings', target: 6, mode: 'sum', pts: 25, coins: 80 },
+  { id: 'runs3', text: 'Play 3 races', stat: 'runs', target: 3, mode: 'sum', pts: 0, coins: 100 },
+  { id: 'coins150', text: 'Collect 150 coins', stat: 'coins', target: 150, mode: 'sum', pts: 0, coins: 120 },
+  { id: 'dist5k', text: 'Drive 5,000 m in total', stat: 'distance', target: 5000, mode: 'sum', pts: 0, coins: 120 },
+  { id: 'dist12k', text: 'Drive 12,000 m in total', stat: 'distance', target: 12000, mode: 'sum', pts: 0, coins: 200 },
+  { id: 'exp1500', text: 'Earn 1,500 EXP in one race', stat: 'exp', target: 1500, mode: 'max', pts: 0, coins: 150 },
+  { id: 'exp3000', text: 'Earn 3,000 EXP in one race', stat: 'exp', target: 3000, mode: 'max', pts: 0, coins: 250 },
+  { id: 'power4', text: 'Grab 4 power-ups', stat: 'powerups', target: 4, mode: 'sum', pts: 0, coins: 100 },
+  { id: 'jump1', text: 'Use a special', stat: 'jumps', target: 1, mode: 'sum', pts: 0, coins: 150 },
+  { id: 'rings6', text: 'Fly through 6 energy rings', stat: 'rings', target: 6, mode: 'sum', pts: 0, coins: 100 },
+  { id: 'bonus1', text: 'Finish a Bonus road', stat: 'finish', target: 1, mode: 'sum', pts: 0, coins: 300 },
 ];
 
 /** Same 4 quests for everyone on a given day. */
@@ -88,11 +90,8 @@ export function questsFor(day: string): Quest[] {
   return out;
 }
 
-export const CHESTS: { pts: number; reward: Reward }[] = [
-  { pts: 30, reward: { coins: 100 } },
-  { pts: 70, reward: { coins: 150 } },
-  { pts: 100, reward: { coins: 250 } },
-];
+/** v2: no points / chests any more (Daily pays coins per mission) */
+export const CHESTS: { pts: number; reward: Reward }[] = [];
 
 export const rewardText = (r: Reward) => {
   const parts: string[] = [];

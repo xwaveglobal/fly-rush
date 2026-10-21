@@ -290,6 +290,12 @@ export class Game {
       chooseSpecial: (k) => this.chooseSpecial(k),
       buySpecial: (k) => this.buySpecial(k),
       goRace: () => this.goRace(),
+      bagPick: () => {
+        this.audio.play('click');
+        this.bagPickMode = true;
+        this.ui.bagSync(this.save, true);
+        this.ui.showOverlay('bag');
+      },
       setSpeed: (lv) => this.setSpeed(lv),
       nextTrack: () => this.afterResults(() => this.nextTrack()),
       garage: () => this.openGarage(),
@@ -407,7 +413,17 @@ export class Game {
       },
       pause: () => this.pause(),
       resume: () => this.resume(),
-      retry: () => this.afterResults(() => this.startRun()),
+      retry: () =>
+        this.afterResults(() => {
+          // Bonus roads only while the event is open
+          if (this.course?.bonus && !bonusState().live) {
+            this.ui.toast(`${ICON.clock} This Bonus has closed — next one ${localTime(bonusState().next.start)}`, '#ffc21a');
+            return this.goHome();
+          }
+          // v2: every EXP race starts with the special choice (Retry too)
+          if (!this.course && !this.tutorialMode) return this.openSpecialPick(this.variant === 'track2' ? 'track2' : 'endless');
+          this.startRun();
+        }),
       continueAd: () => void this.continueByAd(),
       continueCoins: () => this.continueByCoins(),
       continueNo: () => this.gameOver(),
@@ -551,6 +567,11 @@ export class Game {
   /** Home screen without resetting the world (closing a modal / page). */
   showHome() {
     this.vehicle.resetFx();
+    // never carry training / race overlays onto Home
+    this.ui.tutorial(false);
+    this.ui.tutPrompt(null);
+    this.ui.gateHud(null);
+    this.tutorialMode = false;
     if (this.state !== 'menu') this.setState('menu');
     this.rig.mode = 'menu';
     this.meta.rollover();
@@ -987,7 +1008,7 @@ export class Game {
     if (rc !== this.runRank) {
       this.runRank = rc;
       const first = CLASSES.indexOf(rc) > CLASSES.indexOf(this.rank);
-      this.ui.toast(`${XPT_ICON} RANK ${rc}${first ? ' · NEW!' : ''}`, '#ffc21a');
+      this.ui.toastNow(`${XPT_ICON} RANK ${rc}${first ? ' · NEW!' : ''}`, '#ffc21a');
       this.audio.play('mission');
       this.vibrate([20, 40, 30]);
     }
@@ -1223,6 +1244,7 @@ export class Game {
 
   private openBag() {
     this.audio.play('click');
+    this.bagPickMode = false;
     this.ui.bagSync(this.save);
     const base = ['start', 'tracks', 'profile'].filter((id) => this.ui.isShown(id));
     this.ui.show(...(base.length ? base : ['start']), 'bag');
@@ -1257,6 +1279,26 @@ export class Game {
       this.save.pendingMissions = [];
       this.persist();
     }
+    if (!this.save.carsRelocked) {
+      // v2: cars unlock by rank only — cars bought with coins in v1 above the player's rank go back
+      // into the garage locked, and their v1 price is refunded
+      const V1_CAR_PRICE: Record<string, number> = { volt: 2500, phantom: 6000, inferno: 12000, nexus: 25000 };
+      const r = this.rank;
+      let back = 0;
+      this.save.unlocked = this.save.unlocked.filter((id) => {
+        const k = SKINS.find((x) => x.id === id);
+        if (!k || rankAtLeast(r, (k.need ?? 'D') as RankClass)) return true;
+        back += V1_CAR_PRICE[id] ?? 0;
+        return false;
+      });
+      if (!this.save.unlocked.includes(this.save.vehicle)) this.save.vehicle = 'zenith';
+      this.save.carsRelocked = true;
+      if (back > 0) {
+        this.save.wallet += back;
+        window.setTimeout(() => this.ui.toast(`${ICON.car} Cars now unlock by rank · +${back.toLocaleString('en-US')} coins refunded`, '#ffc21a'), 3500);
+      }
+      this.persist();
+    }
     if (this.save.v2) return;
     let refund = 0;
     for (const k of ['shield', 'turbo', 'magnet', 'double', 'life'] as ItemKey[]) {
@@ -1289,21 +1331,30 @@ export class Game {
   private pickTrackId = 'endless';
   openSpecialPick(trackId: string) {
     if (trackId === 'track2' && !rankAtLeast(this.rank, 'AAA')) {
-      this.ui.toast(`${ICON.lock} Reach rank AAA to unlock Track 2`, '#ff4fd8');
+      this.ui.toast(`${ICON.lock} Reach rank AAA to unlock Mega Rush`, '#ff4fd8');
       return;
     }
     this.audio.play('click');
     this.pickTrackId = trackId;
     if (this.save.special && this.save.items[this.save.special] <= 0) this.save.special = null;
-    this.ui.specialPick(this.save, this.rank);
+    this.ui.specialPick(this.save, this.pickLabel());
   }
+  private pickLabel() {
+    return `${this.pickTrackId === 'track2' ? 'Mega Rush' : 'Endless'} · ${LEVELS[this.save.settings.speed].label}`;
+  }
+  /** Magic Bag opened from the pre-race button: tapping a special picks it */
+  private bagPickMode = false;
   private chooseSpecial(k: string) {
     const key = (SPECIALS as readonly string[]).includes(k) ? (k as SpecialKey) : null;
     if (key && this.save.items[key] <= 0) return this.buySpecial(key);
-    this.save.special = this.save.special === key ? null : key;
+    this.save.special = key;
     this.persist();
     this.audio.play('click');
-    this.ui.specialPick(this.save, this.rank);
+    if (this.bagPickMode) {
+      this.bagPickMode = false;
+      this.ui.hideOverlay('bag');
+    }
+    if (this.ui.isShown('specialpick')) this.ui.specialPick(this.save, this.pickLabel());
   }
   private buySpecial(k: string) {
     const key = k as SpecialKey;
@@ -1312,16 +1363,17 @@ export class Game {
     if (this.save.wallet < price) {
       this.ui.toast(`${ICON.coin} Need ${(price - this.save.wallet).toLocaleString('en-US')} more coins`, '#ffc21a');
       this.ui.hideOverlay('specialpick');
+      this.ui.hideOverlay('bag');
       return this.openShop();
     }
     this.save.wallet -= price;
     this.save.items[key]++;
-    this.save.special = key;
+    if (this.bagPickMode || !this.save.special) this.save.special = key;
     this.persist();
     this.audio.play('power');
-    this.ui.toast(`${ICON.bag} +1 ${{ super: 'Roadster Jump', hyper: 'HYPER JUMP', escape: 'SOS' }[key]} · stored in your Magic Bag`, '#9b6bff');
-    if (this.ui.isShown('specialpick')) this.ui.specialPick(this.save, this.rank);
-    if (this.ui.isShown('bag')) this.ui.bagSync(this.save);
+    this.ui.toast(`${ICON.bag} +1 ${{ super: 'Roadster', hyper: 'HYPER', escape: 'SOS' }[key]} · in your bag`, '#9b6bff');
+    if (this.ui.isShown('bag')) this.ui.bagSync(this.save, this.bagPickMode);
+    if (this.ui.isShown('specialpick')) this.ui.specialPick(this.save, this.pickLabel());
     this.ui.refreshProfile(this.save);
   }
   private goRace() {
@@ -1340,6 +1392,7 @@ export class Game {
       name: BONUS_NAME[(bs.live ?? bs.next).theme],
       left: bs.live ? fmtLeft(bs.live.end - now) : '',
       opens: bs.live ? '' : `${localTime(bs.next.start)} · in ${fmtLeft(bs.next.start - now)}`,
+      opensAt: localTime(bs.next.start),
       next: bs.live ? `${BONUS_NAME[bs.next.theme]} · ${localTime(bs.next.start)}` : '',
       finish: Math.round(BONUS.finishCoins * LEVELS[this.save.settings.speed].reward),
     });
@@ -1444,7 +1497,7 @@ export class Game {
   startTrack(id: string) {
     this.tutorialMode = false;
     if (id === 'track2' && !rankAtLeast(this.rank, 'AAA')) {
-      this.ui.toast(`${ICON.lock} Reach rank AAA to unlock Track 2`, '#ff4fd8');
+      this.ui.toast(`${ICON.lock} Reach rank AAA to unlock Mega Rush`, '#ff4fd8');
       return;
     }
     if (id !== 'track2') id = 'endless'; // v2: the old 20 courses are retired
@@ -2344,14 +2397,9 @@ export class Game {
           if (k === 'escape') this.ui.toast(`${POWER_ICON.escape} SKY ESCAPE ready · tap SOS (E) in an emergency`, '#ff5a3c');
           break;
         }
-        case 'near': {
-          this.audio.play('near', { pan: clamp(f.x / 4, -1, 1) });
-          this.ui.pop('NEAR MISS', '#b6ff2e', '', 6);
-          this.vibrate(10);
-          for (let i = 0; i < 4; i++) this.particles.emit(f.x * 0.6, f.y, -1, 0, 0, 14, 0xb6ff2e, 0.1, 0.2, { drag: 1 });
-          this.rig.fovKick += 2;
+        case 'near':
+          // v2: near misses are not a feature any more (owner: nobody understands them) — no sound, no pop
           break;
-        }
         case 'ring':
           this.audio.play('ring');
           this.vibrate(8);
@@ -2592,9 +2640,17 @@ export class Game {
     this.save.totalRuns++;
     const rewards = this.recordMeta(false);
     this.persist();
-    this.ui.gameOver({ score: run.exp, best: this.save.expBest, isBest: !!rewards && rewards.exp > 0 && rewards.to > rewards.from, dist: run.distance, length: this.course?.length, coins: run.coins, near: run.nearMiss, missions: this.runMissionsDone, rewards, speedBonus, level: lvg.label, tip: this.lastTip });
+    const isBonus = !!this.course?.bonus;
+    let pos = '';
+    if (!isBonus && run.exp > 0) {
+      const wb = this.meta.weekly();
+      const r = wb.you.rank;
+      pos = r <= 999 ? `#${r.toLocaleString('en-US')} this week` : `Top ${Math.max(1, Math.ceil((r / wb.total) * 100))}% this week`;
+    }
+    this.ui.gameOver({ score: isBonus ? run.coins : run.exp, best: this.variant === 'track2' ? this.save.exp2Best : this.save.expBest, isBest: !!rewards && rewards.exp > 0 && rewards.to > rewards.from, dist: run.distance, length: this.course?.length, coins: run.coins, near: run.nearMiss, missions: this.runMissionsDone, rewards, speedBonus, level: lvg.label, tip: this.lastTip, runRank: isBonus || run.expRate <= 0 ? null : this.runRank, pos });
     this.lastResult = { coins: run.coins, reward: 0, doubled: false };
     this.ui.adButton('ad2x', run.coins > 0 ? 'ready' : 'used', 'No coins to double');
+    this.ui.hideEl('ad2x', run.coins <= 0); // nothing to double → no button
     this.ads.runEnded();
     this.ui.show('gameover');
     if (rewards && rewards.to > rewards.from) this.audio.play('mission');
@@ -2677,7 +2733,7 @@ export class Game {
     // power-up visuals only while actually racing (never on the game-over / menu screens: the
     // last run's shield or turbo used to stay glowing around the car on the next run)
     const racing = !!run && (this.state === 'run' || this.state === 'respawn' || this.state === 'countdown');
-    this.vehicle.auraTarget = racing && (run.magnetActive || run.doubleT > 0) ? 1 : 0;
+    this.vehicle.auraTarget = racing && (run.magnetActive || run.doubleT > 0 || this.showcaseK === 'ghost') ? 1 : 0;
     this.vehicle.shieldTarget = racing && run.shield ? 1 : 0;
     // boost look while Turbo runs or a Roadster / HYPER / SOS rocket is climbing
     this.vehicle.boostTarget = run && this.state === 'run' && (run.turboT > 0 || (this.world.player.isSuper && this.world.player.vphase !== 'recover')) ? 1 : 0;

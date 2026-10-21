@@ -61,8 +61,8 @@ export const EXP_RULES: { what: string; gain: string }[] = [
   { what: 'Your EXP = your best single run', gain: 'best' },
 ];
 
-/** the EXP logo: a rank shield with two rising chevrons (not a star — stars meant something else in v1) */
-export const XPT = `<svg viewBox="0 0 24 24" class="xpt" aria-label="EXP"><defs><linearGradient id="xpg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fe6ff"/><stop offset="1" stop-color="#7a4dff"/></linearGradient></defs><path d="M12 1.6l8.6 3.1v6.6c0 5.2-3.6 9.3-8.6 11.1C7 20.6 3.4 16.5 3.4 11.3V4.7z" fill="url(#xpg)" stroke="#1b1450" stroke-width="1.2" stroke-linejoin="round"/><path d="M7.6 12.6L12 8.6l4.4 4M7.6 16.6L12 12.6l4.4 4" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+/** the EXP badge: a small pill that literally reads "EXP" (owner: the shield icon was unclear) */
+export const XPT = `<svg viewBox="0 0 36 20" class="xpt" aria-label="EXP"><defs><linearGradient id="xpg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ee6ff"/><stop offset="1" stop-color="#8a4dff"/></linearGradient></defs><rect x="1" y="1" width="34" height="18" rx="6" fill="url(#xpg)" stroke="#1b1450" stroke-width="1.4"/><text x="18" y="14.6" text-anchor="middle" font-family="'Arial Black',Arial,sans-serif" font-weight="900" font-size="12.5" fill="#fff" letter-spacing=".3">EXP</text></svg>`;
 
 /** small class badge (hex plate with the letters) */
 export function classBadge(c: RankClass, size = 'sm') {

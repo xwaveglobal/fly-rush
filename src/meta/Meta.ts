@@ -122,7 +122,7 @@ export class Meta {
   /** count of things ready to claim (home badge) */
   dailyBadge() {
     const q = this.quests().filter((x) => x.done && !x.claimed).length;
-    const ch = CHESTS.filter((c, i) => this.s.dailyPts >= c.pts && !this.s.dailyChests.includes(i)).length;
+    const ch = 0; // v2: no chests
     const ci = this.checkinState().claimedToday ? 0 : 1;
     const pass = this.passActive && this.s.passDay !== dayKey() ? 1 : 0;
     return q + ch + ci + pass;

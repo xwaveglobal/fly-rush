@@ -8,6 +8,7 @@ import { mergeByMaterial } from './merge.ts';
 import type { Player } from '../gameplay/Player.ts';
 import x1Back from '../assets/images/car/x1-back.webp';
 import x1BackBoost from '../assets/images/car/x1-back-boost.webp';
+import vegaBack from '../assets/images/car/vega-back.webp';
 import x1TyreFx from '../assets/images/car/x1-tyrefx.png';
 import x1Tread from '../assets/images/car/x1-tread.png';
 
@@ -80,12 +81,16 @@ export interface VehicleSkin {
   /** speed / acceleration / handling / energy, out of 10 (display) */
   stats?: [number, number, number, number];
   skills?: { name: string; desc: string }[];
+  /** own rear render (instead of the tinted X1): no tread layer / boost art (they are aligned to the X1) */
+  rear?: string;
 }
 
 export const SKINS: VehicleSkin[] = [
   { id: 'zenith', name: 'XWAVE Zenith', shape: 'gt', cls: 'Common · Balanced for every run', rarity: 'Common', need: 'D', price: 0, bonus: 0, tintAmt: 0,
     body: 0xf3f5fa, trim: 0xb9c2d3, glass: 0x0a0d16, glow: 0x39b6ff, accent: 0x1c64ff, stats: [7, 7, 8, 7],
     skills: [{ name: 'Turbo Boost', desc: 'Short burst of high speed.' }, { name: 'Stable Flight', desc: 'Easier to control.' }] },
+  { id: 'vega', name: 'XWAVE Vega', shape: 'gt', cls: 'Uncommon · Red-line racer', rarity: 'Rare', need: 'C', price: 0, bonus: 0, tintAmt: 0, rear: vegaBack,
+    body: 0xf3f5fa, trim: 0xb9c2d3, glass: 0x0a0d16, glow: 0xff3b4e, accent: 0xff3b4e, stats: [8, 7, 8, 7] },
   { id: 'volt', name: 'XWAVE Volt', shape: 'gt', cls: 'Rare · Speed beyond limits', rarity: 'Rare', need: 'B', price: 0, bonus: 0, tintAmt: 0.92,
     body: 0x6a3cf0, trim: 0x9aa6bd, glass: 0x05060a, glow: 0xb46bff, accent: 0x8a4dff, stats: [9, 9, 8, 8],
     skills: [{ name: 'Ion Burst', desc: 'Massive speed boost for 5 seconds.' }, { name: 'Shockwave', desc: 'Pushes nearby obstacles out of the way.' }] },
@@ -107,8 +112,9 @@ export const SKINS: VehicleSkin[] = [
  */
 export function carVisibility(unlocked: string[], id: string): 'own' | 'next' | 'dark' {
   if (unlocked.includes(id)) return 'own';
+  // v2: only the rank-C car is shown before it is earned; rank B and up stay black silhouettes
   const next = SKINS.find((k) => !unlocked.includes(k.id));
-  return next?.id === id ? 'next' : 'dark';
+  return next?.id === id && next.need === 'C' ? 'next' : 'dark';
 }
 
 const BLUE = new THREE.Color(0x39b6ff);
@@ -254,6 +260,10 @@ export class Vehicle {
   visibleBlink = true;
   /** dark silhouette preview (garage, not owned) */
   locked = false;
+  /** car with its own rear render (no X1 tread layer / boost art) */
+  private customRear: THREE.Texture | null = null;
+  private customAspect = 2;
+  private static rearCache = new Map<string, { tex: THREE.Texture; aspect: number }>();
   /** camera the X1 sprite turns to face (set by the game) */
   camera: THREE.Camera | null = null;
   /** always show the high-res rear render (cameras stay behind the car) */
@@ -942,10 +952,12 @@ export class Vehicle {
     // index order: back, back-right, right, front-right, front, front-left, left, back-left
     if (view !== this.spriteView) {
       this.spriteView = view;
-      this.sprite.material.uniforms.map.value = this.spriteTex[view];
+      const own = view === 0 && this.customRear;
+      if (own && this.skin.rear) this.customAspect = Vehicle.rearCache.get(this.skin.rear)?.aspect ?? this.customAspect;
+      this.sprite.material.uniforms.map.value = own ? this.customRear : this.spriteTex[view];
       this.sprite.material.uniforms.rearView.value = view === 0 ? 1 : 0;
       const h = X1_VIEWS[view].h;
-      this.sprite.scale.set(h * this.spriteAspect[view], h, 1);
+      this.sprite.scale.set(h * (own ? this.customAspect : this.spriteAspect[view]), h, 1);
     }
     const h = this.sprite.scale.y;
     // wheels on the road at driving height; the sprite rises with the car when it flies,
@@ -1038,6 +1050,25 @@ export class Vehicle {
       u.tintAmt.value = skin.tintAmt ?? 0.92;
       u.dim.value = locked ? 0.06 : 1;
     }
+    this.customRear = null;
+    if (skin.rear) {
+      let c = Vehicle.rearCache.get(skin.rear);
+      if (!c) {
+        const entry = { tex: null as unknown as THREE.Texture, aspect: 1.9 };
+        entry.tex = new THREE.TextureLoader().load(skin.rear, (tex) => {
+          const img = tex.image as HTMLImageElement;
+          entry.aspect = img.width / img.height;
+          this.spriteView = -1;
+        });
+        entry.tex.colorSpace = THREE.NoColorSpace;
+        entry.tex.anisotropy = 4;
+        c = entry;
+        Vehicle.rearCache.set(skin.rear, c);
+      }
+      this.customRear = c.tex;
+      this.customAspect = c.aspect;
+    }
+    this.spriteView = -1; // re-pick the texture for this car
     for (const pod of this.pods) pod.pivot.visible = !this.spriteOn;
     for (const w of this.wings) w.visible = !this.spriteOn;
     this.underglow.visible = !this.spriteOn;
@@ -1287,11 +1318,6 @@ export class Vehicle {
       } else if (sc.kind === 'tunnel') {
         this.root.position.y += 1.9 * e;
         scRoll = Math.PI * e;
-      } else if (sc.kind === 'ghost') {
-        if (Math.floor(this.time * 16) % 3 === 0) {
-          this.root.visible = false;
-          this.ghostHid = true;
-        }
       }
     }
 
@@ -1449,7 +1475,7 @@ export class Vehicle {
         const blurNow = Math.min(1.2, Math.max(this.treadBlurS, step));
         u.treadScroll.value = this.treadPhase;
         u.treadBlur.value = blurNow;
-        u.treadOn.value = this.locked ? 0 : 1; // wheels keep spinning in the air (free spin)
+        u.treadOn.value = this.locked || this.customRear ? 0 : 1; // wheels keep spinning in the air (free spin)
         const bsu2 = this.boostSprite.material.uniforms;
         bsu2.treadScroll.value = this.treadPhase;
         bsu2.treadBlur.value = blurNow;
@@ -1489,19 +1515,22 @@ export class Vehicle {
       // swap to the flames + smoke render while boosting (cross-fade), rear view only
       const su = this.sprite.material.uniforms;
       const e = clamp01(this.boostK);
-      const bk = su.rearView.value > 0.5 ? e * e * (3 - 2 * e) : 0; // smoothstep cross-fade
+      const bk = su.rearView.value > 0.5 && !this.customRear ? e * e * (3 - 2 * e) : 0; // smoothstep cross-fade (X1 art only)
       const bsu = this.boostSprite.material.uniforms;
       bsu.fade.value = bk;
       bsu.tint.value.copy(su.tint.value);
       bsu.tintAmt.value = su.tintAmt.value;
       bsu.dim.value = su.dim.value;
       su.fade.value = 1 - bk;
-      this.boostSprite.visible = this.spriteOn && bk > 0.01;
+      // Phase Ghost: a steady translucent hologram (no blinking)
+      const gk = this.showcase?.kind === 'ghost' ? this.showcase.e : 0;
+      if (gk > 0) su.fade.value *= 1 - 0.6 * gk;
+      this.boostSprite.visible = this.spriteOn && !this.customRear && bk > 0.01;
       this.boostSprite.renderOrder = this.sprite.renderOrder + 1;
       // the engines push: a tiny high-frequency shimmy while boosting (sub-pixel → feels like vibration)
       this.boostSprite.position.x = Math.sin(bu.t.value * 63) * 0.0025 * bk;
       for (const j of this.boostJets) {
-        j.visible = false; // replaced by the boost render
+        j.visible = !!this.customRear && this.boostK > 0.05; // cars with their own render: plain exhaust jets
         j.scale.set(0.16, len, 1);
         j.position.set(j.userData.side * 0.2, -0.3 - len / 2, 0.003);
       }

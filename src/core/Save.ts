@@ -54,6 +54,8 @@ export interface SaveData {
   exp2Best: number;
   /** v2: old save already converted (retired items/upgrades refunded as coins) */
   v2?: boolean;
+  /** v2: cars bought with coins in v1 above the rank were re-locked + refunded */
+  carsRelocked?: boolean;
   /** v2: special picked for the next race (one per race) */
   special?: 'super' | 'hyper' | 'escape' | null;
   /** mission rewards waiting for a manual claim (auto-claim off) */

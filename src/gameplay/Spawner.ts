@@ -341,7 +341,7 @@ export class Spawner {
         kind = r.weighted<PickupKind>([
           { w: 3, v: 'magnet' },
           { w: 3, v: 'shield' },
-          { w: 2.2, v: 'turbo' },
+          { w: v1 ? 2.2 : 0.7, v: 'turbo' }, // v2: turbo is rare (it also adds EXP)
           { w: 2, v: 'double' },
           { w: v1 && dist > 600 ? 1 : 0, v: 'life' },
           { w: v1 && dist > 250 ? 2 : 0, v: 'super' },

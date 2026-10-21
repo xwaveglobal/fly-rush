@@ -1993,3 +1993,95 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .bn-rules span svg { display: inline-block; vertical-align: -3px; margin-right: 6px; }
 #hud .scorebox.exp .label svg { width: 13px; height: 13px; }
 .panel.pass[hidden], #hud .mission[hidden] { display: none !important; }
+
+/* v2.1 — pre-race special button + compact Magic Bag */
+.sp-track { text-align: center; font: 800 12px var(--font-body); letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
+.sp-big { display: grid; grid-template-columns: 56px 1fr 20px; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border-radius: 16px; text-align: left; cursor: pointer;
+  background: linear-gradient(180deg, rgba(155,107,255,.28), rgba(90,46,224,.18)); border: 2px solid #9b6bff; color: #fff; box-shadow: 0 0 18px rgba(155,107,255,.25); }
+.sp-big.none { border-style: dashed; background: rgba(255,255,255,.04); box-shadow: none; }
+.sp-big .spi { width: 56px; height: 56px; border-radius: 14px; display: grid; place-items: center; background: rgba(10,14,40,.55); }
+.sp-big .spi svg { width: 38px; height: 38px; }
+.sp-big .spt b { display: block; font: 900 20px var(--font); font-style: italic; letter-spacing: .4px; }
+.sp-big .spt small { font: 600 12px var(--font-body); color: #cfd8ff; }
+.sp-big .chev svg { width: 20px; height: 20px; opacity: .7; }
+.bagm .spwallet .bgrule { margin-left: auto; font: 800 11px var(--font-body); color: #9fdcff; padding: 3px 8px; border-radius: 999px; background: rgba(79,195,255,.12); border: 1px solid rgba(79,195,255,.3); }
+.bggrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.bgt { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 4px 6px; border-radius: 12px; background: var(--card); border: 1px solid var(--card-rim); color: #fff; cursor: pointer; min-width: 0; }
+.bgt .spi { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 10px; background: rgba(155,107,255,.18); font: 900 18px var(--font); }
+.bgt .spi svg { width: 26px; height: 26px; }
+.bgt b { font: 900 11.5px var(--font); font-style: italic; letter-spacing: .3px; white-space: nowrap; }
+.bgt .cnt { position: absolute; top: 4px; right: 6px; font: 900 11px var(--font); font-style: normal; color: #ffd23d; }
+.bgt .tick { position: absolute; top: 4px; left: 5px; width: 14px; height: 14px; color: #3dff8b; }
+.bgt .tick svg { width: 14px; height: 14px; }
+.bgt.on { border-color: #3dff8b; box-shadow: 0 0 0 1px #3dff8b inset; }
+.bgempty { grid-column: 1 / -1; text-align: center; font: 600 12px var(--font-body); color: var(--muted); padding: 8px; }
+.bgbuys { display: flex; flex-direction: column; gap: 5px; }
+.bgbuy { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 12px; background: var(--card); border: 1px solid var(--card-rim); }
+.bgbuy .spi { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: rgba(155,107,255,.18); }
+.bgbuy .spi svg { width: 24px; height: 24px; }
+.bgbuy .bn { min-width: 0; }
+.bgbuy .bn b { display: block; font: 900 13px var(--font); font-style: italic; }
+.bgbuy .bn small { font: 600 11px var(--font-body); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.bgbuy .btn { display: inline-flex; align-items: center; gap: 4px; min-width: 78px; justify-content: center; }
+.bgbuy .btn svg { width: 14px; height: 14px; }
+.bglocked { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+.bgl { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 5px 2px; border-radius: 10px; background: rgba(255,255,255,.04); border: 1px dashed rgba(255,255,255,.2); color: #fff; opacity: .65; filter: saturate(.4); cursor: pointer; }
+.bgl span svg { width: 22px; height: 22px; }
+.bgl small { font: 800 10px var(--font-body); }
+.bglk { display: flex; align-items: center; gap: 3px; flex: none; }
+.bglk svg { width: 12px; height: 12px; }
+.bagm .mhead h2 { display: flex; align-items: center; gap: 6px; }
+.bagm .mhead h2 svg { width: 24px; height: 24px; }
+#ui .screen.overlay#bag { z-index: 24; }
+/* EXP badge is a pill (wider than tall) */
+.xpt { width: 1.8em !important; height: 1em !important; }
+#hud .scorebox.exp .label .xpt { width: 24px !important; height: 13px !important; }
+.tcard .tmeta .xpt { width: 26px !important; height: 14px !important; }
+
+/* v2.1 — END screen: EXP big, rank reached, leaderboard position */
+.result .endexp { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.result .endexp .ex .xpt { width: 54px !important; height: 30px !important; }
+.result .endrow { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; min-height: 30px; }
+.result .endrow .erank { display: inline-flex; align-items: center; gap: 6px; }
+.result .endrow .erank small { font: 700 11px var(--font-body); color: var(--muted); }
+.result .endrow .epos { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; background: rgba(79,195,255,.14); border: 1px solid rgba(79,195,255,.35); font: 800 12px var(--font-body); color: #dff4ff; }
+.result .endrow .epos svg { width: 14px; height: 14px; }
+.result .endrow .epos:empty, .result .endrow .erank:empty { display: none; }
+.result .endrow .newbest { position: static; margin: 0; }
+.result .stats.mini.two { grid-template-columns: 1fr 1fr; }
+.adbtn[hidden] { display: none !important; }
+.cont-panel .contleft { font-size: 15px; color: #ffd6e2; }
+.cont-panel [data-a="contad"] { font-size: 20px !important; letter-spacing: .3px; white-space: nowrap; }
+
+/* v2.1 — Daily: compact 4 + 3 check-in grid, missions pay coins */
+.ckgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.ckt { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px 5px; border-radius: 12px; background: rgba(20,26,70,.9); border: 1px solid rgba(255,255,255,.08); }
+.ckt small { font: 800 10px var(--font-body); color: #9fb3dd; }
+.ckt b { font: 900 13px var(--font-body); color: #fff; }
+.ckt .cki svg { width: 22px; height: 22px; }
+.ckt.today { border-color: #4fc3ff; box-shadow: 0 0 0 1px #4fc3ff inset, 0 0 12px rgba(79,195,255,.3); }
+.ckt.got { opacity: .55; }
+.ckt .ok { position: absolute; top: 3px; right: 4px; width: 13px; height: 13px; color: #3dff8b; }
+.ckt .ok svg { width: 13px; height: 13px; }
+.ckt.big { grid-column: span 2; flex-direction: row; justify-content: center; gap: 8px; background: linear-gradient(90deg, rgba(120,80,255,.45), rgba(40,90,255,.3)); border-color: rgba(190,160,255,.45); }
+.dailyv2 .panel.block { padding-top: 10px; padding-bottom: 10px; }
+.dailyv2 .quest { padding-top: 7px; padding-bottom: 7px; }
+.tcard .tinfo b .lvtag { font: 800 9.5px var(--font-body); font-style: normal; letter-spacing: .8px; padding: 2px 6px; border-radius: 6px; background: rgba(79,195,255,.18); color: #9fdcff; vertical-align: 3px; margin-left: 4px; }
+.cupstrip .ct small.bt { display: flex !important; gap: 6px; align-items: center; }
+.cupstrip .ct small.bt span { overflow: hidden; text-overflow: ellipsis; }
+.rg-line { display: flex; align-items: center; gap: 6px; padding: 6px 9px; border-radius: 10px; background: var(--card); border: 1px solid var(--card-rim); font: 600 12px var(--font-body); color: #dbe6ff; white-space: nowrap; }
+.rg-line svg { width: 14px; height: 14px; flex: none; }
+.rg-line .xpt { width: 26px !important; height: 14px !important; }
+#start .msale { display: none !important; }
+.bi-one { margin: 0 0 10px; text-align: center; font: 600 14px/1.4 var(--font-body); color: #dbe6ff; }
+/* Bonus OPEN tag sits on the Bonus icon (not under the Daily button) */
+#start .rbtn .tag.live { top: auto; bottom: 16px; right: -10px; }
+.bhead b svg { width: 16px; height: 16px; vertical-align: -2px; }
+.sbtns.two { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dailyv2 .quest { padding: 6px 10px !important; }
+.dailyv2 .quest .qt b { font-size: 13px; }
+.dailyv2 .quest .qb { margin-top: 3px; }
+.dailyv2 .qlist { gap: 6px !important; }
+.dailyv2 .ckt { padding: 4px 2px; }
+.dailyv2 [data-k="cibtn"] { padding-top: 8px; padding-bottom: 8px; }
+.dailyv2 .panel.block { margin-bottom: 8px; }
