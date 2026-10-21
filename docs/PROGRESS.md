@@ -13,7 +13,7 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 - In-race car sprite is still the X1 render, tinted per car. The owner will send high-res transparent rear renders of the 5 cars; swap them into `X1_VIEWS` / per-skin textures.
 - Daily Day 4 / Day 7 in the mock-up show cars. The rewards stay items/coins (cars are class-gated); revisit if cars become daily prizes.
 - Mega Gate aiming was typechecked + unit-tested, but not played through in a browser (the 0.5 fps headless run was stopped).
-- Publishing the Claude artifact link fails with a validator false positive ("artifact-pr-review"). The owner tests on localhost / the HTML file in `builds/`.
+- The old artifact link stopped accepting updates (validator false positive), so v1.18 was published as a NEW artifact: https://claude.ai/artifact/QFASRhp6EQAWvJdu7Djwxr. Update that one from now on.
 - Emoji flags render as letters on Windows Chrome (OS limitation).
 
 ---
