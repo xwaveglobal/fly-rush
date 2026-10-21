@@ -109,6 +109,20 @@ export const TYRE = {
   rimY: -0.3,
   rimD: 0.42,
   rimSquash: 0.42,
+  /** 'streaks' = hot glowing tyres with light trails orbiting them (owner's reference); 'spokes' = spoked rims */
+  style: 'streaks' as 'streaks' | 'spokes',
+  /** speed (m/s) where the hot-tyre glow starts / is full */
+  hotFrom: 14,
+  hotFull: 40,
+  /** orbit trail speed relative to the wheel's real spin */
+  orbitSpeed: 0.35,
+  /** orbit glow placement on the sprite plane, diameter (m), horizontal squash */
+  glowX: 0.42,
+  glowY: -0.3,
+  glowD: 0.62,
+  glowSquash: 0.5,
+  /** at speed the tyre spray turns into orange sparks */
+  sparkColor: 0xff8a2a,
 };
 
 export const SPEED = {

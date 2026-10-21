@@ -239,6 +239,9 @@ export class Vehicle {
   /** spoked rims drawn over the two rear tyres of the X1 render (rear view only) */
   private rims: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>[] = [];
   private rimMat!: THREE.ShaderMaterial;
+  /** comet light trails orbiting the rear tyres (TYRE.style = 'streaks') */
+  private orbits: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>[] = [];
+  private orbitMat!: THREE.ShaderMaterial;
   private spriteTex: THREE.Texture[] = [];
   private spriteAspect: number[] = [];
   private spriteView = -1;
@@ -581,10 +584,10 @@ export class Vehicle {
       this.spriteTex[i] = t;
     });
     const mat = new THREE.ShaderMaterial({
-      uniforms: { map: { value: this.spriteTex[0] }, tint: { value: new THREE.Color(0xffffff) }, tintAmt: { value: 0 }, dim: { value: 1 }, gain: { value: 1.05 }, spin: { value: 0 }, streak: { value: 0 }, spinAmt: { value: 0 }, speedK: { value: 0 }, rearView: { value: 1 } },
+      uniforms: { map: { value: this.spriteTex[0] }, tint: { value: new THREE.Color(0xffffff) }, tintAmt: { value: 0 }, dim: { value: 1 }, gain: { value: 1.05 }, spin: { value: 0 }, streak: { value: 0 }, spinAmt: { value: 0 }, speedK: { value: 0 }, hot: { value: 0 }, rearView: { value: 1 } },
       vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
       fragmentShader: `uniform sampler2D map; uniform vec3 tint; uniform float tintAmt; uniform float dim; uniform float gain;
-        uniform float spin; uniform float streak; uniform float spinAmt; uniform float speedK; uniform float rearView; varying vec2 vUv;
+        uniform float spin; uniform float streak; uniform float spinAmt; uniform float speedK; uniform float hot; uniform float rearView; varying vec2 vUv;
         void main(){
           vec4 c = texture2D(map, vUv);
           if (c.a < 0.02) discard;
@@ -610,6 +613,22 @@ export class Vehicle {
           // long motion streaks sliding over the rubber (racing tyre at speed), brighter when fast
           float g = fract(vUv.y * 5.0 + streak);
           c.rgb += vec3(0.34, 0.2, 0.1) * (0.6 + 0.8 * speedK) * tyre * rub * spinAmt * smoothstep(0.7, 0.96, g) * smoothstep(1.0, 0.97, g);
+          // "hot tyre" look (TYRE.style = streaks): thin glowing lines wrap the tread and race down it
+          if (hot > 0.01 && tyre > 0.5) {
+            float tx = vUv.x < 0.5 ? vUv.x / 0.175 : (1.0 - vUv.x) / 0.175;   // 0 = outer edge … 1 = inner
+            float ty = vUv.y / 0.44;
+            float hl = 0.0;
+            for (int i = 0; i < 6; i++) {
+              float fi = float(i);
+              float x0 = 0.1 + 0.15 * fi + 0.04 * sin(ty * 6.0 + fi);       // lines follow the tyre's curve
+              float lw = 0.012 + 0.01 * fract(fi * 0.61);
+              float seg = fract(ty * (0.8 + 0.25 * fi) + streak * (1.2 + 0.3 * fi) + fi * 0.37);
+              hl += smoothstep(lw, 0.0, abs(tx - x0)) * smoothstep(0.0, 0.08, seg) * smoothstep(0.75, 0.25, seg);
+            }
+            float edgeGlow = smoothstep(0.22, 0.0, tx) * (0.6 + 0.4 * sin(ty * 9.0 + streak * 6.0));  // hot rim on the outer side
+            vec3 hotC = mix(vec3(1.0, 0.42, 0.08), vec3(1.0, 0.92, 0.75), clamp(hl * 0.7, 0.0, 1.0));
+            c.rgb += hotC * (hl * 1.1 + edgeGlow * 0.55) * hot * spinAmt;
+          }
           // lateral blur hint at the tyre edge
           c.rgb += vec3(0.05) * tyre * spinAmt * (1.0 - rub);
           float mx = max(c.r, max(c.g, c.b)); float mn = min(c.r, min(c.g, c.b));
@@ -661,6 +680,47 @@ export class Vehicle {
       transparent: true,
       depthWrite: false,
     });
+    // TYRE.style = 'streaks': glowing comet trails orbit each rear tyre (additive light, like a hot
+    // racing tyre at speed). Smooth arcs never strobe, so they may turn as fast as the wheel.
+    this.orbitMat = new THREE.ShaderMaterial({
+      uniforms: { rot: { value: 0 }, amt: { value: 0 }, k: { value: 0 } },
+      vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      fragmentShader: `uniform float rot; uniform float amt; uniform float k; varying vec2 vUv;
+        void main(){
+          vec2 p = vUv * 2.0 - 1.0;
+          float r = length(p);
+          if (r > 1.0) discard;
+          float a = atan(p.y, p.x);
+          float lum = 0.0; float head = 0.0;
+          for (int i = 0; i < 5; i++) {
+            float fi = float(i);
+            float R = 0.62 + 0.07 * fi;                          // nested orbits hugging the tyre
+            float w = 0.018 + 0.01 * fract(fi * 0.73);
+            float ring = exp(-pow((r - R) / w, 2.0));
+            float ph = rot * (1.0 + 0.18 * fi) + fi * 2.1;
+            float d = mod(ph - a, 6.2831853);                     // 0 at the head, grows along the tail
+            float len = 1.2 + 2.4 * k;                            // longer tails when faster
+            float tail = smoothstep(len, 0.0, d);
+            lum += ring * tail * (0.55 + 0.45 * fract(fi * 0.37 + 0.2));
+            head += ring * smoothstep(0.25, 0.0, d);
+          }
+          // faint glow halo around the tyre silhouette
+          lum += exp(-pow((r - 0.66) / 0.12, 2.0)) * 0.12 * k;
+          vec3 col = mix(vec3(1.0, 0.38, 0.06), vec3(1.0, 0.95, 0.8), clamp(head, 0.0, 1.0));
+          gl_FragColor = vec4(col * lum * amt, 1.0);
+        }`,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    for (const side of [-1, 1]) {
+      const g = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.orbitMat);
+      g.userData.side = side;
+      g.renderOrder = 4;
+      g.visible = false;
+      this.sprite.add(g);
+      this.orbits.push(g);
+    }
     for (const side of [-1, 1]) {
       const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.rimMat);
       m.userData.side = side;
@@ -768,6 +828,7 @@ export class Vehicle {
     if (this.sprite.material.depthTest === over) {
       this.sprite.material.depthTest = !over;
       this.rimMat.depthTest = !over;
+      this.orbitMat.depthTest = !over;
       this.aura.material.depthTest = !over;
       this.jetMat.depthTest = !over;
     }
@@ -1210,8 +1271,20 @@ export class Vehicle {
       ru.dim.value = u.dim.value;
       ru.glow.value.setHex(this.skin.glow);
       const sx = this.sprite.scale.x, sy = this.sprite.scale.y;
+      const streaks = TYRE.style === 'streaks';
+      const hotK = clamp01((speed - TYRE.hotFrom) / (TYRE.hotFull - TYRE.hotFrom));
+      u.hot.value = streaks ? hotK * u.rearView.value * (1 - p.air) * (this.locked ? 0 : 1) : 0;
+      const ou = this.orbitMat.uniforms;
+      ou.rot.value = (ou.rot.value + Math.min((speed / TYRE.radius) * dt * TYRE.orbitSpeed, 1.2)) % (Math.PI * 200);
+      ou.k.value = hotK;
+      ou.amt.value = streaks ? (0.25 + 0.75 * hotK) * clamp01(speed / 10) * u.rearView.value * (1 - p.air) * (this.locked ? 0 : 1) * u.dim.value : 0;
+      for (const g of this.orbits) {
+        g.visible = this.spriteOn && ou.amt.value > 0.02;
+        g.position.set(g.userData.side * TYRE.glowX, TYRE.glowY, 0.002);
+        g.scale.set((TYRE.glowD * TYRE.glowSquash) / sx, TYRE.glowD / sy, 1);
+      }
       for (const m of this.rims) {
-        m.visible = this.spriteOn && ru.amt.value > 0.02;
+        m.visible = !streaks && this.spriteOn && ru.amt.value > 0.02;
         // sprite-local placement (the sprite plane is 1×1, scaled to the car)
         m.position.set(m.userData.side * TYRE.rimX, TYRE.rimY, 0.001);
         m.scale.set((TYRE.rimD * TYRE.rimSquash) / sx, TYRE.rimD / sy, 1);
