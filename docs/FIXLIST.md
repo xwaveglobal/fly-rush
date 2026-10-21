@@ -1,6 +1,6 @@
 # Fix list — after v2.0.8 (owner review 2026-10-22)
 
-Status: **chốt, chưa code**. Owner will send more bug screenshots → append below, then fix in one pass.
+Status: **chốt, chưa code** (round 2 added 2026-10-22 02:08 — section F). Fix everything in one pass.
 
 ## A. Gameplay / logic
 - **A1. Special trước khi đua** — Retry also opens the choice. Replace the long popup with ONE big "SPECIAL" button (icon of the chosen item) on the pre-race step → opens the **Magic Bag** popup to pick; items you don't own have a **Buy with coins** area at the bottom of the same popup.
@@ -45,3 +45,20 @@ Status: **chốt, chưa code**. Owner will send more bug screenshots → append 
 - **E3.** RANK GATE strip hidden by notices → strip below the notice lane; other notices wait while in a gate.
 - **E4.** Rank-up notice queued behind "new best" / "new car" → rank-up first, the others merged into one line.
 - **E5.** Game Over weekly rank "Week #32,172" looks odd at low EXP → show "Top x %" or hide under 1,000 EXP.
+
+## F. Owner screenshots, round 2 (iPhone, artifact)
+- **F1. Bug:** after finishing the training, back on Home all buttons are missing.
+- **F2.** New logo → `docs/assets-inbox/logo-sky-roadster-v2.png` (2172×724 RGBA, sharp). Replace the home / result logo.
+- **F3. Pilot card (rival + own):** remove Trophies; **new avatar set** (current helmets look bad); car name cut ("XWAVE In…") → short name; the EXP shield icon is hard to read → a clearer icon (e.g. "EXP" badge text or a speedometer); show **Average EXP** instead of Best EXP *(open: does the leaderboard / rank also use average, or stay on best run? see questions)*.
+- **F4. Daily:** remove points + chests (coins only); add more daily missions related to v2 (EXP, ranks, specials, Bonus, distance, power-ups); **remove Near Miss from the whole game** (pop, stat, quest, result tile) — nobody understands it.
+- **F5. Tracks 3–5:** not "Coming soon" — they unlock at **S / SS / SSS** (show the rank badge on each card).
+- **F6. Practice (item info card):** "Practice it" = a practice road for **that special only** (SOS / Roadster / HYPER), no basic left/right/up/down steps, and **no shield pickups** in the practice. Item card text: shorter, v2 rules (no "spot the purple rocket on the road", no "win it in Cups").
+- **F7. Profile:** nicer Magic Bag icon; much less text; remove Cups (= D2).
+- **F8. Result screen:** title **"END"** instead of "GAME OVER"; no "how to avoid" tip; emphasise **this race's EXP**, the **rank reached** and the **leaderboard position**; minimal text.
+- **F9. Revive popup:** no "how to avoid" tip, minimal text, focus on the button + revives left.
+- **F10. Cars:** the car in `docs/assets-inbox/car-rank-C-rear.png` (1536×1024, background is a baked-in checkerboard → must be cut out) becomes the **rank C** car. Cars for **B and above are black silhouettes** (not visible until unlocked). Ladder becomes D Zenith · C new car · B · A · AA · AAA.
+
+## Open questions for the owner
+1. F3 "Average EXP": shown on the pilot card only, or should rank / leaderboard use average too? (Design today: rank = best single run.)
+2. A8 special prices: SOS 1,200 · Roadster 1,800 · HYPER 4,000 OK?
+3. F10: name of the rank-C car? Cars B → AAA keep Volt / Phantom / Inferno / Nexus?
