@@ -4,6 +4,18 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-22 — v3.0.4: colour calibration + Android "Couldn't open TikTok Minis"
+
+**Owner report**: iPhone still washed out (menus much worse than home); 2 Android phones show "Couldn't open TikTok Minis".
+
+**Colour**: the v3.0.3 alpha theory did not fix it. Dark navy → slate grey everywhere points at an extra sRGB encode (screen surface) or sRGB textures not decoded. `src/native/color.ts` measures both at start (render target + screen readback of a 50 % grey) and fixes only what it finds; Settings → Colour lets the owner force Normal / Screen fix / Texture fix and shows `out` / `tex` readings (browser: 55 / 55). UI quad = RawShaderMaterial copying the canvas raw (decode only when the screen encodes).
+
+**Android**: removed `tiktok/package.json` (tools now run on a temp copy), ES2017 downlevel of game.js via TypeScript (build script), `put()` for read-only runtime globals, boot error screen. Also to check on the owner side: the Android TikTok accounts must be testers of the app in the TikTok developer portal, TikTok app up to date.
+
+**Next**: owner sends a Settings screenshot from the iPhone (the colour line) → confirms which fix applied.
+
+---
+
 ## 2026-10-22 — v3.0.3: native fidelity (owner screenshots: H5 vs TikTok native)
 
 **Cause of the faded look**: the canvas UI quad blended its alpha into the framebuffer (and post passes can leave alpha < 1); TikTok composites the game canvas with alpha, so the page showed through everything. Fix in `src/native/main.ts`: UI material keeps destination alpha (CustomBlending, alpha Zero/One) + `opaque()` clears alpha to 1 after the UI pass.

@@ -14,7 +14,7 @@ From v3.0 the game ships as a **native TikTok mini game** (TikTok Minis). The v2
 npm run build:tiktok    # src/native/main.ts → tiktok/game.js + tiktok/assets/ (the folder you upload)
 npm run check:tiktok    # HS SDK check (must say 0 FAIL)
 npm run preview:tiktok  # the native game in a phone frame on your desktop (http://127.0.0.1:8090)
-npm run pack:tiktok     # tiktok-tiktok.zip to upload (needs the App ID in tiktok/project.config.json)
+npm run pack:tiktok     # tiktok-tiktok.zip to upload (App ID in tiktok/project.config.json)
 ```
 
 - `tiktok/` = the game folder TikTok receives: `game.js`, `game.json`, `project.config.json`, `hs-game.js`, `hs-sdk.min.js`, `assets/`. Never put keys, keystores, `.env` files or the HS kit in it.
@@ -207,6 +207,12 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 ### Meta
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
+
+## v3.0.4 changes — colour calibration · Android start
+- Colour calibration at start (`src/native/color.ts`): two tiny off-screen draws measure whether the screen re-encodes sRGB (fix: output linear) and whether sRGB textures are decoded (fix: decode in the shader). Only what is measured is compensated. Settings → Colour: Auto / Normal / Screen fix / Texture fix, and a line with the measured values + GPU for testing.
+- The UI layer is copied to the screen raw (no sRGB round trip a runtime could get wrong).
+- Android: the game folder no longer contains a `package.json`; the bundle is downlevelled to ES2017 (older mini-game JS engines); globals the runtime keeps read-only are no longer written with plain assignments; a readable error screen if the 3D view cannot start.
+- `npm run check:tiktok` / `pack:tiktok` run the HS tools on a temporary copy (`scripts/tiktok-tools.mjs`).
 
 ## v3.0.3 changes — native looks like the H5 game
 - Washed-out picture on TikTok fixed: the frame's alpha channel is forced to 1 after the UI pass (the UI quad no longer lowers the canvas alpha, and bloom / post passes can't leave it below 1), so the app never shows its page through the game.

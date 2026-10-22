@@ -111,6 +111,8 @@ export class UI {
   myClass: RankClass = 'D';
   hud: HudState = { run: null, speed: 0, maxSpeed: 1, mission: null, gate: null, track: null, danger: null, dangerOkT: -1e9, rocketWaitT: -1e9 };
   rocketReady = false;
+  /** colour calibration control (src/native/color.ts), set by main */
+  colorCtl: { mode: () => string; line: () => string; cycle: () => void } | null = null;
 
   // ---------------------------------------------------------------- effects
   notices: Notice[] = [];

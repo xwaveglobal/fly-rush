@@ -467,12 +467,16 @@ function settingsOv(ui: UI, g: Gfx) {
       y += 52;
     };
     row('s-lang', '🌐', 'Language', LANGS.find((l) => l.code === ui.lang)?.name ?? 'English', () => ui.langPicker());
+    const cc = ui.colorCtl;
+    if (cc) row('s-color', '🎨', 'Colour', ({ auto: 'Auto', normal: 'Normal', surface: 'Screen fix', texture: 'Texture fix' } as Record<string, string>)[cc.mode()] ?? cc.mode(), () => cc.cycle());
     const bw = (w - 8) / 2;
     button(g, 's-prof', x, y, bw, 40, `${ICON.user} Profile`, () => ui.h.profile(), { style: 'ghost', size: 12 });
     button(g, 's-help', x + bw + 8, y, bw, 40, `${ICON.info} How to play`, () => ui.h.help(), { style: 'ghost', size: 12 });
     y += 50;
     g.text(`Sky Roadster ${ui.version}`, x + w / 2, y + 6, { size: 10, align: 'center', font: 'b', color: C.muted, noTr: true });
-    return y + 16;
+    y += 16;
+    if (cc) y += g.para(cc.line(), x, y, w, { size: 8.5, font: 'b', color: C.muted, align: 'center', noTr: true });
+    return y + 4;
   });
 }
 

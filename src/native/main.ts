@@ -9,6 +9,8 @@ import { DPR, NATIVE, emitWindow, makeImage, safeArea, screenCanvas, sizeScreen,
 import { hs, profile } from './hs.ts';
 import './save.ts';
 import * as THREE from 'three';
+import { COLOR_MODES, applyColor, color, colorLine, measure, type ColorMode } from './color.ts';
+import { kv } from '../core/kv.ts';
 import { setAdProvider, type RewardPlacement } from '../ads/Ads.ts';
 import { platform } from '../platform.ts';
 import { Game } from '../Game.ts';
@@ -87,6 +89,28 @@ try {
   ui = (game as any).ui as UI;
 } catch (e) {
   console.error('[sky-roadster] could not start the 3D view', e);
+  bootError(e);
+}
+
+/** the 3D view could not start: say why on screen (instead of a blank / closed game) */
+function bootError(e: unknown) {
+  try {
+    const c = screenCanvas.getContext('2d');
+    if (!c) return;
+    c.fillStyle = '#04071a';
+    c.fillRect(0, 0, screenCanvas.width, screenCanvas.height);
+    c.fillStyle = '#ffffff';
+    const k = screenCanvas.width / viewW;
+    c.font = `${Math.round(16 * k)}px sans-serif`;
+    c.textAlign = 'center';
+    c.fillText('Sky Roadster could not start the 3D view', screenCanvas.width / 2, screenCanvas.height * 0.42);
+    c.font = `${Math.round(12 * k)}px sans-serif`;
+    c.fillStyle = '#9fb3dd';
+    c.fillText(String((e as Error)?.message ?? e).slice(0, 70), screenCanvas.width / 2, screenCanvas.height * 0.42 + 28 * k);
+    c.fillText('Please update TikTok and try again.', screenCanvas.width / 2, screenCanvas.height * 0.42 + 50 * k);
+  } catch {
+    /* the canvas already holds a WebGL context */
+  }
 }
 
 // ---------------------------------------------------------------- canvas UI layer over the 3D view
@@ -101,15 +125,25 @@ let uiCam: THREE.OrthographicCamera | null = null;
 if (ui && game) {
   ui.attach(gfx);
   uiTex = new THREE.CanvasTexture(uiCanvas);
-  uiTex.colorSpace = THREE.SRGBColorSpace;
+  // the UI canvas is copied to the screen as-is (no sRGB decode / encode round trip that a
+  // runtime could get wrong); `decode` is only on when the screen itself encodes to sRGB
+  uiTex.colorSpace = THREE.NoColorSpace;
   uiTex.minFilter = THREE.LinearFilter;
+  uiTex.magFilter = THREE.LinearFilter;
   uiTex.generateMipmaps = false;
   uiScene = new THREE.Scene();
   uiCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-  // UI over the 3D frame: normal blending for colour, but the alpha channel is left at 1 —
-  // a mini game's screen canvas is composited by the app, so any alpha < 1 lets the page show
-  // through and the whole game looks washed out
-  const mat = new THREE.MeshBasicMaterial({ map: uiTex, transparent: true, depthTest: false, depthWrite: false, toneMapped: false });
+  const mat = new THREE.RawShaderMaterial({
+    uniforms: { map: { value: uiTex }, decode: { value: 0 } },
+    vertexShader: 'attribute vec3 position; attribute vec2 uv; varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+    fragmentShader: `precision mediump float; uniform sampler2D map; uniform float decode; varying vec2 vUv;
+      vec3 toLinear(vec3 c){ return mix(c * 0.0773993808, pow(c * 0.9478672986 + 0.0521327014, vec3(2.4)), step(vec3(0.04045), c)); }
+      void main(){ vec4 c = texture2D(map, vUv); if (decode > 0.5) c.rgb = toLinear(c.rgb); gl_FragColor = c; }`,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+  });
+  // normal blending for colour; the alpha channel stays 1 (the app composites the game canvas)
   mat.blending = THREE.CustomBlending;
   mat.blendEquation = THREE.AddEquation;
   mat.blendSrc = THREE.SrcAlphaFactor;
@@ -122,12 +156,26 @@ if (ui && game) {
   uiScene.add(quad);
   const renderer = (game as any).renderer;
   const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  // colour calibration (see color.ts) — before any 3D material is compiled
+  const r0: THREE.WebGLRenderer = renderer.renderer;
+  measure(r0, () => (G.document?.createElement ? G.document.createElement('canvas') : T.createCanvas()));
+  const savedMode = (kv.get('colorMode') as ColorMode) || 'auto';
+  applyColor(r0, COLOR_MODES.includes(savedMode) ? savedMode : 'auto');
+  ui.colorCtl = {
+    mode: () => color.mode,
+    line: () => colorLine(),
+    cycle: () => {
+      const i = COLOR_MODES.indexOf(color.mode);
+      const next = COLOR_MODES[(i + 1) % COLOR_MODES.length];
+      kv.set('colorMode', next);
+      applyColor(r0, next);
+      if (next === 'normal' && color.applied.texture === false) ui!.toast('Colour: normal · reopen the game if textures still look pale', '#4fc3ff');
+    },
+  };
   renderer.uiPass = (r: THREE.WebGLRenderer) => {
     if (ui!.frame(now())) uiTex!.needsUpdate = true;
-    const tm = r.toneMapping;
-    r.toneMapping = THREE.NoToneMapping;
+    mat.uniforms.decode.value = color.applied.surface ? 1 : 0;
     r.render(uiScene!, uiCam!);
-    r.toneMapping = tm;
     opaque(r);
   };
   /** force the finished frame's alpha to 1 (bloom / post passes can leave it below 1) */

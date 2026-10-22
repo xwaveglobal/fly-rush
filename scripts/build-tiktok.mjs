@@ -5,7 +5,7 @@
 //
 // The game folder must hold only what is uploaded to TikTok: game.js, game.json, project.config.json,
 // hs-game.js, hs-sdk.min.js and assets/. The HS kit itself stays outside (hs-sdk/).
-import { existsSync, mkdirSync, readdirSync, rmSync, statSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, rmSync, statSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -116,6 +116,35 @@ async function buildBun() {
 const t0 = Date.now();
 if (typeof Bun !== 'undefined') await buildBun();
 else await buildEsbuild();
+
+// Downlevel the bundle to ES2017 so older mini-game JS engines (some Android TikTok builds) parse it:
+// optional chaining, ??, ??=, class fields, object spread… become plain ES2017. TypeScript does it.
+{
+  let ts = null;
+  try {
+    ts = (await import('typescript')).default;
+  } catch {
+    try {
+      const { createRequire } = await import('node:module');
+      const { execSync } = await import('node:child_process');
+      const globalRoot = execSync('npm root -g', { encoding: 'utf8' }).trim();
+      ts = createRequire(join(globalRoot, 'x.js'))('typescript');
+    } catch {
+      ts = null;
+    }
+  }
+  const f = join(out, 'game.js');
+  if (ts) {
+    const t1 = Date.now();
+    const r = ts.transpileModule(readFileSync(f, 'utf8'), {
+      compilerOptions: { target: ts.ScriptTarget.ES2017, module: ts.ModuleKind.None, allowJs: true, removeComments: false, newLine: ts.NewLineKind.LineFeed },
+      reportDiagnostics: false,
+    });
+    // keep the bundle's own (sloppy) mode: TypeScript adds a "use strict" of its own
+    writeFileSync(f, r.outputText.replace(/^\s*"use strict";\s*/, ''));
+    console.log(`game.js downlevelled to ES2017 in ${Date.now() - t1} ms`);
+  } else console.warn('⚠ typescript not found: game.js left at the bundler output level');
+}
 
 // TikTok refuses 0-byte files; report sizes against the 4 MB main-package limit
 let total = 0;

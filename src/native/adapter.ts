@@ -189,25 +189,39 @@ if (NATIVE) {
   };
 
   const win = G;
-  win.window = win;
-  win.self = win;
-  win.top = win;
-  win.parent = win;
-  win.document = document;
-  win.navigator = navigator;
-  win.performance = perf;
-  win.localStorage = storage;
-  win.sessionStorage = storage;
-  win.location = { href: '', search: '', hash: '', origin: '', pathname: '/', hostname: '', protocol: 'tt:', host: '', reload: noop };
-  win.screen = { width: viewW, height: viewH };
-  win.innerWidth = viewW;
-  win.innerHeight = viewH;
-  win.devicePixelRatio = DPR;
-  win.addEventListener = on;
-  win.removeEventListener = off;
-  win.dispatchEvent = noop;
-  win.matchMedia = () => ({ matches: false, addListener: noop, removeListener: noop, addEventListener: noop, removeEventListener: noop });
-  win.getComputedStyle = () => ({ getPropertyValue: () => '' });
+  /** set a global; read-only ones (a getter on the runtime's global) are redefined, else skipped */
+  const put = (k: string, v: any) => {
+    try {
+      win[k] = v;
+      if (win[k] === v) return;
+    } catch {
+      /* read-only */
+    }
+    try {
+      Object.defineProperty(win, k, { value: v, configurable: true, writable: true });
+    } catch {
+      /* the runtime keeps its own */
+    }
+  };
+  put('window', win);
+  put('self', win);
+  put('top', win);
+  put('parent', win);
+  put('document', document);
+  put('navigator', navigator);
+  put('performance', perf);
+  put('localStorage', storage);
+  put('sessionStorage', storage);
+  put('location', { href: '', search: '', hash: '', origin: '', pathname: '/', hostname: '', protocol: 'tt:', host: '', reload: noop });
+  put('screen', { width: viewW, height: viewH });
+  put('innerWidth', viewW);
+  put('innerHeight', viewH);
+  put('devicePixelRatio', DPR);
+  put('addEventListener', on);
+  put('removeEventListener', off);
+  put('dispatchEvent', noop);
+  put('matchMedia', () => ({ matches: false, addListener: noop, removeListener: noop, addEventListener: noop, removeEventListener: noop }));
+  put('getComputedStyle', () => ({ getPropertyValue: () => '' }));
   win.Image = function Image() {
     return makeImage();
   };
@@ -220,7 +234,7 @@ if (NATIVE) {
   win.AudioContext ??= function AudioContext() {
     return T.createWebAudioContext();
   };
-  win.webkitAudioContext = win.AudioContext;
+  put('webkitAudioContext', win.AudioContext);
   win.alert ??= (m: string) => T.showModal?.({ title: '', content: String(m), showCancel: false });
 
   // app lifecycle → the visibilitychange / resize events the game already listens to

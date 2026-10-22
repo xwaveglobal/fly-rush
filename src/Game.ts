@@ -58,7 +58,7 @@ import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } f
 import { dayKey } from './core/Save.ts';
 import { platform } from './platform.ts';
 
-const VERSION = 'v3.0.3';
+const VERSION = 'v3.0.4';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */

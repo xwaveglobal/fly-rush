@@ -19,9 +19,9 @@
     "test:bonus": "node --experimental-transform-types --no-warnings tests/bonus.test.ts",
     "test:server": "node --experimental-transform-types --no-warnings tests/server.test.ts",
     "build:tiktok": "node scripts/build-tiktok.mjs",
-    "check:tiktok": "node hs-sdk/hs-check.mjs tiktok",
+    "check:tiktok": "node scripts/tiktok-tools.mjs check",
     "preview:tiktok": "node hs-sdk/web/hs-web.mjs preview tiktok",
-    "pack:tiktok": "node hs-sdk/web/hs-web.mjs pack tiktok --tiktok"
+    "pack:tiktok": "node scripts/tiktok-tools.mjs pack"
   },
   "dependencies": {
     "three": "0.169.0"

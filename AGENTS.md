@@ -22,7 +22,8 @@ npm test               # fairness + difficulty + air-lane + EXP calibration + ra
 npm run build          # dist/ (multi-file static build)
 npm run build:single   # dist/index.html, everything inlined (one shareable file)
 npm run build:tiktok   # v3 native: tiktok/game.js + tiktok/assets (the folder uploaded to TikTok)
-npm run check:tiktok   # HS SDK check — must stay at 0 FAIL
+npm run check:tiktok   # HS SDK check on a temp copy of tiktok/ — must stay at 0 FAIL
+npm run pack:tiktok    # tiktok-tiktok.zip — the file to upload to TikTok
 npm run preview:tiktok # the native build in a desktop phone frame (127.0.0.1:8090)
 node scripts/build-esbuild.mjs [--single]   # fallback build without Vite
 ```
@@ -63,7 +64,7 @@ builds/              prebuilt single-file HTML snapshots (playable by opening th
 7. Saves are in `localStorage` via `src/core/Save.ts` — don't break old saves; migrate fields instead.
 8. Never trust the client for EXP / rank: the server re-computes EXP from each run (`server/core.mjs`). If you change EXP rates, ranks or road multipliers in `config.ts`, update `server/core.mjs` too (`npm test` checks).
 
-9. **Native (v3) rules — from the HS kit:** never call `tt.login`, `TTMinis.game.*`, `createRewardedVideoAd`, `createInterstitialAd`, `shareAppMessage`, `addShortcut`, `startEntranceMission` — only `HSGame`. Never edit `hs-game.js` / `hs-sdk.min.js`. Never ask for or write the TikTok **Client Secret**. Nothing but the game goes in `tiktok/` (no keys, keystores, `.env`, no kit). Ad / share / shop / Entry-Launch buttons are drawn only while `HSGame.has(...)` / `canShowAd(place)` say so. Keys and places are string literals in the calls. Progress only in the HS profile (via `src/core/Save.ts` + `src/core/kv.ts` backends). Never add reward items yourself after showAd / share / buy — HSGame adds them.
+9. **Native (v3) rules — from the HS kit:** never call `tt.login`, `TTMinis.game.*`, `createRewardedVideoAd`, `createInterstitialAd`, `shareAppMessage`, `addShortcut`, `startEntranceMission` — only `HSGame`. Never edit `hs-game.js` / `hs-sdk.min.js`. Never ask for or write the TikTok **Client Secret**. Nothing but the game goes in `tiktok/` (no keys, keystores, `.env`, no kit, no package.json). Ad / share / shop / Entry-Launch buttons are drawn only while `HSGame.has(...)` / `canShowAd(place)` say so. Keys and places are string literals in the calls. Progress only in the HS profile (via `src/core/Save.ts` + `src/core/kv.ts` backends). Never add reward items yourself after showAd / share / buy — HSGame adds them.
 10. **UI changes go in both UIs**: `src/ui/UI.ts` (web/DOM) and `src/native/ui/*` (canvas). A new `this.ui.x()` call in Game.ts needs a method in `src/native/ui/NativeUI.ts` too. After native changes: `npm run build:tiktok && npm run check:tiktok`.
 
 ## Workflow
