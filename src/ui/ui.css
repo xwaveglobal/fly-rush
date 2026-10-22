@@ -2346,3 +2346,26 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .lbrow .ln { display: flex; flex-direction: column; align-items: flex-start; gap: 3px !important; }
 .lbrow .ln small { display: inline-flex !important; align-items: center; gap: 6px !important; line-height: 1; }
 .lbrow .ln small .clsb { height: 16px !important; min-width: 20px !important; font-size: 9.5px !important; padding: 0 4px !important; flex: none; }
+
+/* ---- v2.2.4 overlay stacking: pre-race popups always above result / pause screens ---- */
+#ui .screen.overlay#specialpick { z-index: 25; }
+#ui .screen.overlay#bag { z-index: 26; }
+#ui .screen.overlay#bagbuy, #ui .screen.overlay#spconfirm, #ui .screen.overlay#boostinfo { z-index: 27; }
+#ui .screen.overlay#sharepv, #ui .screen.overlay#rankguide, #ui .screen.overlay#popup { z-index: 28; }
+
+/* ---- v2.2.4 overlay stacking: pre-race popups always above result / pause screens ---- */
+#ui .screen.overlay#specialpick { z-index: 25; }
+#ui .screen.overlay#bag { z-index: 26; }
+#ui .screen.overlay#bagbuy, #ui .screen.overlay#spconfirm, #ui .screen.overlay#boostinfo { z-index: 27; }
+#ui .screen.overlay#sharepv, #ui .screen.overlay#rankguide, #ui .screen.overlay#popup { z-index: 28; }
+/* AA3: normal FINISH card — rank and EXP stand out */
+.result .endexp .final { font-size: 64px !important; text-shadow: 0 0 22px rgba(127,230,255,.55), 0 3px 0 rgba(0,0,0,.35); }
+.result .endrow { gap: 10px !important; margin-top: 2px; }
+.result .endrow .erank { gap: 8px !important; padding: 5px 14px 5px 6px; border-radius: 16px; background: color-mix(in srgb, var(--cc, #9fb3dd) 16%, rgba(255,255,255,.04)); border: 1.5px solid color-mix(in srgb, var(--cc, #9fb3dd) 70%, transparent); box-shadow: 0 0 16px color-mix(in srgb, var(--cc, #9fb3dd) 35%, transparent); }
+.result .endrow .erank span { display: flex; flex-direction: column; line-height: 1.05; }
+.result .endrow .erank span small { font: 800 9px var(--font-body) !important; letter-spacing: 1.4px; color: var(--muted); }
+.result .endrow .erank span b { font: 900 20px var(--font); color: var(--cc, #fff); }
+/* AA2: race HUD labels */
+#hud .scorebox .rkl { font: 800 8.5px var(--font-body); letter-spacing: 1.3px; color: var(--muted); margin: 0 4px 0 8px; vertical-align: middle; }
+#hud .scorebox .hme { display: inline-flex; align-items: center; gap: 4px; margin-right: 6px; padding-right: 6px; border-right: 1px solid rgba(255,255,255,.15); }
+#hud .scorebox .hme .clsb { height: 14px; min-width: 16px; font-size: 8.5px; padding: 0 3px; }

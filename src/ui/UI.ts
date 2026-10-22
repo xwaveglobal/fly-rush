@@ -594,7 +594,7 @@ export class UI {
       <div class="row">
         <button class="icon-btn hit" data-a="pause" aria-label="Pause">${ICON.pause}</button>
         <button class="trskip" data-a="tutskip" data-k="trskip" hidden>Skip ›</button>
-        <div class="scorebox panel exp"><div class="label" data-h="scorelabel">${XPT}</div><div class="val"><span data-h="score">0</span><span class="rankp" data-h="rankp"></span></div><div class="hbest" data-h="hbest" hidden><small>BEST</small><b data-h="hbestv">0</b><i><em data-h="hbestbar"></em></i></div><div class="hnext" data-h="hnext" hidden></div></div>
+        <div class="scorebox panel exp"><div class="label" data-h="scorelabel">${XPT}</div><div class="val"><span data-h="score">0</span><span class="rankp" data-h="rankp"></span></div><div class="hbest" data-h="hbest" hidden><span class="hme" data-h="hme"></span><small>BEST</small><b data-h="hbestv">0</b><i><em data-h="hbestbar"></em></i></div><div class="hnext" data-h="hnext" hidden></div></div>
         <div class="side">
           <span class="pill coins">${ICON.coin}<b data-h="coins">0</b></span>
           <span class="pill">${ICON.flag}<b data-h="dist">0 m</b></span>
@@ -1048,6 +1048,8 @@ export class UI {
   hudLevel = '';
   /** highest rank this road can give (Endless AAA, Mega Rush SSS) */
   hudTop: RankClass = 'AAA';
+  /** the player's own rank (profile) shown on the race HUD */
+  hudMe: RankClass = 'D';
 
   /** v2: rank-gate strip under the HUD (null = hidden) */
   gateHud(g: { next: RankClass; k: number } | null) {
@@ -1080,7 +1082,8 @@ export class UI {
     } else {
       this.hset('scorelabel', `${XPT}${this.hudLevel ? `<small class="lvtag2 ${this.hudLevel.toLowerCase()}">${this.hudLevel}</small>` : ''}`, true);
       this.hset('score', fmt(run.exp));
-      this.hset('rankp', run.expRate > 0 ? classBadge(classOfBolts(run.exp)) : '', true);
+      // the rank THIS race has reached (labelled), next to its EXP
+      this.hset('rankp', run.expRate > 0 ? `<small class="rkl">RACE</small>${classBadge(classOfBolts(run.exp))}` : '', true);
     }
     // the best EXP to beat, with a thin bar — turns gold once beaten
     const hb = this.root.querySelector<HTMLElement>('[data-h="hbest"]');
@@ -1088,6 +1091,7 @@ export class UI {
       const show = this.hudBest > 0 && !this.trainHud && !this.bonusHud && run.expRate > 0;
       if (hb.hidden === show) hb.hidden = !show;
       if (show) {
+        this.hset('hme', `<small>YOU</small>${classBadge(this.hudMe)}`, true);
         const beat = run.exp > this.hudBest;
         hb.classList.toggle('beat', beat);
         this.hset('hbestv', beat ? 'BEATEN!' : fmt(this.hudBest));
@@ -1363,7 +1367,9 @@ export class UI {
     this.setAll('final', fmt(o.score));
     this.setAll('gbest', fmt(o.best));
     this.setAll('gdist', o.length ? `${fmt((o.dist / o.length) * 100)}%` : `${fmt(o.dist)} m`);
-    $(this.root, '[data-k="erank"]').innerHTML = o.runRank ? `${classBadge(o.runRank, 'md')}<small>rank reached</small>` : '';
+    const er = $(this.root, '[data-k="erank"]');
+    er.innerHTML = o.runRank ? `${classBadge(o.runRank, 'lg')}<span><small>RACE RANK</small><b>${o.runRank}</b></span>` : '';
+    if (o.runRank) er.style.setProperty('--cc', CLASS_COLOR[o.runRank]);
     $(this.root, '[data-k="epos"]').innerHTML = o.pos ? `${ICON.podium}<b>${o.pos}</b>` : '';
     $(this.root, '[data-k="newbest"]').classList.toggle('show', o.isBest);
     $(this.root, '[data-k="grwd"]').innerHTML = this.rewardsHtml(o.rewards, [{ label: 'race', coins: o.coins }, { label: `${o.level} bonus`, coins: o.speedBonus }]);

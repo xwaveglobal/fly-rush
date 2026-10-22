@@ -187,9 +187,10 @@ export interface PhaseConfig extends Omit<MapDifficultyConfig, 'world' | 'target
 }
 
 export const PHASES: PhaseConfig[] = [
-  { rank: 'D', tiers: [0.9, 0.1, 0, 0], maxBlockers: 1, minGap: 1.25, slack: 0.28, maxConsecutiveHard: 0, recovery: 0.5, density: 0.9, movingSpeed: 0.7, speed: 1, boost: { crate: 1.4, barrier: 1.2, ring: 1.2 } },
-  { rank: 'C', tiers: [0.45, 0.55, 0, 0], maxBlockers: 2, minGap: 1.1, slack: 0.22, maxConsecutiveHard: 0, recovery: 0.5, density: 0.95, movingSpeed: 0.8, speed: 1, boost: { low2: 1.8, beam: 1.6, crateBeam: 1.5 } },
-  { rank: 'B', tiers: [0.25, 0.5, 0.25, 0], maxBlockers: 2, minGap: 0.98, slack: 0.18, maxConsecutiveHard: 2, recovery: 0.42, density: 1, movingSpeed: 0.95, speed: 1.03, boost: { trafficMix: 2, laser: 1.6, platform: 1.6, crateBeam: 1.3 } },
+  // v2.2.4: early phases brought back to v1's lively rhythm (v1 city → cloud → tunnel mix) — the D road was too empty
+  { rank: 'D', tiers: [0.62, 0.36, 0.02, 0], maxBlockers: 2, minGap: 1.12, slack: 0.24, maxConsecutiveHard: 1, recovery: 0.5, density: 0.95, movingSpeed: 0.75, speed: 1, boost: { crate: 1.2, barrier: 1.2, ring: 1.4, beam: 1.2, low2: 1.3 } },
+  { rank: 'C', tiers: [0.42, 0.43, 0.15, 0], maxBlockers: 2, minGap: 1.02, slack: 0.2, maxConsecutiveHard: 1, recovery: 0.46, density: 1, movingSpeed: 0.85, speed: 1, boost: { low2: 1.6, beam: 1.4, crateBeam: 1.5, trafficMix: 1.3 } },
+  { rank: 'B', tiers: [0.25, 0.45, 0.25, 0.05], maxBlockers: 2, minGap: 0.95, slack: 0.17, maxConsecutiveHard: 2, recovery: 0.42, density: 1, movingSpeed: 0.95, speed: 1.03, boost: { trafficMix: 2, laser: 1.6, platform: 1.6, crateBeam: 1.3 } },
   { rank: 'A', tiers: [0.12, 0.43, 0.33, 0.12], maxBlockers: 2, minGap: 0.9, slack: 0.15, maxConsecutiveHard: 2, recovery: 0.4, density: 1, movingSpeed: 1.05, speed: 1.06, boost: { gate: 2.2, low2: 1.4, laser: 1.3 } },
   { rank: 'AA', tiers: [0.06, 0.36, 0.4, 0.18], maxBlockers: 2, minGap: 0.84, slack: 0.13, maxConsecutiveHard: 3, recovery: 0.36, density: 1, movingSpeed: 1.15, speed: 1.1, boost: { trafficMix: 1.5, laser: 1.5, gate: 1.6 } },
   { rank: 'AAA', tiers: [0.04, 0.3, 0.44, 0.22], maxBlockers: 2, minGap: 0.8, slack: 0.12, maxConsecutiveHard: 3, recovery: 0.34, density: 1, movingSpeed: 1.2, speed: 1.14, boost: { gate: 1.8, laser: 1.6, trafficMix: 1.6 } },
@@ -198,9 +199,9 @@ export const PHASES: PhaseConfig[] = [
 /** first phase (index into PHASES) in which a pattern may appear on Endless */
 export const PHASE_UNLOCK: Record<PatternKey, number> = {
   crate: 0, barrier: 0, ring: 0, beam: 0, asteroid: 0, traffic: 0,
-  low2: 1, crateBeam: 1, asteroid2: 1,
-  trafficMix: 2, laser: 2, platform: 2, drone: 2, wall3: 9,
-  gate: 3,
+  low2: 0, crateBeam: 0, asteroid2: 0,
+  trafficMix: 1, laser: 1, platform: 1, drone: 1, wall3: 9,
+  gate: 2,
 };
 
 export const GATE = {

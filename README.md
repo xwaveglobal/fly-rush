@@ -187,6 +187,14 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v2.2.4 changes (owner round AA)
+
+- **Retry** always works: the pre-race popups (special pick, Magic Bag, buy, confirm) now sit above the result / pause screens.
+- Pause → Home ends the race and shows **its own result screen** (the race counts); old result screens never come back.
+- Race HUD redrawn at the start of each race; shows **RACE** rank (this race), **YOU** (your profile rank), BEST and NEXT.
+- FINISH card: bigger EXP, glowing "RACE RANK" plate. Share card is drawn in advance so the share sheet opens on tap.
+- **EXP road feels like v1 again**: v1 coin lines (skip 18 %, up to 8 coins), road power-ups every 220–360 m, early phases with v1's mix (rings, beams, double blocks from rank D; traffic mixes, lasers, drones from C; gates from B). Bonus ~10 % more coins than the main road.
+
 ## v2.2.3 changes (owner round Z)
 
 - **Speed**: the road speed now glides to every new target (level, rank phase, turbo, respawn) — no jolts; the race HUD shows the level (EASY / NORMAL / HARD tag).

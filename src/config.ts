@@ -105,9 +105,9 @@ export const BONUS_SET = {
 };
 
 export const COIN_LINES = {
-  // v2.2: main road +20 % coins; Bonus only ~10 % above the main road
-  endless: { skip: 0.545, max: 5 },
-  bonus: { skip: 0.5, max: 5 },
+  // v2.2.4: main road back to v1's generous coin lines (the fun of collecting); Bonus ~10 % above it
+  endless: { skip: 0.18, max: 8 },
+  bonus: { skip: 0.1, max: 8 },
   /** old courses (v1) */
   course: { skip: 0.18, max: 8 },
 };

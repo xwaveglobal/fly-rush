@@ -216,3 +216,12 @@ Owner 07:05: "rà soát sửa toàn bộ" → fix H–O now.
 - **Z12.** Car pictures (brag card, share card): use the clean transparent in-race car, no stretched thumbnail; nicer layout.
 
 **Z: done in v2.2.3.**
+
+## AA. Round 22 (owner 2026-10-22 08:35)
+- **AA1.** Retry buttons don't restart the race (check every Retry).
+- **AA2.** Race HUD: reset at the start of each race (no old values); make clear which rank THIS race has reached; keep the player's own rank (profile) visible during the race.
+- **AA3.** Normal FINISH card: rank and EXP stand out more; Share must work.
+- **AA4.** Main road (EXP road) must feel as fun as v1: compare v1's coin layout and obstacle rhythm and bring that feel back.
+- **AA5.** (08:37) Pause → Home must still show THIS race's result screen (the race ends and counts), then Home from there. (replaces Z6)
+
+**AA: done in v2.2.4.**

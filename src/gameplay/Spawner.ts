@@ -522,7 +522,7 @@ export class Spawner {
           { w: v1 && dist > 150 ? 2 : 0, v: 'dash' },
           { w: v1 && dist > 400 ? 1.2 : 0, v: 'escape' },
         ]);
-        this.nextPowerAt = dist + r.range(260, 420);
+        this.nextPowerAt = dist + (v1 ? r.range(260, 420) : r.range(220, 360)); // v2.2.4: road power-ups about as often as v1
       }
       this.pickups.push({ kind, lane, dist, y });
     }

@@ -56,7 +56,7 @@ import { drawShareCard, shareImage, copyText } from './ui/ShareCard.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v2.2.3';
+const VERSION = 'v2.2.4';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -347,8 +347,13 @@ export class Game {
       home: () => {
         const back = this.returnTo;
         this.returnTo = null;
-        // quitting a race half-way: straight Home — never back to an old result screen, no ad
-        if (this.state === 'paused' || this.state === 'run' || this.state === 'respawn' || this.state === 'continue' || this.state === 'countdown') return this.goHome();
+        // quitting a race half-way: the race ends and counts → its own result screen (never an old one)
+        if (this.state === 'paused' || this.state === 'run' || this.state === 'respawn' || this.state === 'continue') {
+          if (this.tutorialMode) return this.goHome();
+          this.timeScale = this.timeScaleTarget = 1;
+          return this.gameOver();
+        }
+        if (this.state === 'countdown') return this.goHome();
         if (back) return back();
         this.afterResults(() => this.goHome());
       },
@@ -1061,22 +1066,32 @@ export class Game {
   }
 
   /** draw the brag card (this run, or the pilot's best) and open the share sheet; preview if sharing is blocked */
+  /** card image drawn ahead of time (result screen), so Share can open the sheet while the tap still counts */
+  private cardCache: { key: string; blob: Promise<Blob | null> } | null = null;
+  private cardKey(ofRun: boolean) {
+    return `${ofRun}-${this.run?.exp ?? 0}-${this.bestExp}-${this.save.vehicle}-${this.save.avatar}-${this.meta.name}`;
+  }
+  private prepareCard(ofRun: boolean) {
+    const key = this.cardKey(ofRun);
+    if (this.cardCache?.key === key) return this.cardCache.blob;
+    const run = this.run;
+    const exp = ofRun && run && !this.course ? run.exp : this.bestExp;
+    const rank = ofRun && run && !this.course ? classFor(run.exp) : this.rank;
+    const sub = ofRun && run && !this.course ? `${(run.distance / 1000).toFixed(1)} km · ${LEVELS[this.runLevel].label} · ${this.variant === 'track2' ? 'Mega Rush' : 'Endless'}` : `${this.meta.name} · best race`;
+    const blob = drawShareCard({ title: ofRun ? 'FINISH' : 'MY PILOT CARD', name: this.meta.name || 'Pilot', rank, exp, sub, car: carRear(this.save.vehicle), avatar: avatarSvg(this.save.avatar), logo: logoImg }).catch(() => null);
+    this.cardCache = { key, blob };
+    return blob;
+  }
+
   private async shareCard(ofRun: boolean): Promise<boolean> {
     const run = this.run;
     const exp = ofRun && run && !this.course ? run.exp : this.bestExp;
     const rank = ofRun && run && !this.course ? classFor(run.exp) : this.rank;
     const sub = ofRun && run && !this.course ? `${(run.distance / 1000).toFixed(1)} km · ${LEVELS[this.runLevel].label} · ${this.variant === 'track2' ? 'Mega Rush' : 'Endless'}` : `${this.meta.name} · best race`;
-    this.ui.toast(`${ICON.share} Making your card…`, '#9b6bff');
-    const blob = await drawShareCard({
-      title: ofRun ? 'FINISH' : 'MY PILOT CARD',
-      name: this.meta.name || 'Pilot',
-      rank,
-      exp,
-      sub,
-      car: carRear(this.save.vehicle),
-      avatar: avatarSvg(this.save.avatar),
-      logo: logoImg,
-    });
+    void sub;
+    const ready = this.cardCache?.key === this.cardKey(ofRun);
+    if (!ready) this.ui.toast(`${ICON.share} Making your card…`, '#9b6bff');
+    const blob = await this.prepareCard(ofRun);
     const text = `Rank ${rank} · ${exp.toLocaleString('en-US')} EXP in Sky Roadster! Can you beat me?`;
     const r = await shareImage(blob, text, this.shareUrl);
     if (r === 'shared') return true;
@@ -1770,6 +1785,7 @@ export class Game {
     this.bestCheer = 0;
     this.ui.hudLevel = this.course?.bonus || this.tutorialMode ? '' : LEVELS[level].label;
     this.ui.hudTop = this.variant === 'track2' && !this.course ? 'SSS' : 'AAA';
+    this.ui.hudMe = this.rank;
     this.ui.hudBest = this.course || this.tutorialMode ? 0 : this.variant === 'track2' ? this.save.exp2Best : this.save.expBest;
     this.superFlight = false;
     this.blockade = null;
@@ -1789,6 +1805,8 @@ export class Game {
     this.showcaseT = 0;
     this.ui.bonusHud = !!this.course?.bonus;
     this.ui.trainHud = this.tutorialMode;
+    // fresh race: redraw the HUD at once (never a frame of the previous race's numbers)
+    this.ui.updateHud(this.run, this.world.speed, SPEED.max * SPEED.turboMul * LEVELS[level].speed, null);
     this.obstacleViews.theme = (PROP_THEMES as string[]).includes(this.world.world) ? (this.world.world as PropTheme) : null;
     if (!this.tutorialMode && !this.course?.bonus) {
       const k = this.save.special ?? null;
@@ -2910,6 +2928,7 @@ export class Game {
       pos = r <= 999 ? `#${r.toLocaleString('en-US')} this week` : pct <= 50 ? `Top ${pct}% this week` : ''; // a weak run shows no position
     }
     this.ui.gameOver({ score: isBonus ? run.coins : run.exp, best: this.variant === 'track2' ? this.save.exp2Best : this.save.expBest, isBest: !!rewards && rewards.exp > 0 && rewards.to > rewards.from, dist: run.distance, length: this.course?.length, coins: run.coins, near: run.nearMiss, missions: this.runMissionsDone, rewards, speedBonus, level: lvg.label, tip: this.lastTip, runRank: isBonus || run.expRate <= 0 ? null : this.runRank, pos, car: this.save.vehicle, bonus: isBonus });
+    if (!isBonus) window.setTimeout(() => void this.prepareCard(true), 400); // ready before the Share tap
     this.lastResult = { coins: run.coins, reward: 0, doubled: false };
     this.ui.adButton('ad2x', run.coins > 0 ? 'ready' : 'used', 'No coins to double');
     this.ui.hideEl('ad2x', run.coins <= 0); // nothing to double → no button
