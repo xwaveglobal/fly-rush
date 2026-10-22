@@ -90,7 +90,7 @@ export const GIFTS = {
  */
 export const BONUS_SET = {
   /** chance that a power-up slot is a special instead of a normal item */
-  chance: 0.08,
+  chance: 0.065,
   /** chance that a tunnel gets a Tunnel Rider pickup in front of it */
   tunnelChance: 0.5,
   /** metres from the pickup to the start of the set piece */
@@ -117,7 +117,7 @@ export const COIN_LINES = {
  * 3 / 7 / 12 / 20 / 30 min on HARD, ×2 that time on NORMAL and ×3 on EASY.
  */
 export const EXP = {
-  rate: { easy: 0.184, normal: 0.21, hard: 0.35 } as Record<SpeedLevel, number>,
+  rate: { easy: 0.184, normal: 0.19, hard: 0.318 } as Record<SpeedLevel, number>,
   /** EXP needed for each rank */
   rank: { D: 0, C: 3000, B: 8000, A: 15000, AA: 26000, AAA: 40000, S: 65000, SS: 85000, SSS: 110000 },
   /** design targets (minutes of non-stop HARD; S tiers on Track 2) — shown in the rank guide, checked by the test */
@@ -132,8 +132,8 @@ export const EXP = {
  */
 export const LEVELS: Record<SpeedLevel, { label: string; speed: number; gap: number; score: number; reward: number; desc: string }> = {
   easy: { label: 'EASY', speed: 0.82, gap: 1.2, score: 0.8, reward: 1, desc: 'Slower road · EXP ×1 (ranks take 3× longer)' },
-  normal: { label: 'NORMAL', speed: 1.1, gap: 1, score: 1, reward: 1.25, desc: 'Regular speed · EXP ×1.15 · coins ×1.25' },
-  hard: { label: 'HARD', speed: 1.36, gap: 0.92, score: 1.3, reward: 1.6, desc: 'Fast & tight · EXP ×1.9 · coins ×1.6' },
+  normal: { label: 'NORMAL', speed: 1.21, gap: 1, score: 1, reward: 1.25, desc: 'Regular speed · EXP ×1.05 · coins ×1.25' },
+  hard: { label: 'HARD', speed: 1.5, gap: 0.92, score: 1.3, reward: 1.6, desc: 'Fast & tight · EXP ×1.7 · coins ×1.6' },
 };
 
 /** big-reward tracks also pay items when finished with enough stars (all matching rules apply) */
@@ -251,6 +251,8 @@ export const POWERUP_DURATION = {
   magnet: 8,
   turbo: 4,
   double: 10,
+  /** v2.2 ring pass: every coin counts twice for this long (a new ring refreshes it) */
+  coin2: 8,
 };
 
 export const WORLD_LENGTH = 1000; // metres per themed world

@@ -120,9 +120,16 @@ export async function drawShareCard(d: ShareCardData): Promise<Blob | null> {
   }
   // car
   if (car) {
-    const cw = 620;
-    const ch = (cw * car.height) / car.width;
-    g.drawImage(car, (W - cw) / 2, 1000, cw, Math.min(ch, 250));
+    // fit inside 680×250, keep the aspect ratio, sit on a soft glow
+    const k = Math.min(680 / car.width, 250 / car.height);
+    const cw = car.width * k;
+    const ch = car.height * k;
+    const halo = g.createRadialGradient(W / 2, 1110, 20, W / 2, 1110, 380);
+    halo.addColorStop(0, `${col}55`);
+    halo.addColorStop(1, 'transparent');
+    g.fillStyle = halo;
+    g.fillRect(0, 980, W, 260);
+    g.drawImage(car, (W - cw) / 2, 1235 - ch, cw, ch);
   }
   // pilot strip
   g.fillStyle = 'rgba(0,0,0,.45)';

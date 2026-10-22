@@ -187,6 +187,14 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v2.2.2 changes (owner round Y)
+
+- Flying through a **ring = double coins** for 8 s (HUD chip "coin ×2"); mystery boxes keep their random rewards.
+- Normal and Hard another **+10 % speed** (Normal ×1.21, Hard ×1.5); EXP per metre re-calibrated (labels Easy ×1 · Normal ×1.05 · Hard ×1.7).
+- Share card: car drawn from the transparent in-race render (aspect kept, soft glow); preview header fixed; "Save image" hidden inside preview frames (long-press the card).
+- Share links work: Add-to-screen tiles (Add / Share / Copy Link / More) and "Share again" share or copy the game link; the link falls back to the page that embeds the game.
+- Special pick popup and share popup spacing / cut text fixed.
+
 ## v2.2.1 changes
 
 - Fix: opening the Tutorial card from Home and closing it left Home without its buttons (the card now opens over Home and closes back to it).

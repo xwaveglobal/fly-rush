@@ -60,6 +60,8 @@ export class Run {
   magnetT = 0;
   turboT = 0;
   doubleT = 0;
+  /** v2.2 double coins from flying through a ring (seconds left) */
+  coin2T = 0;
   invulnT = 0;
 
   feedback: Feedback[] = [];
@@ -120,6 +122,7 @@ export class Run {
     tick('turboT', 'turbo');
     tick('doubleT', 'double');
     tick('shieldT', 'shield');
+    if (this.coin2T > 0) this.coin2T = Math.max(0, this.coin2T - dt);
     if (this.invulnT > 0) this.invulnT = Math.max(0, this.invulnT - dt);
   }
 
@@ -131,7 +134,7 @@ export class Run {
         case 'pickup': {
           const p = e.p;
           if (p.spec.kind === 'coin') {
-            this.coins++;
+            this.coins += this.coin2T > 0 ? 2 : 1;
             this.score += SCORE.coin * this.mult;
             this.feedback.push({ t: 'coin', x: p.x, y: p.y, z: p.z });
           } else if (p.spec.kind === 'mystery') {
@@ -166,8 +169,8 @@ export class Run {
           const pts = SCORE.ringPass * this.mult;
           this.score += pts;
           this.feedback.push({ t: 'ring', points: pts });
-          const b = e.o.boxes[0];
-          if (b) this.gift('ring', (b.minX + b.maxX) / 2, (b.minY + b.maxY) / 2, 0);
+          // v2.2: a ring = double coins for a while
+          this.coin2T = POWERUP_DURATION.coin2;
           break;
         }
         case 'smash': {

@@ -26,7 +26,7 @@ import { setObstacleContrast, OBSTACLE_FX } from './render/ObstacleViews.ts';
 import { Particles, SpeedLines, RingPulses, Debris, makeShield, makePortal } from './render/Effects.ts';
 import { Audio } from './audio/Audio.ts';
 import { AssetLoader } from './assets/AssetLoader.ts';
-import { UI, UPGRADE_MAX, upgradeCost, carImage, logoImg, type UpgradeKey } from './ui/UI.ts';
+import { UI, UPGRADE_MAX, upgradeCost, carRear, logoImg, type UpgradeKey } from './ui/UI.ts';
 import { ICON } from './ui/icons.ts';
 import { COURSES, sectionAt, trackLock, type Course } from './gameplay/Courses.ts';
 import { makeArch } from './render/Arches.ts';
@@ -56,7 +56,7 @@ import { drawShareCard, shareImage, copyText } from './ui/ShareCard.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v2.2.1';
+const VERSION = 'v2.2.2';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -915,9 +915,12 @@ export class Game {
     if (a === 'install') {
       const ip = this.installPrompt;
       this.installPrompt = null;
-      void ip?.prompt();
+      if (ip) void ip.prompt();
+      else this.ui.toast(`${ICON.plus} Use your browser menu → Add to Home Screen`, '#4fc3ff');
       return;
     }
+    if (a === 'sharelink') return void this.shareGameLink();
+    if (a === 'copylink') return void this.shareGameLink(true);
     if (a === 'retry') {
       if (navigator.onLine !== false) {
         this.ui.closePopup();
@@ -1030,7 +1033,29 @@ export class Game {
   /** a public link to the game (none inside sandboxed previews) */
   private get shareUrl() {
     const h = location.hostname;
-    return /^https?:$/.test(location.protocol) && !/claudeusercontent|localhost|^127\.|^192\.168\./.test(h) ? `${location.origin}${location.pathname}` : '';
+    if (/^https?:$/.test(location.protocol) && !/claudeusercontent|localhost|^127\.|^192\.168\./.test(h)) return `${location.origin}${location.pathname}`;
+    // inside a preview frame: the page that embeds the game (e.g. the artifact link) is the shareable one
+    const r = document.referrer;
+    return /^https:\/\//.test(r) && !/claudeusercontent/.test(r) ? r : '';
+  }
+
+  /** share just the game link (Add-to-screen tiles, Share again): native sheet, else copy */
+  private async shareGameLink(copyOnly = false) {
+    const url = this.shareUrl;
+    const text = `Race me in Sky Roadster! Rank ${this.rank} · ${this.bestExp.toLocaleString('en-US')} EXP.`;
+    if (!copyOnly) {
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: 'Sky Roadster', text, ...(url ? { url } : {}) });
+          return true;
+        }
+      } catch (e) {
+        if ((e as DOMException)?.name === 'AbortError') return false;
+      }
+    }
+    copyText(url ? `${text} ${url}` : text);
+    this.ui.toast(`${ICON.share} ${url ? 'Link copied' : 'Copied'} — paste it to a friend`);
+    return true;
   }
 
   /** draw the brag card (this run, or the pilot's best) and open the share sheet; preview if sharing is blocked */
@@ -1046,7 +1071,7 @@ export class Game {
       rank,
       exp,
       sub,
-      car: carImage(this.save.vehicle),
+      car: carRear(this.save.vehicle),
       avatar: avatarSvg(this.save.avatar),
       logo: logoImg,
     });
@@ -2625,7 +2650,7 @@ export class Game {
         case 'ring':
           this.audio.play('ring');
           this.vibrate(8);
-          this.ui.pop('RING', '#4fc3ff', '', 2);
+          this.ui.pop('RING', '#ffd24a', 'COINS ×2', 2);
           this.rings.spawn(this.tmpV.copy(this.vehicle.root.position), 0x39b6ff, 3, 0.5);
           break;
         case 'combo':

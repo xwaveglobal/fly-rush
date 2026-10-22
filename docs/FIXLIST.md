@@ -191,3 +191,13 @@ Owner 07:05: "rà soát sửa toàn bộ" → fix H–O now.
 - **X1.** Speed levels faster: Easy +5 %, Normal +10 %, Hard +15 % (EXP per metre re-calibrated so the minutes per rank stay as designed).
 
 **H–X: all done in v2.2.0.**
+
+## Y. Round 20 (owner 2026-10-22 07:47)
+- **Y1.** Flying through a RING = **Double COIN** for a while (not a random reward, not EXP).
+- **Y2.** Share card: the car looks bad (thumbnail box) → transparent in-race render; the SHARE header text is cut / misplaced; Save image can't work inside the artifact → hide it there.
+- **Y3.** Special pick popup: lines still too close → more spacing.
+- **Y4.** Share popup: "SHARED TODAY · BACK TOMORROW" cut and the tap hand covers the text; sharing the game link must work (falls back to copying the link).
+- **Y5.** Add-to-screen popup: Share / Copy Link / More / Add tiles must do something.
+- **Y6.** Normal and Hard another **+10 %** speed (EXP re-calibrated).
+
+**Y: done in v2.2.2.**

@@ -27,8 +27,11 @@ import carInferno from '../assets/images/cars/inferno.webp';
 import carNexus from '../assets/images/cars/nexus.webp';
 import carVega from '../assets/images/cars/vega.webp';
 import carShadow from '../assets/images/car/x1-back.webp';
+import vegaRear from '../assets/images/car/vega-back.webp';
 const CAR_IMG: Record<string, string> = { zenith: carZenith, vega: carVega, volt: carVolt, phantom: carPhantom, inferno: carInferno, nexus: carNexus };
 export const carImage = (id: string) => CAR_IMG[id] ?? carZenith;
+/** transparent in-race rear render (share card); cars without one use their thumbnail */
+export const carRear = (id: string) => ({ zenith: carShadow, vega: vegaRear } as Record<string, string>)[id] ?? carImage(id);
 export const logoImg = logoUrl;
 const RARITY_COLOR: Record<string, string> = { Common: '#4fb3ff', Rare: '#a77bff', Epic: '#ffc24a', Legendary: '#ff4a3c', Mythic: '#d04dff' };
 import { LEVELS } from '../config.ts';
@@ -403,7 +406,7 @@ export class UI {
       <div class="menu">
         <button class="cupstrip" data-a="events" data-k="cupstrip" hidden></button>
         <div class="speedsel" role="radiogroup" aria-label="Speed">
-          ${(['easy', 'normal', 'hard'] as const).map((k, i) => `<button role="radio" data-a="speed" data-v="${k}" title="${LEVELS[k].label}: ${LEVELS[k].desc}"><i class="chev">${'›'.repeat(i + 1)}</i><b>${LEVELS[k].label}</b><small>EXP ×${['1', '1.15', '1.9'][i]}</small></button>`).join('')}
+          ${(['easy', 'normal', 'hard'] as const).map((k, i) => `<button role="radio" data-a="speed" data-v="${k}" title="${LEVELS[k].label}: ${LEVELS[k].desc}"><i class="chev">${'›'.repeat(i + 1)}</i><b>${LEVELS[k].label}</b><small>EXP ×${['1', '1.05', '1.7'][i]}</small></button>`).join('')}
         </div>
         <div class="speedcap" data-k="speedtip" hidden></div>
 
@@ -1105,6 +1108,7 @@ export class UI {
     if (run.magnetT > 0) chips.push({ kind: 'magnet', left: run.magnetT, total: d.magnet });
     if (run.turboT > 0) chips.push({ kind: 'turbo', left: run.turboT, total: d.turbo });
     if (run.doubleT > 0) chips.push({ kind: 'double', left: run.doubleT, total: d.double });
+    if (run.coin2T > 0) chips.push({ kind: 'coin2' as PickupKind, left: run.coin2T, total: 8 });
     // Roadster / HYPER charges show on their own button (bottom-right)
     if (run.dashes > 0) chips.push({ kind: 'dash', left: 1, total: 1 });
     const rb = $(this.root, '[data-k="rocketbtn"]');
@@ -1116,8 +1120,8 @@ export class UI {
     const sos = $(this.root, '[data-k="sosbtn"]');
     if (sos.hidden !== run.escapes <= 0) sos.hidden = run.escapes <= 0;
     this.hset('soscnt', String(run.escapes));
-    const colors: Record<string, string> = { shield: '#3d9bff', magnet: '#ff3b4e', turbo: '#b6ff2e', double: '#ffc21a', super: '#9b6bff', hyper: '#ffc21a', dash: '#2ee6c8' };
-    const icons: Record<string, string> = { shield: ICON.shield, magnet: ICON.magnet, turbo: BOLT, double: ICON.x2, super: ICON.rocket, hyper: ICON.hyper, dash: ICON.dash };
+    const colors: Record<string, string> = { coin2: '#ffd24a', shield: '#3d9bff', magnet: '#ff3b4e', turbo: '#b6ff2e', double: '#ffc21a', super: '#9b6bff', hyper: '#ffc21a', dash: '#2ee6c8' };
+    const icons: Record<string, string> = { coin2: ICON.coin, shield: ICON.shield, magnet: ICON.magnet, turbo: BOLT, double: ICON.x2, super: ICON.rocket, hyper: ICON.hyper, dash: ICON.dash };
     const html = chips
       .map((c) => {
         const k = Math.max(0, c.left / c.total);
@@ -1125,7 +1129,7 @@ export class UI {
         const q = Math.round(k * 40) / 40; // quantise to limit DOM churn
         return `<div class="pchip ${c.left < 2 ? 'expiring' : ''}" style="box-shadow:0 0 8px ${colors[c.kind]}40">
           <svg class="ring" viewBox="0 0 46 46"><circle class="bg" cx="23" cy="23" r="20"/><circle cx="23" cy="23" r="20" stroke="${colors[c.kind]}" stroke-dasharray="${circ}" stroke-dashoffset="${(circ * (1 - q)).toFixed(1)}" stroke-linecap="round"/></svg>
-          ${icons[c.kind].replace('<svg', '<svg class="icon"')}${c.kind === 'super' && run.superJumps > 1 ? `<em class="cnt">×${run.superJumps}</em>` : ''}${c.kind === 'dash' ? `<em class="cnt dash">×${run.dashes}</em>` : ''}${c.kind === 'shield' && c.n ? `<em class="cnt shieldn">×${c.n}</em>` : ''}</div>`;
+          ${icons[c.kind].replace('<svg', '<svg class="icon"')}${c.kind === 'super' && run.superJumps > 1 ? `<em class="cnt">×${run.superJumps}</em>` : ''}${c.kind === 'dash' ? `<em class="cnt dash">×${run.dashes}</em>` : ''}${c.kind === 'shield' && c.n ? `<em class="cnt shieldn">×${c.n}</em>` : ''}${(c.kind as string) === 'coin2' ? '<em class="cnt">×2</em>' : ''}</div>`;
       })
       .join('');
     this.hset('powers', html, true);
@@ -1819,7 +1823,14 @@ export class UI {
     img.src = u;
     img.hidden = !u;
     a.href = u;
-    a.hidden = !u;
+    // inside a preview frame downloads are blocked: long-press the image instead
+    let framed = false;
+    try {
+      framed = window.self !== window.top;
+    } catch {
+      framed = true;
+    }
+    a.hidden = !u || framed;
     this.showOverlay('sharepv');
   }
 
@@ -2033,7 +2044,7 @@ export class UI {
     const ladder = CLASSES.map((c) => `<tr><td>${classBadge(c, 'md')}</td><td>${fmt(CLASS_MIN[c])}</td><td class="uls">${UNL[c]}</td></tr>`).join('');
     $(this.root, '[data-k="rgbody"]').innerHTML = `
       <table class="rgt"><thead><tr><th>Rank</th><th>EXP</th><th>Unlocks</th></tr></thead><tbody>${ladder}</tbody></table>
-      <div class="rg-line">${XPT}<span>= metres × <b>Hard 1.9 · Normal 1.15 · Easy 1</b></span></div>
+      <div class="rg-line">${XPT}<span>= metres × <b>Hard 1.7 · Normal 1.05 · Easy 1</b></span></div>
       <div class="rg-line">${ICON.lock}<span>EXP can't be bought</span></div>
 `;
     this.screens.rankguide.classList.add('show');
@@ -2123,7 +2134,7 @@ export class UI {
         return head(shareNodes(46), 'SHARE REWARDS', 'art') +
           `<button class="pzshare" data-a="popa" data-v="share"><img src="${carImage(String(d.vehicle ?? 'zenith'))}" alt="" /><span class="pzhelm">${avatarSvg(av)}</span>${hand}${tapMarks('r')}<em>${ICON.share} Tap to share your card</em></button>
           <div class="pzcoins">${coinPile(150, 72)}${amount(`+${fmt(Number(d.shareReward))}`)}</div>` +
-          (done ? `<button class="btn big ghost" disabled>${ICON.check} Shared today · back tomorrow</button>` : `<button class="btn big green" data-a="popa" data-v="share">${ICON.share} SHARE</button>`) +
+          (done ? `<button class="btn big green" data-a="popa" data-v="share">${ICON.share} SHARE AGAIN</button><div class="label p3foot">✓ Reward taken today · new one tomorrow</div>` : `<button class="btn big green" data-a="popa" data-v="share">${ICON.share} SHARE</button>`) +
           `<button class="linkbtn center" data-a="popa" data-v="go:invite">Invite friends instead →</button>`;
       }
       case 'invite': {
@@ -2145,12 +2156,12 @@ export class UI {
         const can = !!d.canInstall;
         const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
         const sheet = [
-          [`<span class="pzsq on">${ICON.plus}</span>`, 'Add to<br/>Home Screen'], [`<span class="pzsq">${ICON.share}</span>`, 'Share'],
-          [`<span class="pzsq">🔗</span>`, 'Copy Link'], [`<span class="pzsq">•••</span>`, 'More'],
+          [`<span class="pzsq on">${ICON.plus}</span>`, 'Add to<br/>Home Screen', 'install'], [`<span class="pzsq">${ICON.share}</span>`, 'Share', 'sharelink'],
+          [`<span class="pzsq">🔗</span>`, 'Copy Link', 'copylink'], [`<span class="pzsq">•••</span>`, 'More', 'sharelink'],
         ];
         return head(phonePlus(44), 'ADD TO SCREEN', 'art') +
           `<p class="p3t">Add Sky Roadster to your<br/>Home Screen for faster access!</p>
-          <div class="pzphone"><i class="notch"></i><div class="pzsheet">${sheet.map(([ic, t]) => `<span>${ic}<small>${t}</small></span>`).join('')}</div>
+          <div class="pzphone"><i class="notch"></i><div class="pzsheet">${sheet.map(([ic, t, a]) => `<button class="pztile2" data-a="popa" data-v="${a}">${ic}<small>${t}</small></button>`).join('')}</div>
             <ol class="pzol">${ios ? '<li>Tap <b>Share</b></li><li>Select <b>Add to Home Screen</b></li>' : '<li>Tap the browser menu <b>⋮</b></li><li>Select <b>Install app</b> / <b>Add to Home screen</b></li>'}<li>Find Sky Roadster on your Home Screen</li></ol></div>` +
           (can ? `<button class="btn big blue" data-a="popa" data-v="install">INSTALL NOW</button>` : `<button class="btn big blue" data-a="closeov" data-v="popup">GOT IT</button>`);
       }

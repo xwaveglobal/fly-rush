@@ -4,6 +4,12 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-22 — v2.2.2: owner round Y
+
+**Done**: FIXLIST Y1–Y6 (see README). `Run.coin2T` (ring double coins), `Game.shareGameLink`, `carRear` for the share card, speeds Normal 1.21 / Hard 1.5 with EXP rates 0.184 / 0.19 / 0.318, Bonus special chance 0.065.
+
+---
+
 ## 2026-10-22 — v2.2.1: hotfix
 
 **Done**: Tutorial card opened from Home → close → Home had no buttons (it was shown alone, not over Home). Fixed in `openTutorialIntro` + close goes through `closeModal`.

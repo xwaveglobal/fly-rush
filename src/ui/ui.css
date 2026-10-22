@@ -2302,3 +2302,23 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 /* skip button during training (always reachable, also over the step prompts) */
 #hud .trskip { position: absolute; right: 12px; top: calc(118px + var(--safe-t, 0px)); z-index: 40; pointer-events: auto; padding: 7px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.3); background: rgba(8,14,40,.75); color: #fff; font: 800 13px var(--font-body); letter-spacing: .5px; }
 #hud .trskip[hidden] { display: none; }
+
+/* ---- v2.2.2: Y2 share preview header, Y3 special pick spacing, Y4 share popup, Y5 tiles ---- */
+.shpv { align-items: stretch !important; }
+.shpv > .mhead { display: flex; align-items: center; justify-content: space-between; }
+.shpv > .mhead h2 { display: flex; align-items: center; gap: 8px; font-size: 22px; }
+.shpv-img { align-self: center; }
+.shpv .td-row:has(a[hidden]) { grid-template-columns: 1fr; }
+.spick [data-k="spbody"] { display: flex; flex-direction: column; gap: 14px; align-items: stretch; }
+.spick [data-k="spbody"] > * { margin: 0 !important; }
+.spick .sp-track { text-align: center; }
+.spick .sprules { padding: 10px 12px; line-height: 1.4; }
+.spick .spgo { margin-top: 2px !important; }
+.pzshare .pzhand { position: absolute; right: 18px; top: 16px; bottom: auto; left: auto; }
+.pzshare .art-tap { position: absolute; right: 6px; top: 4px; left: auto; bottom: auto; }
+.pzshare em { padding: 10px 8px; }
+.pop3 .btn.big { font-size: clamp(16px, 5.2vw, 22px); white-space: nowrap; }
+.pztile2 { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: 0; padding: 0; color: inherit; cursor: pointer; font: inherit; }
+.pztile2:active { transform: scale(.94); }
+.pztile2 small { line-height: 1.2; }
+.shpv .td-row .btn { font-size: 15px; padding-left: 8px; padding-right: 8px; }
