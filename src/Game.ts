@@ -35,7 +35,7 @@ import { Ads, ADS } from './ads/Ads.ts';
 import { advancedScript, basicScript, boostScript, WORLD_LESSONS, type BoostKind, type TrainingScript, type TutorialStep } from './gameplay/Tutorial.ts';
 import { PASS_H, PASS_L, PASS_N } from './gameplay/types.ts';
 import { MAPS, TIER_NAME, type Tier } from './gameplay/Difficulty.ts';
-import { FAIRNESS, V2_POWERUPS, BONUS_SET } from './config.ts';
+import { FAIRNESS, V2_POWERUPS, BONUS_SET, CLOUD } from './config.ts';
 import { RANK_ORDER, rankDist, expRate, VARIANTS, type Variant } from './gameplay/Difficulty.ts';
 import type { Box, PickupKind, RowSpec } from './gameplay/types.ts';
 import { Meta, type EventResult, type RunSummary } from './meta/Meta.ts';
@@ -50,13 +50,14 @@ import { avatarForName, avatarSvg } from './ui/avatars.ts';
 import { productBySku, DemoStore, type Store } from './meta/Shop.ts';
 import type { ItemKey, QuestStat, Reward } from './meta/Daily.ts';
 import { careerDefaults, settleCareer } from './meta/Career.ts';
+import { Cloud } from './net/Cloud.ts';
 import type { SetPiece } from './gameplay/Spawner.ts';
 import { BonusTunnels } from './render/BonusTunnels.ts';
 import { drawShareCard, shareImage, copyText } from './ui/ShareCard.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v2.2.11';
+const VERSION = 'v2.3.0';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -382,6 +383,7 @@ export class Game {
       boostInfo: (k) => this.openBoostInfo(k as ItemKey),
       bag: () => this.openBag(),
       boostTrain: (k) => this.startBoostTraining(k as BoostKind),
+      cloud: (a, v) => void this.cloudAction(a, v),
       trainAgain: () => (this.lastPractice ? this.startBoostTraining(this.lastPractice) : this.startTutorial(this.trainWorld)),
       toggleAutoClaim: () => {
         this.save.settings.autoClaim = this.save.settings.autoClaim === false;
@@ -517,7 +519,16 @@ export class Game {
     window.visualViewport?.addEventListener('resize', resize);
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && this.state === 'run') this.pause();
+      if (document.hidden) void this.pushSave(); // leaving the app: save to the cloud right away
+      else if (this.cloud.enabled) void this.cloudSync();
     });
+    // cloud save: hear back from Google / Apple sign-in, then line this device up with the account
+    this.cloud.onSignedIn = () => {
+      this.ui.toast('☁️ Signed in', '#4fc3ff');
+      void this.cloudSync(true).then(() => (this.ui.isShown('account') ? this.accountView() : undefined));
+    };
+    this.cloud.listen();
+    if (this.cloud.enabled) window.setTimeout(() => void this.cloudSync(), 1500);
     // unlock audio on first gesture anywhere
     const unlock = () => {
       this.audio.unlock();
@@ -654,6 +665,8 @@ export class Game {
   private openSettings() {
     this.audio.play('click');
     this.ui.settingsSync(this.save, this.meta.name, VERSION);
+    const a = this.cloud.account;
+    this.ui.acctLine(!this.cloud.enabled ? 'This device' : this.cloud.signedIn ? a?.email ?? a?.providers[0] ?? 'Signed in' : 'Guest · sign in');
     this.ui.show('start', 'settings');
   }
 
@@ -1170,6 +1183,7 @@ export class Game {
     this.prevExpBest = this.variant === 'track2' ? this.save.exp2Best : this.save.expBest;
     const rankBefore = this.rank;
     const done = this.meta.recordRun(sum);
+    this.reportRun(run, sum.exp);
     // career missions: lifetime counters, then pay every tier reached
     const cs = this.career();
     cs.km += run.distance / 1000;
@@ -1759,6 +1773,7 @@ export class Game {
 
   startRun() {
     this.returnTo = null;
+    this.runStartT = this.time;
     this.audio.unlock();
     this.audio.startMusic();
     this.audio.play('click');
@@ -3091,7 +3106,128 @@ export class Game {
     this.save.missions.completed = this.missions.completed;
     this.save.lastSeen = Date.now();
     writeSave(this.save);
+    this.schedulePush();
   }
+
+  // ================================================================ v2.3 cloud save
+  private cloud = new Cloud();
+  private pushTimer = 0;
+  private cloudCode = '';
+  private cloudMsg = '';
+  private schedulePush() {
+    if (!this.cloud.enabled || this.applyingCloud) return;
+    this.cloud.markDirty();
+    window.clearTimeout(this.pushTimer);
+    this.pushTimer = window.setTimeout(() => void this.pushSave(), CLOUD.syncDelay);
+  }
+  private async pushSave() {
+    if (!this.cloud.enabled || !this.cloud.dirty) return;
+    try {
+      const r = await this.cloud.putSave(this.save);
+      if (!r.ok && r.conflict) await this.resolveCloud(r.conflict);
+    } catch {
+      /* offline: stays dirty, pushed next time */
+    }
+  }
+  private applyingCloud = false;
+  /** a fresh install (or a phone that never played): the cloud copy wins without asking */
+  private get localIsFresh() {
+    return this.save.totalRuns === 0 && this.save.expBest === 0 && this.save.exp2Best === 0;
+  }
+  /** boot / sign-in: line this device up with the account's cloud save */
+  private async cloudSync(fromSignIn = false) {
+    if (!this.cloud.enabled) return;
+    try {
+      await this.cloud.ensureGuest();
+      void this.cloud.flushRuns();
+      const srv = await this.cloud.getSave();
+      if (!srv || !srv.save) {
+        await this.cloud.putSave(this.save, true);
+        if (fromSignIn) this.ui.toast(`☁️ Progress saved to your account`, '#4fc3ff');
+        return;
+      }
+      if (srv.rev === this.cloud.rev) {
+        if (this.cloud.dirty) await this.pushSave();
+        return;
+      }
+      await this.resolveCloud(srv);
+    } catch {
+      if (fromSignIn) this.ui.toast(`☁️ Can't reach the server — try Sync later`, '#ff5a8a');
+    }
+  }
+  private pendingCloud: { save: Record<string, unknown>; rev: number } | null = null;
+  private async resolveCloud(srv: { save: Record<string, unknown> | null; rev: number; summary: { rank: string; exp: number; coins: number; races: number } | null }) {
+    if (!srv.save) return;
+    if (this.localIsFresh || !this.cloud.dirty) return this.applyCloud(srv.save, srv.rev);
+    // both sides changed: the player picks
+    this.pendingCloud = { save: srv.save, rev: srv.rev };
+    const s = srv.summary;
+    this.ui.cloudChoice(
+      { rank: this.rank, exp: this.bestExp, coins: this.save.wallet, races: this.save.totalRuns },
+      { rank: (s?.rank ?? 'D') as RankClass, exp: s?.exp ?? 0, coins: s?.coins ?? 0, races: s?.races ?? 0 },
+    );
+  }
+  /** take the cloud copy: write it as this device's save and restart the game on it */
+  private applyCloud(save: Record<string, unknown>, rev: number) {
+    this.applyingCloud = true;
+    writeSave(save as unknown as SaveData);
+    this.cloud.acceptServer(rev);
+    this.ui.toast(`☁️ Progress restored from your account`, '#4fc3ff');
+    window.setTimeout(() => location.reload(), 700);
+  }
+  private accountView(busy = false) {
+    const a = this.cloud.account;
+    this.ui.accountSync({ enabled: this.cloud.enabled, signedIn: this.cloud.signedIn, email: a?.email ?? null, providers: a?.providers ?? [], lastSync: this.cloud.lastSync, codeFor: this.cloudCode || undefined, busy, msg: this.cloudMsg || undefined });
+  }
+  private async cloudAction(a: string, v?: string) {
+    this.audio.play('click');
+    this.cloudMsg = '';
+    switch (a) {
+      case 'open':
+        return this.accountView();
+      case 'google':
+      case 'apple':
+        return void this.cloud.oauth(a);
+      case 'send': {
+        const email = (v ?? '').trim();
+        this.accountView(true);
+        const r = await this.cloud.emailStart(email);
+        if (r.ok) this.cloudCode = email;
+        this.cloudMsg = r.ok ? (r.devCode ? `Test code: ${r.devCode}` : '') : r.error ?? '';
+        return this.accountView();
+      }
+      case 'verify': {
+        this.accountView(true);
+        const r = await this.cloud.emailVerify(this.cloudCode, (v ?? '').trim());
+        if (r.ok) this.cloudCode = '';
+        else this.cloudMsg = r.error ?? 'Sign-in failed';
+        return this.accountView();
+      }
+      case 'sync':
+        this.accountView(true);
+        await this.cloudSync(true);
+        return this.accountView();
+      case 'signout':
+        await this.cloud.signOut();
+        this.ui.toast('Signed out · progress stays on this phone', '#9fb3dd');
+        return this.accountView();
+      case 'keep': {
+        this.ui.hideOverlay('cloudpick');
+        const p = this.pendingCloud;
+        this.pendingCloud = null;
+        if (v === 'cloud' && p) return this.applyCloud(p.save, p.rev);
+        await this.cloud.putSave(this.save, true);
+        this.ui.toast('☁️ This phone\'s progress is now saved to your account', '#4fc3ff');
+        return;
+      }
+    }
+  }
+  /** a finished EXP race → the server re-checks it (the only way EXP grows on the account) */
+  private reportRun(run: Run, exp: number) {
+    if (!this.cloud.enabled || this.debugStart || this.tutorialMode || this.course) return;
+    void this.cloud.reportRun({ variant: this.variant, level: this.runLevel, distance: Math.floor(run.distance), seconds: Math.max(1, Math.round(this.time - this.runStartT)), exp, playerId: `p-${this.save.pid}` });
+  }
+  private runStartT = 0;
 
   private applySkin(id: string, preview = false) {
     const s = SKINS.find((x) => x.id === id) ?? SKINS[0];

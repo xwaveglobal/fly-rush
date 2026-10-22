@@ -2493,3 +2493,38 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 #start .speedsel button[data-v="normal"].on .chev, #start .speedsel button[data-v="normal"].on small { color: #7a3a00 !important; }
 #start .speedsel button[data-v="hard"].on .chev, #start .speedsel button[data-v="hard"].on small { color: #5a0a06 !important; }
 #start .speedsel button.on b { color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,.45) !important; }
+
+/* ---- v2.3 account / cloud save ---- */
+#ui .screen.overlay#account, #ui .screen.overlay#cloudpick { z-index: 29; }
+.acbody { display: flex; flex-direction: column; gap: 12px; }
+.acbody.busy { opacity: .6; pointer-events: none; }
+.achero { width: 64px; height: 64px; margin: 0 auto; border-radius: 20px; display: grid; place-items: center; font-size: 32px; background: rgba(79,195,255,.14); border: 1px solid rgba(79,195,255,.35); }
+.achero.ok { background: rgba(47,211,107,.16); border-color: rgba(47,211,107,.5); color: #5ef08e; }
+.achero.ok svg { width: 32px; height: 32px; }
+.aclead { text-align: center; font: 600 14px/1.5 var(--font-body); color: #dbe6ff; margin: 0; }
+.acsub { text-align: center; font: 600 12px/1.45 var(--font-body); color: var(--muted); margin: 0; }
+.acmsg { text-align: center; font: 700 12.5px/1.4 var(--font-body); color: #ffd24a; margin: 0; }
+.acrow { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 12px; background: rgba(47,211,107,.1); border: 1px solid rgba(47,211,107,.3); font: 600 12.5px var(--font-body); color: #d6ffe4; }
+.acrow svg { width: 16px; height: 16px; flex: none; color: #5ef08e; }
+.acbody > .btn { width: 100%; justify-content: center; gap: 10px; font-size: 16px !important; }
+.btn.acg { --c1: #ffffff; --c2: #e3e8f4; --edge: #9aa6c4; color: #1f2a44 !important; text-shadow: none !important; }
+.btn.aca { --c1: #2a2a2e; --c2: #050506; --edge: #000; color: #fff !important; }
+.aclogo { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 900 15px Arial, sans-serif; font-style: normal; }
+.btn.acg .aclogo { color: #fff; background: conic-gradient(#ea4335 0 25%, #fbbc05 0 50%, #34a853 0 75%, #4285f4 0); }
+.acor { display: flex; align-items: center; gap: 10px; font: 700 11px var(--font-body); letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.acor::before, .acor::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.15); }
+.acin { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.acin input { min-width: 0; height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,.2); background: rgba(0,0,0,.3); color: #fff; font: 700 15px var(--font-body); }
+.acin .btn { font-size: 14px !important; padding: 0 14px !important; }
+.cpgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cpcard { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px; border-radius: 16px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.15); color: #fff; font-family: var(--font-body); cursor: pointer; }
+.cpcard small { font: 800 9.5px var(--font-body); letter-spacing: 1.3px; color: var(--muted); }
+.cpcard b { display: inline-flex; align-items: center; gap: 4px; font: 900 18px var(--font); }
+.cpcard b .xpt { width: 30px !important; height: 17px !important; }
+.cpcard span { display: inline-flex; align-items: center; gap: 3px; font: 600 11.5px var(--font-body); color: #cfdcff; }
+.cpcard span svg { width: 13px; height: 13px; }
+.cpcard em { margin-top: 4px; padding: 6px 12px; border-radius: 10px; font: 900 12px var(--font-body); font-style: normal; background: linear-gradient(180deg, #ffd24a, #f09a00); color: #3a2000; }
+.cpcard:active { transform: scale(.97); }
+.acin { grid-template-columns: minmax(0, 1fr) auto !important; }
+.acin .btn { font-size: 13px !important; padding: 0 12px !important; min-width: 0 !important; height: 44px; }
+.srow.acct b { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

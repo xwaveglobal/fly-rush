@@ -18,7 +18,7 @@ The player pilots a flying car through a neon sky-city: swipe left/right to chan
 npm install
 npm run dev            # http://localhost:5173 (also on LAN for phone testing)
 npm run typecheck
-npm test               # fairness + difficulty + air-lane + EXP calibration + rank-phase tests (Node 22+)
+npm test               # fairness + difficulty + air-lane + EXP calibration + rank-phase + bonus + server-rule tests (Node 22+)
 npm run build          # dist/ (multi-file static build)
 npm run build:single   # dist/index.html, everything inlined (one shareable file)
 node scripts/build-esbuild.mjs [--single]   # fallback build without Vite
@@ -36,8 +36,9 @@ src/render/          Three.js views — read-only consumers of gameplay state
 src/ui/              DOM overlay UI, ui.css, i18n.ts (EN/FR/JA/PT-BR/DE/ES), icons, avatars
 src/meta/            shop, rank, daily, events, leaderboard
 src/net/PlayerStore  local (default) or remote player store (?api=…)
+src/net/Cloud.ts     accounts (guest / email / Google / Apple) + cloud save + verified run reports (CLOUD.api)
 src/ads/Ads.ts       rewarded + interstitial ads
-server/              reference Node API + SQL schema (not deployed)
+server/              game server: accounts, cloud save, verified EXP, boards (index.mjs + core.mjs + schema.sql)
 builds/              prebuilt single-file HTML snapshots (playable by opening the file)
 ```
 
@@ -50,7 +51,7 @@ builds/              prebuilt single-file HTML snapshots (playable by opening th
 5. New UI text: add it to `src/ui/i18n.ts` for all languages (English fallback is OK for dynamic sentences).
 6. Mobile first: every panel must fit a 375×640 screen without scrolling. Target 60 FPS on phones.
 7. Saves are in `localStorage` via `src/core/Save.ts` — don't break old saves; migrate fields instead.
-8. Never trust the client for X-Points / rank when a real server is added (see `server/README.md`).
+8. Never trust the client for EXP / rank: the server re-computes EXP from each run (`server/core.mjs`). If you change EXP rates, ranks or road multipliers in `config.ts`, update `server/core.mjs` too (`npm test` checks).
 
 ## Workflow
 

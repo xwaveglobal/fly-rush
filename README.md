@@ -187,6 +187,16 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v2.3.0 changes — accounts & cloud save
+
+- **Settings → Account**: sign in with **Google**, **Apple** or an **email code**. Progress (rank, EXP, coins, specials, cars, missions…) is saved to the account and comes back after a reinstall or on a new phone.
+- Every install is a guest account from the first launch; signing in keeps the guest's progress.
+- A fresh phone that signs in takes the cloud save automatically; a phone with its own progress shows **"Which progress?"** (rank, EXP, coins, races side by side).
+- Auto-sync a few seconds after every change and when the app goes to the background; finished races are queued while offline.
+- **EXP is server-verified**: each EXP race is reported and re-computed on the server (distance × rate, impossible speeds rejected); a save can never raise EXP / rank. Pre-cloud progress is imported once.
+- Server: `server/index.mjs` (+ `core.mjs`, `schema.sql`, README with the go-live steps). Cloud is off until `CLOUD.api` in `src/config.ts` (or `?api=`) points at it — until then Account says "coming soon".
+- `tests/server.test.ts`: server EXP rules stay equal to the game's.
+
 ## v2.2.11 changes
 
 - Speed levels each have their own colour: Easy green · Normal gold · Hard red (Home selector and the race HUD tag). Default stays Normal.

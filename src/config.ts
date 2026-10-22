@@ -260,3 +260,13 @@ export const WORLD_LENGTH = 1000; // metres per themed world
 
 export const DEBUG = typeof location !== 'undefined' && /[?&]debug/.test(location.search);
 export const AUTOPILOT = typeof location !== 'undefined' && /[?&]autopilot/.test(location.search);
+
+/**
+ * v2.3 cloud save (server/index.mjs). `api` = the game server's address, e.g. 'https://api.skyroadster.com'.
+ * Empty = cloud off (progress stays on the device). `?api=…` in the page URL overrides it for testing.
+ */
+export const CLOUD = {
+  api: '',
+  /** ms after the last change before the save is pushed */
+  syncDelay: 4000,
+};

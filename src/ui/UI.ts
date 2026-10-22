@@ -136,6 +136,7 @@ export interface UIHandlers {
   bag(): void;
   boostTrain(k: string): void;
   trainAgain(): void;
+  cloud(a: string, v?: string): void;
   toggleAutoClaim(): void;
   claimMission(i: number): void;
   rocket(): void;
@@ -435,6 +436,7 @@ export class UI {
           <div class="stile"><span class="si">◐</span><span class="sl">Eye comfort</span><button class="switch" data-a="comfort" role="switch" aria-label="Comfort visuals"><i></i></button></div>
           <div class="stile"><span class="si">${ICON.gear}</span><span class="sl">Graphics</span><div class="seg" data-k="qseg"><button data-a="quality" data-v="high">HI</button><button data-a="quality" data-v="low">LO</button></div></div>
         </div>
+        <button class="srow lang acct" data-a="account"><span class="si">☁️</span><span class="sl">Account</span><b data-k="acctline">Guest</b>${ICON.chevR}</button>
         <button class="srow lang" data-a="lang"><span class="si">🌐</span><span class="sl">Language</span><b data-k="langname">English</b>${ICON.chevR}</button>
         <div class="sbtns compact">
           <button class="btn sm ghost" data-a="profile">${ICON.user} Profile</button>
@@ -537,6 +539,17 @@ export class UI {
         <div class="mhead"><h2>${ICON.coin} BUY ITEMS</h2><button class="icon-btn sm" data-a="closeov" data-v="bagbuy" aria-label="Close">${ICON.close}</button></div>
         <div data-k="buybody"></div>
       </div>
+    </section>
+
+    <section id="account" class="screen overlay">
+      <div class="panel modal acm">
+        <div class="mhead"><h2>☁️ ACCOUNT</h2><button class="icon-btn sm" data-a="closeov" data-v="account" aria-label="Close">${ICON.close}</button></div>
+        <div data-k="acbody"></div>
+      </div>
+    </section>
+
+    <section id="cloudpick" class="screen overlay">
+      <div class="panel modal acm" data-k="cpbody"></div>
     </section>
 
     <section id="sharepv" class="screen overlay">
@@ -797,6 +810,14 @@ export class UI {
           copyText(this.shareText);
           return this.toast(`${ICON.share} Copied — paste it anywhere`);
         case 'morecars': return this.toast(`${ICON.car} More cars unlock at rank ${classBadge('S')} ${classBadge('SS')} ${classBadge('SSS')} on Mega Rush`, '#ff7a2e');
+        case 'account': return this.h.cloud('open');
+        case 'acgoogle': return this.h.cloud('google');
+        case 'acapple': return this.h.cloud('apple');
+        case 'acsend': return this.h.cloud('send', $<HTMLInputElement>(this.root, '[data-k="acemail"]').value);
+        case 'acverify': return this.h.cloud('verify', $<HTMLInputElement>(this.root, '[data-k="accode"]').value);
+        case 'acsync': return this.h.cloud('sync');
+        case 'acout': return this.h.cloud('signout');
+        case 'ckeep': return this.h.cloud('keep', el.dataset.v);
         case 'spok': this.hideOverlay('spconfirm'); return this.h.chooseSpecial(el.dataset.v ?? '');
         case 'bagbuy': if (this.lastSave) this.buySync(this.lastSave); return this.showOverlay('bagbuy');
         case 'sbuy': return this.h.buySpecial(el.dataset.v!);
@@ -1856,6 +1877,54 @@ export class UI {
     }
     a.hidden = !u || framed;
     this.showOverlay('sharepv');
+  }
+
+  acctLine(t: string) {
+    this.setAll('acctline', t);
+  }
+
+  /** Account popup: guest / signed in / cloud not configured */
+  accountSync(o: { enabled: boolean; signedIn: boolean; email: string | null; providers: string[]; lastSync: number; codeFor?: string; busy?: boolean; msg?: string }) {
+    const ago = (t: number) => {
+      if (!t) return 'not yet';
+      const m = Math.round((Date.now() - t) / 60000);
+      return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : `${Math.round(m / 60)} h ago`;
+    };
+    this.setAll('acctline', !o.enabled ? 'This device' : o.signedIn ? (o.email ?? o.providers[0] ?? 'Signed in') : 'Guest');
+    const msg = o.msg ? `<p class="acmsg">${esc(o.msg)}</p>` : '';
+    let body: string;
+    if (!o.enabled) {
+      body = `<div class="achero">☁️</div><p class="aclead">Cloud save is coming soon. For now your progress is saved <b>on this device</b> only.</p>
+        <button class="btn" disabled>Sign in</button>`;
+    } else if (o.signedIn) {
+      body = `<div class="achero ok">${ICON.check}</div>
+        <p class="aclead">Signed in${o.email ? ` as <b>${esc(o.email)}</b>` : ''}${o.providers.length ? ` · ${o.providers.map((p) => p[0].toUpperCase() + p.slice(1)).join(' · ')}` : ''}</p>
+        <div class="acrow">${ICON.check}<span>Progress saved to the cloud · synced <b>${ago(o.lastSync)}</b></span></div>
+        <p class="acsub">Reinstall or new phone? Sign in the same way and everything comes back.</p>${msg}
+        <div class="td-row"><button class="btn" data-a="acsync">${ICON.retry} Sync now</button><button class="btn ghost" data-a="acout">Sign out</button></div>`;
+    } else {
+      body = `<p class="aclead">Sign in to keep your <b>rank, EXP, coins and cars</b> if you reinstall or change phone.</p>
+        <button class="btn acg" data-a="acgoogle"><span class="aclogo">G</span> Continue with Google</button>
+        <button class="btn aca" data-a="acapple"><span class="aclogo"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#fff" d="M16.4 12.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.8 0-1.9-.9-3.2-.8-1.6 0-3.1 1-4 2.4-1.7 3-.4 7.4 1.2 9.8.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8s1.9.8 3.2.8c1.3 0 2.2-1.2 3-2.4.9-1.4 1.3-2.7 1.3-2.8 0 0-2.5-1-2.5-3.9zM14 5.5c.7-.8 1.1-1.9 1-3-1 0-2.1.7-2.8 1.5-.6.7-1.2 1.8-1 2.9 1 .1 2.1-.6 2.8-1.4z"/></svg></span> Continue with Apple</button>
+        <div class="acor"><span>or with email</span></div>
+        ${o.codeFor
+          ? `<p class="acsub">We sent a 6-digit code to <b>${esc(o.codeFor)}</b></p>
+             <div class="acin"><input data-k="accode" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="one-time-code" /><button class="btn gold" data-a="acverify">Sign in</button></div>`
+          : `<div class="acin"><input data-k="acemail" type="email" placeholder="you@email.com" autocomplete="email" /><button class="btn" data-a="acsend">Send code</button></div>`}
+        ${msg}<p class="acsub">Until then, progress is saved as a guest on this device.</p>`;
+    }
+    $(this.root, '[data-k="acbody"]').innerHTML = `<div class="acbody ${o.busy ? 'busy' : ''}">${body}</div>`;
+    this.showOverlay('account');
+  }
+
+  /** both this device and the cloud have progress: let the player pick */
+  cloudChoice(device: { rank: RankClass; exp: number; coins: number; races: number }, cloud: { rank: RankClass; exp: number; coins: number; races: number }) {
+    const card = (k: 'device' | 'cloud', t: string, s: typeof device) => `<button class="cpcard" data-a="ckeep" data-v="${k}">
+      <small>${t}</small>${classBadge(s.rank, 'lg')}<b>${fmt(s.exp)} ${XPT}</b><span>${ICON.coin}${fmt(s.coins)} · ${fmt(s.races)} races</span><em>Keep this</em></button>`;
+    $(this.root, '[data-k="cpbody"]').innerHTML = `<div class="mhead"><h2>☁️ WHICH PROGRESS?</h2></div>
+      <p class="aclead">This phone and your account have different progress. Pick the one to keep — the other is replaced.</p>
+      <div class="cpgrid">${card('device', 'THIS PHONE', device)}${card('cloud', 'ACCOUNT (CLOUD)', cloud)}</div>`;
+    this.showOverlay('cloudpick');
   }
 
   /** confirm popup before taking a special into the race */

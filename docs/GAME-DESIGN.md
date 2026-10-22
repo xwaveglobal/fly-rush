@@ -141,6 +141,11 @@ Bỏ: XWAVE Pass, Starter Pack, mọi bundle.
 - **Profile**: avatar + logo hạng + EXP cao nhất + thanh tiến độ tới hạng kế + túi special.
 - **Nhiệm vụ ngày**: Daily + Mission gộp thành một danh sách, chủ yếu thưởng coin.
 
+### Tài khoản & lưu đám mây (v2.3)
+- Mỗi máy là tài khoản khách từ lần mở đầu. Đăng nhập Google / Apple / mã email → tiến trình theo tài khoản, cài lại hoặc đổi máy đăng nhập lại là có đủ.
+- Máy mới đăng nhập: tự lấy bản đám mây. Máy đã có tiến trình riêng: hỏi giữ bản nào.
+- EXP / hạng do server xác minh (tính lại từ quãng đường từng lượt); sửa save không tăng được hạng.
+
 ### Bỏ khỏi game
 rank stars / bolts / X-points · sao ★ đường đua · 20 đường cũ · cup, trophy, division · mission rank · nâng cấp xe (Engine/Shield/Magnet) · mua xe bằng coin · item thường trong kho (Turbo, Magnet, ×2, Shield, Life) · hồi sinh bằng coin · XWAVE Pass / bundle / Starter Pack.
 

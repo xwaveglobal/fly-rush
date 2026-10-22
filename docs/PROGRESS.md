@@ -4,6 +4,16 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-22 — v2.3.0: accounts & cloud save (owner chose "cách 2", server coming)
+
+**Done**: `src/net/Cloud.ts` (guest token, email code, Google/Apple via server-side OAuth popup/redirect, GET/PUT /save with rev + 409 conflict, run queue), Game: `cloudSync` / `resolveCloud` / `applyCloud` (writes the cloud save then reloads) / `cloudAction` / `reportRun`; UI: Settings → Account popup, "Which progress?" chooser. Server rewritten: `server/index.mjs` + `server/core.mjs` + `schema.sql` + README (env vars, go-live). Tested end-to-end headless with a local server: device A (4,600 EXP, 7,054 coins) signs in by email → device B fresh install signs in → same progress restored.
+
+**To go live**: host the server (HTTPS), set env (README), put the address in `CLOUD.api` (src/config.ts), rebuild. Google needs an OAuth Web client; Apple needs a Services ID + key; email needs a mail key (Resend) or another mailer in `sendCode()`.
+
+**Next**: switch the leaderboards to the server boards when the server is live (PlayerStore already has `RemotePlayerStore`).
+
+---
+
 ## 2026-10-22 — v2.2.8: Home = owner mock-up
 
 **Done**: CSS block "v2.2.8 — Home exactly like the owner's mock-up" at the end of `ui.css`; stars in the speed selector, `ROCKET_W` / `CAR_LINE` icons, `.pchev` on PLAY.
