@@ -142,3 +142,9 @@ Status: **DONE in v2.1.0** (2026-10-22). G2 note: new per-world obstacles are ne
 - **N1.** Move the 3D car lower in the garage so the info panel does not cover it.
 - **N2.** Car thumbnails must show the real in-race car: the Zenith "In use" card still shows the old studio art (blue exhaust flames) → rebuild the Zenith thumb from the in-race rear render (same style as Vega's), and keep thumbs in sync with each car's race sprite.
 - **N3.** After the last car (Nexus, AAA) add a **"MORE"** card: more cars that unlock beyond AAA (S / SS / SSS) — shown as locked silhouettes with the rank badge, tap → "Reach rank S on Mega Rush".
+
+## O. Round 10 — modal spacing (owner 2026-10-22 07:05)
+- **O1.** Every popup card (training complete, revive, END, bonus, item card, special pick, profile…): text and buttons sit too close → consistent vertical rhythm (gap between title / text / buttons, comfortable line height).
+- (= H4) Training complete card needs a **Home** button.
+
+Owner 07:05: "rà soát sửa toàn bộ" → fix H–O now.
