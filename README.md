@@ -208,6 +208,13 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v3.0.2 changes — buttons on real TikTok devices
+- Sound engine is fail-safe: a runtime with a partial Web Audio (no compressor, `connect()` not chainable) used to throw at the first tap, leaving the audio half-built so every button's click sound threw and the button did nothing. Now audio switches off cleanly instead.
+- Images: the native image wrapper always feeds its own load listeners (the car sprite never appeared when the runtime's own `addEventListener` didn't fire).
+- Canvas UI: each screen draws inside a guard — one failing screen can no longer wipe every button; errors show once as a red notice.
+- Touch points reported in device pixels are scaled back to screen points.
+- Tested in a no-DOM runtime simulator (Web Worker + OffscreenCanvas + strict tt shim): home → settings → garage → play → tracks → special → race.
+
 ## v3.0.1 changes
 - Pause no longer ends the race after 7 s (the paused state shared the revive countdown) — web and native.
 - Ad places renamed by type: rewarded `rw_revive` · `rw_end_bonus` · `rw_free_coins` · `rw_head_start`, interstitial `int_race_end`.

@@ -36,8 +36,8 @@ const SCREENS: Record<string, (ui: UI, g: Gfx) => void> = {
 export function drawScreens(ui: UI, g: Gfx, ids: string[], layer: 'base' | 'overlay') {
   for (const id of ids) {
     if (!ui.shown.has(id)) continue;
-    if (layer === 'base') SCREENS[id]?.(ui, g);
-    else drawOverlay(ui, g, id);
+    // one screen failing to draw must never take the others (and their buttons) down with it
+    g.guard(id, () => (layer === 'base' ? SCREENS[id]?.(ui, g) : drawOverlay(ui, g, id)));
   }
   if (layer === 'base' && ui.tutHint && ui.shown.has('hud')) swipeHint(g);
 }

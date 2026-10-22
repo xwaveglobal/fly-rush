@@ -32,8 +32,17 @@ export class Audio {
 
   /** Must be called from a user gesture (browser autoplay policy). */
   unlock() {
+    try {
+      this.unlockInner();
+    } catch (e) {
+      // a runtime with a partial Web Audio (some mini-game engines): play silently, never break the game
+      console.warn('[audio] off:', e);
+      this.ctx = null;
+    }
+  }
+  private unlockInner() {
     if (this.ctx) {
-      if (this.ctx.state === 'suspended') void this.ctx.resume();
+      if (this.ctx.state === 'suspended') void this.ctx.resume?.();
       return;
     }
     const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -45,7 +54,8 @@ export class Audio {
     const comp = c.createDynamicsCompressor();
     comp.threshold.value = -14;
     comp.ratio.value = 4;
-    this.master.connect(comp).connect(c.destination);
+    this.master.connect(comp);
+    comp.connect(c.destination);
     this.sfxBus = c.createGain();
     this.sfxBus.gain.value = this.sfxOn ? 0.9 : 0;
     this.sfxBus.connect(this.master);
@@ -68,7 +78,10 @@ export class Audio {
     const damp = c.createBiquadFilter();
     damp.type = 'lowpass';
     damp.frequency.value = 1800;
-    this.echo.connect(dl).connect(damp).connect(fb).connect(dl);
+    this.echo.connect(dl);
+    dl.connect(damp);
+    damp.connect(fb);
+    fb.connect(dl);
     damp.connect(this.musicTone);
     this.noiseBuf = c.createBuffer(1, c.sampleRate, c.sampleRate);
     const d = this.noiseBuf.getChannelData(0);
@@ -94,16 +107,16 @@ export class Audio {
 
   setSfx(on: boolean) {
     this.sfxOn = on;
-    if (this.ctx) this.sfxBus.gain.value = on ? 0.9 : 0;
+    if (this.ctx && this.sfxBus) this.sfxBus.gain.value = on ? 0.9 : 0;
   }
   /** silence everything while an ad plays */
   duck(on: boolean) {
-    if (this.ctx) this.master.gain.value = on ? 0 : 0.8;
+    if (this.ctx && this.master) this.master.gain.value = on ? 0 : 0.8;
   }
 
   setMusic(on: boolean) {
     this.musicOn = on;
-    if (this.ctx) this.musicBus.gain.value = on ? 0.32 : 0;
+    if (this.ctx && this.musicBus) this.musicBus.gain.value = on ? 0.32 : 0;
   }
 
   // ---------------------------------------------------------------- helpers
@@ -143,7 +156,8 @@ export class Audio {
     g.gain.setValueAtTime(0.0001, t0);
     g.gain.exponentialRampToValueAtTime(vol, t0 + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    s.connect(f).connect(g);
+    s.connect(f);
+    f.connect(g);
     let out: AudioNode = g;
     if (pan && c.createStereoPanner) {
       const p = c.createStereoPanner();
@@ -158,6 +172,14 @@ export class Audio {
 
   play(name: Sfx, opt: { pan?: number } = {}) {
     if (!this.ctx || !this.sfxOn) return;
+    try {
+      this.playInner(name, opt);
+    } catch (e) {
+      console.warn('[audio] play', name, e);
+    }
+  }
+  private playInner(name: Sfx, opt: { pan?: number }) {
+    if (!this.ctx) return;
     const c = this.ctx;
     const t = c.currentTime;
     const ov = this.overrides.get(name);
@@ -277,6 +299,14 @@ export class Audio {
   }
 
   private schedule() {
+    try {
+      this.scheduleInner();
+    } catch (e) {
+      console.warn('[audio] music off:', e);
+      this.stopMusic();
+    }
+  }
+  private scheduleInner() {
     const c = this.ctx;
     if (!c) return;
     const spb = 60 / this.bpm / 4; // 16th notes
@@ -324,7 +354,8 @@ export class Audio {
       o.frequency.value = hz * mul;
       const og = c.createGain();
       og.gain.value = mul === 1 ? 1 : 0.25;
-      o.connect(og).connect(g);
+      o.connect(og);
+      og.connect(g);
       o.start(t0);
       o.stop(t0 + 0.45);
     }

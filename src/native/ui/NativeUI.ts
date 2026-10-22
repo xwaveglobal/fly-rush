@@ -129,6 +129,7 @@ export class UI {
   /** set up by src/native/main.ts once the canvas exists */
   attach(g: Gfx) {
     this.g = g;
+    g.onError = (_w, msg) => setTimeout(() => this.toastNow(`⚠ ${msg.replace(/[<>&]/g, '')}`, 'var(--red)'), 0);
     g.onImageLoad = () => (this.dirty = true);
   }
 
@@ -166,9 +167,9 @@ export class UI {
     g.begin(t);
     this.pumpNotice(t);
     drawScreens(this, g, BASE, 'base');
-    if (this.shown.has('hud')) drawHud(this, g);
+    if (this.shown.has('hud')) g.guard('hud', () => drawHud(this, g));
     drawScreens(this, g, OVERLAYS, 'overlay');
-    drawNotices(this, g);
+    g.guard('notices', () => drawNotices(this, g));
     if (this.debugText) g.para(this.debugText, 8, g.H - 120, g.W - 16, { size: 10, font: 'b', color: '#9fffa0' });
     return true;
   }
@@ -177,6 +178,7 @@ export class UI {
   private press: { key: string; fn: () => void; x: number; y: number } | null = null;
   private drag: { key: string; horiz: boolean; start: number; x: number; y: number; moved: boolean } | null = null;
   private passthrough = false;
+  private errShown = new Set<string>();
 
   /** returns true when the UI took the touch (else it steers the car) */
   touchStart(x: number, y: number): boolean {
@@ -269,6 +271,12 @@ export class UI {
         p.fn();
       } catch (e) {
         console.error(e);
+        // surface it once on the device (no console there) — a broken button must never be silent
+        const msg = String((e as Error)?.message ?? e).slice(0, 80);
+        if (!this.errShown.has(msg)) {
+          this.errShown.add(msg);
+          this.toastNow(`⚠ ${p.key}: ${msg.replace(/[<>&]/g, '')}`, 'var(--red)');
+        }
       }
       this.dirty = true;
     }

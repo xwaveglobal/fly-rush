@@ -131,7 +131,17 @@ function pt(e: any): { id: number; x: number; y: number } | null {
   const list = e?.changedTouches ?? e?.touches ?? [];
   const t = list[0];
   if (!t) return null;
-  return { id: t.identifier ?? 0, x: t.clientX ?? t.x ?? t.pageX ?? 0, y: t.clientY ?? t.y ?? t.pageY ?? 0 };
+  return { id: t.identifier ?? 0, ...xy(t) };
+}
+/** a touch point in CSS pixels (a runtime reporting device pixels is scaled back) */
+function xy(t: any): { x: number; y: number } {
+  let x = Number(t.clientX ?? t.x ?? t.pageX ?? 0),
+    y = Number(t.clientY ?? t.y ?? t.pageY ?? 0);
+  if (x > viewW * 1.25 || y > viewH * 1.25) {
+    x /= DPR;
+    y /= DPR;
+  }
+  return { x, y };
 }
 /** web preview (browser / artifact frame): the shim cancels pointerdown, so the page never takes
  *  keyboard focus by itself — focus it on every tap so the arrow keys / WASD steer */
@@ -175,8 +185,7 @@ function onMove(e: any) {
   const list = e?.changedTouches ?? e?.touches ?? [];
   for (const t of list) {
     if ((t.identifier ?? 0) !== touchId) continue;
-    const x = t.clientX ?? t.x ?? 0,
-      y = t.clientY ?? t.y ?? 0;
+    const { x, y } = xy(t);
     if (owner === 'ui') ui?.touchMove(x, y);
     else if (owner === 'input') input()?.touchMove(x, y);
   }

@@ -4,6 +4,16 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-22 — v3.0.2: buttons dead on the TikTok device
+
+**Cause (reproduced)**: `Audio.unlock()` on the first tap built the Web Audio graph with chained `connect()` and `createDynamicsCompressor` — a mini-game Web Audio without them threw halfway, leaving `ctx` set but buses undefined → every `audio.play('click')` (first line of most button handlers) threw → nothing happened; the music timer threw 40×/s. Also: Three's ImageLoader waits on `addEventListener('load')`, which a runtime image may not fire → no car sprite.
+
+**Fix**: fail-safe Audio (no chained connect, unlock/play/schedule in try/catch, off on failure); makeImage always installs its own listeners; `Gfx.guard()` per screen; touch device-pixel guard; handler errors toast once.
+
+**Test rig** (scratch, not in repo): Chromium Web Worker = TikTok-like runtime (no window/document), OffscreenCanvas screen, strict tt (partial Web Audio, onload-only images), touches forwarded from the page. Flow home → settings → garage → play → tracks → special → countdown all respond.
+
+---
+
 ## 2026-10-22 — v3.0.1 release package
 
 **Done**: HS Game ID = TikTok App ID `7698594517263403028` (in `src/native/hs.ts` and `tiktok/project.config.json`), SDK key set, real TikTok ad unit ids for the 5 places in `tiktok.hs-dashboard.json`. `npm run check:tiktok` → 0 fail, 0 warn. `npm run pack:tiktok` → `tiktok-tiktok.zip` (git-ignored).

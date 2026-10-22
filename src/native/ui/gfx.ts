@@ -209,6 +209,39 @@ export class Gfx {
     this.canvas.height = Math.round(h * scale);
   }
 
+  /** draw errors seen (reported once each) */
+  errors: string[] = [];
+  onError: (where: string, msg: string) => void = () => {};
+  /** run a draw step; on an exception restore the canvas state and report it once */
+  guard(where: string, fn: () => void) {
+    const depth = this.tf.length,
+      clips = this.clips.length;
+    const dry = this.dry;
+    this.ctx.save();
+    try {
+      fn();
+    } catch (e) {
+      const msg = `${where}: ${String((e as Error)?.message ?? e).slice(0, 90)}`;
+      if (!this.errors.includes(msg)) {
+        this.errors.push(msg);
+        console.error('[ui]', msg, e);
+        this.onError(where, msg);
+      }
+      while (this.tf.length > depth) this.tf.pop();
+      this.clips.length = clips;
+      this.dry = dry;
+      // unwind any save() the failed step left open (extra restore() calls are no-ops)
+      for (let i = 0; i < 64; i++) this.ctx.restore();
+      this.ctx.setTransform(this.scale, 0, 0, this.scale, 0, 0);
+      this.ctx.globalAlpha = 1;
+      this.shadow(null);
+      return;
+    }
+    this.ctx.restore();
+    this.ctx.globalAlpha = 1;
+    this.shadow(null);
+  }
+
   begin(t: number) {
     this.time = t;
     this.hits.length = 0;

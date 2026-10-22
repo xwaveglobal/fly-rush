@@ -40,7 +40,8 @@ function noop() {}
 /** tt images have onload/onerror only — give them the addEventListener Three.js' ImageLoader uses */
 export function makeImage(): any {
   const im = T.createImage();
-  if (typeof im.addEventListener === 'function') return im;
+  // always our own listener list, fed from onload / onerror: a runtime image may have an
+  // addEventListener that never fires 'load' (Three.js' ImageLoader listens that way)
   const evs: Record<string, ((e: any) => void)[]> = { load: [], error: [] };
   im.addEventListener = (t: string, cb: (e: any) => void) => (evs[t] ??= []).push(cb);
   im.removeEventListener = (t: string, cb: (e: any) => void) => {
