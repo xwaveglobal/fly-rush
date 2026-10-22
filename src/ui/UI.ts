@@ -153,7 +153,7 @@ const BAG_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradi
 
 /** tutorial (book + ?) and launch (megaphone) icons */
 const TUT_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M10.2 8.3a2 2 0 1 1 2.6 1.9c-.5.2-.8.6-.8 1.1v.6"/><path d="M12 14.4h.01"/></g></svg>`;
-const MEGA_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.6" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M12 6.2c1.7 1.2 2.4 3 2.2 5.4l-.9.9h-2.6l-.9-.9c-.2-2.4.5-4.2 2.2-5.4z" fill="#fff"/><circle cx="12" cy="9.3" r=".9" fill="#2a7bff"/><path d="M10.6 13.2 12 16.4l1.4-3.2z" fill="#ffc21a"/><path d="M10.4 18.6h3.2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+export const MEGA_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.6" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M12 6.2c1.7 1.2 2.4 3 2.2 5.4l-.9.9h-2.6l-.9-.9c-.2-2.4.5-4.2 2.2-5.4z" fill="#fff"/><circle cx="12" cy="9.3" r=".9" fill="#2a7bff"/><path d="M10.6 13.2 12 16.4l1.4-3.2z" fill="#ffc21a"/><path d="M10.4 18.6h3.2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>`;
 
 /** what a finished / crashed run paid out (result screens) */
 export interface RunRewards {
@@ -220,6 +220,9 @@ function carSvg(shape: string, body: number, glow: number) {
 /** avatar with the rank-class plate (D … AAA) in the corner */
 const avaHtml = (av: number, rc: RankClass, cls = '', extra = '') => `<span class="ava img rk-${rc} ${cls}">${avatarSvg(av)}${classCorner(rc)}${extra}</span>`;
 /** EXP logo (rank shield) */
+/** v2.2.8 Home mock-up icons: white rocket (Launch) and an outline car (Garage) */
+const ROCKET_W = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.8 3.2c2.9-.6 5.4-.4 6 .2.6.6.8 3.1.2 6-.6 3-2.6 5.8-5.3 7.7l.3 2.6-2.6 2-1.1-3.2-3.6-3.6-3.2-1.1 2-2.6 2.6.3C11 8.8 11.8 3.8 14.8 3.2z" fill="#fff"/><circle cx="16" cy="8" r="1.8" fill="#2c4a9a"/><path d="M6.5 14.8c-1.6.4-2.8 2.4-3 5.7 3.3-.2 5.3-1.4 5.7-3z" fill="#7fe6ff"/></svg>`;
+const CAR_LINE = `<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M4 13.5 5.8 8.6A2 2 0 0 1 7.7 7.3h8.6a2 2 0 0 1 1.9 1.3l1.8 4.9"/><rect x="2.8" y="13" width="18.4" height="5.2" rx="1.8"/><path d="M5.2 18.2v1.6M18.8 18.2v1.6"/></g><circle cx="7" cy="15.6" r="1.1" fill="currentColor"/><circle cx="17" cy="15.6" r="1.1" fill="currentColor"/></svg>`;
 const BOLT = XPT;
 const fmt = (n: number) => Math.floor(n).toLocaleString('en-US');
 const $ = <T extends HTMLElement = HTMLElement>(root: ParentNode, sel: string) => root.querySelector(sel) as T;
@@ -400,20 +403,20 @@ export class UI {
       <div class="rail right">
         <button class="rbtn" data-a="perk" data-v="share" data-k="pk-share"><span class="ri g-share">${ICON.share}</span><span class="rl">Share</span><em class="badge" hidden>!</em></button>
         <button class="rbtn" data-a="perk" data-v="entry" data-k="pk-entry"><span class="ri g-entry">${ICON.gift}</span><span class="rl">Entry</span><em class="badge" hidden>!</em></button>
-        <button class="rbtn" data-a="perk" data-v="launch" data-k="pk-launch"><span class="ri g-launch">${MEGA_ICON}</span><span class="rl">Launch</span><em class="badge" hidden>!</em></button>
+        <button class="rbtn" data-a="perk" data-v="launch" data-k="pk-launch"><span class="ri g-launch">${ROCKET_W}</span><span class="rl">Launch</span><em class="badge" hidden>!</em></button>
       </div>
       </div>
       <div class="menu">
         <button class="cupstrip" data-a="events" data-k="cupstrip" hidden></button>
         <div class="speedsel" role="radiogroup" aria-label="Speed">
-          ${(['easy', 'normal', 'hard'] as const).map((k, i) => `<button role="radio" data-a="speed" data-v="${k}" title="${LEVELS[k].label}: ${LEVELS[k].desc}"><i class="chev">${'›'.repeat(i + 1)}</i><b>${LEVELS[k].label}</b><small>EXP ×${['1', '1.05', '1.7'][i]}</small></button>`).join('')}
+          ${(['easy', 'normal', 'hard'] as const).map((k, i) => `<button role="radio" data-a="speed" data-v="${k}" title="${LEVELS[k].label}: ${LEVELS[k].desc}"><i class="chev">${'★'.repeat(i + 1)}</i><b>${LEVELS[k].label}</b><small>EXP ×${['1.0', '1.05', '1.7'][i]}</small></button>`).join('')}
         </div>
         <div class="speedcap" data-k="speedtip" hidden></div>
 
         <div class="menu-btns">
-          <button class="btn mbtn" data-a="play"><span class="ib">${ICON.play}</span><span class="lb">Play</span></button>
+          <button class="btn mbtn" data-a="play"><span class="ib">${ICON.play}</span><span class="lb">Play</span><span class="pchev"><i></i><i></i></span></button>
           <div class="minirow">
-            <button class="mini garage" data-a="garage">${ICON.car}<span>Garage</span></button>
+            <button class="mini garage" data-a="garage">${CAR_LINE}<span>Garage</span></button>
             <button class="mini shop" data-a="shop">${ICON.bag}<span>Shop</span><em class="msale" data-k="saletag">−80%</em></button>
             <button class="mini missions" data-a="missions">${ICON.target}<span>Missions</span></button>
           </div>
