@@ -100,7 +100,7 @@ const badge = (c: RankClass) => `<span class="clsb" style="--cc:${CLASS_COLOR[c]
 function navRow(g: Gfx, x: number, y: number, w: number, items: [string, string, string, BtnStyle, () => void][]) {
   const n = items.length;
   const bw = (w - (n - 1) * 8) / n;
-  items.forEach(([key, icon, label, st, fn], i) => button(g, key, x + i * (bw + 8), y, bw, 54, label, fn, { style: st, size: 12, icon }));
+  items.forEach(([key, icon, label, st, fn], i) => button(g, key, x + i * (bw + 8), y, bw, 54, label, fn, { style: st, size: 16, icon }));
   return y + 60;
 }
 /** ad button: only drawn while the platform can show that ad (HS rule 12) */
@@ -337,18 +337,18 @@ function continueOv(ui: UI, g: Gfx) {
 function pauseOv(ui: UI, g: Gfx) {
   const s = ui.save;
   modal(ui, g, 'pause', { close: 'none', w: 330 }, (x, y, w) => {
-    g.text('Paused', x + w / 2, y + 14, { size: 28, align: 'center', italic: true });
-    y += 40;
+    g.text('Paused', x + w / 2, y + 16, { size: 31, align: 'center', italic: true });
+    y += 44;
     const tw = (w - 16) / 3;
     const items: [string, string, string, () => void, boolean][] = [
       ['p-sound', s?.settings.sound ? ICON.sound : ICON.soundOff, 'SFX', () => ui.h.toggleSound(), !!s?.settings.sound],
       ['p-music', s?.settings.music ? ICON.music : ICON.musicOff, 'MUSIC', () => ui.h.toggleMusic(), !!s?.settings.music],
       ['p-q', ICON.gear, (ui.liveQuality ?? s?.settings.quality ?? 'high').toUpperCase(), () => ui.h.toggleQuality(), true],
     ];
-    items.forEach(([k, ic, l, fn, on], i) => button(g, k, x + i * (tw + 8), y, tw, 44, l, fn, { style: on ? 'dark' : 'ghost', icon: ic, size: 12 }));
-    y += 54;
-    button(g, 'resume', x, y, w, 56, `${ICON.play} Resume`, () => ui.h.resume(), { style: 'gold', size: 20 });
-    y += 64;
+    items.forEach(([k, ic, l, fn, on], i) => button(g, k, x + i * (tw + 8), y, tw, 46, l, fn, { style: on ? 'dark' : 'ghost', icon: ic, size: 15 }));
+    y += 56;
+    button(g, 'resume', x, y, w, 60, `${ICON.play} Resume`, () => ui.h.resume(), { style: 'gold', size: 24 });
+    y += 68;
     return navRow(g, x, y, w, [
       ['p-retry', ICON.retry, 'Retry', 'blue', () => ui.h.retry()],
       ['p-home', ICON.home, 'Home', 'dark', () => ui.h.home()],

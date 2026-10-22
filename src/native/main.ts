@@ -33,16 +33,36 @@ setAdProvider({
 
 // ---------------------------------------------------------------- safe area (status bar, TikTok capsule)
 function measureSafe() {
-  SAFE.top = Math.max(0, safeArea?.top ?? 0);
-  SAFE.bottom = Math.max(0, viewH - (safeArea?.bottom ?? viewH));
+  let sys: any = {};
+  try {
+    sys = T.getSystemInfoSync?.() ?? {};
+  } catch {
+    /* keep the first reading */
+  }
+  const sa = sys.safeArea ?? safeArea;
+  const statusBar = Math.max(0, sa?.top ?? 0, sys.statusBarHeight ?? 0);
+  SAFE.top = statusBar;
+  SAFE.bottom = Math.max(0, viewH - (sa?.bottom ?? viewH));
+  // TikTok's "… ×" capsule sits top-right over the game: keep the top bar below it.
+  // Without a readable rect (some app versions answer 0 at start) assume its usual place.
+  let capsule = 0;
   try {
     const m = T.getMenuButtonBoundingClientRect?.();
-    if (m && m.bottom > 0 && m.bottom < viewH / 3) SAFE.menuBottom = m.bottom + 4;
+    if (m && m.bottom > 0 && m.bottom < viewH / 3) capsule = m.bottom + 6;
   } catch {
     /* no capsule */
   }
+  SAFE.menuBottom = capsule || Math.max(statusBar, 20) + 48;
+  try {
+    if (ui) ui.dirty = true; // (not yet declared on the first call)
+  } catch {
+    /* first call, before the UI exists */
+  }
 }
 measureSafe();
+// the app may report the capsule only once it is on screen: measure again shortly after start
+setTimeout(measureSafe, 800);
+setTimeout(measureSafe, 3000);
 
 // ---------------------------------------------------------------- the game
 const container: any = {
@@ -86,7 +106,18 @@ if (ui && game) {
   uiTex.generateMipmaps = false;
   uiScene = new THREE.Scene();
   uiCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial({ map: uiTex, transparent: true, depthTest: false, depthWrite: false, toneMapped: false }));
+  // UI over the 3D frame: normal blending for colour, but the alpha channel is left at 1 —
+  // a mini game's screen canvas is composited by the app, so any alpha < 1 lets the page show
+  // through and the whole game looks washed out
+  const mat = new THREE.MeshBasicMaterial({ map: uiTex, transparent: true, depthTest: false, depthWrite: false, toneMapped: false });
+  mat.blending = THREE.CustomBlending;
+  mat.blendEquation = THREE.AddEquation;
+  mat.blendSrc = THREE.SrcAlphaFactor;
+  mat.blendDst = THREE.OneMinusSrcAlphaFactor;
+  mat.blendEquationAlpha = THREE.AddEquation;
+  mat.blendSrcAlpha = THREE.ZeroFactor;
+  mat.blendDstAlpha = THREE.OneFactor;
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat);
   quad.frustumCulled = false;
   uiScene.add(quad);
   const renderer = (game as any).renderer;
@@ -97,6 +128,17 @@ if (ui && game) {
     r.toneMapping = THREE.NoToneMapping;
     r.render(uiScene!, uiCam!);
     r.toneMapping = tm;
+    opaque(r);
+  };
+  /** force the finished frame's alpha to 1 (bloom / post passes can leave it below 1) */
+  const opaque = (r: THREE.WebGLRenderer) => {
+    const gl = r.getContext();
+    r.setRenderTarget(null);
+    gl.colorMask(false, false, false, true);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.colorMask(true, true, true, true);
+    r.resetState();
   };
   // until the game loop starts (boot: shaders, key art), draw the UI alone — no blank screen
   let booted = false;

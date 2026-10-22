@@ -4,6 +4,16 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-22 — v3.0.3: native fidelity (owner screenshots: H5 vs TikTok native)
+
+**Cause of the faded look**: the canvas UI quad blended its alpha into the framebuffer (and post passes can leave alpha < 1); TikTok composites the game canvas with alpha, so the page showed through everything. Fix in `src/native/main.ts`: UI material keeps destination alpha (CustomBlending, alpha Zero/One) + `opaque()` clears alpha to 1 after the UI pass.
+
+**HUD** (`src/native/ui/hud.ts`) redrawn to the H5 layout; `shieldBadge()`; pause menu sizes up (`popups.ts`). Capsule safe area re-measured at 0.8 s / 3 s with a fallback.
+
+**Not verifiable here**: the alpha fix (desktop Chrome honours `alpha:false`) — check on the phone.
+
+---
+
 ## 2026-10-22 — v3.0.2: buttons dead on the TikTok device
 
 **Cause (reproduced)**: `Audio.unlock()` on the first tap built the Web Audio graph with chained `connect()` and `createDynamicsCompressor` — a mini-game Web Audio without them threw halfway, leaving `ctx` set but buses undefined → every `audio.play('click')` (first line of most button handlers) threw → nothing happened; the music timer threw 40×/s. Also: Three's ImageLoader waits on `addEventListener('load')`, which a runtime image may not fire → no car sprite.

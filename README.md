@@ -208,6 +208,12 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v3.0.3 changes — native looks like the H5 game
+- Washed-out picture on TikTok fixed: the frame's alpha channel is forced to 1 after the UI pass (the UI quad no longer lowers the canvas alpha, and bloom / post passes can't leave it below 1), so the app never shows its page through the game.
+- Race HUD rebuilt to the H5 layout: EXP + level tag, big race EXP with RACE shield, YOU / BEST row, NEXT row; coin / distance pills; "SPEED … KM/H" with the rainbow bar; bigger hearts; H5 pause button; shield-shaped class badges; dark ROADSTER button.
+- Pause menu typography bigger (title, SFX / MUSIC / quality, Resume, Retry / Home); result-screen nav buttons too.
+- Top bar always below TikTok's "… ×" capsule (re-measured after start, safe fallback when the app reports no rect).
+
 ## v3.0.2 changes — buttons on real TikTok devices
 - Sound engine is fail-safe: a runtime with a partial Web Audio (no compressor, `connect()` not chainable) used to throw at the first tap, leaving the audio half-built so every button's click sound threw and the button did nothing. Now audio switches off cleanly instead.
 - Images: the native image wrapper always feeds its own load listeners (the car sprite never appeared when the runtime's own `addEventListener` didn't fire).

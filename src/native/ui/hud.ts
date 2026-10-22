@@ -1,6 +1,6 @@
 /** v3 native UI — race HUD, ROADSTER / SOS buttons, notices, pops, flyers */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { C, Gfx, bar, cssColor, fmt, iconBtn, rankBadge, rankBadgeW, shade } from './gfx.ts';
+import { C, Gfx, bar, cssColor, fmt, rankBadge, shade } from './gfx.ts';
 import type { UI } from './NativeUI.ts';
 import { ARROW, BOLT, CHEV, ICON } from './consts.ts';
 import { CLASSES, CLASS_COLOR, CLASS_MIN, classFor } from '../../meta/Rank.ts';
@@ -18,72 +18,94 @@ export function drawHud(ui: UI, g: Gfx) {
   const W = g.W;
   const top = safeTop(g) + 8;
   const t = g.time;
-  // pause
-  iconBtn(g, 'pause', 12, top, 40, ICON.pause, () => ui.h.pause());
+  // ---- pause (H5: 44 px glossy square)
+  {
+    const k = 'pause';
+    const pr = g.isPressed(k);
+    g.shadow('rgba(0,0,0,.45)', 6, 2);
+    g.rr(12, top, 44, 44, 14, g.lin(0, top, 0, top + 44, [[0, pr ? '#2a3f8f' : '#3a55c0'], [1, '#18286a']]), 'rgba(170,200,255,.55)', 1.2);
+    g.shadow(null);
+    g.rr(15, top + 3, 38, 16, 10, 'rgba(255,255,255,.14)');
+    g.icon(ICON.pause, 23, top + 11, 22, '#ffffff');
+    g.hit(8, top - 4, 52, 52, k, () => ui.h.pause());
+  }
   if (ui.trainHud) {
     const k = 'tutskip';
-    g.rr(12, top + 48, 64, 28, 14, g.isPressed(k) ? 'rgba(255,255,255,.3)' : 'rgba(10,22,60,.8)', 'rgba(255,255,255,.3)');
-    g.text('Skip ›', 44, top + 62, { size: 12, align: 'center' });
-    g.hit(12, top + 44, 64, 36, k, () => ui.h.skipTutorial());
+    g.rr(12, top + 52, 64, 28, 14, g.isPressed(k) ? 'rgba(255,255,255,.3)' : 'rgba(10,22,60,.85)', 'rgba(255,255,255,.3)');
+    g.text('Skip ›', 44, top + 66, { size: 12.5, align: 'center' });
+    g.hit(12, top + 48, 64, 36, k, () => ui.h.skipTutorial());
   }
   if (!run) return;
-  // ---- score box (EXP of this race + the rank it reached)
-  const bw = 168,
-    bx = (W - bw) / 2,
-    by = top - 2;
+  // ---- right pills: coins · distance (H5: 15 px bold, rounded pills)
+  const pillW = (html: string) => Math.max(58, g.richW(html, 15) + 22);
+  const cHtml = `${ICON.coin} <b>${fmt(run.coins)}</b>`;
+  const dHtml = `${ICON.flag} <b>${fmt(run.distance)} m</b>`;
+  const pw = Math.max(pillW(cHtml), pillW(dHtml));
+  const px = W - 12 - pw;
+  pill(g, px, top, pw, 30, cHtml, bump(ui, 'coins', t), 'rgba(255,194,26,.6)');
+  hudPos.coins = { x: px + 18, y: top + 15 };
+  pill(g, px, top + 36, pw, 30, dHtml, 1);
+  // ---- score box (H5 layout): EXP · level pill / big race EXP · RACE + shield / (best) / NEXT
   const exp = run.exp;
-  g.rr(bx, by, bw, 62, 16, 'rgba(8,16,44,.78)', 'rgba(120,180,255,.35)', 1.2);
+  const bx = 66,
+    bw = Math.max(170, px - 8 - bx);
+  const showBest = ui.hudBest > 0 && !ui.trainHud && !ui.bonusHud && run.expRate > 0;
+  const cur = classFor(exp);
+  const ni = CLASSES.indexOf(cur);
+  const nx = ni < CLASSES.indexOf(ui.hudTop) ? CLASSES[ni + 1] : null;
+  const showNext = !!nx && !ui.trainHud && !ui.bonusHud && run.expRate > 0;
+  const bh = 50 + (showBest ? 20 : 0) + (showNext ? 18 : 0);
+  const by = top - 1;
+  g.shadow('rgba(0,0,0,.35)', 10, 3);
+  g.rr(bx, by, bw, bh, 14, g.lin(0, by, 0, by + bh, [[0, 'rgba(18,32,76,.92)'], [1, 'rgba(8,15,40,.94)']]), 'rgba(98,170,255,.42)', 1.2);
+  g.shadow(null);
+  const ix = bx + 14;
   if (ui.bonusHud) {
-    g.rich(`${ICON.coin} BONUS COINS`, bx, by + 4, bw, { size: 11, align: 'center', color: C.gold });
-    g.text(fmt(run.coins), W / 2, by + 38, { size: 26, align: 'center', italic: true });
+    g.rich(`${ICON.coin} <b>BONUS COINS</b>`, ix, by + 6, bw - 28, { size: 11, color: C.gold });
+    g.text(fmt(run.coins), ix, by + 36, { size: 28, italic: true, noTr: true });
   } else {
-    let lab = BOLT;
-    if (ui.trainHud) lab += ' <small>TRAINING</small>';
-    else if (ui.hudLevel) lab += ` <b>${ui.hudLevel}</b>`;
-    g.rich(lab, bx, by + 3, bw, { size: 12, align: 'center', color: ui.hudLevel === 'HARD' ? '#ff6b6b' : ui.hudLevel === 'EASY' ? '#5eea8a' : C.gold });
+    g.icon(BOLT, ix, by + 7, 26, '#fff', 14);
+    let lx = ix + 32;
+    if (ui.trainHud) levelPill(g, lx, by + 7, 'TRAINING', '#9fb3dd', '#0b1436');
+    else if (ui.hudLevel) {
+      const lv = ui.hudLevel.toUpperCase();
+      const [bg, fg] = lv === 'HARD' ? ['#ff5a48', '#ffffff'] : lv === 'EASY' ? ['#5ef08e', '#064a22'] : ['#ffc84a', '#5a2a00'];
+      lx += levelPill(g, lx, by + 7, lv, bg, fg);
+    }
+    // big number + RACE shield
     const num = fmt(exp);
-    const showRank = run.expRate > 0 || ui.trainHud;
-    const cls = classFor(exp);
-    const nw = g.measure(num, { size: 26, italic: true });
-    const rw = showRank ? rankBadgeW(g, cls, 18) + 6 : 0;
-    const x0 = W / 2 - (nw + rw) / 2;
-    g.text(num, x0, by + 38, { size: 26, italic: true });
-    if (showRank) rankBadge(g, cls, x0 + nw + 6, by + 29, 18);
-  }
-  let y = by + 66;
-  // best to beat + next rank
-  if (ui.hudBest > 0 && !ui.trainHud && !ui.bonusHud && run.expRate > 0) {
-    const beat = exp > ui.hudBest;
-    g.rr(bx + 6, y, bw - 12, 22, 11, beat ? 'rgba(255,194,26,.25)' : 'rgba(8,16,44,.7)', beat ? C.gold : 'rgba(120,180,255,.25)');
-    g.text('YOU', bx + 14, y + 11, { size: 8, color: C.muted });
-    rankBadge(g, ui.hudMe, bx + 34, y + 4, 14);
-    g.text('BEST', bx + 66, y + 11, { size: 8, color: C.muted });
-    g.text(beat ? 'BEATEN!' : fmt(ui.hudBest), bx + 92, y + 11, { size: 11, color: beat ? C.gold : '#fff', maxW: 60 });
-    bar(g, bx + 14, y + 18, bw - 28, 2.5, exp / ui.hudBest, beat ? C.gold : C.cyan);
-    y += 26;
-  }
-  {
-    const cur = classFor(exp);
-    const ni = CLASSES.indexOf(cur);
-    const nx = ni < CLASSES.indexOf(ui.hudTop) ? CLASSES[ni + 1] : null;
-    if (nx && !ui.trainHud && !ui.bonusHud && run.expRate > 0) {
-      g.rich(`<small>NEXT</small> <span class="clsb" style="--cc:${CLASS_COLOR[nx]}">${nx}</span> <b>${fmt(CLASS_MIN[nx] - exp)}</b> <small>EXP</small>`, bx, y, bw, { size: 11, align: 'center' });
-      y += 18;
+    g.text(num, ix, by + 37, { size: 28, italic: true, noTr: true });
+    const nw = g.measure(num, { size: 28, italic: true });
+    if (run.expRate > 0 || ui.trainHud) {
+      g.text('RACE', ix + nw + 12, by + 38, { size: 9, color: C.muted, font: 'b', weight: 800, noTr: true, shadow: null });
+      shieldBadge(g, cur, ix + nw + 46, by + 26, 24);
     }
   }
-  // ---- coins / distance pills (right)
-  const px = W - 12 - 98;
-  const coinBump = bump(ui, 'coins', t);
-  pill(g, px, top, 98, 26, `${ICON.coin} <b>${fmt(run.coins)}</b>`, coinBump);
-  hudPos.coins = { x: px + 16, y: top + 13 };
-  pill(g, px, top + 31, 98, 26, `${ICON.flag} <b>${fmt(run.distance)} m</b>`, 1);
-  // ---- speed + hearts (row 2)
-  const r2 = Math.max(y, top + 64) + 4;
-  g.text(`Speed ${fmt(ui.hud.speed * 3.6)} km/h`, 14, r2 + 6, { size: 10, font: 'b', color: C.muted, noTr: true });
-  bar(g, 14, r2 + 14, 110, 5, ui.hud.speed / Math.max(1, ui.hud.maxSpeed), g.lin(14, 0, 124, 0, [[0, '#2fd36b'], [1, '#ffc21a']]));
-  for (let i = 0; i < run.maxLives; i++) g.icon(i < run.lives ? ICON.heart : ICON.heartEmpty, W - 14 - (run.maxLives - i) * 22, r2 + 1, 20);
+  let yy = by + 52;
+  if (showBest) {
+    const beat = exp > ui.hudBest;
+    g.text('YOU', ix, yy + 7, { size: 8.5, color: C.muted, font: 'b', weight: 800, noTr: true, shadow: null });
+    shieldBadge(g, ui.hudMe, ix + 24, yy, 14);
+    g.text('BEST', ix + 46, yy + 7, { size: 8.5, color: C.muted, font: 'b', weight: 800, noTr: true, shadow: null });
+    g.text(beat ? 'BEATEN!' : fmt(ui.hudBest), ix + 74, yy + 7, { size: 11, color: beat ? C.gold : '#fff', font: 'b', weight: 900, maxW: bw - 110, noTr: true, shadow: null });
+    bar(g, ix, yy + 15, bw - 28, 3, exp / ui.hudBest, beat ? C.gold : C.cyan);
+    yy += 20;
+  }
+  if (showNext && nx) {
+    g.text('NEXT', ix, yy + 7, { size: 8.5, color: C.muted, font: 'b', weight: 800, noTr: true, shadow: null });
+    shieldBadge(g, nx, ix + 30, yy - 1, 15);
+    const need = fmt(CLASS_MIN[nx] - exp);
+    g.text(need, ix + 52, yy + 7, { size: 11, font: 'b', weight: 900, noTr: true, shadow: null });
+    g.text('EXP', ix + 56 + g.measure(need, { size: 11, font: 'b', weight: 900 }), yy + 7, { size: 8.5, color: C.muted, font: 'b', weight: 800, noTr: true, shadow: null });
+  }
+  // ---- speed (H5: "SPEED 91 KM/H", rainbow bar) + hearts
+  const r2 = Math.max(by + bh, top + 66) + 12;
+  g.text(`SPEED ${fmt(ui.hud.speed * 3.6)} KM/H`, 14, r2 + 6, { size: 11.5, font: 'b', weight: 800, color: '#cfe0ff', noTr: true });
+  bar(g, 14, r2 + 15, 118, 6, ui.hud.speed / Math.max(1, ui.hud.maxSpeed), g.lin(14, 0, 132, 0, [[0, '#39b6ff'], [0.5, '#b6ff2e'], [1, '#ff8a1f']]));
+  for (let i = 0; i < run.maxLives; i++) g.icon(i < run.lives ? ICON.heart : ICON.heartEmpty, W - 12 - (run.maxLives - i) * 25, r2 - 1, 23);
   hudPos.hearts = { x: W - 40, y: r2 + 10 };
-  let ly = r2 + 26;
+  let ly = r2 + 30;
+
   // ---- rank gate strip
   if (ui.hud.gate) {
     const gw = 220,
@@ -174,7 +196,7 @@ export function drawHud(ui: UI, g: Gfx) {
     const wait = t - ui.hud.rocketWaitT < 600 ? Math.sin((t - ui.hud.rocketWaitT) / 40) * 4 : 0;
     const s = ready ? 1 + 0.07 * Math.sin(t / 110) : 1;
     if (ready) g.circle(bx2 + 38 + wait, byy + 38, 50, withAlpha(hyper ? '#ffc21a' : '#9b6bff', 0.25 + 0.15 * Math.sin(t / 110)));
-    roundBtn(g, 'rocket', bx2 + wait, byy, 76 * s, hyper ? '#ffb31a' : '#8a4dff', hyper ? ICON.hyper : ICON.rocket, ready ? 'TAP!' : hyper ? 'HYPER' : 'ROADSTER', String(rockets), () => ui.h.rocket());
+    roundBtn(g, 'rocket', bx2 + wait, byy, 76 * s, hyper ? '#ffb31a' : '#8a4dff', hyper ? ICON.hyper : ICON.rocket, ready ? 'TAP!' : hyper ? 'HYPER' : 'ROADSTER', String(rockets), () => ui.h.rocket(), hyper ? { c0: '#ffe07a', c1: '#e79a00', rim: 'rgba(255,255,255,.8)', text: '#3a2000' } : { c0: '#2a1d5c', c1: '#120a33', rim: '#b48cff', text: '#e6dcff' });
     hudPos.rocket = { x: bx2 + 38, y: byy + 38 };
   }
   // ---- mission (bottom)
@@ -197,30 +219,30 @@ function bump(ui: UI, k: string, t: number) {
   return p >= 1 ? 1 : 1 + 0.16 * Math.sin(p * Math.PI);
 }
 
-function pill(g: Gfx, x: number, y: number, w: number, h: number, html: string, s = 1) {
+function pill(g: Gfx, x: number, y: number, w: number, h: number, html: string, s = 1, rim = 'rgba(79,195,255,.32)') {
   g.ctx.save();
   if (s !== 1) {
     g.ctx.translate(x + w / 2, y + h / 2);
     g.ctx.scale(s, s);
     g.ctx.translate(-(x + w / 2), -(y + h / 2));
   }
-  g.rr(x, y, w, h, h / 2, 'rgba(8,16,44,.78)', 'rgba(120,180,255,.3)');
-  g.rich(html, x + 8, y + h / 2 - 9, w - 14, { size: 13, align: 'left' });
+  g.rr(x, y, w, h, h / 2, 'rgba(9,16,44,.86)', rim, 1.2);
+  g.rich(html, x + 7, y + h / 2 - 10, w - 12, { size: 15, align: 'left' });
   g.ctx.restore();
 }
 
-function roundBtn(g: Gfx, key: string, x: number, y: number, s: number, col: string, icon: string, label: string, n: string, fn: () => void) {
+function roundBtn(g: Gfx, key: string, x: number, y: number, s: number, col: string, icon: string, label: string, n: string, fn: () => void, look?: { c0: string; c1: string; rim: string; text: string }) {
   const cx = x + 38 * (s / 76) + (76 - s) / 2,
     cy = y + s / 2;
   const r = s / 2;
   const pr = g.isPressed(key);
   const rr = pr ? r * 0.92 : r;
   g.shadow('rgba(0,0,0,.5)', 8, 3);
-  g.circle(cx, cy, rr, g.rad(cx, cy - rr * 0.4, rr * 0.1, rr * 1.2, [[0, shade(col, 0.35)], [1, shade(col, -0.25)]]));
+  g.circle(cx, cy, rr, g.rad(cx, cy - rr * 0.3, rr * 0.1, rr * 1.15, look ? [[0, look.c0], [0.75, look.c1], [1, look.c1]] : [[0, shade(col, 0.35)], [1, shade(col, -0.25)]]));
   g.shadow(null);
-  g.circle(cx, cy, rr - 1, null, 'rgba(255,255,255,.7)', 2);
-  g.icon(icon, cx - rr * 0.4, cy - rr * 0.62, rr * 0.8);
-  g.text(label, cx, cy + rr * 0.45, { size: Math.max(8, rr * 0.27), align: 'center', maxW: rr * 1.7 });
+  g.circle(cx, cy, rr - 1, null, look?.rim ?? 'rgba(255,255,255,.7)', 2);
+  g.icon(icon, cx - rr * 0.38, cy - rr * 0.64, rr * 0.76);
+  g.text(label, cx, cy + rr * 0.45, { size: Math.max(9, rr * 0.27), align: 'center', maxW: rr * 1.7, color: look?.text ?? '#fff', italic: true });
   g.circle(cx + rr * 0.72, cy - rr * 0.72, 11, '#fff');
   g.text(n, cx + rr * 0.72, cy - rr * 0.72 + 0.5, { size: 12, align: 'center', color: '#1a1040', shadow: null, noTr: true });
   g.hit(cx - r - 6, cy - r - 6, r * 2 + 12, r * 2 + 12, key, fn, true);
@@ -315,3 +337,33 @@ export function drawNotices(ui: UI, g: Gfx) {
 }
 
 export { ARROW };
+
+
+/** H5 class badge: a shield with the class letters (white → class colour) */
+export function shieldBadge(g: Gfx, cls: string, x: number, y: number, h: number) {
+  if (g.dry) return;
+  const cc = CLASS_COLOR[cls as keyof typeof CLASS_COLOR] ?? '#9fb3dd';
+  const w = h * 0.92;
+  const c = g.ctx;
+  c.beginPath();
+  c.moveTo(x, y + h * 0.12);
+  c.quadraticCurveTo(x + w / 2, y - h * 0.04, x + w, y + h * 0.12);
+  c.lineTo(x + w, y + h * 0.55);
+  c.quadraticCurveTo(x + w, y + h * 0.86, x + w / 2, y + h);
+  c.quadraticCurveTo(x, y + h * 0.86, x, y + h * 0.55);
+  c.closePath();
+  c.fillStyle = g.lin(0, y, 0, y + h, [[0, '#f4f7ff'], [1, cc]]);
+  c.fill();
+  c.strokeStyle = 'rgba(0,0,0,.35)';
+  c.lineWidth = 1;
+  c.stroke();
+  g.text(cls, x + w / 2, y + h * 0.47, { size: h * (cls.length > 2 ? 0.34 : cls.length > 1 ? 0.42 : 0.55), align: 'center', color: '#0b1436', shadow: null, noTr: true, italic: true });
+}
+
+/** the EASY / NORMAL / HARD tag next to EXP */
+function levelPill(g: Gfx, x: number, y: number, label: string, bg: string, fg: string) {
+  const w = g.measure(label, { size: 9, font: 'b', weight: 900 }) + 14;
+  g.rr(x, y, w, 15, 5, bg);
+  g.text(label, x + w / 2, y + 8, { size: 9, align: 'center', color: fg, font: 'b', weight: 900, shadow: null, noTr: true });
+  return w + 6;
+}
