@@ -2397,3 +2397,24 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 #start .minirow .mini span { font-size: 12.5px !important; letter-spacing: 0 !important; overflow: visible !important; text-overflow: clip !important; }
 #start .minirow .mini svg { width: 16px !important; height: 16px !important; }
 #start .menu-btns .mbtn[data-a="play"] { height: 76px !important; font-size: 34px !important; }
+
+/* ---- v2.2.6: every button in the glossy 3D candy style of the Home buttons ---- */
+#ui .screen .btn:not(.mbtn):not(.linkbtn) {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c1) 80%, #fff) 0%, var(--c1) 40%, var(--c2) 100%) !important;
+  border: 1px solid rgba(255,255,255,.3) !important;
+  box-shadow: 0 4px 0 var(--edge), 0 8px 18px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.55), inset 0 -4px 10px rgba(0,0,0,.18) !important;
+  font-style: italic; font-weight: 900; position: relative; overflow: hidden;
+}
+#ui .screen .btn:not(.mbtn):not(.linkbtn)::before { content: ''; position: absolute; left: 5%; right: 5%; top: 3px; height: 42%; border-radius: 12px 12px 20px 20px;
+  background: linear-gradient(180deg, rgba(255,255,255,.42), rgba(255,255,255,0)); pointer-events: none; }
+#ui .screen .btn:not(.mbtn):not(.linkbtn):active { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge), 0 4px 10px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.45) !important; }
+/* dark / ghost buttons become glossy navy instead of flat glass */
+#ui .screen .btn.ghost, #ui .screen .btn.dark { --c1: #34478f; --c2: #1a2560; --edge: #0b1238; color: #fff; }
+#ui .screen .btn.green { --c1: #4fe38d; --c2: #129a4c; --edge: #0a5a2b; }
+#ui .screen .btn[disabled] { filter: grayscale(.85) brightness(.75); }
+/* result / pause nav row */
+#ui .screen .navrow .btn.nav { border-radius: 16px !important; }
+/* round icon buttons (close / share / back): glossy navy discs */
+#ui .screen .icon-btn { background: linear-gradient(180deg, #3a4f9c, #18235a) !important; border: 1px solid rgba(255,255,255,.3) !important;
+  box-shadow: 0 3px 0 #0b1238, 0 6px 14px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.5) !important; }
+#ui .screen .icon-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #0b1238, inset 0 1px 0 rgba(255,255,255,.4) !important; }
