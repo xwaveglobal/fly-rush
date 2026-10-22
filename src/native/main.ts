@@ -133,7 +133,24 @@ function pt(e: any): { id: number; x: number; y: number } | null {
   if (!t) return null;
   return { id: t.identifier ?? 0, x: t.clientX ?? t.x ?? t.pageX ?? 0, y: t.clientY ?? t.y ?? t.pageY ?? 0 };
 }
+/** web preview (browser / artifact frame): the shim cancels pointerdown, so the page never takes
+ *  keyboard focus by itself — focus it on every tap so the arrow keys / WASD steer */
+function takeFocus() {
+  if (NATIVE) return;
+  try {
+    G.focus?.();
+    const c = screenCanvas as any;
+    if (c && typeof c.focus === 'function') {
+      if (!(c.tabIndex >= 0)) c.tabIndex = 0;
+      c.style.outline = 'none';
+      c.focus({ preventScroll: true });
+    }
+  } catch {
+    /* ignore */
+  }
+}
 function onStart(e: any) {
+  takeFocus();
   const p = pt(e);
   if (!p) return;
   if (firstTouch) {

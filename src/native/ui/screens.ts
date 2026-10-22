@@ -170,22 +170,23 @@ function start(ui: UI, g: Gfx) {
   tile(18, ry, 'daily', ICON.calendar, 'Daily', navy, () => ui.h.daily(), o && o.dailyBadge > 0 ? String(o.dailyBadge) : '');
   tile(18, ry + 60, 'events', ICON.gift, 'Bonus', ['#d9802e', '#9a4a12'], () => ui.h.events());
   tile(18, ry + 120, 'ranks', ICON.podium, 'Ranks', navy, () => ui.h.ranks());
-  // right rail: the TikTok review buttons — only where the platform has them (HSGame.has)
-  let rr = ry;
-  if (hs.hasShare()) {
-    tile(W - 68, rr, 'pk-share', ICON.share, 'Share', ['#1aa79a', '#0b6a66'], () => ui.h.perk('share'));
-    rr += 60;
-  }
-  if (hs.hasMissions()) {
-    if (!hs.entryDone()) {
-      tile(W - 68, rr, 'pk-entry', ICON.gift, 'Entry', ['#7b3fe0', '#4a1d9e'], () => ui.h.perk('entry'), '!');
-      rr += 60;
+  // right rail: Share · Entry · Launch — always 3 tiles (6 on the two rails). They work where the
+  // platform has the feature (HSGame.has); elsewhere (web preview, Android app) the tile is dimmed
+  // and a tap explains it. A claimed reward keeps its tile with a ✓.
+  const perk = (i: number, key: string, icon: string, label: string, col: [string, string], live: boolean, done: boolean, fn: () => void) => {
+    const x = W - 68,
+      y = ry + i * 60;
+    tile(x, y, key, icon, label, col, live ? fn : () => ui.toast(`${ICON.info} ${label} works inside the TikTok app`, '#4fc3ff'), live && !done && key !== 'pk-share' ? '!' : '');
+    g.alpha(1);
+    if (done) {
+      g.circle(x + 48, y + 2, 9, C.green, '#fff', 1.5);
+      g.icon(ICON.check, x + 42, y - 4, 12, '#fff');
     }
-    if (!hs.launchDone()) {
-      tile(W - 68, rr, 'pk-launch', ROCKET_W, 'Launch', ['#5a3fe0', '#2c1d9e'], () => ui.h.perk('launch'), '!');
-      rr += 60;
-    }
-  }
+  };
+  const miss = hs.hasMissions();
+  perk(0, 'pk-share', ICON.share, 'Share', ['#1aa79a', '#0b6a66'], hs.hasShare(), false, () => ui.h.perk('share'));
+  perk(1, 'pk-entry', ICON.gift, 'Entry', ['#7b3fe0', '#4a1d9e'], miss, miss && hs.entryDone(), () => ui.h.perk('entry'));
+  perk(2, 'pk-launch', ROCKET_W, 'Launch', ['#5a3fe0', '#2c1d9e'], miss, miss && hs.launchDone(), () => ui.h.perk('launch'));
   // ---- bottom menu
   const col = column(g);
   const sb = safeBottom(g);

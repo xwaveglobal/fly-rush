@@ -87,15 +87,15 @@ export const hs = {
   canShowAd(place: string): boolean {
     switch (place) {
       case 'continue':
-        return !!HSGame.canShowAd('revive');
+        return !!HSGame.canShowAd('rw_revive');
       case 'double_coins':
-        return !!HSGame.canShowAd('end_bonus');
+        return !!HSGame.canShowAd('rw_end_bonus');
       case 'free_coins':
-        return !!HSGame.canShowAd('free_coins');
+        return !!HSGame.canShowAd('rw_free_coins');
       case 'head_start':
-        return !!HSGame.canShowAd('head_start');
+        return !!HSGame.canShowAd('rw_head_start');
       default:
-        return !!HSGame.canShowAd('race_end');
+        return !!HSGame.canShowAd('int_race_end');
     }
   },
   /** resolves true when the ad was watched to the end */
@@ -103,16 +103,16 @@ export const hs = {
     let r: unknown = null;
     switch (place) {
       case 'continue':
-        r = await HSGame.showAd('revive');
+        r = await HSGame.showAd('rw_revive');
         break;
       case 'double_coins':
-        r = await HSGame.showAd('end_bonus');
+        r = await HSGame.showAd('rw_end_bonus');
         break;
       case 'free_coins':
-        r = await HSGame.showAd('free_coins');
+        r = await HSGame.showAd('rw_free_coins');
         break;
       case 'head_start':
-        r = await HSGame.showAd('head_start');
+        r = await HSGame.showAd('rw_head_start');
         break;
       default:
         r = null;
@@ -120,7 +120,7 @@ export const hs = {
     return r !== null && r !== undefined;
   },
   async interstitial(): Promise<void> {
-    await HSGame.showAd('race_end');
+    await HSGame.showAd('int_race_end');
   },
 
   // ---- share (reward of key "share", once a day, added to the profile by HSGame)

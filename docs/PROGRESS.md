@@ -4,6 +4,12 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-22 — v3.0.1
+
+**Done**: pause never times out (Game.tick: `paused` no longer shares the `continue` 7 s countdown → it used to end the race); ad places renamed `rw_revive` / `rw_end_bonus` / `rw_free_coins` / `rw_head_start` (rewarded) and `int_race_end` (interstitial) in `src/native/hs.ts` + `tiktok.hs-dashboard.json`; home right rail always has Share / Entry / Launch (live where `HSGame.has`, else a tap explains; claimed = ✓); web preview takes keyboard focus on tap (the HS web shim cancels pointerdown, so arrows/WASD did nothing in a frame).
+
+---
+
 ## 2026-10-22 — v3.0.0: native TikTok mini game (main) · v2 kept on branch `v2`
 
 **Owner asked**: release as a native game for TikTok Minis with the HS SDK kit (hs-sdk 1.1.2); "clone thành native version 3.0, giữ bản 2.0 ở GitHub, 3.0 làm main". HS answers: SAVE local · no Game ID / SDK key yet · shop + ads at revive / end bonus / free coins / head start · no sign-in button.

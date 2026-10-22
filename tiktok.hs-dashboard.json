@@ -2,26 +2,26 @@
   "iaa_config": {
     "placements": [
       {
-        "label": "revive",
+        "label": "rw_revive",
         "ads": [
           {
-            "id": "ad_REPLACE_rewarded_revive"
+            "id": "ad_REPLACE_rewarded_rw_revive"
           }
         ]
       },
       {
-        "label": "end_bonus",
+        "label": "rw_end_bonus",
         "ads": [
           {
-            "id": "ad_REPLACE_rewarded_end_bonus"
+            "id": "ad_REPLACE_rewarded_rw_end_bonus"
           }
         ]
       },
       {
-        "label": "free_coins",
+        "label": "rw_free_coins",
         "ads": [
           {
-            "id": "ad_REPLACE_rewarded_free_coins",
+            "id": "ad_REPLACE_rewarded_rw_free_coins",
             "config": {
               "cooldown": 30
             }
@@ -29,18 +29,18 @@
         ]
       },
       {
-        "label": "head_start",
+        "label": "rw_head_start",
         "ads": [
           {
-            "id": "ad_REPLACE_rewarded_head_start"
+            "id": "ad_REPLACE_rewarded_rw_head_start"
           }
         ]
       },
       {
-        "label": "race_end",
+        "label": "int_race_end",
         "ads": [
           {
-            "id": "ad_REPLACE_interstitial_race_end",
+            "id": "ad_REPLACE_interstitial_int_race_end",
             "config": {
               "cooldown": 45
             }

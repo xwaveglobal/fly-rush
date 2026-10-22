@@ -58,7 +58,7 @@ import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } f
 import { dayKey } from './core/Save.ts';
 import { platform } from './platform.ts';
 
-const VERSION = 'v3.0.0';
+const VERSION = 'v3.0.1';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -2291,6 +2291,9 @@ export class Game {
         this.updateRun(dt);
         break;
       case 'paused':
+        // paused = everything holds still until Resume / Retry / Home (never times out)
+        this.stateT -= dt;
+        break;
       case 'continue': {
         if (this.holdContinue) {
           this.stateT -= dt;
