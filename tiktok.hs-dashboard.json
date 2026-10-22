@@ -79,47 +79,63 @@
   },
   "products": [
     {
-      "id": 1,
-      "name": "1,000 coins",
-      "beans_cost": 99,
-      "rewards": {
-        "coins": 1000
-      }
-    },
-    {
-      "id": 2,
-      "name": "6,000 coins",
-      "beans_cost": 499,
-      "rewards": {
-        "coins": 6000
-      },
-      "badge": "POPULAR"
-    },
-    {
-      "id": 3,
-      "name": "13,000 coins",
-      "beans_cost": 999,
-      "rewards": {
-        "coins": 13000
-      }
-    },
-    {
-      "id": 4,
-      "name": "30,000 coins",
-      "beans_cost": 1999,
-      "rewards": {
-        "coins": 30000
-      },
-      "badge": "BEST VALUE"
-    },
-    {
       "id": 5,
       "name": "Remove Ads",
+      "description": "No ad after a race ends — forever",
       "beans_cost": 299,
       "rewards": {
         "no_ads": 1
       },
-      "consumable": false
+      "consumable": false,
+      "badge": "NO ADS"
+    },
+    {
+      "id": 1,
+      "name": "5,000 coins",
+      "description": "Starter pack",
+      "beans_cost": 99,
+      "rewards": {
+        "coins": 5000
+      },
+      "badge": "STARTER"
+    },
+    {
+      "id": 2,
+      "name": "16,000 coins",
+      "description": "+6% bonus",
+      "beans_cost": 299,
+      "rewards": {
+        "coins": 16000
+      }
+    },
+    {
+      "id": 3,
+      "name": "28,000 coins",
+      "description": "+11% bonus",
+      "beans_cost": 499,
+      "rewards": {
+        "coins": 28000
+      },
+      "badge": "POPULAR"
+    },
+    {
+      "id": 4,
+      "name": "60,000 coins",
+      "description": "+19% bonus",
+      "beans_cost": 999,
+      "rewards": {
+        "coins": 60000
+      }
+    },
+    {
+      "id": 6,
+      "name": "130,000 coins",
+      "description": "+29% bonus",
+      "beans_cost": 1999,
+      "rewards": {
+        "coins": 130000
+      },
+      "badge": "BEST VALUE"
     }
   ]
 }

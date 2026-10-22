@@ -5,7 +5,7 @@ import type { UI } from './NativeUI.ts';
 import { ARROW, BOLT, CHEV, ICON } from './consts.ts';
 import { CLASSES, CLASS_COLOR, CLASS_MIN, classFor } from '../../meta/Rank.ts';
 import { withAlpha } from './svg.ts';
-import { safeTop, safeBottom } from './layout.ts';
+import { belowCap, capRow, safeTop, safeBottom } from './layout.ts';
 
 const CHIP_COL: Record<string, string> = { coin2: '#ffd24a', shield: '#3d9bff', magnet: '#ff3b4e', turbo: '#b6ff2e', double: '#ffc21a', super: '#9b6bff', hyper: '#ffc21a', dash: '#2ee6c8' };
 const CHIP_IC: Record<string, string> = { coin2: ICON.coin, shield: ICON.shield, magnet: ICON.magnet, turbo: ICON.bolt, double: ICON.x2, super: ICON.rocket, hyper: ICON.hyper, dash: ICON.dash };
@@ -16,7 +16,8 @@ export const hudPos: Record<string, { x: number; y: number }> = {};
 export function drawHud(ui: UI, g: Gfx) {
   const run = ui.hud.run;
   const W = g.W;
-  const top = safeTop(g) + 2;
+  const row = capRow(g);
+  const top = row.top;
   const t = g.time;
   // ---- pause (H5: 44 px glossy square)
   {
@@ -40,30 +41,32 @@ export function drawHud(ui: UI, g: Gfx) {
   const wallet = ui.save?.wallet ?? 0;
   const cw = 104;
   const px = W - 12 - cw;
+  // v3.0.8: pause + score box share the line with TikTok's capsule; coins + distance sit under it
+  const ct = row.capped ? Math.max(top, belowCap()) : top;
   {
     const s = bump(ui, 'coins', t);
     g.ctx.save();
     if (s !== 1) {
-      g.ctx.translate(px + cw / 2, top + 21);
+      g.ctx.translate(px + cw / 2, ct + 21);
       g.ctx.scale(s, s);
-      g.ctx.translate(-(px + cw / 2), -(top + 21));
+      g.ctx.translate(-(px + cw / 2), -(ct + 21));
     }
-    g.rr(px, top, cw, 42, 14, g.lin(0, top, 0, top + 42, [[0, 'rgba(48,36,4,.9)'], [1, 'rgba(22,16,2,.92)']]), 'rgba(255,194,26,.7)', 1.3);
-    g.icon(ICON.coin, px + 8, top + 6, 20);
-    g.text(`+${fmt(run.coins)}`, px + 33, top + 16.5, { size: 16, color: '#ffe28a', maxW: cw - 40, noTr: true, weight: 900, font: 'b' });
-    g.text('TOTAL', px + 9, top + 33, { size: 8, color: 'rgba(255,226,138,.7)', font: 'b', weight: 800, noTr: true, shadow: null });
-    g.text(fmt(wallet + run.coins), px + cw - 9, top + 33, { size: 10.5, align: 'right', color: '#ffffff', font: 'b', weight: 800, maxW: cw - 48, noTr: true, shadow: null });
+    g.rr(px, ct, cw, 42, 14, g.lin(0, ct, 0, ct + 42, [[0, 'rgba(48,36,4,.9)'], [1, 'rgba(22,16,2,.92)']]), 'rgba(255,194,26,.7)', 1.3);
+    g.icon(ICON.coin, px + 8, ct + 6, 20);
+    g.text(`+${fmt(run.coins)}`, px + 33, ct + 16.5, { size: 16, color: '#ffe28a', maxW: cw - 40, noTr: true, weight: 900, font: 'b' });
+    g.text('TOTAL', px + 9, ct + 33, { size: 8, color: 'rgba(255,226,138,.7)', font: 'b', weight: 800, noTr: true, shadow: null });
+    g.text(fmt(wallet + run.coins), px + cw - 9, ct + 33, { size: 10.5, align: 'right', color: '#ffffff', font: 'b', weight: 800, maxW: cw - 48, noTr: true, shadow: null });
     g.ctx.restore();
   }
-  hudPos.coins = { x: px + 18, y: top + 16 };
-  pill(g, px, top + 48, cw, 28, `${ICON.flag} <b>${fmt(run.distance)} m</b>`, 1);
+  hudPos.coins = { x: px + 18, y: ct + 16 };
+  pill(g, px, ct + 48, cw, 28, `${ICON.flag} <b>${fmt(run.distance)} m</b>`, 1);
   // ---- score box: [EXP · level]  big race EXP  ·  RACE rank shield
   //                 ───────────────────────────────────────────────
   //                 YOU ◆ BEST 316                    NEXT ◆ 2,948
   //                 ━━━━━━━━━━━━━━━━━━━━ progress to the next rank, best marked
   const exp = run.exp;
   const bx = 66,
-    bw = Math.max(176, px - 8 - bx);
+    bw = Math.max(150, Math.min(row.right, px - 8) - bx);
   const expRace = run.expRate > 0 && !ui.bonusHud;
   const showBest = ui.hudBest > 0 && !ui.trainHud && expRace;
   const cur = classFor(exp);
@@ -126,7 +129,7 @@ export function drawHud(ui: UI, g: Gfx) {
       g.rr(mx - 1, by + 73, 2, 10, 1, '#ffffff');
     }
   }
-  const bottomY = Math.max(by + bh, top + 76);
+  const bottomY = Math.max(by + bh, ct + 76);
 
   // ---- speed (H5: "SPEED 91 KM/H", rainbow bar) + hearts
   const r2 = bottomY + 12;

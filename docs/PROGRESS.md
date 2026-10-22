@@ -4,6 +4,14 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-22 — v3.0.8
+
+**Done**: `layout.ts capRow()/belowCap()` + capsule rect in `SAFE` (main.ts) → first row beside the capsule (home, pageHead, HUD). Native shop rewritten (`screens.ts shop`): Remove Ads, free coins, pack tiles. New products in `tiktok.hs-dashboard.json` (owner must paste into the HS dashboard — the game reads products from there). `ITEM_PRICE` specials raised. Shield 2 hits, timer ×0.7 (`SHIELD` in config). Owner confirmed sound OK on iPhone.
+
+**Note**: HS reports `has('shop')` off on Android → the shop shows "open soon" there; packs appear where HS enables the shop.
+
+---
+
 ## 2026-10-22 — v3.0.7
 
 **Done**: Android now loads (v3.0.6 regex fix confirmed by owner screenshot). Top inset fix in `src/native/main.ts measureSafe()` (px → layout units, clamps) + smaller offsets in `screens.ts` (home, pageHead) and `hud.ts`.

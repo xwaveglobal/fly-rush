@@ -208,6 +208,13 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v3.0.8 changes — shop · top row beside the TikTok capsule
+
+- **Top row on the capsule line**: home (profile · coins · settings), page headers and the race HUD (pause · score box) now sit on the same line as TikTok's "… ×" capsule, left of it; the race coin card + distance sit just under the capsule. "How to play" lives in Settings when space is short. Profile chip fits its content with a clear gap to the coin chip.
+- **Shop**: Remove Ads card on top, free coins (rewarded ad), then coin packs as tiles. New packs (`tiktok.hs-dashboard.json`, paste into the HS dashboard): **5,000 coins = 99 Beans (≈ $0.99)**, 16,000 = 299, 28,000 = 499 (POPULAR), 60,000 = 999, 130,000 = 1,999 (BEST VALUE); Remove Ads 299 (one-time). Web `PRODUCTS` match. The coin chip's **+** always opens the shop.
+- **Shield**: breaks after **2 hits** (was 3) and lasts **30 % shorter** (14 s instead of 20 s) — `SHIELD` in `config.ts`.
+- **Special item prices up**: Roadster Jump 3,000 (was 1,800), HYPER Jump 7,000 (was 4,000), SOS Escape 2,000 (was 1,200).
+
 ## v3.0.7 changes — top inset
 
 - **Android**: some TikTok builds report the "… ×" capsule / status bar in physical pixels → the whole UI sat ~200 units too low. Values are now detected and converted (÷ pixel ratio) and clamped; the top bar sits right under the capsule.
@@ -354,7 +361,7 @@ Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder M
 
 - **Daily + Missions merged**: one daily list (4 missions a day, chests at 30 / 70 / 100 pts) that pays coins; the home "Missions" button opens it. The in-race strip shows the next unfinished daily mission with live progress. The old per-run mission system no longer pays (waiting rewards were moved to the wallet).
 - 7-day check-in pays coins 100 → 400, day 7 = 600 coins + 1 Roadster Jump. New missions: "Earn 1,500 EXP in one race", "Use a special" (SOS counts), "Drive 5,000 m"…
-- Coin balance (`COIN_LINES` in config): Endless ≈ 25–40 coins / min before the speed-level coin bonus (a special costs 2,000–6,000), Bonus roads ≈ 2× denser.
+- Coin balance (`COIN_LINES` in config): Endless ≈ 25–40 coins / min before the speed-level coin bonus (a special costs 2,000–7,000), Bonus roads ≈ 2× denser.
 - XWAVE Pass row hidden; new UI text translated (FR / JA / PT / DE / ES).
 
 ## v2.0.7 changes (v2 step 7 — Bonus events replace cups)

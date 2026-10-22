@@ -57,13 +57,25 @@ function measureSafe() {
     const m = T.getMenuButtonBoundingClientRect?.();
     if (m && m.bottom > 0) {
       const px = m.right > viewW * 1.05 || m.bottom > viewH * 0.2;
-      const bottom = px ? m.bottom / pr : m.bottom;
-      if (bottom < viewH * 0.16) capsule = bottom + 4;
+      const k = px ? 1 / pr : 1;
+      const bottom = m.bottom * k;
+      if (bottom < viewH * 0.16) {
+        capsule = bottom + 4;
+        SAFE.capL = Math.max(viewW * 0.4, (m.left ?? m.right - (m.width ?? 87)) * k);
+        SAFE.capTop = Math.max(0, (m.top ?? m.bottom - (m.height ?? 32)) * k);
+        SAFE.capBottom = bottom;
+      }
     }
   } catch {
     /* no capsule */
   }
   SAFE.menuBottom = capsule || Math.max(statusBar, 20) + 40;
+  if (!capsule) {
+    // no readable rect: TikTok's capsule is ~87×32, 6–10 units from the top-right corner
+    SAFE.capL = viewW - 100;
+    SAFE.capTop = Math.max(statusBar, 20) + 4;
+    SAFE.capBottom = SAFE.capTop + 32;
+  }
   try {
     if (ui) ui.dirty = true; // (not yet declared on the first call)
   } catch {

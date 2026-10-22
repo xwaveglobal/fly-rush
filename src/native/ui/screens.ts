@@ -3,7 +3,7 @@
 import { C, Gfx, bar, button, card, fmt, iconBtn, panel, rankBadge, toggle } from './gfx.ts';
 import type { UI } from './NativeUI.ts';
 import { BAG_ICON, BOLT, CAR_LINE, ICON, ITEM_ICON, RARITY_COLOR, ROCKET_W, SPECIAL_SHORT, TUT_ICON } from './consts.ts';
-import { column, safeBottom, safeTop } from './layout.ts';
+import { capRow, column, safeBottom, safeTop } from './layout.ts';
 import { drawOverlay } from './popups.ts';
 import { avatarSvg, avatarForName } from '../../ui/avatars.ts';
 import { CLASSES, CLASS_COLOR, classFor, playerRank, type RankClass } from '../../meta/Rank.ts';
@@ -51,18 +51,21 @@ function pageBg(g: Gfx, a = 0.86) {
 
 /** page header: back · title · wallet */
 export function pageHead(ui: UI, g: Gfx, title: string, back = () => ui.h.home()) {
-  const y = safeTop(g) + 2;
+  const row = capRow(g);
+  const y = row.top + 2;
   iconBtn(g, 'back', 12, y, 40, ICON.chevL, back);
-  g.text(title, g.W / 2, y + 20, { size: 19, align: 'center', italic: true, maxW: g.W - 200 });
-  wallet(ui, g, g.W - 12, y + 4);
-  return y + 50;
+  const ww = wallet(ui, g, row.right, y + 4);
+  const l = 60,
+    r = row.right - ww - 8;
+  g.text(title, (l + r) / 2, y + 20, { size: 19, align: 'center', italic: true, maxW: Math.max(60, r - l) });
+  return Math.max(y + 50, safeTop(g) + 4);
 }
 
 /** coin chip: tap → shop, "+" → free coins (only while an ad can be shown) */
 export function wallet(ui: UI, g: Gfx, right: number, y: number, compact = false) {
   const n = ui.save?.wallet ?? 0;
   const txt = compact && n >= 10000 ? `${(n / 1000).toFixed(n >= 100000 ? 0 : 1)}K` : fmt(n);
-  const plus = hs.hasAds() && hs.canShowAd('free_coins');
+  const plus = true; // v3.0.8: "+" always opens the shop (coin packs · Remove Ads · free coins)
   const tw = g.measure(txt, { size: 14 });
   const w = 34 + tw + (plus ? 26 : 10);
   const x = right - w;
@@ -73,7 +76,7 @@ export function wallet(ui: UI, g: Gfx, right: number, y: number, compact = false
   if (plus) {
     g.circle(x + w - 15, y + 16, 10, g.isPressed('freepop') ? '#fff' : '#2fd36b');
     g.icon(ICON.plus, x + w - 22, y + 9, 14, '#fff');
-    g.hit(x + w - 30, y - 4, 30, 40, 'freepop', () => ui.h.freePop());
+    g.hit(x + w - 30, y - 4, 30, 40, 'freepop', () => ui.h.shop());
   }
   return w;
 }
@@ -111,15 +114,33 @@ function start(ui: UI, g: Gfx) {
   const s = ui.save;
   const o = ui.home;
   const W = g.W;
-  const top = safeTop(g) - 4;
+  const row = capRow(g);
+  const top = row.top - 6;
   const t = g.time;
   // soft vignette top & bottom so the buttons read over the 3D city
   g.rr(0, 0, W, 150, 0, g.lin(0, 0, 0, 150, [[0, 'rgba(3,6,22,.55)'], [1, 'rgba(3,6,22,0)']]));
   g.rr(0, g.H - 300, W, 300, 0, g.lin(0, g.H - 300, 0, g.H, [[0, 'rgba(3,6,22,0)'], [1, 'rgba(3,6,22,.8)']]));
+  // ---- top right: wallet · tutorial · settings (left of TikTok's capsule; How to play is in Settings then)
+  const sq = (x: number, key: string, icon: string, fn: () => void) => {
+    const s2 = 44;
+    g.rr(x, top + 6, s2, s2, 12, g.isPressed(key) ? 'rgba(79,195,255,.35)' : g.lin(0, top, 0, top + s2, [[0, '#1c3a8c'], [1, '#0d1d55']]), 'rgba(120,170,255,.5)', 1.2);
+    g.icon(icon, x + 11, top + 17, 22, '#ffffff');
+    g.hit(x - 2, top + 2, s2 + 4, s2 + 8, key, fn);
+  };
+  let rx = row.right - (row.capped ? 0 : 6);
+  sq(rx - 44, 'settings', ICON.gear, () => ui.h.settings());
+  rx -= 50;
+  if (!row.capped || rx - 50 - 150 > 18 + 150) {
+    sq(rx - 44, 'help', TUT_ICON, () => ui.h.help());
+    rx -= 50;
+  }
+  const wl = rx - wallet(ui, g, rx, top + 12, true);
   // ---- profile chip (avatar with rank glow · name · rank shield · best EXP)
   if (o) {
     const pk = 'profile';
-    const cw = Math.min(196, W - 196);
+    // v3.0.8: chip fits its content and keeps a clear gap to the coin chip
+    const content = Math.max(g.measure(o.name, { size: 13.5, font: 'b' }), 24 + g.measure(fmt(o.bolts), { size: 12.5 }) + 34);
+    const cw = Math.max(110, Math.min(172, 54 + content + 14, wl - 14 - 18));
     const cc = CLASS_COLOR[ui.myClass];
     g.rr(18, top + 6, cw, 44, 22, g.isPressed(pk) ? 'rgba(79,195,255,.3)' : 'rgba(12,24,70,.86)', 'rgba(110,160,255,.45)', 1.2);
     g.shadow(cc, 10, 0);
@@ -135,16 +156,6 @@ function start(ui: UI, g: Gfx) {
     g.text(rk, 40, top + 52, { size: 9, align: 'center', color: '#2a1600', shadow: null, noTr: true });
     g.hit(14, top, cw + 4, 62, pk, () => ui.h.profile());
   }
-  // ---- top right: wallet · tutorial · settings
-  const sq = (x: number, key: string, icon: string, fn: () => void) => {
-    const s2 = 44;
-    g.rr(x, top + 6, s2, s2, 12, g.isPressed(key) ? 'rgba(79,195,255,.35)' : g.lin(0, top, 0, top + s2, [[0, '#1c3a8c'], [1, '#0d1d55']]), 'rgba(120,170,255,.5)', 1.2);
-    g.icon(icon, x + 11, top + 17, 22, '#ffffff');
-    g.hit(x - 2, top + 2, s2 + 4, s2 + 8, key, fn);
-  };
-  sq(W - 18 - 44, 'settings', ICON.gear, () => ui.h.settings());
-  sq(W - 18 - 44 - 50, 'help', TUT_ICON, () => ui.h.help());
-  wallet(ui, g, W - 18 - 100, top + 12, true);
   // ---- logo
   const lw = Math.min(W * 0.86, 360);
   const lh = lw * 0.4;
@@ -640,7 +651,73 @@ function shop(ui: UI, g: Gfx) {
   const x = col.x + 12,
     w = col.w - 24;
   scrollList(g, 'shop', 0, top, g.W, g.H - top - safeBottom(g), (y) => {
-    // your items
+    // TikTok Beans products (HS dashboard) — shown only while the platform has a shop
+    const prods = hs.hasShop() ? ui.products : [];
+    const noAds = prods.filter((p) => !!p.items?.no_ads);
+    const packs = prods.filter((p) => !p.items?.no_ads).sort((a, b) => (a.beans_cost ?? 0) - (b.beans_cost ?? 0) || (a.items?.coins ?? 0) - (b.items?.coins ?? 0));
+    const buy = (p: (typeof prods)[number]) =>
+      void hs.buy(p.product_id).then((r) => {
+        // HSGame adds the items to the profile itself (coins / no_ads) — the game only says so
+        if (r.ok) ui.toast(r.delivered === false ? `${ICON.clock} ${p.name} · paid — it arrives next time you open the game` : `${ICON.check} ${p.name} · thank you!`, 'var(--gold)');
+        else if (r.error && !/cancel/i.test(r.error)) ui.toast(`${ICON.info} ${r.error}`, 'var(--red)');
+        ui.dirty = true;
+      });
+    const badge = (text: string, bx: number, by: number, col = C.gold) => {
+      const bw = g.measure(text, { size: 9 }) + 14;
+      g.rr(bx - bw, by - 7, bw, 16, 8, col);
+      g.text(text, bx - bw / 2, by + 1, { size: 9, align: 'center', color: '#2a1600', shadow: null, noTr: true });
+    };
+    // ---- Remove Ads (one purchase, forever)
+    for (const p of noAds) {
+      const owned = s.noAds;
+      const h = 84;
+      card(g, x, y, w, h, 16, owned ? C.green : '#ff4fd8');
+      g.rr(x + 1, y + 1, w - 2, h - 2, 15, g.lin(x, 0, x + w, 0, [[0, 'rgba(255,79,216,.22)'], [1, 'rgba(79,195,255,.12)']]));
+      if (p.badge && !owned) badge(p.badge, x + w - 10, y, '#ff8ae6');
+      g.icon(ICON.noads, x + 14, y + 20, 44, '#fff');
+      g.text(p.name, x + 68, y + 30, { size: 16, maxW: w - 196, noTr: true });
+      g.para(p.description ?? 'No ad after a race, forever', x + 68, y + 42, w - 196, { size: 10.5, font: 'b', color: '#e8d6ff', noTr: true });
+      const label = owned ? 'Owned' : p.price || `${p.beans_cost ?? 0} Beans`;
+      button(g, `buy-${p.product_id}`, x + w - 116, y + 22, 104, 40, owned ? `${ICON.check} Owned` : label, () => buy(p), { style: owned ? 'ghost' : 'pink', disabled: owned, size: 13 });
+      y += h + 12;
+    }
+    // ---- free coins (rewarded ad)
+    if (hs.hasAds()) {
+      const h = 58;
+      card(g, x, y, w, h, 14, 'rgba(47,211,107,.55)');
+      g.icon(ICON.play, x + 14, y + 15, 28, C.green);
+      g.text('Free coins', x + 52, y + 23, { size: 14 });
+      g.text('Watch an ad', x + 52, y + 41, { size: 10.5, font: 'b', color: C.muted });
+      button(g, 'shop-free', x + w - 116, y + 11, 104, 36, `${ICON.play} Watch`, () => ui.h.freePop(), { style: 'green', size: 13 });
+      y += h + 12;
+    }
+    // ---- coin packs
+    if (packs.length) {
+      g.text('Coin packs', x + 4, y + 12, { size: 15 });
+      y += 26;
+      // two columns of tiles (the cheapest first)
+      const gap = 10;
+      const tw = (w - gap) / 2,
+        th = 136;
+      packs.forEach((p, i) => {
+        const tx = x + (i % 2) * (tw + gap),
+          ty = y + Math.floor(i / 2) * (th + gap);
+        const hot = !!p.badge;
+        card(g, tx, ty, tw, th, 16, hot ? C.gold : 'rgba(130,175,255,.25)');
+        if (hot) badge(p.badge!, tx + tw - 8, ty, C.gold);
+        const coins = p.items?.coins ?? 0;
+        const n = Math.min(4, 1 + i);
+        for (let k = 0; k < n; k++) g.icon(ICON.coin, tx + tw / 2 - 16 - (n - 1) * 6 + k * 12, ty + 14 - (k % 2) * 4, 32);
+        g.text(coins ? fmt(coins) : p.name, tx + tw / 2, ty + 62, { size: 18, align: 'center', italic: true, maxW: tw - 12, noTr: true });
+        g.text(p.description ?? 'coins', tx + tw / 2, ty + 80, { size: 10, align: 'center', font: 'b', color: C.muted, maxW: tw - 12, noTr: true });
+        button(g, `buy-${p.product_id}`, tx + 10, ty + th - 42, tw - 20, 34, p.price || `${p.beans_cost ?? 0} Beans`, () => buy(p), { style: 'gold', size: 13 });
+      });
+      y += Math.ceil(packs.length / 2) * (th + gap) + 4;
+    } else if (!prods.length) {
+      g.para('Coin packs and Remove Ads open soon on this platform. Earn coins by racing, daily check-in and missions.', x + 10, y + 6, w - 20, { size: 12, font: 'b', color: C.muted, align: 'center' });
+      y += 60;
+    }
+    // ---- your items (bought with coins)
     card(g, x, y, w, 50, 14);
     g.text('Your items', x + 14, y + 25, { size: 12, font: 'b', color: C.muted });
     let ix = x + 100;
@@ -654,40 +731,7 @@ function shop(ui: UI, g: Gfx) {
       ui.buySync(s);
       ui.showOverlay('bagbuy');
     }, { style: 'purple' });
-    y += 56;
-    // TikTok Beans products (HS dashboard) — shown only while the platform has a shop
-    const prods = hs.hasShop() ? ui.products : [];
-    if (!prods.length) {
-      g.para('Coin packs open soon on this platform. Earn coins by racing, daily check-in and missions.', x + 10, y + 6, w - 20, { size: 12, font: 'b', color: C.muted, align: 'center' });
-      return y + 60;
-    }
-    g.text('Coins', x + 4, y + 12, { size: 15 });
-    y += 26;
-    for (const p of prods) {
-      const isNoAds = !!p.items?.no_ads;
-      const owned = isNoAds && s.noAds;
-      const h = 74;
-      card(g, x, y, w, h, 14, p.badge ? C.gold : 'rgba(130,175,255,.2)');
-      if (p.badge) {
-        const bw = g.measure(p.badge, { size: 9 }) + 14;
-        g.rr(x + w - bw - 10, y - 7, bw, 16, 8, C.gold);
-        g.text(p.badge, x + w - bw / 2 - 10, y + 1, { size: 9, align: 'center', color: '#2a1600', shadow: null, noTr: true });
-      }
-      const coins = p.items?.coins ?? 0;
-      g.icon(isNoAds ? ICON.noads : ICON.coin, x + 12, y + 16, 40, '#fff');
-      g.text(p.name, x + 64, y + 26, { size: 14, maxW: w - 190, noTr: true });
-      g.para(p.description ?? (coins ? `${fmt(coins)} coins` : ''), x + 64, y + 38, w - 190, { size: 10.5, font: 'b', color: C.muted, noTr: true });
-      const label = owned ? 'Owned' : p.price || `${p.beans_cost ?? 0} Beans`;
-      button(g, `buy-${p.product_id}`, x + w - 112, y + 18, 100, 38, label, () =>
-        void hs.buy(p.product_id).then((r) => {
-          // HSGame adds the items to the profile itself (coins / no_ads) — the game only says so
-          if (r.ok) ui.toast(r.delivered === false ? `${ICON.clock} ${p.name} · paid — it arrives next time you open the game` : `${ICON.check} ${p.name} · thank you!`, 'var(--gold)');
-          else if (r.error && !/cancel/i.test(r.error)) ui.toast(`${ICON.info} ${r.error}`, 'var(--red)');
-          ui.dirty = true;
-        }), { style: owned ? 'ghost' : 'gold', disabled: owned, size: 13 });
-      y += h + 10;
-    }
-    return y;
+    return y + 56;
   });
 }
 

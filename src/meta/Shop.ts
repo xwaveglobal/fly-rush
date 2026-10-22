@@ -22,10 +22,11 @@ export interface Product {
 
 /** v2: the shop sells only coins (+ Remove Ads). EXP can never be bought. */
 export const PRODUCTS: Product[] = [
-  { sku: 'coins_s', name: '1,000 coins', desc: 'A handful', price: '$0.99', grant: { coins: 1000 }, kind: 'coins', art: 'coins-s' },
-  { sku: 'coins_m', name: '6,000 coins', desc: '+20% bonus', price: '$4.99', grant: { coins: 6000 }, badge: 'POPULAR', kind: 'coins', art: 'coins-m' },
-  { sku: 'coins_l', name: '13,000 coins', desc: '+30% bonus', price: '$9.99', grant: { coins: 13000 }, kind: 'coins', art: 'coins-l' },
-  { sku: 'coins_xl', name: '30,000 coins', desc: '+50% bonus', price: '$19.99', grant: { coins: 30000 }, badge: 'BEST VALUE', kind: 'coins', art: 'coins-xl' },
+  { sku: 'coins_s', name: '5,000 coins', desc: 'Starter pack', price: '$0.99', grant: { coins: 5000 }, badge: 'STARTER', kind: 'coins', art: 'coins-s' },
+  { sku: 'coins_m', name: '16,000 coins', desc: '+6% bonus', price: '$2.99', grant: { coins: 16000 }, kind: 'coins', art: 'coins-m' },
+  { sku: 'coins_l', name: '28,000 coins', desc: '+11% bonus', price: '$4.99', grant: { coins: 28000 }, badge: 'POPULAR', kind: 'coins', art: 'coins-l' },
+  { sku: 'coins_xl', name: '60,000 coins', desc: '+19% bonus', price: '$9.99', grant: { coins: 60000 }, kind: 'coins', art: 'coins-xl' },
+  { sku: 'coins_xxl', name: '130,000 coins', desc: '+29% bonus', price: '$19.99', grant: { coins: 130000 }, badge: 'BEST VALUE', kind: 'coins', art: 'coins-xl' },
   { sku: 'no_ads', name: 'Remove Ads', desc: 'No ad after a race ends, forever. Revive ads stay optional.', price: '$2.99', grant: { noAds: true }, kind: 'special', once: true, art: 'noads' },
 ];
 
