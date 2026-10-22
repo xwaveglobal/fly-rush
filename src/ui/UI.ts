@@ -1677,11 +1677,13 @@ export class UI {
   /** the player's own class (for their avatar plate) */
   myClass: RankClass = 'D';
 
-  homeSync(o: { name: string; color: string; best: number; avatar: number; bolts: number; weekRank: number | null; dailyBadge: number; bonus: { live: boolean; name: string; theme: string; text: string }; sale: boolean; pass: boolean }) {
+  homeSync(o: { name: string; color: string; best: number; avatar: number; bolts: number; weekRank: number | null; allRank?: number | null; dailyBadge: number; bonus: { live: boolean; name: string; theme: string; text: string }; sale: boolean; pass: boolean }) {
     this.setAll('pname', o.name);
     // home chip: plain avatar (no corner badge over the text) · rank badge · best EXP
     $(this.root, '[data-k="ava"]').innerHTML = `<span class="ava img rk-${this.myClass} ${o.pass ? 'pass' : ''}">${avatarSvg(o.avatar)}</span>`;
     $(this.root, '[data-k="pline"]').innerHTML = `${classBadge(this.myClass)}<span class="pbolt">${fmt(o.bolts)}${BOLT}</span>`;
+    // all-time position on the avatar (tap → profile)
+    $(this.root, '[data-k="ava"]').insertAdjacentHTML('beforeend', `<em class="avrank">${o.allRank ? `#${o.allRank >= 10000 ? `${Math.round(o.allRank / 1000)}K` : fmt(o.allRank)}` : '#—'}</em>`);
     const b = $(this.root, '[data-k="dailybadge"]');
     b.hidden = o.dailyBadge <= 0;
     b.textContent = String(o.dailyBadge);

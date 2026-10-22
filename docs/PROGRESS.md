@@ -4,6 +4,12 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-22 — v2.2.5: Home polish
+
+**Done**: all-time #rank badge on the Home avatar (`homeSync.allRank`), glossy mini buttons, animated PLAY.
+
+---
+
 ## 2026-10-22 — v2.2.4: owner round AA
 
 **Done**: AA1–AA5 (see README). Root cause of the dead Retry: `#specialpick` was stacked under `#gameover` / `#pause` (same z-index, earlier in the DOM). Pause → Home now calls `gameOver()`. Difficulty: `PHASES` D/C/B and `PHASE_UNLOCK` shifted one step earlier (v1 rhythm); `COIN_LINES.endless` = v1 values. All tests pass (hard-row shares still rise phase by phase).

@@ -225,3 +225,6 @@ Owner 07:05: "rà soát sửa toàn bộ" → fix H–O now.
 - **AA5.** (08:37) Pause → Home must still show THIS race's result screen (the race ends and counts), then Home from there. (replaces Z6)
 
 **AA: done in v2.2.4.**
+
+## AB. Round 23 (owner 09:03) — done v2.2.5
+- Avatar on Home shows the all-time rank; buttons in the glossy style of the side buttons; PLAY stands out.

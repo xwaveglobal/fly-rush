@@ -56,7 +56,7 @@ import { drawShareCard, shareImage, copyText } from './ui/ShareCard.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v2.2.4';
+const VERSION = 'v2.2.5';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -638,6 +638,7 @@ export class Game {
       avatar: this.save.avatar,
       bolts: this.save.expBest,
       weekRank: this.save.expWeek > 0 ? this.meta.weekly().you.rank : null,
+      allRank: this.save.expBest > 0 ? this.meta.allTime().you.rank : null,
       dailyBadge: this.meta.dailyBadge(),
       bonus: bs.live
         ? { live: true, name: BONUS_NAME[bs.live.theme], theme: bs.live.theme, text: `open · ${fmtLeft(bs.live.end - Date.now())} left` }
