@@ -51,7 +51,7 @@ function pageBg(g: Gfx, a = 0.86) {
 
 /** page header: back · title · wallet */
 export function pageHead(ui: UI, g: Gfx, title: string, back = () => ui.h.home()) {
-  const y = safeTop(g) + 8;
+  const y = safeTop(g) + 2;
   iconBtn(g, 'back', 12, y, 40, ICON.chevL, back);
   g.text(title, g.W / 2, y + 20, { size: 19, align: 'center', italic: true, maxW: g.W - 200 });
   wallet(ui, g, g.W - 12, y + 4);
@@ -111,7 +111,7 @@ function start(ui: UI, g: Gfx) {
   const s = ui.save;
   const o = ui.home;
   const W = g.W;
-  const top = safeTop(g) + 10;
+  const top = safeTop(g) - 4;
   const t = g.time;
   // soft vignette top & bottom so the buttons read over the 3D city
   g.rr(0, 0, W, 150, 0, g.lin(0, 0, 0, 150, [[0, 'rgba(3,6,22,.55)'], [1, 'rgba(3,6,22,0)']]));

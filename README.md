@@ -208,6 +208,11 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v3.0.7 changes — top inset
+
+- **Android**: some TikTok builds report the "… ×" capsule / status bar in physical pixels → the whole UI sat ~200 units too low. Values are now detected and converted (÷ pixel ratio) and clamped; the top bar sits right under the capsule.
+- **iPhone/all**: tighter gap under the capsule on home, pages and the race HUD.
+
 ## v3.0.6 changes — Android start · clean sound · hourly Bonus
 
 - **Android**: the game failed to load (`SyntaxError: Invalid regular expression … \p{L}` — Unicode property escapes are missing on the Android engine). The name filter no longer uses them; the TikTok build now refuses any regex feature newer than ES2017 (`\p{}`, lookbehind, named groups, `s`/`d`/`v` flags), and `game.js` parses as plain ES2017.

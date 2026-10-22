@@ -41,19 +41,29 @@ function measureSafe() {
     /* keep the first reading */
   }
   const sa = sys.safeArea ?? safeArea;
-  const statusBar = Math.max(0, sa?.top ?? 0, sys.statusBarHeight ?? 0);
+  // v3.0.7: some Android TikTok builds answer in physical pixels instead of layout units → the
+  // whole UI was pushed ~200 units down. Detect px values (wider than the view / taller than a
+  // status bar can be) and divide by the pixel ratio.
+  const pr = Math.max(1, sys.pixelRatio || DPR || 1);
+  const unit = (v: number, limit: number) => (v > limit && pr > 1 ? v / pr : v);
+  const statusBar = Math.min(80, unit(Math.max(0, sys.statusBarHeight ?? 0, sa?.top ?? 0), viewH * 0.1));
   SAFE.top = statusBar;
-  SAFE.bottom = Math.max(0, viewH - (sa?.bottom ?? viewH));
-  // TikTok's "… ×" capsule sits top-right over the game: keep the top bar below it.
+  const saBottom = sa?.bottom ?? viewH;
+  SAFE.bottom = Math.min(48, Math.max(0, viewH - (saBottom > viewH * 1.05 ? saBottom / pr : saBottom)));
+  // TikTok's "… ×" capsule sits top-right over the game: keep the top bar just below it.
   // Without a readable rect (some app versions answer 0 at start) assume its usual place.
   let capsule = 0;
   try {
     const m = T.getMenuButtonBoundingClientRect?.();
-    if (m && m.bottom > 0 && m.bottom < viewH / 3) capsule = m.bottom + 6;
+    if (m && m.bottom > 0) {
+      const px = m.right > viewW * 1.05 || m.bottom > viewH * 0.2;
+      const bottom = px ? m.bottom / pr : m.bottom;
+      if (bottom < viewH * 0.16) capsule = bottom + 4;
+    }
   } catch {
     /* no capsule */
   }
-  SAFE.menuBottom = capsule || Math.max(statusBar, 20) + 48;
+  SAFE.menuBottom = capsule || Math.max(statusBar, 20) + 40;
   try {
     if (ui) ui.dirty = true; // (not yet declared on the first call)
   } catch {

@@ -4,6 +4,14 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-22 — v3.0.7
+
+**Done**: Android now loads (v3.0.6 regex fix confirmed by owner screenshot). Top inset fix in `src/native/main.ts measureSafe()` (px → layout units, clamps) + smaller offsets in `screens.ts` (home, pageHead) and `hud.ts`.
+
+**Next**: owner checks the top spacing on Android + iPhone, and the sound on iPhone.
+
+---
+
 ## 2026-10-22 — v3.0.6
 
 **Done**: Android load failure found from the owner's screenshot — `/[^\p{L}\p{N} _.\-]/u` in `Game.setName` is a SyntaxError on the Android engine → `cleanName()` without `\p{}`; build guard in `scripts/build-tiktok.mjs` rejects post-ES2017 regex features. Baked audio for native (`Audio.ts`: `baked`, `bakeSfx`, `bakeLoopAsync`, synth helpers at the end of the file) to stop the iPhone crackle. Bonus: every 1 h, open 30 min, random place per opening (`meta/Bonus.ts` `themeIdx`), replayable (Game.startBonus / retry); tests in `tests/bonus.test.ts`.

@@ -16,7 +16,7 @@ export const hudPos: Record<string, { x: number; y: number }> = {};
 export function drawHud(ui: UI, g: Gfx) {
   const run = ui.hud.run;
   const W = g.W;
-  const top = safeTop(g) + 8;
+  const top = safeTop(g) + 2;
   const t = g.time;
   // ---- pause (H5: 44 px glossy square)
   {
