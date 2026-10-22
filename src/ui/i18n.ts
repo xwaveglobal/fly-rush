@@ -87,6 +87,8 @@ const T: [string, string, string, string, string, string][] = [
   ['RANK GATE', 'PORTE DE RANG', 'ランクゲート', 'PORTÃO DE RANK', 'RANG-TOR', 'PUERTA DE RANGO'],
   ['Bonus', 'Bonus', 'ボーナス', 'Bônus', 'Bonus', 'Bonus'],
   ['BONUS', 'BONUS', 'ボーナス', 'BÔNUS', 'BONUS', 'BONUS'],
+  ['Replay freely', 'Rejouable à volonté', '何度でもプレイ可', 'Jogue à vontade', 'Beliebig oft', 'Repite cuanto quieras'],
+  ['Every hour', 'Chaque heure', '毎時', 'Toda hora', 'Jede Stunde', 'Cada hora'],
   ['Race the Bonus', 'Courir le Bonus', 'ボーナスに挑戦', 'Correr o Bônus', 'Bonus fahren', 'Correr el Bonus'],
   ['Coming soon', 'Bientôt', '近日公開', 'Em breve', 'Bald', 'Próximamente'],
   ['Race Endless', 'Courir Endless', 'エンドレスへ', 'Correr Endless', 'Endless fahren', 'Correr Endless'],

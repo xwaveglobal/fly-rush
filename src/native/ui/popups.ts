@@ -665,10 +665,10 @@ function bonusOv(ui: UI, g: Gfx) {
     g.rich(o.live ? `<b class="live">OPEN</b> ${o.left} left` : `<b class="soon">NEXT</b> ${o.opens}`, x, y + 76, w, { size: 11.5, align: 'center', font: 'b' });
     y += 110;
     const rules = [
-      `${ICON.clock}<b>${o.minutes} min</b> to the finish · <b>1 play</b>`,
+      `${ICON.clock}<b>${o.minutes} min</b> to the finish · <b>Replay freely</b>`,
       `${ICON.coin}<b>Coins only</b> · finish +${fmt(o.finish)}`,
       `${ICON.rocket}<b>Rare specials</b> fire by themselves`,
-      `${ICON.gift}<b>Every 2 h</b> · open 60 min · new place`,
+      `${ICON.gift}<b>Every hour</b> · open 30 min · random place`,
     ];
     for (const r of rules) y += g.rich(r, x + 4, y, w - 8, { size: 12, font: 'b', color: '#dfe8ff' }) + 4;
     y += 6;

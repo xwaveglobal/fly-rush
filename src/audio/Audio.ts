@@ -3,6 +3,8 @@
  * sequencer for music. Any SFX can be overridden by a real file via
  * `loadOverride(name, url)` (see assets/manifest.ts).
  */
+import { platform } from '../platform.ts';
+
 export type Sfx =
   | 'coin' | 'lane' | 'up' | 'down' | 'land' | 'power' | 'shield' | 'shieldBreak' | 'crash' | 'explode'
   | 'near' | 'ring' | 'beep' | 'go' | 'mission' | 'click' | 'turbo' | 'respawn' | 'bump' | 'combo' | 'warp' | 'expire';
@@ -110,6 +112,23 @@ export class Audio {
   intensity = 0; // 0 menu, 1 run, 2 turbo
   private playing = false;
 
+  // ---- v3 native: "baked" sound. Mini-game Web Audio has no (or crude) AudioParam automation, which
+  // turned every envelope into hard steps = crackle. In the native build every SFX and the music
+  // loop are rendered once into PCM buffers (same recipes, envelopes computed per sample) and only
+  // plain buffer sources play — the most basic, best-supported part of Web Audio.
+  private baked = platform.native;
+  /** render target while baking (null = real-time) */
+  private rt: Float32Array | null = null;
+  private rtSr = 44100;
+  private rtEcho: Float32Array | null = null;
+  private sfxCache = new Map<string, AudioBuffer>();
+  private loops: (AudioBuffer | null)[] = [null, null, null];
+  private loopLen = 0;
+  private loopSrc: AudioBufferSourceNode | null = null;
+  private loopLevel = -1;
+  private loopStart = 0;
+  private loopTimer: number | null = null;
+
   /** Must be called from a user gesture (browser autoplay policy). */
   unlock() {
     try {
@@ -136,6 +155,20 @@ export class Audio {
     }
     // iOS / mini-game runtimes start the context suspended until resumed inside a touch
     if (c.state !== 'running') void c.resume?.();
+    if (this.baked) {
+      this.rtSr = c.sampleRate || 44100;
+      this.master = c.createGain();
+      this.master.gain.value = 0.8;
+      this.master.connect(c.destination);
+      this.sfxBus = c.createGain();
+      this.sfxBus.gain.value = this.sfxOn ? 0.9 : 0;
+      this.sfxBus.connect(this.master);
+      this.musicBus = c.createGain();
+      this.musicBus.gain.value = this.musicOn ? 0.32 : 0;
+      this.musicBus.connect(this.master);
+      this.prebakeSfx();
+      return;
+    }
     this.master = c.createGain();
     this.master.gain.value = 0.8;
     const comp = c.createDynamicsCompressor();
@@ -208,6 +241,7 @@ export class Audio {
 
   // ---------------------------------------------------------------- helpers
   private osc(type: OscillatorType, f0: number, f1: number, t0: number, dur: number, vol: number, bus?: AudioNode, pan = 0) {
+    if (this.rt) return bakeOsc(this.rt, this.rtSr, type, f0, f1, t0, dur, (t) => envAD(t, 0.008, dur, vol));
     const c = this.ctx!;
     const o = c.createOscillator();
     const g = c.createGain();
@@ -231,6 +265,7 @@ export class Audio {
   }
 
   private noise(t0: number, dur: number, vol: number, f0: number, f1: number, q = 1, type: BiquadFilterType = 'bandpass', bus?: AudioNode, pan = 0) {
+    if (this.rt) return bakeNoise(this.rt, this.rtSr, t0, dur, vol, f0, f1, q, type);
     const c = this.ctx!;
     const s = c.createBufferSource();
     s.buffer = this.noiseBuf;
@@ -260,15 +295,65 @@ export class Audio {
   play(name: Sfx, opt: { pan?: number } = {}) {
     if (!this.ctx || !this.sfxOn) return;
     try {
+      if (this.baked) return this.playBaked(name);
       this.playInner(name, opt);
     } catch (e) {
       console.warn('[audio] play', name, e);
     }
   }
-  private playInner(name: Sfx, opt: { pan?: number }) {
+  /** baked SFX: render once (per coin pitch step), then play the buffer */
+  private playBaked(name: Sfx) {
+    const c = this.ctx!;
+    if (this.overrides.has(name)) return this.playInner(name, {});
+    if (name === 'coin') {
+      const now = performance.now() / 1000;
+      if (now - this.coinPitchT > 0.6) this.coinPitch = 0;
+      this.coinPitchT = now;
+    }
+    const buf = this.bakeSfx(name, name === 'coin' ? Math.min(this.coinPitch, 12) : -1);
+    if (name === 'coin') this.coinPitch++;
+    const s = c.createBufferSource();
+    s.buffer = buf;
+    s.connect(this.sfxBus);
+    s.start();
+  }
+
+  private bakeSfx(name: Sfx, pitch: number): AudioBuffer {
+    const key = name === 'coin' ? `coin${pitch}` : name;
+    let buf = this.sfxCache.get(key);
+    if (!buf) {
+      const pcm = this.bake(1.6, () => this.playInner(name, {}, Math.max(0, pitch)));
+      buf = this.toBuffer(trimTail(pcm));
+      this.sfxCache.set(key, buf);
+    }
+    return buf;
+  }
+
+  /** run a recipe into a fresh PCM buffer of `seconds` */
+  private bake(seconds: number, recipe: () => void, echo = false): Float32Array {
+    const pcm = new Float32Array(Math.ceil(seconds * this.rtSr));
+    this.rt = pcm;
+    this.rtEcho = echo ? new Float32Array(pcm.length) : null;
+    try {
+      recipe();
+    } finally {
+      this.rt = null;
+    }
+    return pcm;
+  }
+
+  private toBuffer(pcm: Float32Array): AudioBuffer {
+    const c = this.ctx!;
+    const b = c.createBuffer(1, Math.max(1, pcm.length), this.rtSr);
+    const d = b.getChannelData(0);
+    for (let i = 0; i < pcm.length; i++) d[i] = softClip(pcm[i]);
+    return b;
+  }
+
+  private playInner(name: Sfx, opt: { pan?: number }, bakedPitch = -1) {
     if (!this.ctx) return;
     const c = this.ctx;
-    const t = c.currentTime;
+    const t = this.rt ? 0 : c.currentTime;
     const ov = this.overrides.get(name);
     if (ov) {
       const s = c.createBufferSource();
@@ -281,10 +366,12 @@ export class Audio {
     switch (name) {
       case 'coin': {
         // rising pitch on fast streaks
-        if (t - this.coinPitchT > 0.6) this.coinPitch = 0;
-        this.coinPitchT = t;
-        const base = 1320 * Math.pow(2, Math.min(this.coinPitch, 12) / 24);
-        this.coinPitch++;
+        if (bakedPitch < 0) {
+          if (t - this.coinPitchT > 0.6) this.coinPitch = 0;
+          this.coinPitchT = t;
+        }
+        const base = 1320 * Math.pow(2, Math.min(bakedPitch >= 0 ? bakedPitch : this.coinPitch, 12) / 24);
+        if (bakedPitch < 0) this.coinPitch++;
         this.osc('square', base, base, t, 0.06, 0.06);
         this.osc('sine', base * 1.5, base * 1.5, t + 0.05, 0.16, 0.12);
         break;
@@ -374,6 +461,13 @@ export class Audio {
   // ---------------------------------------------------------------- music
   startMusic() {
     if (!this.ctx || this.playing) return;
+    if (this.baked) {
+      this.playing = true;
+      this.loopLevel = -1;
+      this.loopTick();
+      this.loopTimer = window.setInterval(() => this.loopTick(), 300);
+      return;
+    }
     this.playing = true;
     this.step = 0;
     this.nextTime = this.ctx.currentTime + 0.05;
@@ -381,8 +475,123 @@ export class Audio {
   }
   stopMusic() {
     this.playing = false;
+    if (this.loopTimer !== null) window.clearInterval(this.loopTimer);
+    this.loopTimer = null;
+    try {
+      this.loopSrc?.stop();
+    } catch {
+      /* already stopped */
+    }
+    this.loopSrc = null;
     if (this.seqTimer !== null) window.clearInterval(this.seqTimer);
     this.seqTimer = null;
+  }
+
+  /** baked music: one 4-bar loop per intensity, switched at the next bar line (no clicks) */
+  private loopTick() {
+    try {
+      const c = this.ctx;
+      if (!c || !this.playing) return;
+      const lv = Math.max(0, Math.min(2, Math.round(this.intensity)));
+      if (lv === this.loopLevel && this.loopSrc) return;
+      const buf = this.loops[lv];
+      if (!buf) {
+        this.bakeLoopAsync(lv);
+        // keep the next levels warm too
+        for (let k = 0; k < 3; k++) if (k !== lv) setTimeout(() => this.bakeLoopAsync(k), 2500 + k * 500);
+        return;
+      }
+      const bar = this.loopLen / 4;
+      const now = c.currentTime;
+      // start in step with the old loop: at its next bar line, from the same position in the bar
+      let when = now + 0.03;
+      let offset = 0;
+      if (this.loopSrc && this.loopLen > 0) {
+        const pos = (now - this.loopStart) % this.loopLen;
+        const nextBar = Math.ceil((pos + 0.02) / bar) * bar;
+        when = now + (nextBar - pos);
+        offset = nextBar % this.loopLen;
+        try {
+          this.loopSrc.stop(when);
+        } catch {
+          /* ignore */
+        }
+      }
+      const s = c.createBufferSource();
+      s.buffer = buf;
+      s.loop = true;
+      s.connect(this.musicBus);
+      s.start(when, offset);
+      this.loopStart = when - offset;
+      this.loopSrc = s;
+      this.loopLevel = lv;
+    } catch (e) {
+      console.warn('[audio] music', e);
+      this.stopMusic();
+    }
+  }
+
+  /** loops being rendered (a few steps per tick so the game never freezes) */
+  private loopJobs = new Set<number>();
+  private bakeLoopAsync(level: number) {
+    if (this.loops[level] || this.loopJobs.has(level) || !this.ctx) return;
+    this.loopJobs.add(level);
+    const spb = 60 / this.bpm / 4;
+    const len = 64 * spb;
+    this.loopLen = len;
+    const sr = this.rtSr;
+    const pcm = new Float32Array(Math.ceil((len + 3) * sr));
+    const echo = new Float32Array(pcm.length);
+    let st = 0;
+    const step = () => {
+      try {
+        const keep = this.intensity;
+        this.intensity = level;
+        this.rt = pcm;
+        this.rtEcho = echo;
+        try {
+          for (const end = Math.min(64, st + 6); st < end; st++) this.note(st, st * spb, spb);
+        } finally {
+          this.rt = null;
+          this.rtEcho = null;
+          this.intensity = keep;
+        }
+        if (st < 64) return void setTimeout(step, 16);
+        const n = Math.round(len * sr);
+        // fold the tails (notes ringing past the loop end) back to the start → seamless
+        for (let i = n; i < pcm.length; i++) {
+          pcm[i - n] += pcm[i];
+          echo[i - n] += echo[i];
+        }
+        const out = pcm.subarray(0, n);
+        addEcho(out, echo.subarray(0, n), sr, (60 / this.bpm) * 0.75, 0.32, 0.55, 1800);
+        lowpass(out, sr, 2600);
+        this.loops[level] = this.toBuffer(out);
+      } catch (e) {
+        console.warn('[audio] bake', e);
+      }
+      this.loopJobs.delete(level);
+      if (this.playing) this.loopTick();
+    };
+    setTimeout(step, 0);
+  }
+
+  /** pre-render every SFX after unlock, a few per tick */
+  private prebakeSfx() {
+    const all: Sfx[] = ['click', 'coin', 'lane', 'up', 'down', 'land', 'power', 'shield', 'shieldBreak', 'crash', 'explode',
+      'near', 'ring', 'beep', 'go', 'mission', 'turbo', 'respawn', 'bump', 'combo', 'warp', 'expire'];
+    let i = 0;
+    const tick = () => {
+      for (const end = Math.min(all.length, i + 3); i < end; i++) {
+        try {
+          this.bakeSfx(all[i], all[i] === 'coin' ? 0 : -1);
+        } catch {
+          /* rendered on first play instead */
+        }
+      }
+      if (i < all.length) setTimeout(tick, 30);
+    };
+    setTimeout(tick, 200);
   }
 
   private schedule() {
@@ -406,8 +615,14 @@ export class Audio {
 
   /** slow-attack pad voice (two detuned saws through the music lowpass) */
   private pad(midi: number, t0: number, dur: number, vol: number) {
-    const c = this.ctx!;
     const hz = 440 * Math.pow(2, (midi - 69) / 12);
+    if (this.rt) {
+      const a = Math.min(0.9, dur * 0.35);
+      const env = (t: number) => (t < a ? expSeg(t, 0, a, 0.0001, vol) : t < dur * 0.7 ? vol : expSeg(t, dur * 0.7, dur, vol, 0.0001));
+      for (const det of [-7, 7]) bakeOsc(this.rt, this.rtSr, 'sawtooth', hz * Math.pow(2, det / 1200), hz * Math.pow(2, det / 1200), t0, dur + 0.03, env);
+      return;
+    }
+    const c = this.ctx!;
     const g = c.createGain();
     g.gain.setValueAtTime(0.0001, t0);
     g.gain.exponentialRampToValueAtTime(vol, t0 + Math.min(0.9, dur * 0.35));
@@ -427,8 +642,17 @@ export class Audio {
 
   /** soft pluck for the arpeggio (sine + triangle), sent to the echo */
   private pluck(midi: number, t0: number, vol: number) {
-    const c = this.ctx!;
     const hz = 440 * Math.pow(2, (midi - 69) / 12);
+    if (this.rt) {
+      const env = (t: number) => envAD(t, 0.01, 0.42, vol);
+      for (const target of [this.rt, this.rtEcho]) {
+        if (!target) continue;
+        bakeOsc(target, this.rtSr, 'sine', hz, hz, t0, 0.45, env);
+        bakeOsc(target, this.rtSr, 'triangle', hz * 2, hz * 2, t0, 0.45, (t) => env(t) * 0.25);
+      }
+      return;
+    }
+    const c = this.ctx!;
     const g = c.createGain();
     g.gain.setValueAtTime(0.0001, t0);
     g.gain.exponentialRampToValueAtTime(vol, t0 + 0.01);
@@ -490,4 +714,122 @@ export class Audio {
     // brushed clap on 2 and 4
     if (s === 4 || s === 12) this.noise(t, 0.18, 0.09, 1400, 900, 0.7, 'bandpass', bus);
   }
+}
+
+
+// =============================================================== baked synthesis (v3 native)
+/** exponential segment from v0 at t0 to v1 at t1 (Web Audio exponentialRamp) */
+function expSeg(t: number, t0: number, t1: number, v0: number, v1: number) {
+  if (t <= t0) return v0;
+  if (t >= t1) return v1;
+  return v0 * Math.pow(v1 / v0, (t - t0) / (t1 - t0));
+}
+/** 0.0001 → vol over `a`, → 0.0001 at `dur` (the recipes' envelope) */
+function envAD(t: number, a: number, dur: number, vol: number) {
+  if (t < 0) return 0;
+  if (t < a) return expSeg(t, 0, a, 0.0001, vol);
+  if (t < dur) return expSeg(t, a, dur, vol, 0.0001);
+  return 0;
+}
+/** band-limited step correction (PolyBLEP) — kills the aliasing that sounds like crackle */
+function blep(t: number, dt: number) {
+  if (t < dt) {
+    t /= dt;
+    return t + t - t * t - 1;
+  }
+  if (t > 1 - dt) {
+    t = (t - 1) / dt;
+    return t * t + t + t + 1;
+  }
+  return 0;
+}
+function bakeOsc(out: Float32Array, sr: number, type: string, f0: number, f1: number, t0: number, dur: number, env: (t: number) => number) {
+  const i0 = Math.max(0, Math.floor(t0 * sr));
+  const i1 = Math.min(out.length, Math.ceil((t0 + dur + 0.02) * sr));
+  let ph = 0;
+  let tri = 0;
+  const glide = f1 !== f0 && dur > 0;
+  for (let i = i0; i < i1; i++) {
+    const t = i / sr - t0;
+    const f = glide ? f0 * Math.pow(f1 / f0, Math.min(1, t / dur)) : f0;
+    const dt = f / sr;
+    let v: number;
+    if (type === 'sine') v = Math.sin(ph * 2 * Math.PI);
+    else if (type === 'sawtooth') v = 2 * ph - 1 - blep(ph, dt);
+    else {
+      // square (and the triangle integrates it)
+      let sq = ph < 0.5 ? 1 : -1;
+      sq += blep(ph, dt);
+      sq -= blep((ph + 0.5) % 1, dt);
+      if (type === 'square') v = sq;
+      else {
+        tri = dt * sq + (1 - dt) * tri;
+        v = tri * 4;
+      }
+    }
+    // fade the last 4 ms so a voice never ends on a step
+    const tailK = Math.min(1, (t0 + dur + 0.02 - i / sr) / 0.004);
+    out[i] += v * env(t) * tailK;
+    ph += dt;
+    if (ph >= 1) ph -= 1;
+  }
+}
+/** white noise through a gliding TPT state-variable filter */
+function bakeNoise(out: Float32Array, sr: number, t0: number, dur: number, vol: number, f0: number, f1: number, q: number, type: string) {
+  const i0 = Math.max(0, Math.floor(t0 * sr));
+  const i1 = Math.min(out.length, Math.ceil((t0 + dur + 0.02) * sr));
+  let ic1 = 0,
+    ic2 = 0;
+  const k = 1 / Math.max(0.05, q);
+  const nyq = sr * 0.45;
+  for (let i = i0; i < i1; i++) {
+    const t = i / sr - t0;
+    const fc = Math.min(nyq, f0 * Math.pow(Math.max(30, f1) / f0, Math.min(1, t / Math.max(0.001, dur))));
+    const g = Math.tan((Math.PI * fc) / sr);
+    const a1 = 1 / (1 + g * (g + k));
+    const a2 = g * a1;
+    const a3 = g * a2;
+    const v0 = Math.random() * 2 - 1;
+    const v3 = v0 - ic2;
+    const v1 = a1 * ic1 + a2 * v3;
+    const v2 = ic2 + a2 * ic1 + a3 * v3;
+    ic1 = 2 * v1 - ic1;
+    ic2 = 2 * v2 - ic2;
+    const y = type === 'lowpass' ? v2 : type === 'highpass' ? v0 - k * v1 - v2 : v1;
+    const tailK = Math.min(1, (t0 + dur + 0.02 - i / sr) / 0.004);
+    out[i] += y * envAD(t, 0.01, dur, vol) * tailK;
+  }
+}
+/** dotted-eighth echo with damped feedback, wrapping around the loop */
+function addEcho(out: Float32Array, send: Float32Array, sr: number, delay: number, fb: number, wet: number, dampHz: number) {
+  const n = out.length;
+  const d = Math.round(delay * sr);
+  const line = new Float32Array(n);
+  const a = 1 - Math.exp((-2 * Math.PI * dampHz) / sr);
+  let lp = 0;
+  // two passes so the feedback tail wraps across the loop seam
+  for (let pass = 0; pass < 2; pass++)
+    for (let i = 0; i < n; i++) {
+      const j = (i - d + n) % n;
+      lp += a * (line[j] - lp);
+      line[i] = send[i] + lp * fb;
+    }
+  for (let i = 0; i < n; i++) out[i] += line[(i - d + n) % n] * wet;
+}
+/** one-pole lowpass in place (the music's warm tone), run twice so the loop seam matches */
+function lowpass(x: Float32Array, sr: number, hz: number) {
+  const a = 1 - Math.exp((-2 * Math.PI * hz) / sr);
+  let y = 0;
+  for (let i = 0; i < x.length; i++) y += a * (x[i] - y);
+  for (let i = 0; i < x.length; i++) {
+    y += a * (x[i] - y);
+    x[i] = y;
+  }
+}
+const softClip = (v: number) => (v > 1 || v < -1 ? Math.tanh(v) : v);
+/** drop trailing silence (keeps buffers small) */
+function trimTail(x: Float32Array) {
+  let n = x.length;
+  while (n > 1 && Math.abs(x[n - 1]) < 1e-4) n--;
+  return x.subarray(0, Math.min(x.length, n + 64));
 }

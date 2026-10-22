@@ -3,7 +3,7 @@ declare const process: { exit(code: number): never };
 import { BONUS_SET, LEVELS, type SpeedLevel } from '../src/config.ts';
 import { Spawner } from '../src/gameplay/Spawner.ts';
 import { Rng } from '../src/core/Rng.ts';
-import { BONUS, BONUS_NAME } from '../src/meta/Bonus.ts';
+import { BONUS, BONUS_NAME, bonusState } from '../src/meta/Bonus.ts';
 import { START_STATE, step } from '../src/gameplay/Fairness.ts';
 import { FAIRNESS } from '../src/config.ts';
 
@@ -56,6 +56,25 @@ for (const theme of Object.keys(BONUS_NAME) as (keyof typeof BONUS_NAME)[])
     check(unreachable === 0, `${theme} ${lv}: every row passable`);
   }
 check(BONUS.raceMinutes === 5, 'Bonus road lasts 5 minutes');
+// v3.0.6 schedule: every hour, open 30 minutes, a random place each time (never twice in a row)
+check(BONUS.everyHours === 1 && BONUS.openMinutes === 30, 'Bonus opens every hour for 30 minutes');
+{
+  const base = new Date(2026, 9, 22, 0, 10).getTime();
+  let same = 0;
+  const seen = new Set<string>();
+  let prev = '';
+  for (let h = 0; h < 24 * 14; h++) {
+    const st = bonusState(base + h * 3600000);
+    if (!st.live) same += 1000;
+    const th = st.live!.theme;
+    if (th === prev) same++;
+    seen.add(th);
+    prev = th;
+    if (bonusState(base + h * 3600000 + 35 * 60000).live) same += 1000;
+  }
+  check(same === 0, 'open at :10, closed at :45, never the same place two hours in a row');
+  check(seen.size === BONUS.themes.length, 'every place shows up');
+}
 check(BONUS_SET.tunnels.length >= 2, 'Bonus roads have tunnel sections');
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED');
 if (fails) process.exit(1);

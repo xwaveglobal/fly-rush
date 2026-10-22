@@ -208,6 +208,12 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v3.0.6 changes — Android start · clean sound · hourly Bonus
+
+- **Android**: the game failed to load (`SyntaxError: Invalid regular expression … \p{L}` — Unicode property escapes are missing on the Android engine). The name filter no longer uses them; the TikTok build now refuses any regex feature newer than ES2017 (`\p{}`, lookbehind, named groups, `s`/`d`/`v` flags), and `game.js` parses as plain ES2017.
+- **Sound (iPhone crackle)**: in the native build every sound effect and the music loop are **pre-rendered** once into PCM buffers (same recipes; envelopes, glides and filters computed per sample, band-limited oscillators, seamless 4-bar loops per intensity, switched on the bar line) and played with plain buffer sources — no AudioParam automation, so no stepping clicks. The web build keeps the real-time synth.
+- **Bonus**: opens **every hour for 30 minutes**, a **random place** each time (the same for every player, never twice in a row), and can be **replayed** as often as you like while open (Retry restarts the Bonus road).
+
 ## v3.0.5 changes
 - Race HUD: coin card shows this race's coins (+37) and the wallet total; score box reorganised (EXP · level / big race EXP / RACE rank on the right, footer YOU · BEST and NEXT, progress bar to the next rank with the best EXP marked).
 - Sound & music on TikTok: Web Audio compatibility layer (missing compressor / filter / delay nodes and AudioParam automation fall back instead of silencing everything), the context is resumed on touches and after the app returns.
@@ -348,7 +354,7 @@ Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder M
 
 ## v2.0.7 changes (v2 step 7 — Bonus events replace cups)
 
-- **Bonus** opens every 2 hours (local 00:00, 02:00, …) for 60 minutes, in a new everyday place each time: **Desert Highway · Pine Forest · Country Road · Ocean Causeway** (new daylight scenery: scrolling sand / grass / fields / sea ground, cacti, mesas, pines, barns, windmills, palm islets, boats, a lighthouse). `meta/Bonus.ts`, `BONUS_WORLDS`.
+- **Bonus** opens every hour (local 00:00, 01:00, …) for 30 minutes (v3.0.6; was every 2 h for 60 min), in a random everyday place each time, replayable while open: **Desert Highway · Pine Forest · Country Road · Ocean Causeway** (new daylight scenery: scrolling sand / grass / fields / sea ground, cacti, mesas, pines, barns, windmills, palm islets, boats, a lighthouse). `meta/Bonus.ts`, `BONUS_WORLDS`.
 - A Bonus road is a 30-minute course with a FINISH line (length computed from the speed level), coins only (no EXP, no ranking), finish bonus 800 × coin multiplier. HUD shows "BONUS COINS".
 - Specials lie on the road and **fire by themselves**: Roadster, HYPER, and the AAA teasers — **Wall Run** (car rides the side wall), **Tunnel Rider** (upside-down on the roof), **Sky Rail** (glides above the road), **Phase Ghost** (flickers through obstacles).
 - Home: the cup strip and rail button became **Bonus** (open now / next opening); the Bonus card explains the rules. Old cup results are no longer shown.

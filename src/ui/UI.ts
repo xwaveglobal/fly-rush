@@ -1716,10 +1716,10 @@ export class UI {
       <div class="bn-hero" style="--cc:${BONUS_COLOR[o.theme] ?? '#ffc21a'}" data-theme="${o.theme}"><span class="bn-ic">${BONUS_EMOJI[o.theme] ?? '🏁'}</span><b>${o.name}</b>
         <small>${o.live ? `<em class="live">OPEN</em> ${o.left} left` : `<em class="soon">NEXT</em> ${o.opens}`}</small></div>
       <div class="bn-rules">
-        <span>${ICON.clock}<b>${o.minutes} min</b> to the finish · <b>1 play</b></span>
+        <span>${ICON.clock}<b>${o.minutes} min</b> to the finish · <b>Replay freely</b></span>
         <span>${ICON.coin}<b>Coins only</b> · finish +${fmt(o.finish)}</span>
         <span>${ICON.rocket}<b>Rare specials</b> fire by themselves</span>
-        <span>${ICON.gift}<b>Every 2 h</b> · open 60 min · new place</span>
+        <span>${ICON.gift}<b>Every hour</b> · open 30 min · random place</span>
       </div>
       ${o.live && !o.played ? `<button class="btn big gold" data-a="bonusgo">${ICON.play} Race</button>` : o.live ? `<button class="btn" disabled>${ICON.check} Played · next ${o.opensAt}</button>` : `<button class="btn" disabled>${ICON.lock} Opens ${o.opensAt}</button>`}
       ${o.next ? `<div class="label bn-next">Next: ${o.next}</div>` : ''}`;

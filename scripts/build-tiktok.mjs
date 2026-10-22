@@ -143,6 +143,20 @@ else await buildEsbuild();
     // keep the bundle's own (sloppy) mode: TypeScript adds a "use strict" of its own
     writeFileSync(f, r.outputText.replace(/^\s*"use strict";\s*/, ''));
     console.log(`game.js downlevelled to ES2017 in ${Date.now() - t1} ms`);
+    // regex features older mini-game engines reject at load (TikTok Android: "Invalid regular expression")
+    const sf = ts.createSourceFile('game.js', readFileSync(f, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+    const bad = [];
+    const walk = (n) => {
+      if (n.kind === ts.SyntaxKind.RegularExpressionLiteral) {
+        const t = n.getText();
+        const body = t.slice(1, t.lastIndexOf('/'));
+        const flags = t.slice(t.lastIndexOf('/') + 1);
+        if (/\\[pP]\{/.test(body) || /\(\?<[=!A-Za-z]/.test(body) || /[sdv]/.test(flags)) bad.push(t.slice(0, 60));
+      }
+      ts.forEachChild(n, walk);
+    };
+    walk(sf);
+    if (bad.length) throw new Error(`game.js has regex features older engines reject (\\p{…}, lookbehind, named groups, s/d/v flags):\n  ${bad.join('\n  ')}`);
   } else console.warn('⚠ typescript not found: game.js left at the bundler output level');
 }
 

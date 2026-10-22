@@ -12469,8 +12469,15 @@ void main() {
             for (let b of hitboxes(o, 0, this.tmp))
                 d = Math.max(d, (b.maxZ - b.minZ) / 2); return d; }
     }
-    var BONUS = { everyHours: 2, openMinutes: 60, raceMinutes: 5, finishCoins: 300, themes: ["desert", "forest", "country", "sea"] }, BONUS_NAME = { desert: "Desert Highway", forest: "Pine Forest", country: "Country Road", sea: "Ocean Causeway" }, BONUS_SECTIONS = { desert: ["Dune Gate", "Cactus Flats", "Red Mesas", "Mirage Mile", "Canyon Run", "Sunset Straight"], forest: ["Pine Gate", "Fern Valley", "Old Bridge", "Misty Hills", "Ranger Pass", "Lakeside"], country: ["Farm Gate", "Wheat Fields", "Windmill Row", "Hay Bales", "Barn Bend", "Village Lane"], sea: ["Harbour Gate", "Palm Islets", "Sailing Bay", "Lighthouse Point", "Coral Reef", "Sunset Pier"] };
-    function slotAt(now) { let d = new Date(now), h = d.getHours(), startH = h - h % BONUS.everyHours, start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), startH, 0, 0, 0).getTime(), idx = Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 86400000) * (24 / BONUS.everyHours) + startH / BONUS.everyHours; return { theme: BONUS.themes[(idx % BONUS.themes.length + BONUS.themes.length) % BONUS.themes.length], start, end: start + BONUS.openMinutes * 60000, key: `${start}` }; }
+    var BONUS = { everyHours: 1, openMinutes: 30, raceMinutes: 5, finishCoins: 300, themes: ["desert", "forest", "country", "sea"] }, BONUS_NAME = { desert: "Desert Highway", forest: "Pine Forest", country: "Country Road", sea: "Ocean Causeway" }, BONUS_SECTIONS = { desert: ["Dune Gate", "Cactus Flats", "Red Mesas", "Mirage Mile", "Canyon Run", "Sunset Straight"], forest: ["Pine Gate", "Fern Valley", "Old Bridge", "Misty Hills", "Ranger Pass", "Lakeside"], country: ["Farm Gate", "Wheat Fields", "Windmill Row", "Hay Bales", "Barn Bend", "Village Lane"], sea: ["Harbour Gate", "Palm Islets", "Sailing Bay", "Lighthouse Point", "Coral Reef", "Sunset Pier"] };
+    function shuffled(b) { let n = BONUS.themes.length, order = Array.from({ length: n }, (_, i) => i), x = (Math.imul(b, 2654435761) ^ 1540483477) >>> 0; for (let i = n - 1; i > 0; i--) {
+        x ^= x << 13, x ^= x >>> 17, x ^= x << 5, x >>>= 0;
+        let j = x % (i + 1);
+        [order[i], order[j]] = [order[j], order[i]];
+    } return order; }
+    function themeIdx(idx) { let n = BONUS.themes.length, b = Math.floor(idx / n), order = shuffled(b); if (n > 1 && order[0] === shuffled(b - 1)[n - 1])
+        [order[0], order[1]] = [order[1], order[0]]; return order[idx - b * n]; }
+    function slotAt(now) { let d = new Date(now), h = d.getHours(), startH = h - h % BONUS.everyHours, start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), startH, 0, 0, 0).getTime(), idx = Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 86400000) * (24 / BONUS.everyHours) + startH / BONUS.everyHours; return { theme: BONUS.themes[themeIdx(idx)], start, end: start + BONUS.openMinutes * 60000, key: `${start}` }; }
     function bonusState(now = Date.now()) { let cur = slotAt(now), live = now < cur.end ? cur : null, next = live ? slotAt(cur.start + BONUS.everyHours * 3600000) : slotAt(cur.start + BONUS.everyHours * 3600000); return { live, next }; }
     class RoomEnvironment extends Scene {
         constructor() { super(); let geometry = new BoxGeometry; geometry.deleteAttribute("uv"); let roomMaterial = new MeshStandardMaterial({ side: BackSide }), boxMaterial = new MeshStandardMaterial, mainLight = new PointLight(16777215, 900, 28, 2); mainLight.position.set(0.418, 16.199, 0.3), this.add(mainLight); let room = new Mesh(geometry, roomMaterial); room.position.set(-0.757, 13.219, 0.717), room.scale.set(31.713, 28.305, 28.591), this.add(room); let box1 = new Mesh(geometry, boxMaterial); box1.position.set(-10.906, 2.009, 1.846), box1.rotation.set(0, -0.195, 0), box1.scale.set(2.328, 7.905, 4.651), this.add(box1); let box2 = new Mesh(geometry, boxMaterial); box2.position.set(-5.607, -0.754, -0.758), box2.rotation.set(0, 0.994, 0), box2.scale.set(1.97, 1.534, 3.955), this.add(box2); let box3 = new Mesh(geometry, boxMaterial); box3.position.set(6.167, 0.857, 7.803), box3.rotation.set(0, 0.561, 0), box3.scale.set(3.927, 6.285, 3.687), this.add(box3); let box4 = new Mesh(geometry, boxMaterial); box4.position.set(-2.017, 0.018, 6.124), box4.rotation.set(0, 0.333, 0), box4.scale.set(2.002, 4.566, 2.064), this.add(box4); let box5 = new Mesh(geometry, boxMaterial); box5.position.set(2.291, -0.756, -2.621), box5.rotation.set(0, -0.286, 0), box5.scale.set(1.546, 1.552, 1.496), this.add(box5); let box6 = new Mesh(geometry, boxMaterial); box6.position.set(-2.193, -0.369, -5.547), box6.rotation.set(0, 0.516, 0), box6.scale.set(3.875, 3.487, 2.986), this.add(box6); let light1 = new Mesh(geometry, createAreaLightMaterial(50)); light1.position.set(-16.116, 14.37, 8.208), light1.scale.set(0.1, 2.428, 2.739), this.add(light1); let light2 = new Mesh(geometry, createAreaLightMaterial(50)); light2.position.set(-16.109, 18.021, -8.207), light2.scale.set(0.1, 2.425, 2.751), this.add(light2); let light3 = new Mesh(geometry, createAreaLightMaterial(17)); light3.position.set(14.904, 12.198, -1.832), light3.scale.set(0.15, 4.265, 6.331), this.add(light3); let light4 = new Mesh(geometry, createAreaLightMaterial(43)); light4.position.set(-0.462, 8.89, 14.52), light4.scale.set(4.38, 5.441, 0.088), this.add(light4); let light5 = new Mesh(geometry, createAreaLightMaterial(20)); light5.position.set(3.235, 11.486, -12.541), light5.scale.set(2.5, 2, 0.1), this.add(light5); let light6 = new Mesh(geometry, createAreaLightMaterial(100)); light6.position.set(0, 20, 0), light6.scale.set(1, 0.1, 1), this.add(light6); }
@@ -15309,6 +15316,18 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.bpm = 100;
             this.intensity = 0;
             this.playing = !1;
+            this.baked = platform.native;
+            this.rt = null;
+            this.rtSr = 44100;
+            this.rtEcho = null;
+            this.sfxCache = new Map;
+            this.loops = [null, null, null];
+            this.loopLen = 0;
+            this.loopSrc = null;
+            this.loopLevel = -1;
+            this.loopStart = 0;
+            this.loopTimer = null;
+            this.loopJobs = new Set;
         }
         unlock() { try {
             this.unlockInner();
@@ -15327,7 +15346,10 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         catch (e) {
             console.warn("[audio] compat", e);
         } if (c.state !== "running")
-            (_c = c.resume) === null || _c === void 0 ? void 0 : _c.call(c); this.master = c.createGain(), this.master.gain.value = 0.8; let comp = c.createDynamicsCompressor(); comp.threshold.value = -14, comp.ratio.value = 4, this.master.connect(comp), comp.connect(c.destination), this.sfxBus = c.createGain(), this.sfxBus.gain.value = this.sfxOn ? 0.9 : 0, this.sfxBus.connect(this.master), this.musicBus = c.createGain(), this.musicBus.gain.value = this.musicOn ? 0.32 : 0, this.musicBus.connect(this.master), this.musicTone = c.createBiquadFilter(), this.musicTone.type = "lowpass", this.musicTone.frequency.value = 2600, this.musicTone.Q.value = 0.5, this.musicTone.connect(this.musicBus), this.echo = c.createGain(), this.echo.gain.value = 0.55; let dl = c.createDelay(1); dl.delayTime.value = 60 / this.bpm * 0.75; let fb = c.createGain(); fb.gain.value = 0.32; let damp = c.createBiquadFilter(); damp.type = "lowpass", damp.frequency.value = 1800, this.echo.connect(dl), dl.connect(damp), damp.connect(fb), fb.connect(dl), damp.connect(this.musicTone), this.noiseBuf = c.createBuffer(1, c.sampleRate, c.sampleRate); let d = this.noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++)
+            (_c = c.resume) === null || _c === void 0 ? void 0 : _c.call(c); if (this.baked) {
+            this.rtSr = c.sampleRate || 44100, this.master = c.createGain(), this.master.gain.value = 0.8, this.master.connect(c.destination), this.sfxBus = c.createGain(), this.sfxBus.gain.value = this.sfxOn ? 0.9 : 0, this.sfxBus.connect(this.master), this.musicBus = c.createGain(), this.musicBus.gain.value = this.musicOn ? 0.32 : 0, this.musicBus.connect(this.master), this.prebakeSfx();
+            return;
+        } this.master = c.createGain(), this.master.gain.value = 0.8; let comp = c.createDynamicsCompressor(); comp.threshold.value = -14, comp.ratio.value = 4, this.master.connect(comp), comp.connect(c.destination), this.sfxBus = c.createGain(), this.sfxBus.gain.value = this.sfxOn ? 0.9 : 0, this.sfxBus.connect(this.master), this.musicBus = c.createGain(), this.musicBus.gain.value = this.musicOn ? 0.32 : 0, this.musicBus.connect(this.master), this.musicTone = c.createBiquadFilter(), this.musicTone.type = "lowpass", this.musicTone.frequency.value = 2600, this.musicTone.Q.value = 0.5, this.musicTone.connect(this.musicBus), this.echo = c.createGain(), this.echo.gain.value = 0.55; let dl = c.createDelay(1); dl.delayTime.value = 60 / this.bpm * 0.75; let fb = c.createGain(); fb.gain.value = 0.32; let damp = c.createBiquadFilter(); damp.type = "lowpass", damp.frequency.value = 1800, this.echo.connect(dl), dl.connect(damp), damp.connect(fb), fb.connect(dl), damp.connect(this.musicTone), this.noiseBuf = c.createBuffer(1, c.sampleRate, c.sampleRate); let d = this.noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++)
             d[i] = Math.random() * 2 - 1; for (let [n, u] of this.pendingOverrides)
             this.loadOverride(n, u); this.pendingOverrides.length = 0; }
         async loadOverride(name, url) { if (!this.ctx) {
@@ -15347,34 +15369,62 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.master.gain.value = on ? 0 : 0.8; }
         setMusic(on) { if (this.musicOn = on, this.ctx && this.musicBus)
             this.musicBus.gain.value = on ? 0.32 : 0; }
-        osc(type, f0, f1, t0, dur, vol, bus, pan = 0) { let c = this.ctx, o = c.createOscillator(), g = c.createGain(); if (o.type = type, o.frequency.setValueAtTime(f0, t0), f1 !== f0)
+        osc(type, f0, f1, t0, dur, vol, bus, pan = 0) { if (this.rt)
+            return bakeOsc(this.rt, this.rtSr, type, f0, f1, t0, dur, (t) => envAD(t, 0.008, dur, vol)); let c = this.ctx, o = c.createOscillator(), g = c.createGain(); if (o.type = type, o.frequency.setValueAtTime(f0, t0), f1 !== f0)
             o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + dur); g.gain.setValueAtTime(0.0001, t0), g.gain.exponentialRampToValueAtTime(vol, t0 + 0.008), g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); let out = g; if (pan && c.createStereoPanner) {
             let p = c.createStereoPanner();
             p.pan.value = pan, g.connect(p), out = p;
         } o.connect(g), out.connect(bus !== null && bus !== void 0 ? bus : this.sfxBus), o.start(t0), o.stop(t0 + dur + 0.02); }
-        noise(t0, dur, vol, f0, f1, q = 1, type = "bandpass", bus, pan = 0) { let c = this.ctx, s = c.createBufferSource(); s.buffer = this.noiseBuf; let f = c.createBiquadFilter(); f.type = type, f.Q.value = q, f.frequency.setValueAtTime(f0, t0), f.frequency.exponentialRampToValueAtTime(Math.max(30, f1), t0 + dur); let g = c.createGain(); g.gain.setValueAtTime(0.0001, t0), g.gain.exponentialRampToValueAtTime(vol, t0 + 0.01), g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur), s.connect(f), f.connect(g); let out = g; if (pan && c.createStereoPanner) {
+        noise(t0, dur, vol, f0, f1, q = 1, type = "bandpass", bus, pan = 0) { if (this.rt)
+            return bakeNoise(this.rt, this.rtSr, t0, dur, vol, f0, f1, q, type); let c = this.ctx, s = c.createBufferSource(); s.buffer = this.noiseBuf; let f = c.createBiquadFilter(); f.type = type, f.Q.value = q, f.frequency.setValueAtTime(f0, t0), f.frequency.exponentialRampToValueAtTime(Math.max(30, f1), t0 + dur); let g = c.createGain(); g.gain.setValueAtTime(0.0001, t0), g.gain.exponentialRampToValueAtTime(vol, t0 + 0.01), g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur), s.connect(f), f.connect(g); let out = g; if (pan && c.createStereoPanner) {
             let p = c.createStereoPanner();
             p.pan.value = pan, g.connect(p), out = p;
         } out.connect(bus !== null && bus !== void 0 ? bus : this.sfxBus), s.start(t0, Math.random() * 0.5), s.stop(t0 + dur + 0.02); }
         play(name, opt = {}) { if (!this.ctx || !this.sfxOn)
             return; try {
+            if (this.baked)
+                return this.playBaked(name);
             this.playInner(name, opt);
         }
         catch (e) {
             console.warn("[audio] play", name, e);
         } }
-        playInner(name, opt) { var _a; if (!this.ctx)
-            return; let c = this.ctx, t = c.currentTime, ov = this.overrides.get(name); if (ov) {
+        playBaked(name) { let c = this.ctx; if (this.overrides.has(name))
+            return this.playInner(name, {}); if (name === "coin") {
+            let now = performance.now() / 1000;
+            if (now - this.coinPitchT > 0.6)
+                this.coinPitch = 0;
+            this.coinPitchT = now;
+        } let buf = this.bakeSfx(name, name === "coin" ? Math.min(this.coinPitch, 12) : -1); if (name === "coin")
+            this.coinPitch++; let s = c.createBufferSource(); s.buffer = buf, s.connect(this.sfxBus), s.start(); }
+        bakeSfx(name, pitch) { let key = name === "coin" ? `coin${pitch}` : name, buf = this.sfxCache.get(key); if (!buf) {
+            let pcm = this.bake(1.6, () => this.playInner(name, {}, Math.max(0, pitch)));
+            buf = this.toBuffer(trimTail(pcm)), this.sfxCache.set(key, buf);
+        } return buf; }
+        bake(seconds, recipe, echo = !1) { let pcm = new Float32Array(Math.ceil(seconds * this.rtSr)); this.rt = pcm, this.rtEcho = echo ? new Float32Array(pcm.length) : null; try {
+            recipe();
+        }
+        finally {
+            this.rt = null;
+        } return pcm; }
+        toBuffer(pcm) { let b = this.ctx.createBuffer(1, Math.max(1, pcm.length), this.rtSr), d = b.getChannelData(0); for (let i = 0; i < pcm.length; i++)
+            d[i] = softClip(pcm[i]); return b; }
+        playInner(name, opt, bakedPitch = -1) { var _a; if (!this.ctx)
+            return; let c = this.ctx, t = this.rt ? 0 : c.currentTime, ov = this.overrides.get(name); if (ov) {
             let s = c.createBufferSource();
             s.buffer = ov, s.connect(this.sfxBus), s.start();
             return;
         } let pan = (_a = opt.pan) !== null && _a !== void 0 ? _a : 0; switch (name) {
             case "coin": {
-                if (t - this.coinPitchT > 0.6)
-                    this.coinPitch = 0;
-                this.coinPitchT = t;
-                let base = 1320 * Math.pow(2, Math.min(this.coinPitch, 12) / 24);
-                this.coinPitch++, this.osc("square", base, base, t, 0.06, 0.06), this.osc("sine", base * 1.5, base * 1.5, t + 0.05, 0.16, 0.12);
+                if (bakedPitch < 0) {
+                    if (t - this.coinPitchT > 0.6)
+                        this.coinPitch = 0;
+                    this.coinPitchT = t;
+                }
+                let base = 1320 * Math.pow(2, Math.min(bakedPitch >= 0 ? bakedPitch : this.coinPitch, 12) / 24);
+                if (bakedPitch < 0)
+                    this.coinPitch++;
+                this.osc("square", base, base, t, 0.06, 0.06), this.osc("sine", base * 1.5, base * 1.5, t + 0.05, 0.16, 0.12);
                 break;
             }
             case "lane":
@@ -15442,9 +15492,75 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
                 break;
         } }
         startMusic() { if (!this.ctx || this.playing)
-            return; this.playing = !0, this.step = 0, this.nextTime = this.ctx.currentTime + 0.05, this.seqTimer = window.setInterval(() => this.schedule(), 25); }
-        stopMusic() { if (this.playing = !1, this.seqTimer !== null)
+            return; if (this.baked) {
+            this.playing = !0, this.loopLevel = -1, this.loopTick(), this.loopTimer = window.setInterval(() => this.loopTick(), 300);
+            return;
+        } this.playing = !0, this.step = 0, this.nextTime = this.ctx.currentTime + 0.05, this.seqTimer = window.setInterval(() => this.schedule(), 25); }
+        stopMusic() { var _a; if (this.playing = !1, this.loopTimer !== null)
+            window.clearInterval(this.loopTimer); this.loopTimer = null; try {
+            (_a = this.loopSrc) === null || _a === void 0 ? void 0 : _a.stop();
+        }
+        catch (_b) { } if (this.loopSrc = null, this.seqTimer !== null)
             window.clearInterval(this.seqTimer); this.seqTimer = null; }
+        loopTick() { try {
+            let c = this.ctx;
+            if (!c || !this.playing)
+                return;
+            let lv = Math.max(0, Math.min(2, Math.round(this.intensity)));
+            if (lv === this.loopLevel && this.loopSrc)
+                return;
+            let buf = this.loops[lv];
+            if (!buf) {
+                this.bakeLoopAsync(lv);
+                for (let k = 0; k < 3; k++)
+                    if (k !== lv)
+                        setTimeout(() => this.bakeLoopAsync(k), 2500 + k * 500);
+                return;
+            }
+            let bar = this.loopLen / 4, now = c.currentTime, when = now + 0.03, offset = 0;
+            if (this.loopSrc && this.loopLen > 0) {
+                let pos = (now - this.loopStart) % this.loopLen, nextBar = Math.ceil((pos + 0.02) / bar) * bar;
+                when = now + (nextBar - pos), offset = nextBar % this.loopLen;
+                try {
+                    this.loopSrc.stop(when);
+                }
+                catch (_a) { }
+            }
+            let s = c.createBufferSource();
+            s.buffer = buf, s.loop = !0, s.connect(this.musicBus), s.start(when, offset), this.loopStart = when - offset, this.loopSrc = s, this.loopLevel = lv;
+        }
+        catch (e) {
+            console.warn("[audio] music", e), this.stopMusic();
+        } }
+        bakeLoopAsync(level) { if (this.loops[level] || this.loopJobs.has(level) || !this.ctx)
+            return; this.loopJobs.add(level); let spb = 60 / this.bpm / 4, len = 64 * spb; this.loopLen = len; let sr = this.rtSr, pcm = new Float32Array(Math.ceil((len + 3) * sr)), echo = new Float32Array(pcm.length), st = 0, step = () => { try {
+            let keep = this.intensity;
+            this.intensity = level, this.rt = pcm, this.rtEcho = echo;
+            try {
+                for (let end = Math.min(64, st + 6); st < end; st++)
+                    this.note(st, st * spb, spb);
+            }
+            finally {
+                this.rt = null, this.rtEcho = null, this.intensity = keep;
+            }
+            if (st < 64)
+                return void setTimeout(step, 16);
+            let n = Math.round(len * sr);
+            for (let i = n; i < pcm.length; i++)
+                pcm[i - n] += pcm[i], echo[i - n] += echo[i];
+            let out = pcm.subarray(0, n);
+            addEcho(out, echo.subarray(0, n), sr, 60 / this.bpm * 0.75, 0.32, 0.55, 1800), lowpass(out, sr, 2600), this.loops[level] = this.toBuffer(out);
+        }
+        catch (e) {
+            console.warn("[audio] bake", e);
+        } if (this.loopJobs.delete(level), this.playing)
+            this.loopTick(); }; setTimeout(step, 0); }
+        prebakeSfx() { let all = ["click", "coin", "lane", "up", "down", "land", "power", "shield", "shieldBreak", "crash", "explode", "near", "ring", "beep", "go", "mission", "turbo", "respawn", "bump", "combo", "warp", "expire"], i = 0, tick = () => { for (let end = Math.min(all.length, i + 3); i < end; i++)
+            try {
+                this.bakeSfx(all[i], all[i] === "coin" ? 0 : -1);
+            }
+            catch (_a) { } if (i < all.length)
+            setTimeout(tick, 30); }; setTimeout(tick, 200); }
         schedule() { try {
             this.scheduleInner();
         }
@@ -15454,11 +15570,24 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         scheduleInner() { let c = this.ctx; if (!c)
             return; let spb = 60 / this.bpm / 4; while (this.nextTime < c.currentTime + 0.12)
             this.note(this.step, this.nextTime, spb), this.nextTime += spb, this.step = (this.step + 1) % 128; }
-        pad(midi, t0, dur, vol) { let c = this.ctx, hz = 440 * Math.pow(2, (midi - 69) / 12), g = c.createGain(); g.gain.setValueAtTime(0.0001, t0), g.gain.exponentialRampToValueAtTime(vol, t0 + Math.min(0.9, dur * 0.35)), g.gain.setValueAtTime(vol, t0 + dur * 0.7), g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur), g.connect(this.musicTone); for (let det of [-7, 7]) {
+        pad(midi, t0, dur, vol) { let hz = 440 * Math.pow(2, (midi - 69) / 12); if (this.rt) {
+            let a = Math.min(0.9, dur * 0.35), env = (t) => t < a ? expSeg(t, 0, a, 0.0001, vol) : t < dur * 0.7 ? vol : expSeg(t, dur * 0.7, dur, vol, 0.0001);
+            for (let det of [-7, 7])
+                bakeOsc(this.rt, this.rtSr, "sawtooth", hz * Math.pow(2, det / 1200), hz * Math.pow(2, det / 1200), t0, dur + 0.03, env);
+            return;
+        } let c = this.ctx, g = c.createGain(); g.gain.setValueAtTime(0.0001, t0), g.gain.exponentialRampToValueAtTime(vol, t0 + Math.min(0.9, dur * 0.35)), g.gain.setValueAtTime(vol, t0 + dur * 0.7), g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur), g.connect(this.musicTone); for (let det of [-7, 7]) {
             let o = c.createOscillator();
             o.type = "sawtooth", o.frequency.value = hz, o.detune.value = det, o.connect(g), o.start(t0), o.stop(t0 + dur + 0.05);
         } }
-        pluck(midi, t0, vol) { let c = this.ctx, hz = 440 * Math.pow(2, (midi - 69) / 12), g = c.createGain(); g.gain.setValueAtTime(0.0001, t0), g.gain.exponentialRampToValueAtTime(vol, t0 + 0.01), g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.42), g.connect(this.musicTone), g.connect(this.echo); for (let [type, mul] of [["sine", 1], ["triangle", 2]]) {
+        pluck(midi, t0, vol) { let hz = 440 * Math.pow(2, (midi - 69) / 12); if (this.rt) {
+            let env = (t) => envAD(t, 0.01, 0.42, vol);
+            for (let target of [this.rt, this.rtEcho]) {
+                if (!target)
+                    continue;
+                bakeOsc(target, this.rtSr, "sine", hz, hz, t0, 0.45, env), bakeOsc(target, this.rtSr, "triangle", hz * 2, hz * 2, t0, 0.45, (t) => env(t) * 0.25);
+            }
+            return;
+        } let c = this.ctx, g = c.createGain(); g.gain.setValueAtTime(0.0001, t0), g.gain.exponentialRampToValueAtTime(vol, t0 + 0.01), g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.42), g.connect(this.musicTone), g.connect(this.echo); for (let [type, mul] of [["sine", 1], ["triangle", 2]]) {
             let o = c.createOscillator();
             o.type = type, o.frequency.value = hz * mul;
             let og = c.createGain();
@@ -15478,6 +15607,51 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.noise(t, 0.05, 0.05, 7000, 7000, 0.8, "highpass", bus); if (s === 4 || s === 12)
             this.noise(t, 0.18, 0.09, 1400, 900, 0.7, "bandpass", bus); }
     }
+    function expSeg(t, t0, t1, v0, v1) { if (t <= t0)
+        return v0; if (t >= t1)
+        return v1; return v0 * Math.pow(v1 / v0, (t - t0) / (t1 - t0)); }
+    function envAD(t, a, dur, vol) { if (t < 0)
+        return 0; if (t < a)
+        return expSeg(t, 0, a, 0.0001, vol); if (t < dur)
+        return expSeg(t, a, dur, vol, 0.0001); return 0; }
+    function blep(t, dt) { if (t < dt)
+        return t /= dt, t + t - t * t - 1; if (t > 1 - dt)
+        return t = (t - 1) / dt, t * t + t + t + 1; return 0; }
+    function bakeOsc(out, sr, type, f0, f1, t0, dur, env) { let i0 = Math.max(0, Math.floor(t0 * sr)), i1 = Math.min(out.length, Math.ceil((t0 + dur + 0.02) * sr)), ph = 0, tri = 0, glide = f1 !== f0 && dur > 0; for (let i = i0; i < i1; i++) {
+        let t = i / sr - t0, dt = (glide ? f0 * Math.pow(f1 / f0, Math.min(1, t / dur)) : f0) / sr, v;
+        if (type === "sine")
+            v = Math.sin(ph * 2 * Math.PI);
+        else if (type === "sawtooth")
+            v = 2 * ph - 1 - blep(ph, dt);
+        else {
+            let sq = ph < 0.5 ? 1 : -1;
+            if (sq += blep(ph, dt), sq -= blep((ph + 0.5) % 1, dt), type === "square")
+                v = sq;
+            else
+                tri = dt * sq + (1 - dt) * tri, v = tri * 4;
+        }
+        let tailK = Math.min(1, (t0 + dur + 0.02 - i / sr) / 0.004);
+        if (out[i] += v * env(t) * tailK, ph += dt, ph >= 1)
+            ph -= 1;
+    } }
+    function bakeNoise(out, sr, t0, dur, vol, f0, f1, q, type) { let i0 = Math.max(0, Math.floor(t0 * sr)), i1 = Math.min(out.length, Math.ceil((t0 + dur + 0.02) * sr)), ic1 = 0, ic2 = 0, k = 1 / Math.max(0.05, q), nyq = sr * 0.45; for (let i = i0; i < i1; i++) {
+        let t = i / sr - t0, fc = Math.min(nyq, f0 * Math.pow(Math.max(30, f1) / f0, Math.min(1, t / Math.max(0.001, dur)))), g = Math.tan(Math.PI * fc / sr), a1 = 1 / (1 + g * (g + k)), a2 = g * a1, a3 = g * a2, v0 = Math.random() * 2 - 1, v3 = v0 - ic2, v1 = a1 * ic1 + a2 * v3, v2 = ic2 + a2 * ic1 + a3 * v3;
+        ic1 = 2 * v1 - ic1, ic2 = 2 * v2 - ic2;
+        let y = type === "lowpass" ? v2 : type === "highpass" ? v0 - k * v1 - v2 : v1, tailK = Math.min(1, (t0 + dur + 0.02 - i / sr) / 0.004);
+        out[i] += y * envAD(t, 0.01, dur, vol) * tailK;
+    } }
+    function addEcho(out, send, sr, delay, fb, wet, dampHz) { let n = out.length, d = Math.round(delay * sr), line = new Float32Array(n), a = 1 - Math.exp(-2 * Math.PI * dampHz / sr), lp = 0; for (let pass = 0; pass < 2; pass++)
+        for (let i = 0; i < n; i++) {
+            let j = (i - d + n) % n;
+            lp += a * (line[j] - lp), line[i] = send[i] + lp * fb;
+        } for (let i = 0; i < n; i++)
+        out[i] += line[(i - d + n) % n] * wet; }
+    function lowpass(x, sr, hz) { let a = 1 - Math.exp(-2 * Math.PI * hz / sr), y = 0; for (let i = 0; i < x.length; i++)
+        y += a * (x[i] - y); for (let i = 0; i < x.length; i++)
+        y += a * (x[i] - y), x[i] = y; }
+    var softClip = (v) => v > 1 || v < -1 ? Math.tanh(v) : v;
+    function trimTail(x) { let n = x.length; while (n > 1 && Math.abs(x[n - 1]) < 0.0001)
+        n--; return x.subarray(0, Math.min(x.length, n + 64)); }
     class GLTFLoader {
         loadAsync() { return Promise.reject(Error("GLTF loading is disabled in the single-file build")); }
     }
@@ -15502,7 +15676,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         } }
         model(id) { let m = this.models.get(id); return m ? m.clone(!0) : null; }
     }
-    var LANGS = [{ code: "en", name: "English", flag: "\uD83C\uDDEC\uD83C\uDDE7" }, { code: "fr", name: "Français", flag: "\uD83C\uDDEB\uD83C\uDDF7" }, { code: "ja", name: "日本語", flag: "\uD83C\uDDEF\uD83C\uDDF5" }, { code: "pt", name: "Português (BR)", flag: "\uD83C\uDDE7\uD83C\uDDF7" }, { code: "de", name: "Deutsch", flag: "\uD83C\uDDE9\uD83C\uDDEA" }, { code: "es", name: "Español", flag: "\uD83C\uDDEA\uD83C\uDDF8" }], T2 = [["Play", "Jouer", "プレイ", "Jogar", "Spielen", "Jugar"], ["Garage", "Garage", "ガレージ", "Garagem", "Garage", "Garaje"], ["Shop", "Boutique", "ショップ", "Loja", "Shop", "Tienda"], ["Missions", "Missions", "ミッション", "Missões", "Missionen", "Misiones"], ["Daily", "Jour", "デイリー", "Diário", "Täglich", "Diario"], ["Cups", "Coupes", "カップ", "Copas", "Pokale", "Copas"], ["Ranks", "Rangs", "ランク", "Ranking", "Ränge", "Ranking"], ["Share", "Partager", "シェア", "Compartilhar", "Teilen", "Compartir"], ["Entry", "Entrée", "初回", "Entrada", "Start", "Entrada"], ["Launch", "Lancer", "起動", "Abrir", "Starten", "Abrir"], ["SETTINGS", "PARAMÈTRES", "設定", "AJUSTES", "EINSTELLUNGEN", "AJUSTES"], ["Sound", "Son", "サウンド", "Som", "Sound", "Sonido"], ["Music", "Musique", "音楽", "Música", "Musik", "Música"], ["Vibration", "Vibration", "振動", "Vibração", "Vibration", "Vibración"], ["Hint arrows", "Flèches", "ヒント", "Setas", "Pfeile", "Flechas"], ["Comfort", "Confort", "目に優しい", "Conforto", "Komfort", "Confort"], ["Buy items", "Acheter", "アイテム購入", "Comprar itens", "Items kaufen", "Comprar objetos"], ["Race without a special", "Courir sans spécial", "スペシャルなしで走る", "Correr sem especial", "Ohne Spezial fahren", "Correr sin especial"], ["Back to the bag", "Retour au sac", "バッグに戻る", "Voltar à bolsa", "Zurück zur Tasche", "Volver a la bolsa"], ["In your bag", "Dans ton sac", "バッグの中", "Na sua bolsa", "In deiner Tasche", "En tu bolsa"], ["Take it", "Prendre", "持っていく", "Levar", "Mitnehmen", "Llevar"], ["Cancel", "Annuler", "キャンセル", "Cancelar", "Abbrechen", "Cancelar"], ["Share my rank", "Partager mon rang", "ランクをシェア", "Compartilhar rank", "Rang teilen", "Compartir rango"], ["Save image", "Enregistrer", "画像を保存", "Salvar imagem", "Bild speichern", "Guardar imagen"], ["Copy text", "Copier", "テキストをコピー", "Copiar texto", "Text kopieren", "Copiar texto"], ["Unlocks", "Débloque", "解放", "Desbloqueia", "Schaltet frei", "Desbloquea"], ["Ready to claim", "À récupérer", "受け取り可能", "Pronto para coletar", "Bereit", "Listo para cobrar"], ["Claim all", "Tout récupérer", "すべて受け取る", "Coletar tudo", "Alle abholen", "Cobrar todo"], ["Account", "Compte", "アカウント", "Conta", "Konto", "Cuenta"], ["Continue with Google", "Continuer avec Google", "Googleで続ける", "Continuar com Google", "Weiter mit Google", "Continuar con Google"], ["Continue with Apple", "Continuer avec Apple", "Appleで続ける", "Continuar com Apple", "Weiter mit Apple", "Continuar con Apple"], ["Send code", "Envoyer le code", "コードを送信", "Enviar código", "Code senden", "Enviar código"], ["Sign in", "Se connecter", "サインイン", "Entrar", "Anmelden", "Iniciar sesión"], ["Sign out", "Se déconnecter", "サインアウト", "Sair", "Abmelden", "Cerrar sesión"], ["Sync now", "Synchroniser", "今すぐ同期", "Sincronizar", "Jetzt synchronisieren", "Sincronizar"], ["Keep this", "Garder", "これを残す", "Manter", "Behalten", "Conservar"], ["Eye comfort", "Confort visuel", "目に優しい", "Conforto visual", "Augenschonend", "Confort visual"], ["Graphics", "Graphisme", "画質", "Gráficos", "Grafik", "Gráficos"], ["Language", "Langue", "言語", "Idioma", "Sprache", "Idioma"], ["Profile", "Profil", "プロフィール", "Perfil", "Profil", "Perfil"], ["How to play", "Comment jouer", "遊び方", "Como jogar", "Anleitung", "Cómo jugar"], ["Jump guide", "Guide du saut", "ジャンプガイド", "Guia do salto", "Sprung-Guide", "Guía de salto"], ["Restore", "Restaurer", "復元", "Restaurar", "Wiederherstellen", "Restaurar"], ["Paused", "Pause", "一時停止", "Pausado", "Pausiert", "En pausa"], ["Resume", "Reprendre", "再開", "Continuar", "Weiter", "Reanudar"], ["Retry", "Rejouer", "リトライ", "De novo", "Nochmal", "Reintentar"], ["Home", "Accueil", "ホーム", "Início", "Start", "Inicio"], ["Tracks", "Circuits", "コース", "Pistas", "Strecken", "Pistas"], ["Next track", "Circuit suivant", "次のコース", "Próxima pista", "Nächste Strecke", "Siguiente pista"], ["GAME OVER", "PERDU", "ゲームオーバー", "FIM DE JOGO", "GAME OVER", "FIN DEL JUEGO"], ["NEW BEST!", "RECORD !", "自己ベスト!", "NOVO RECORDE!", "NEUER REKORD!", "¡NUEVO RÉCORD!"], ["Best", "Record", "ベスト", "Recorde", "Rekord", "Récord"], ["Distance", "Distance", "距離", "Distância", "Distanz", "Distancia"], ["Coins", "Pièces", "コイン", "Moedas", "Münzen", "Monedas"], ["Near miss", "Frôlé", "ニアミス", "Por um triz", "Knapp", "Roce"], ["Time", "Temps", "タイム", "Tempo", "Zeit", "Tiempo"], ["Lives lost", "Vies perdues", "失ったライフ", "Vidas perdidas", "Verlorene Leben", "Vidas perdidas"], ["Unused boosts", "Bonus inutilisés", "未使用ブースト", "Boosts não usados", "Ungenutzte Boosts", "Potenciadores sin usar"], ["TAP!", "TAPE !", "タップ!", "TOQUE!", "TIPPEN!", "¡TOCA!"], ["Reward", "Récompense", "報酬", "Prêmio", "Belohnung", "Premio"], ["Rewards", "Récompenses", "報酬", "Prêmios", "Belohnungen", "Premios"], ["REVIVE?", "REVIVRE ?", "復活する？", "REVIVER?", "WIEDERBELEBEN?", "¿REVIVIR?"], ["Watch ad · Revive", "Pub · Revivre", "広告で復活", "Anúncio · Reviver", "Werbung · Weiter", "Anuncio · Revivir"], ["No thanks · end race", "Non merci · fin", "やめる · 終了", "Não · terminar", "Nein · beenden", "No · terminar"], ["SPECIAL", "SPÉCIAL", "スペシャル", "ESPECIAL", "SPEZIAL", "ESPECIAL"], ["No special", "Aucun spécial", "スペシャルなし", "Sem especial", "Kein Spezial", "Sin especial"], ["Pure skill run", "Pur talent", "実力勝負", "Só habilidade", "Nur Können", "Solo habilidad"], ["GO", "GO", "GO", "VAI", "LOS", "YA"], ["RANK GATE", "PORTE DE RANG", "ランクゲート", "PORTÃO DE RANK", "RANG-TOR", "PUERTA DE RANGO"], ["Bonus", "Bonus", "ボーナス", "Bônus", "Bonus", "Bonus"], ["BONUS", "BONUS", "ボーナス", "BÔNUS", "BONUS", "BONUS"], ["Race the Bonus", "Courir le Bonus", "ボーナスに挑戦", "Correr o Bônus", "Bonus fahren", "Correr el Bonus"], ["Coming soon", "Bientôt", "近日公開", "Em breve", "Bald", "Próximamente"], ["Race Endless", "Courir Endless", "エンドレスへ", "Correr Endless", "Endless fahren", "Correr Endless"], ["Free coins", "Pièces gratuites", "無料コイン", "Moedas grátis", "Gratis-Münzen", "Monedas gratis"], ["Race", "Course", "レース", "Correr", "Rennen", "Carrera"], ["How EXP works", "Comment marche l’EXP", "EXPの仕組み", "Como funciona o EXP", "So funktioniert EXP", "Cómo funciona el EXP"], ["Best EXP", "Meilleur EXP", "ベストEXP", "Melhor EXP", "Bester EXP", "Mejor EXP"], ["NEW BEST EXP!", "NOUVEAU RECORD EXP !", "EXP新記録！", "NOVO RECORDE DE EXP!", "NEUER EXP-REKORD!", "¡NUEVO RÉCORD DE EXP!"], ["How rank works", "Comment marche le rang", "ランクの仕組み", "Como funciona o rank", "So funktioniert der Rang", "Cómo funciona el rango"], ["Score", "Score", "スコア", "Pontos", "Punkte", "Puntos"], ["CONTINUE?", "CONTINUER ?", "コンティニュー?", "CONTINUAR?", "WEITER?", "¿CONTINUAR?"], ["No thanks", "Non merci", "結構です", "Não, obrigado", "Nein danke", "No, gracias"], ["SELECT TRACK", "CHOISIR UN CIRCUIT", "コース選択", "ESCOLHER PISTA", "STRECKE WÄHLEN", "ELEGIR PISTA"], ["Endless", "Infini", "エンドレス", "Infinito", "Endlos", "Infinito"], ["GARAGE", "GARAGE", "ガレージ", "GARAGEM", "GARAGE", "GARAJE"], ["Selected", "Sélectionnée", "選択中", "Selecionado", "Ausgewählt", "Seleccionado"], ["Select", "Choisir", "選択", "Selecionar", "Wählen", "Elegir"], ["Upgrades", "Améliorations", "アップグレード", "Melhorias", "Upgrades", "Mejoras"], ["MISSIONS", "MISSIONS", "ミッション", "MISSÕES", "MISSIONEN", "MISIONES"], ["DAILY", "QUOTIDIEN", "デイリー", "DIÁRIO", "TÄGLICH", "DIARIO"], ["CUPS", "COUPES", "カップ", "COPAS", "POKALE", "COPAS"], ["SHOP", "BOUTIQUE", "ショップ", "LOJA", "SHOP", "TIENDA"], ["TOP PILOTS", "MEILLEURS PILOTES", "トップパイロット", "MELHORES PILOTOS", "TOP-PILOTEN", "MEJORES PILOTOS"], ["This week", "Cette semaine", "今週", "Esta semana", "Diese Woche", "Esta semana"], ["All time", "Toujours", "全期間", "Geral", "Allzeit", "Histórico"], ["Race now", "Courir", "レース開始", "Correr agora", "Jetzt fahren", "Correr ya"], ["Standings", "Classement", "順位", "Classificação", "Stand", "Clasificación"], ["Prizes", "Prix", "賞品", "Prêmios", "Preise", "Premios"], ["Divisions", "Divisions", "ディビジョン", "Divisões", "Divisionen", "Divisiones"], ["Upcoming", "À venir", "開催予定", "Próximas", "Demnächst", "Próximas"], ["CLAIM", "RÉCUPÉRER", "受け取る", "RESGATAR", "ABHOLEN", "RECLAMAR"], ["DAILY REWARD", "RÉCOMPENSE DU JOUR", "デイリー報酬", "PRÊMIO DIÁRIO", "TAGESBELOHNUNG", "PREMIO DIARIO"], ["ENTRY REWARD", "BONUS D’ENTRÉE", "初回報酬", "PRÊMIO DE ENTRADA", "START-BONUS", "PREMIO DE ENTRADA"], ["LAUNCH REWARD", "BONUS DE LANCEMENT", "起動報酬", "PRÊMIO DE ABERTURA", "START-BELOHNUNG", "PREMIO DE INICIO"], ["SHARE REWARDS", "BONUS DE PARTAGE", "シェア報酬", "PRÊMIO POR COMPARTILHAR", "TEILEN-BONUS", "PREMIO POR COMPARTIR"], ["INVITE FRIENDS", "INVITER DES AMIS", "友達を招待", "CONVIDAR AMIGOS", "FREUNDE EINLADEN", "INVITAR AMIGOS"], ["RATE US", "NOTEZ-NOUS", "評価する", "AVALIE-NOS", "BEWERTE UNS", "VALÓRANOS"], ["ADD TO SCREEN", "AJOUTER À L’ÉCRAN", "ホーム画面に追加", "ADICIONAR À TELA", "ZUM HOMESCREEN", "AÑADIR A INICIO"], ["NO CONNECTION", "PAS DE CONNEXION", "接続なし", "SEM CONEXÃO", "KEINE VERBINDUNG", "SIN CONEXIÓN"], ["WATCH AD REWARD", "PUB RÉCOMPENSÉE", "動画で報酬", "PRÊMIO POR ANÚNCIO", "WERBE-BELOHNUNG", "PREMIO POR ANUNCIO"], ["WELCOME BACK", "BON RETOUR", "おかえり", "BEM-VINDO DE VOLTA", "WILLKOMMEN ZURÜCK", "BIENVENIDO DE NUEVO"], ["SHARE", "PARTAGER", "シェア", "COMPARTILHAR", "TEILEN", "COMPARTIR"], ["RATE NOW", "NOTER", "評価する", "AVALIAR", "BEWERTEN", "VALORAR"], ["NOT NOW", "PLUS TARD", "後で", "AGORA NÃO", "SPÄTER", "AHORA NO"], ["GOT IT", "COMPRIS", "OK", "ENTENDI", "VERSTANDEN", "ENTENDIDO"], ["RETRY", "RÉESSAYER", "再試行", "TENTAR DE NOVO", "ERNEUT", "REINTENTAR"], ["OPEN PROFILE", "OUVRIR LE PROFIL", "プロフィールを開く", "ABRIR PERFIL", "PROFIL ÖFFNEN", "ABRIR PERFIL"], ["YOUR PROFILE", "TON PROFIL", "プロフィール", "SEU PERFIL", "DEIN PROFIL", "TU PERFIL"], ["PILOT", "PILOTE", "パイロット", "PILOTO", "PILOT", "PILOTO"], ["Leaderboard", "Classement", "ランキング", "Ranking", "Rangliste", "Clasificación"], ["Trophies", "Trophées", "トロフィー", "Troféus", "Trophäen", "Trofeos"], ["Runs", "Courses", "プレイ数", "Corridas", "Läufe", "Carreras"], ["Car", "Voiture", "車", "Carro", "Auto", "Coche"], ["Save", "Enregistrer", "保存", "Salvar", "Speichern", "Guardar"], ["Practice it", "S’entraîner", "練習する", "Praticar", "Üben", "Practicar"], ["PILOT TRAINING", "ENTRAÎNEMENT", "パイロット訓練", "TREINO DE PILOTO", "PILOTENTRAINING", "ENTRENAMIENTO"], ["Start training", "Commencer", "訓練開始", "Começar treino", "Training starten", "Empezar"], ["Skip", "Passer", "スキップ", "Pular", "Überspringen", "Saltar"], ["TRAINING COMPLETE", "ENTRAÎNEMENT TERMINÉ", "訓練完了", "TREINO CONCLUÍDO", "TRAINING FERTIG", "ENTRENAMIENTO COMPLETO"], ["Let's race", "C’est parti", "レース開始", "Vamos correr", "Los geht’s", "¡A correr!"], ["Collect", "Récupérer", "受け取る", "Coletar", "Einsammeln", "Recoger"], ["CUP RESULTS", "RÉSULTATS DE LA COUPE", "カップ結果", "RESULTADOS DA COPA", "POKALERGEBNISSE", "RESULTADOS DE LA COPA"], ["Speed", "Vitesse", "スピード", "Velocidade", "Tempo", "Velocidad"], ["Auto-collect rewards", "Récupération auto", "報酬を自動受取", "Coletar prêmios automaticamente", "Belohnungen automatisch", "Recoger premios automáticamente"], ["Boosts for this run", "Bonus pour cette course", "このレースのブースト", "Boosts desta corrida", "Boosts für diesen Lauf", "Potenciadores de esta carrera"], ["FINISH!", "ARRIVÉE !", "ゴール!", "CHEGADA!", "ZIEL!", "¡META!"]], IDX = { en: 0, fr: 1, ja: 2, pt: 3, de: 4, es: 5 }, MAP = new Map(T2.map((row) => [row[0].toLowerCase(), row])), current = "en";
+    var LANGS = [{ code: "en", name: "English", flag: "\uD83C\uDDEC\uD83C\uDDE7" }, { code: "fr", name: "Français", flag: "\uD83C\uDDEB\uD83C\uDDF7" }, { code: "ja", name: "日本語", flag: "\uD83C\uDDEF\uD83C\uDDF5" }, { code: "pt", name: "Português (BR)", flag: "\uD83C\uDDE7\uD83C\uDDF7" }, { code: "de", name: "Deutsch", flag: "\uD83C\uDDE9\uD83C\uDDEA" }, { code: "es", name: "Español", flag: "\uD83C\uDDEA\uD83C\uDDF8" }], T2 = [["Play", "Jouer", "プレイ", "Jogar", "Spielen", "Jugar"], ["Garage", "Garage", "ガレージ", "Garagem", "Garage", "Garaje"], ["Shop", "Boutique", "ショップ", "Loja", "Shop", "Tienda"], ["Missions", "Missions", "ミッション", "Missões", "Missionen", "Misiones"], ["Daily", "Jour", "デイリー", "Diário", "Täglich", "Diario"], ["Cups", "Coupes", "カップ", "Copas", "Pokale", "Copas"], ["Ranks", "Rangs", "ランク", "Ranking", "Ränge", "Ranking"], ["Share", "Partager", "シェア", "Compartilhar", "Teilen", "Compartir"], ["Entry", "Entrée", "初回", "Entrada", "Start", "Entrada"], ["Launch", "Lancer", "起動", "Abrir", "Starten", "Abrir"], ["SETTINGS", "PARAMÈTRES", "設定", "AJUSTES", "EINSTELLUNGEN", "AJUSTES"], ["Sound", "Son", "サウンド", "Som", "Sound", "Sonido"], ["Music", "Musique", "音楽", "Música", "Musik", "Música"], ["Vibration", "Vibration", "振動", "Vibração", "Vibration", "Vibración"], ["Hint arrows", "Flèches", "ヒント", "Setas", "Pfeile", "Flechas"], ["Comfort", "Confort", "目に優しい", "Conforto", "Komfort", "Confort"], ["Buy items", "Acheter", "アイテム購入", "Comprar itens", "Items kaufen", "Comprar objetos"], ["Race without a special", "Courir sans spécial", "スペシャルなしで走る", "Correr sem especial", "Ohne Spezial fahren", "Correr sin especial"], ["Back to the bag", "Retour au sac", "バッグに戻る", "Voltar à bolsa", "Zurück zur Tasche", "Volver a la bolsa"], ["In your bag", "Dans ton sac", "バッグの中", "Na sua bolsa", "In deiner Tasche", "En tu bolsa"], ["Take it", "Prendre", "持っていく", "Levar", "Mitnehmen", "Llevar"], ["Cancel", "Annuler", "キャンセル", "Cancelar", "Abbrechen", "Cancelar"], ["Share my rank", "Partager mon rang", "ランクをシェア", "Compartilhar rank", "Rang teilen", "Compartir rango"], ["Save image", "Enregistrer", "画像を保存", "Salvar imagem", "Bild speichern", "Guardar imagen"], ["Copy text", "Copier", "テキストをコピー", "Copiar texto", "Text kopieren", "Copiar texto"], ["Unlocks", "Débloque", "解放", "Desbloqueia", "Schaltet frei", "Desbloquea"], ["Ready to claim", "À récupérer", "受け取り可能", "Pronto para coletar", "Bereit", "Listo para cobrar"], ["Claim all", "Tout récupérer", "すべて受け取る", "Coletar tudo", "Alle abholen", "Cobrar todo"], ["Account", "Compte", "アカウント", "Conta", "Konto", "Cuenta"], ["Continue with Google", "Continuer avec Google", "Googleで続ける", "Continuar com Google", "Weiter mit Google", "Continuar con Google"], ["Continue with Apple", "Continuer avec Apple", "Appleで続ける", "Continuar com Apple", "Weiter mit Apple", "Continuar con Apple"], ["Send code", "Envoyer le code", "コードを送信", "Enviar código", "Code senden", "Enviar código"], ["Sign in", "Se connecter", "サインイン", "Entrar", "Anmelden", "Iniciar sesión"], ["Sign out", "Se déconnecter", "サインアウト", "Sair", "Abmelden", "Cerrar sesión"], ["Sync now", "Synchroniser", "今すぐ同期", "Sincronizar", "Jetzt synchronisieren", "Sincronizar"], ["Keep this", "Garder", "これを残す", "Manter", "Behalten", "Conservar"], ["Eye comfort", "Confort visuel", "目に優しい", "Conforto visual", "Augenschonend", "Confort visual"], ["Graphics", "Graphisme", "画質", "Gráficos", "Grafik", "Gráficos"], ["Language", "Langue", "言語", "Idioma", "Sprache", "Idioma"], ["Profile", "Profil", "プロフィール", "Perfil", "Profil", "Perfil"], ["How to play", "Comment jouer", "遊び方", "Como jogar", "Anleitung", "Cómo jugar"], ["Jump guide", "Guide du saut", "ジャンプガイド", "Guia do salto", "Sprung-Guide", "Guía de salto"], ["Restore", "Restaurer", "復元", "Restaurar", "Wiederherstellen", "Restaurar"], ["Paused", "Pause", "一時停止", "Pausado", "Pausiert", "En pausa"], ["Resume", "Reprendre", "再開", "Continuar", "Weiter", "Reanudar"], ["Retry", "Rejouer", "リトライ", "De novo", "Nochmal", "Reintentar"], ["Home", "Accueil", "ホーム", "Início", "Start", "Inicio"], ["Tracks", "Circuits", "コース", "Pistas", "Strecken", "Pistas"], ["Next track", "Circuit suivant", "次のコース", "Próxima pista", "Nächste Strecke", "Siguiente pista"], ["GAME OVER", "PERDU", "ゲームオーバー", "FIM DE JOGO", "GAME OVER", "FIN DEL JUEGO"], ["NEW BEST!", "RECORD !", "自己ベスト!", "NOVO RECORDE!", "NEUER REKORD!", "¡NUEVO RÉCORD!"], ["Best", "Record", "ベスト", "Recorde", "Rekord", "Récord"], ["Distance", "Distance", "距離", "Distância", "Distanz", "Distancia"], ["Coins", "Pièces", "コイン", "Moedas", "Münzen", "Monedas"], ["Near miss", "Frôlé", "ニアミス", "Por um triz", "Knapp", "Roce"], ["Time", "Temps", "タイム", "Tempo", "Zeit", "Tiempo"], ["Lives lost", "Vies perdues", "失ったライフ", "Vidas perdidas", "Verlorene Leben", "Vidas perdidas"], ["Unused boosts", "Bonus inutilisés", "未使用ブースト", "Boosts não usados", "Ungenutzte Boosts", "Potenciadores sin usar"], ["TAP!", "TAPE !", "タップ!", "TOQUE!", "TIPPEN!", "¡TOCA!"], ["Reward", "Récompense", "報酬", "Prêmio", "Belohnung", "Premio"], ["Rewards", "Récompenses", "報酬", "Prêmios", "Belohnungen", "Premios"], ["REVIVE?", "REVIVRE ?", "復活する？", "REVIVER?", "WIEDERBELEBEN?", "¿REVIVIR?"], ["Watch ad · Revive", "Pub · Revivre", "広告で復活", "Anúncio · Reviver", "Werbung · Weiter", "Anuncio · Revivir"], ["No thanks · end race", "Non merci · fin", "やめる · 終了", "Não · terminar", "Nein · beenden", "No · terminar"], ["SPECIAL", "SPÉCIAL", "スペシャル", "ESPECIAL", "SPEZIAL", "ESPECIAL"], ["No special", "Aucun spécial", "スペシャルなし", "Sem especial", "Kein Spezial", "Sin especial"], ["Pure skill run", "Pur talent", "実力勝負", "Só habilidade", "Nur Können", "Solo habilidad"], ["GO", "GO", "GO", "VAI", "LOS", "YA"], ["RANK GATE", "PORTE DE RANG", "ランクゲート", "PORTÃO DE RANK", "RANG-TOR", "PUERTA DE RANGO"], ["Bonus", "Bonus", "ボーナス", "Bônus", "Bonus", "Bonus"], ["BONUS", "BONUS", "ボーナス", "BÔNUS", "BONUS", "BONUS"], ["Replay freely", "Rejouable à volonté", "何度でもプレイ可", "Jogue à vontade", "Beliebig oft", "Repite cuanto quieras"], ["Every hour", "Chaque heure", "毎時", "Toda hora", "Jede Stunde", "Cada hora"], ["Race the Bonus", "Courir le Bonus", "ボーナスに挑戦", "Correr o Bônus", "Bonus fahren", "Correr el Bonus"], ["Coming soon", "Bientôt", "近日公開", "Em breve", "Bald", "Próximamente"], ["Race Endless", "Courir Endless", "エンドレスへ", "Correr Endless", "Endless fahren", "Correr Endless"], ["Free coins", "Pièces gratuites", "無料コイン", "Moedas grátis", "Gratis-Münzen", "Monedas gratis"], ["Race", "Course", "レース", "Correr", "Rennen", "Carrera"], ["How EXP works", "Comment marche l’EXP", "EXPの仕組み", "Como funciona o EXP", "So funktioniert EXP", "Cómo funciona el EXP"], ["Best EXP", "Meilleur EXP", "ベストEXP", "Melhor EXP", "Bester EXP", "Mejor EXP"], ["NEW BEST EXP!", "NOUVEAU RECORD EXP !", "EXP新記録！", "NOVO RECORDE DE EXP!", "NEUER EXP-REKORD!", "¡NUEVO RÉCORD DE EXP!"], ["How rank works", "Comment marche le rang", "ランクの仕組み", "Como funciona o rank", "So funktioniert der Rang", "Cómo funciona el rango"], ["Score", "Score", "スコア", "Pontos", "Punkte", "Puntos"], ["CONTINUE?", "CONTINUER ?", "コンティニュー?", "CONTINUAR?", "WEITER?", "¿CONTINUAR?"], ["No thanks", "Non merci", "結構です", "Não, obrigado", "Nein danke", "No, gracias"], ["SELECT TRACK", "CHOISIR UN CIRCUIT", "コース選択", "ESCOLHER PISTA", "STRECKE WÄHLEN", "ELEGIR PISTA"], ["Endless", "Infini", "エンドレス", "Infinito", "Endlos", "Infinito"], ["GARAGE", "GARAGE", "ガレージ", "GARAGEM", "GARAGE", "GARAJE"], ["Selected", "Sélectionnée", "選択中", "Selecionado", "Ausgewählt", "Seleccionado"], ["Select", "Choisir", "選択", "Selecionar", "Wählen", "Elegir"], ["Upgrades", "Améliorations", "アップグレード", "Melhorias", "Upgrades", "Mejoras"], ["MISSIONS", "MISSIONS", "ミッション", "MISSÕES", "MISSIONEN", "MISIONES"], ["DAILY", "QUOTIDIEN", "デイリー", "DIÁRIO", "TÄGLICH", "DIARIO"], ["CUPS", "COUPES", "カップ", "COPAS", "POKALE", "COPAS"], ["SHOP", "BOUTIQUE", "ショップ", "LOJA", "SHOP", "TIENDA"], ["TOP PILOTS", "MEILLEURS PILOTES", "トップパイロット", "MELHORES PILOTOS", "TOP-PILOTEN", "MEJORES PILOTOS"], ["This week", "Cette semaine", "今週", "Esta semana", "Diese Woche", "Esta semana"], ["All time", "Toujours", "全期間", "Geral", "Allzeit", "Histórico"], ["Race now", "Courir", "レース開始", "Correr agora", "Jetzt fahren", "Correr ya"], ["Standings", "Classement", "順位", "Classificação", "Stand", "Clasificación"], ["Prizes", "Prix", "賞品", "Prêmios", "Preise", "Premios"], ["Divisions", "Divisions", "ディビジョン", "Divisões", "Divisionen", "Divisiones"], ["Upcoming", "À venir", "開催予定", "Próximas", "Demnächst", "Próximas"], ["CLAIM", "RÉCUPÉRER", "受け取る", "RESGATAR", "ABHOLEN", "RECLAMAR"], ["DAILY REWARD", "RÉCOMPENSE DU JOUR", "デイリー報酬", "PRÊMIO DIÁRIO", "TAGESBELOHNUNG", "PREMIO DIARIO"], ["ENTRY REWARD", "BONUS D’ENTRÉE", "初回報酬", "PRÊMIO DE ENTRADA", "START-BONUS", "PREMIO DE ENTRADA"], ["LAUNCH REWARD", "BONUS DE LANCEMENT", "起動報酬", "PRÊMIO DE ABERTURA", "START-BELOHNUNG", "PREMIO DE INICIO"], ["SHARE REWARDS", "BONUS DE PARTAGE", "シェア報酬", "PRÊMIO POR COMPARTILHAR", "TEILEN-BONUS", "PREMIO POR COMPARTIR"], ["INVITE FRIENDS", "INVITER DES AMIS", "友達を招待", "CONVIDAR AMIGOS", "FREUNDE EINLADEN", "INVITAR AMIGOS"], ["RATE US", "NOTEZ-NOUS", "評価する", "AVALIE-NOS", "BEWERTE UNS", "VALÓRANOS"], ["ADD TO SCREEN", "AJOUTER À L’ÉCRAN", "ホーム画面に追加", "ADICIONAR À TELA", "ZUM HOMESCREEN", "AÑADIR A INICIO"], ["NO CONNECTION", "PAS DE CONNEXION", "接続なし", "SEM CONEXÃO", "KEINE VERBINDUNG", "SIN CONEXIÓN"], ["WATCH AD REWARD", "PUB RÉCOMPENSÉE", "動画で報酬", "PRÊMIO POR ANÚNCIO", "WERBE-BELOHNUNG", "PREMIO POR ANUNCIO"], ["WELCOME BACK", "BON RETOUR", "おかえり", "BEM-VINDO DE VOLTA", "WILLKOMMEN ZURÜCK", "BIENVENIDO DE NUEVO"], ["SHARE", "PARTAGER", "シェア", "COMPARTILHAR", "TEILEN", "COMPARTIR"], ["RATE NOW", "NOTER", "評価する", "AVALIAR", "BEWERTEN", "VALORAR"], ["NOT NOW", "PLUS TARD", "後で", "AGORA NÃO", "SPÄTER", "AHORA NO"], ["GOT IT", "COMPRIS", "OK", "ENTENDI", "VERSTANDEN", "ENTENDIDO"], ["RETRY", "RÉESSAYER", "再試行", "TENTAR DE NOVO", "ERNEUT", "REINTENTAR"], ["OPEN PROFILE", "OUVRIR LE PROFIL", "プロフィールを開く", "ABRIR PERFIL", "PROFIL ÖFFNEN", "ABRIR PERFIL"], ["YOUR PROFILE", "TON PROFIL", "プロフィール", "SEU PERFIL", "DEIN PROFIL", "TU PERFIL"], ["PILOT", "PILOTE", "パイロット", "PILOTO", "PILOT", "PILOTO"], ["Leaderboard", "Classement", "ランキング", "Ranking", "Rangliste", "Clasificación"], ["Trophies", "Trophées", "トロフィー", "Troféus", "Trophäen", "Trofeos"], ["Runs", "Courses", "プレイ数", "Corridas", "Läufe", "Carreras"], ["Car", "Voiture", "車", "Carro", "Auto", "Coche"], ["Save", "Enregistrer", "保存", "Salvar", "Speichern", "Guardar"], ["Practice it", "S’entraîner", "練習する", "Praticar", "Üben", "Practicar"], ["PILOT TRAINING", "ENTRAÎNEMENT", "パイロット訓練", "TREINO DE PILOTO", "PILOTENTRAINING", "ENTRENAMIENTO"], ["Start training", "Commencer", "訓練開始", "Começar treino", "Training starten", "Empezar"], ["Skip", "Passer", "スキップ", "Pular", "Überspringen", "Saltar"], ["TRAINING COMPLETE", "ENTRAÎNEMENT TERMINÉ", "訓練完了", "TREINO CONCLUÍDO", "TRAINING FERTIG", "ENTRENAMIENTO COMPLETO"], ["Let's race", "C’est parti", "レース開始", "Vamos correr", "Los geht’s", "¡A correr!"], ["Collect", "Récupérer", "受け取る", "Coletar", "Einsammeln", "Recoger"], ["CUP RESULTS", "RÉSULTATS DE LA COUPE", "カップ結果", "RESULTADOS DA COPA", "POKALERGEBNISSE", "RESULTADOS DE LA COPA"], ["Speed", "Vitesse", "スピード", "Velocidade", "Tempo", "Velocidad"], ["Auto-collect rewards", "Récupération auto", "報酬を自動受取", "Coletar prêmios automaticamente", "Belohnungen automatisch", "Recoger premios automáticamente"], ["Boosts for this run", "Bonus pour cette course", "このレースのブースト", "Boosts desta corrida", "Boosts für diesen Lauf", "Potenciadores de esta carrera"], ["FINISH!", "ARRIVÉE !", "ゴール!", "CHEGADA!", "ZIEL!", "¡META!"]], IDX = { en: 0, fr: 1, ja: 2, pt: 3, de: 4, es: 5 }, MAP = new Map(T2.map((row) => [row[0].toLowerCase(), row])), current = "en";
     var getLang = () => current;
     function tr(en, lang = current) { let row = MAP.get(en.trim().toLowerCase()); return row ? row[IDX[lang]] : en; }
     function setLangCode(lang) { current = lang; }
@@ -16343,7 +16517,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
     function rival(name, score) { let h = 2166136261; for (let i = 0; i < name.length; i++)
         h = Math.imul(h ^ name.charCodeAt(i), 16777619) >>> 0; let rnd = (k) => (Math.imul(h ^ k * 2654435761, 1597334677) >>> 0) % 1e4 / 1e4, online = rnd(1) < 0.3; return { runs: Math.round(40 + rnd(2) * 900 + score / 40), car: SKINS[Math.floor(rnd(3) * SKINS.length)].name.replace("XWAVE ", ""), avg: Math.round(score * (0.45 + rnd(11) * 0.25)), seen: online ? "Online now" : rnd(7) < 0.5 ? `Last seen ${1 + Math.floor(rnd(8) * 50)}m ago` : `Last seen ${1 + Math.floor(rnd(9) * 20)}h ago`, online, streak: 1 + Math.floor(rnd(10) * 30) }; }
     function bonusOv(ui, g) { let o = ui.bonus; if (!o)
-        return; modal(ui, g, "bonus", { title: "BONUS", icon: ICON.gift }, (x, y, w) => { var _a, _b; let cc = (_a = BONUS_COLOR[o.theme]) !== null && _a !== void 0 ? _a : "#ffc21a"; g.rr(x, y, w, 100, 16, g.lin(0, y, 0, y + 100, [[0, `${cc}66`], [1, `${cc}22`]]), cc, 1.5), g.text((_b = BONUS_EMOJI[o.theme]) !== null && _b !== void 0 ? _b : "\uD83C\uDFC1", x + w / 2, y + 30, { size: 32, align: "center", noTr: !0 }), g.text(o.name, x + w / 2, y + 64, { size: 20, align: "center", italic: !0, noTr: !0 }), g.rich(o.live ? `<b class="live">OPEN</b> ${o.left} left` : `<b class="soon">NEXT</b> ${o.opens}`, x, y + 76, w, { size: 11.5, align: "center", font: "b" }), y += 110; let rules = [`${ICON.clock}<b>${o.minutes} min</b> to the finish · <b>1 play</b>`, `${ICON.coin}<b>Coins only</b> · finish +${fmt(o.finish)}`, `${ICON.rocket}<b>Rare specials</b> fire by themselves`, `${ICON.gift}<b>Every 2 h</b> · open 60 min · new place`]; for (let r of rules)
+        return; modal(ui, g, "bonus", { title: "BONUS", icon: ICON.gift }, (x, y, w) => { var _a, _b; let cc = (_a = BONUS_COLOR[o.theme]) !== null && _a !== void 0 ? _a : "#ffc21a"; g.rr(x, y, w, 100, 16, g.lin(0, y, 0, y + 100, [[0, `${cc}66`], [1, `${cc}22`]]), cc, 1.5), g.text((_b = BONUS_EMOJI[o.theme]) !== null && _b !== void 0 ? _b : "\uD83C\uDFC1", x + w / 2, y + 30, { size: 32, align: "center", noTr: !0 }), g.text(o.name, x + w / 2, y + 64, { size: 20, align: "center", italic: !0, noTr: !0 }), g.rich(o.live ? `<b class="live">OPEN</b> ${o.left} left` : `<b class="soon">NEXT</b> ${o.opens}`, x, y + 76, w, { size: 11.5, align: "center", font: "b" }), y += 110; let rules = [`${ICON.clock}<b>${o.minutes} min</b> to the finish · <b>Replay freely</b>`, `${ICON.coin}<b>Coins only</b> · finish +${fmt(o.finish)}`, `${ICON.rocket}<b>Rare specials</b> fire by themselves`, `${ICON.gift}<b>Every hour</b> · open 30 min · random place`]; for (let r of rules)
         y += g.rich(r, x + 4, y, w - 8, { size: 12, font: "b", color: "#dfe8ff" }) + 4; if (y += 6, o.live && !o.played)
         button(g, "bonusgo", x, y, w, 54, `${ICON.play} Race`, () => ui.h.bonusGo(), { style: "gold", size: 20 });
     else
@@ -17337,7 +17511,13 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         document.execCommand("copy");
     }
     catch (_a) { } ta.remove(); }
-    var BONUS_DIFF_OFFSET = 900, VERSION = "v3.0.5", ROCKET_PRICE = 250, WELCOME_AFTER_H = 12, WELCOME_GIFT = { coins: 200, shield: 1 }, PERK = { entry: 300, launch: 300, share: 300, invite: 100 }, WORLD_NAMES = { city: "FUTURE CITY", tunnel: "NEON TUNNEL", cloud: "CLOUD CITY", space: "SPACE ZONE", mega: "XWAVE MEGACITY", desert: "DESERT HIGHWAY", forest: "PINE FOREST", country: "COUNTRY ROAD", sea: "OCEAN CAUSEWAY", harbor: "NEON HARBOR", solar: "SOLAR FARMS", canyon: "CRYSTAL CANYON", belt: "ASTEROID BELT", storm: "STORM FRONT", volcano: "VOLCANO CORE", ice: "AURORA ICE" }, POWER_LABEL = { shield: "SHIELD", magnet: "MAGNET", turbo: "TURBO BOOST", double: "DOUBLE EXP", life: "EXTRA LIFE", super: "ROADSTER JUMP", dash: "AIR DASH", escape: "SKY ESCAPE", hyper: "HYPER JUMP", ghost: "PHASE GHOST", wall: "WALL RUN", rail: "SKY RAIL", tunnel: "TUNNEL RIDER", mystery: "MYSTERY BOX" }, POWER_SUB = { shield: "", magnet: "coins fly to you", turbo: "smash through obstacles", double: "EXP ×2 for a while", life: "+1 heart", super: "tap ROADSTER to launch", dash: "flip across 2 lanes", escape: "tap SOS to fly up", hyper: "fires by itself", ghost: "through everything · AAA special", wall: "along the wall · AAA special", rail: "glide the sky rail · AAA special", tunnel: "ride the roof · AAA special", mystery: "a random reward" }, POWER_ICON = { shield: ICON.shield, magnet: ICON.magnet, turbo: ICON.bolt, double: ICON.x2, life: ICON.heart, super: ICON.rocket, dash: ICON.dash, escape: ICON.sos, hyper: ICON.hyper, ghost: ICON.shield, wall: ICON.dash, rail: ICON.rocket, tunnel: ICON.rocket, mystery: ICON.gift };
+    var BONUS_DIFF_OFFSET = 900;
+    function cleanName(n) { var _a; let out = ""; for (let ch of Array.from(n)) {
+        let cp = (_a = ch.codePointAt(0)) !== null && _a !== void 0 ? _a : 0;
+        if (/[0-9 _.\-]/.test(ch) || ch.toLowerCase() !== ch.toUpperCase() || cp >= 192 && cp < 592 || cp >= 1424 && cp < 4352 || cp >= 4352 && cp < 4608 || cp >= 12352 && cp < 12543 || cp >= 13312 && cp < 40960 || cp >= 44032 && cp < 55216)
+            out += ch;
+    } return out.trim().slice(0, 14); }
+    var VERSION = "v3.0.6", ROCKET_PRICE = 250, WELCOME_AFTER_H = 12, WELCOME_GIFT = { coins: 200, shield: 1 }, PERK = { entry: 300, launch: 300, share: 300, invite: 100 }, WORLD_NAMES = { city: "FUTURE CITY", tunnel: "NEON TUNNEL", cloud: "CLOUD CITY", space: "SPACE ZONE", mega: "XWAVE MEGACITY", desert: "DESERT HIGHWAY", forest: "PINE FOREST", country: "COUNTRY ROAD", sea: "OCEAN CAUSEWAY", harbor: "NEON HARBOR", solar: "SOLAR FARMS", canyon: "CRYSTAL CANYON", belt: "ASTEROID BELT", storm: "STORM FRONT", volcano: "VOLCANO CORE", ice: "AURORA ICE" }, POWER_LABEL = { shield: "SHIELD", magnet: "MAGNET", turbo: "TURBO BOOST", double: "DOUBLE EXP", life: "EXTRA LIFE", super: "ROADSTER JUMP", dash: "AIR DASH", escape: "SKY ESCAPE", hyper: "HYPER JUMP", ghost: "PHASE GHOST", wall: "WALL RUN", rail: "SKY RAIL", tunnel: "TUNNEL RIDER", mystery: "MYSTERY BOX" }, POWER_SUB = { shield: "", magnet: "coins fly to you", turbo: "smash through obstacles", double: "EXP ×2 for a while", life: "+1 heart", super: "tap ROADSTER to launch", dash: "flip across 2 lanes", escape: "tap SOS to fly up", hyper: "fires by itself", ghost: "through everything · AAA special", wall: "along the wall · AAA special", rail: "glide the sky rail · AAA special", tunnel: "ride the roof · AAA special", mystery: "a random reward" }, POWER_ICON = { shield: ICON.shield, magnet: ICON.magnet, turbo: ICON.bolt, double: ICON.x2, life: ICON.heart, super: ICON.rocket, dash: ICON.dash, escape: ICON.sos, hyper: ICON.hyper, ghost: ICON.shield, wall: ICON.dash, rail: ICON.rocket, tunnel: ICON.rocket, mystery: ICON.gift };
     class Game {
         turboMulNow(run, dt) { let want = run.turboT > 0 ? 1 : 0; if (this.turboK += (want - this.turboK) * (1 - Math.exp(-(want ? 9 : 5) * dt)), !want && this.turboK < 0.01)
             this.turboK = 0; return 1 + (SPEED.turboMul - 1) * this.turboK; }
@@ -17467,7 +17647,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
                     return; if (this.save.wallet -= price, this.save.items[k]++, this.persist(), this.audio.play("power"), this.ui.refreshProfile(this.save), this.ui.tracksSync(this.save, (_a = this.meta.myCup()) === null || _a === void 0 ? void 0 : _a.cup.track), this.ui.boostSync(k, this.save.items[k], this.save.equip[k], this.save.wallet), this.ui.isShown("bag"))
                     this.ui.bagSync(this.save); }, setLang: (code) => { this.save.settings.lang = code, this.persist(), this.audio.play("click"), this.ui.applyLang(code); }, dailyPop: () => { this.audio.play("click"), this.openDailyPopup(); }, rocketFix: (how) => this.resolveNeedRocket(how), setCountry: (code) => { this.save.country = code, this.save.countryAuto = !1, this.persist(), this.audio.play("click"), this.syncProfile(), this.ui.toast(`${flagOf(code)} Country set to ${countryName(code)}`); }, setAvatar: (i) => { this.save.avatar = i, this.save.perks.avatarPicked = !0, this.persist(), this.audio.play("click"), this.ui.settingsSync(this.save, this.meta.name, VERSION), this.syncProfile(); }, randomAvatar: () => { let i = this.save.avatar; while (i === this.save.avatar)
                     i = Math.floor(Math.random() * 24); this.save.avatar = i, this.save.perks.avatarPicked = !0, this.persist(), this.audio.play("power"), this.ui.settingsSync(this.save, this.meta.name, VERSION), this.syncProfile(); }, pause: () => this.pause(), resume: () => this.resume(), retry: () => this.afterResults(() => { var _a; if ((_a = this.course) === null || _a === void 0 ? void 0 : _a.bonus)
-                    return this.ui.toast(`${ICON.check} Bonus played · next one ${localTime(bonusState().next.start)}`, "#ffc21a"), this.goHome(); if (!this.course && !this.tutorialMode)
+                    return this.startBonus(); if (!this.course && !this.tutorialMode)
                     return this.openSpecialPick(this.variant === "track2" ? "track2" : "endless"); this.startRun(); }), continueAd: () => void this.continueByAd(), continueCoins: () => this.continueByCoins(), continueNo: () => this.gameOver(), adDouble: () => void this.adDouble(), adFreeCoins: () => void this.adFreeCoins(), adBoost: () => void this.adBoost(), selectSkin: (id) => this.selectSkin(id), buySkin: (id) => this.buySkin(id), upgrade: (k) => this.buyUpgrade(k), toggleSound: () => this.toggleSound(), toggleMusic: () => this.toggleMusic(), toggleQuality: () => this.toggleQuality(), toggleAssist: () => this.toggleAssist(), toggleComfort: () => this.toggleComfort(), toggleVibrate: () => { this.save.settings.vibrate = this.save.settings.vibrate === !1, this.persist(), this.audio.play("click"), this.vibrate(30), this.ui.refreshProfile(this.save); }, previewSkin: (id) => this.previewSkin(id) }), this.store = new DemoStore(container), this.ads = new Ads(container, { pause: () => this.audio.duck(!0), resume: () => this.audio.duck(!1) }), this.audio.setSfx(this.save.settings.sound), this.audio.setMusic(this.save.settings.music), this.migrateV2(), this.syncCarUnlocks(), this.applySkin(this.save.vehicle);
             let resize = () => this.onResize();
             if (window.addEventListener("resize", resize), (_a = window.visualViewport) === null || _a === void 0 ? void 0 : _a.addEventListener("resize", resize), document.addEventListener("visibilitychange", () => { if (document.hidden && this.state === "run")
@@ -17633,7 +17813,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.save.noAds = !0; if (g.starter)
             this.save.starterBought = !0; if (g.passDays)
             this.save.passUntil = Math.max(Date.now(), this.save.passUntil) + g.passDays * 86400000; this.save.purchases++, this.persist(), this.audio.play("mission"), this.ui.toast(`${ICON.check} ${p.name} · thank you!`, "var(--gold)"), this.ui.shopSync(this.save), this.ui.refreshProfile(this.save); }
-        setName(n) { let name = n.replace(/[^\p{L}\p{N} _.\-]/gu, "").trim().slice(0, 14); this.save.name = name, this.persist(), this.ui.toast(`${ICON.user} Pilot name: ${this.meta.name}`), this.ui.settingsSync(this.save, this.meta.name, VERSION), this.syncProfile(); }
+        setName(n) { let name = cleanName(n); this.save.name = name, this.persist(), this.ui.toast(`${ICON.user} Pilot name: ${this.meta.name}`), this.ui.settingsSync(this.save, this.meta.name, VERSION), this.syncProfile(); }
         syncProfile() { let prof = this.ui.isShown("profile"); if (this.ui.isShown("start"))
             this.showHome(); if (prof)
             this.openProfile(!1), this.ui.show("start", "profile"); }
@@ -17777,12 +17957,9 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.ui.bagSync(this.save, this.bagPickMode); if (this.ui.isShown("specialpick"))
             this.ui.specialPick(this.save, this.pickLabel()); this.ui.refreshProfile(this.save); }
         goRace() { this.ui.hideOverlay("specialpick"), this.startTrack(this.pickTrackId); }
-        openBonus() { var _a, _b; this.audio.play("click"); let bs = bonusState(), now = Date.now(); this.ui.bonusSync({ live: !!bs.live, theme: ((_a = bs.live) !== null && _a !== void 0 ? _a : bs.next).theme, name: BONUS_NAME[((_b = bs.live) !== null && _b !== void 0 ? _b : bs.next).theme], left: bs.live ? fmtLeft(bs.live.end - now) : "", opens: bs.live ? "" : `${localTime(bs.next.start)} · in ${fmtLeft(bs.next.start - now)}`, opensAt: localTime(bs.next.start), next: bs.live ? `${BONUS_NAME[bs.next.theme]} · ${localTime(bs.next.start)}` : "", finish: Math.round(BONUS.finishCoins * LEVELS[this.save.settings.speed].reward), minutes: BONUS.raceMinutes, played: !!bs.live && this.save.bonusPlayed === bs.live.key }); }
+        openBonus() { var _a, _b; this.audio.play("click"); let bs = bonusState(), now = Date.now(); this.ui.bonusSync({ live: !!bs.live, theme: ((_a = bs.live) !== null && _a !== void 0 ? _a : bs.next).theme, name: BONUS_NAME[((_b = bs.live) !== null && _b !== void 0 ? _b : bs.next).theme], left: bs.live ? fmtLeft(bs.live.end - now) : "", opens: bs.live ? "" : `${localTime(bs.next.start)} · in ${fmtLeft(bs.next.start - now)}`, opensAt: localTime(bs.next.start), next: bs.live ? `${BONUS_NAME[bs.next.theme]} · ${localTime(bs.next.start)}` : "", finish: Math.round(BONUS.finishCoins * LEVELS[this.save.settings.speed].reward), minutes: BONUS.raceMinutes, played: !1 }); }
         startBonus() { let bs = bonusState(); if (!bs.live) {
             this.ui.toast(`${ICON.clock} Next Bonus opens ${localTime(bs.next.start)}`, "#ffc21a");
-            return;
-        } if (this.save.bonusPlayed === bs.live.key) {
-            this.ui.toast(`${ICON.check} Bonus played · next one ${localTime(bs.next.start)}`, "#ffc21a");
             return;
         } this.ui.hideOverlay("bonus"), this.save.bonusPlayed = bs.live.key, this.persist(); let level = this.save.settings.speed, theme = bs.live.theme, sp = new Spawner; sp.level = level, sp.speedMul = LEVELS[level].speed, sp.course = { id: "probe", name: "", world: theme, length: 1, diffOffset: BONUS_DIFF_OFFSET, difficulty: 2, coinTarget: 0, reward: 0, sections: [] }; let d = 0; for (let t = 0; t < BONUS.raceMinutes * 60; t += 0.1)
             d += sp.speed(d) * 0.1; let length = Math.round(d / 100) * 100, names = BONUS_SECTIONS[theme].slice(0, 3), seg = length / names.length; this.tutorialMode = !1, this.course = { id: `bonus-${bs.live.key}`, name: BONUS_NAME[theme], world: theme, length, diffOffset: BONUS_DIFF_OFFSET, difficulty: 2, coinTarget: 0, reward: BONUS.finishCoins, bonus: !0, sections: names.map((n, i) => ({ name: n, from: Math.round(i * seg), to: Math.round((i + 1) * seg), density: i === 0 ? 0.75 : 1 })) }, this.startRun(); }

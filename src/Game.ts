@@ -58,7 +58,29 @@ import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } f
 import { dayKey } from './core/Save.ts';
 import { platform } from './platform.ts';
 
-const VERSION = 'v3.0.5';
+/**
+ * Pilot name: letters (any script), digits, space and _ . - only, max 14.
+ * (No Unicode property escapes: some mini-game JS engines on Android reject /\p{L}/u.)
+ */
+function cleanName(n: string) {
+  let out = '';
+  for (const ch of Array.from(n)) {
+    const cp = ch.codePointAt(0) ?? 0;
+    const ok =
+      /[0-9 _.\-]/.test(ch) ||
+      ch.toLowerCase() !== ch.toUpperCase() || // cased letters (Latin, Greek, Cyrillic, Vietnamese…)
+      (cp >= 0x00c0 && cp < 0x0250) ||
+      (cp >= 0x0590 && cp < 0x1100) || // Hebrew, Arabic, Indic, Thai…
+      (cp >= 0x1100 && cp < 0x1200) || // Hangul Jamo
+      (cp >= 0x3040 && cp < 0x30ff) || // Kana
+      (cp >= 0x3400 && cp < 0xa000) || // CJK
+      (cp >= 0xac00 && cp < 0xd7b0); // Hangul
+    if (ok) out += ch;
+  }
+  return out.trim().slice(0, 14);
+}
+
+const VERSION = 'v3.0.6';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -470,11 +492,8 @@ export class Game {
       resume: () => this.resume(),
       retry: () =>
         this.afterResults(() => {
-          // Bonus roads: one play per event
-          if (this.course?.bonus) {
-            this.ui.toast(`${ICON.check} Bonus played · next one ${localTime(bonusState().next.start)}`, '#ffc21a');
-            return this.goHome();
-          }
+          // v3.0.6 Bonus roads: replay freely while the event is open
+          if (this.course?.bonus) return this.startBonus();
           // v2: every EXP race starts with the special choice (Retry too)
           if (!this.course && !this.tutorialMode) return this.openSpecialPick(this.variant === 'track2' ? 'track2' : 'endless');
           this.startRun();
@@ -1020,7 +1039,7 @@ export class Game {
   }
 
   private setName(n: string) {
-    const name = n.replace(/[^\p{L}\p{N} _.\-]/gu, '').trim().slice(0, 14);
+    const name = cleanName(n);
     this.save.name = name;
     this.persist();
     this.ui.toast(`${ICON.user} Pilot name: ${this.meta.name}`);
@@ -1578,7 +1597,7 @@ export class Game {
       next: bs.live ? `${BONUS_NAME[bs.next.theme]} · ${localTime(bs.next.start)}` : '',
       finish: Math.round(BONUS.finishCoins * LEVELS[this.save.settings.speed].reward),
       minutes: BONUS.raceMinutes,
-      played: !!bs.live && this.save.bonusPlayed === bs.live.key,
+      played: false, // v3.0.6: replayable while open
     });
   }
 
@@ -1589,12 +1608,8 @@ export class Game {
       this.ui.toast(`${ICON.clock} Next Bonus opens ${localTime(bs.next.start)}`, '#ffc21a');
       return;
     }
-    if (this.save.bonusPlayed === bs.live.key) {
-      this.ui.toast(`${ICON.check} Bonus played · next one ${localTime(bs.next.start)}`, '#ffc21a');
-      return;
-    }
     this.ui.hideOverlay('bonus');
-    // one play per event: it counts as played from the start (revives still work inside the race)
+    // v3.0.6: replayable while open (bonusPlayed only remembers the last event played)
     this.save.bonusPlayed = bs.live.key;
     this.persist();
     const level = this.save.settings.speed;

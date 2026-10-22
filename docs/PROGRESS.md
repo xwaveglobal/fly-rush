@@ -4,6 +4,14 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-22 — v3.0.6
+
+**Done**: Android load failure found from the owner's screenshot — `/[^\p{L}\p{N} _.\-]/u` in `Game.setName` is a SyntaxError on the Android engine → `cleanName()` without `\p{}`; build guard in `scripts/build-tiktok.mjs` rejects post-ES2017 regex features. Baked audio for native (`Audio.ts`: `baked`, `bakeSfx`, `bakeLoopAsync`, synth helpers at the end of the file) to stop the iPhone crackle. Bonus: every 1 h, open 30 min, random place per opening (`meta/Bonus.ts` `themeIdx`), replayable (Game.startBonus / retry); tests in `tests/bonus.test.ts`.
+
+**Next**: owner tests v3.0.6 on the two Android phones and the iPhone (sound). If Android shows another engine error, the boot error screen prints it.
+
+---
+
 ## 2026-10-22 — v3.0.5
 
 **Done**: HUD coin card (race + total) and cleaner score box (`hud.ts`); Audio compat layer + resume (`src/audio/Audio.ts`, `main.ts`); Colour row removed (auto calibration kept, diag = tap version ×5); `src/ui/shared.ts` so the native bundle skips UI.ts and its images.
