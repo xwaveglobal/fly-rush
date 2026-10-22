@@ -5,7 +5,7 @@
         "label": "rw_revive",
         "ads": [
           {
-            "id": "ad_REPLACE_rewarded_rw_revive"
+            "id": "ad7698648409188239361"
           }
         ]
       },
@@ -13,7 +13,7 @@
         "label": "rw_end_bonus",
         "ads": [
           {
-            "id": "ad_REPLACE_rewarded_rw_end_bonus"
+            "id": "ad7698648440104470580"
           }
         ]
       },
@@ -21,10 +21,7 @@
         "label": "rw_free_coins",
         "ads": [
           {
-            "id": "ad_REPLACE_rewarded_rw_free_coins",
-            "config": {
-              "cooldown": 30
-            }
+            "id": "ad7698650608001796097"
           }
         ]
       },
@@ -32,7 +29,7 @@
         "label": "rw_head_start",
         "ads": [
           {
-            "id": "ad_REPLACE_rewarded_rw_head_start"
+            "id": "ad7698658129030809601"
           }
         ]
       },
@@ -40,10 +37,7 @@
         "label": "int_race_end",
         "ads": [
           {
-            "id": "ad_REPLACE_interstitial_int_race_end",
-            "config": {
-              "cooldown": 45
-            }
+            "id": "ad7698648500532201524"
           }
         ]
       }

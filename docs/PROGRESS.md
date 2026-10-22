@@ -4,6 +4,14 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-22 — v3.0.1 release package
+
+**Done**: HS Game ID = TikTok App ID `7698594517263403028` (in `src/native/hs.ts` and `tiktok/project.config.json`), SDK key set, real TikTok ad unit ids for the 5 places in `tiktok.hs-dashboard.json`. `npm run check:tiktok` → 0 fail, 0 warn. `npm run pack:tiktok` → `tiktok-tiktok.zip` (git-ignored).
+
+**Next**: paste `tiktok.hs-dashboard.json` (iaa_config → Ads Config raw JSON, products → Products import) in the HS dashboard; upload the zip; test on a phone (WebGL 2, ads, Beans shop).
+
+---
+
 ## 2026-10-22 — v3.0.1
 
 **Done**: pause never times out (Game.tick: `paused` no longer shares the `continue` 7 s countdown → it used to end the race); ad places renamed `rw_revive` / `rw_end_bonus` / `rw_free_coins` / `rw_head_start` (rewarded) and `int_race_end` (interstitial) in `src/native/hs.ts` + `tiktok.hs-dashboard.json`; home right rail always has Share / Entry / Launch (live where `HSGame.has`, else a tap explains; claimed = ✓); web preview takes keyboard focus on tap (the HS web shim cancels pointerdown, so arrows/WASD did nothing in a frame).

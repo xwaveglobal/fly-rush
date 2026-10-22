@@ -20,9 +20,9 @@ const hsModule = require('./hs-game.js');
 /** the kit also sets GameGlobal.HSGame (used when a loader hands back an empty module object) */
 const HSGame = hsModule && typeof hsModule.profile === 'function' ? hsModule : (typeof GameGlobal !== 'undefined' ? GameGlobal : globalThis as any).HSGame;
 
-/** HS credentials — empty while drafting (the game plays offline: device save, DEFAULTS rewards). */
-const GAME_ID = '';
-const SDK_KEY = '';
+/** HS credentials: Game ID = the TikTok App ID; SDK key from the HS dashboard (never the TikTok Client Secret). */
+const GAME_ID = '7698594517263403028';
+const SDK_KEY = 'sk_live_de9c8c226305de889005158a15610eeddc57dabe633c86cdee65948a87ee4e1d';
 
 /**
  * What each moment gives (offline defaults; the HS dashboard overrides them, no new build).
