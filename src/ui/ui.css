@@ -2370,33 +2370,11 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 #hud .scorebox .hme { display: inline-flex; align-items: center; gap: 4px; margin-right: 6px; padding-right: 6px; border-right: 1px solid rgba(255,255,255,.15); }
 #hud .scorebox .hme .clsb { height: 14px; min-width: 16px; font-size: 8.5px; padding: 0 3px; }
 
-/* ---- v2.2.5 Home: all-time rank on the avatar, glossy 3D buttons like the side rail, standout PLAY ---- */
+/* ---- v2.2.5 Home: all-time rank on the avatar (Home buttons stay exactly as the owner's reference shot, v2.2.7) ---- */
 #start .top-row .profile [data-k="ava"] { position: relative; flex: none; }
 #start .top-row .profile { overflow: visible !important; }
 #start .avrank { position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%); padding: 1px 6px; border-radius: 8px; font: 900 9.5px var(--font-body); font-style: normal; white-space: nowrap; color: #2a1600;
   background: linear-gradient(180deg, #ffe17a, #ffb21a); box-shadow: 0 0 0 1.5px #0b1436, 0 2px 6px rgba(0,0,0,.5); z-index: 2; }
-/* bottom buttons: same glossy candy look as the rail icons */
-#start .minirow .mini { height: 50px !important; border-radius: 16px !important; border: 1px solid rgba(255,255,255,.3) !important;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--c1) 85%, #fff) 0%, var(--c1) 38%, var(--c2) 100%) !important;
-  box-shadow: 0 4px 0 var(--edge), 0 8px 18px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.55), inset 0 -4px 10px rgba(0,0,0,.18) !important; overflow: hidden; }
-#start .minirow .mini::before { content: ''; position: absolute; left: 6%; right: 6%; top: 3px; height: 42%; border-radius: 12px 12px 18px 18px; background: linear-gradient(180deg, rgba(255,255,255,.45), rgba(255,255,255,0)); pointer-events: none; }
-#start .minirow .mini span { font: 900 14px var(--font) !important; font-style: italic !important; letter-spacing: .3px !important; text-shadow: 0 1px 2px rgba(0,0,0,.35); }
-#start .minirow .mini.missions span { text-shadow: 0 1px 0 rgba(255,255,255,.4); }
-#start .minirow .mini svg { width: 19px !important; height: 19px !important; filter: drop-shadow(0 1px 1px rgba(0,0,0,.3)); }
-#start .minirow { gap: 10px !important; }
-/* PLAY: bigger, glowing, with a light sweep */
-#start .menu-btns .mbtn[data-a="play"] { height: 82px !important; font-size: 36px !important; letter-spacing: 3px; border-radius: 24px !important;
-  box-shadow: 0 5px 0 #0c3a94, 0 0 0 2px rgba(255,255,255,.35), 0 0 34px rgba(79,195,255,.75), 0 14px 30px rgba(0,0,0,.5) !important; animation: playglow 2.2s ease-in-out infinite; }
-#start .menu-btns .mbtn[data-a="play"] .ib { width: 56px !important; height: 56px !important; border-radius: 18px !important; }
-#start .menu-btns .mbtn[data-a="play"] .ib svg { width: 30px !important; height: 30px !important; }
-#start .menu-btns .mbtn[data-a="play"]::before { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent); transform: skewX(-18deg); animation: playsweep 3s ease-in-out infinite; pointer-events: none; }
-@keyframes playglow { 50% { box-shadow: 0 5px 0 #0c3a94, 0 0 0 2px rgba(255,255,255,.5), 0 0 52px rgba(79,195,255,1), 0 14px 30px rgba(0,0,0,.5); } }
-@keyframes playsweep { 0%, 55% { left: -60%; } 100% { left: 130%; } }
-@media (prefers-reduced-motion: reduce) { #start .menu-btns .mbtn[data-a="play"], #start .menu-btns .mbtn[data-a="play"]::before { animation: none !important; } }
-#start .minirow .mini { height: 46px !important; gap: 4px !important; padding: 0 5px !important; }
-#start .minirow .mini span { font-size: 12.5px !important; letter-spacing: 0 !important; overflow: visible !important; text-overflow: clip !important; }
-#start .minirow .mini svg { width: 16px !important; height: 16px !important; }
-#start .menu-btns .mbtn[data-a="play"] { height: 76px !important; font-size: 34px !important; }
 
 /* ---- v2.2.6: every button in the glossy 3D candy style of the Home buttons ---- */
 #ui .screen .btn:not(.mbtn):not(.linkbtn) {
@@ -2415,6 +2393,6 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 /* result / pause nav row */
 #ui .screen .navrow .btn.nav { border-radius: 16px !important; }
 /* round icon buttons (close / share / back): glossy navy discs */
-#ui .screen .icon-btn { background: linear-gradient(180deg, #3a4f9c, #18235a) !important; border: 1px solid rgba(255,255,255,.3) !important;
+#ui .screen:not(#start) .icon-btn { background: linear-gradient(180deg, #3a4f9c, #18235a) !important; border: 1px solid rgba(255,255,255,.3) !important;
   box-shadow: 0 3px 0 #0b1238, 0 6px 14px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.5) !important; }
-#ui .screen .icon-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #0b1238, inset 0 1px 0 rgba(255,255,255,.4) !important; }
+#ui .screen:not(#start) .icon-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #0b1238, inset 0 1px 0 rgba(255,255,255,.4) !important; }

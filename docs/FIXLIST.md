@@ -229,3 +229,4 @@ Owner 07:05: "rà soát sửa toàn bộ" → fix H–O now.
 ## AB. Round 23 (owner 09:03) — done v2.2.5
 - Avatar on Home shows the all-time rank; buttons in the glossy style of the side buttons; PLAY stands out.
 - (09:06) Same glossy style for the buttons on every other screen — done v2.2.6.
+- (09:09) Home buttons exactly like the reference shot (style + colours) — done v2.2.7.

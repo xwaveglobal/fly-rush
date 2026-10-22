@@ -4,6 +4,12 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-22 — v2.2.7
+
+**Done**: removed the v2.2.5 Home button overrides (owner wants Home exactly as his 08:50 screenshot); glossy icon-button rule now skips `#start`.
+
+---
+
 ## 2026-10-22 — v2.2.6: glossy buttons everywhere
 
 **Done**: one CSS block at the end of `ui.css` (`#ui .screen .btn:not(.mbtn)` + `.icon-btn`) restyles every button.
