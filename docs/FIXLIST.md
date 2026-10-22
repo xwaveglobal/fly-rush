@@ -233,3 +233,4 @@ Owner 07:05: "rà soát sửa toàn bộ" → fix H–O now.
 - (09:12) Home exactly like the owner's mock-up image — done v2.2.8.
 - (09:16) Side tiles smaller + same size, balanced fonts (tiles, speed, bottom row) — done v2.2.9.
 - (09:18) Side tiles a bit smaller, equal squares; softer borders incl. the bottom row — done v2.2.10.
+- (09:21) Easy / Normal / Hard in different colours, default Normal — done v2.2.11.

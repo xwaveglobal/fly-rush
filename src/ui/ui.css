@@ -2334,9 +2334,9 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .bn-rules span { padding: 10px 12px !important; line-height: 1.35; }
 .bn-next { margin-top: -4px; text-align: center; }
 /* Z8 / Z9 race HUD: level tag + next goal */
-#hud .scorebox .lvtag2 { margin-left: 6px; padding: 1px 6px; border-radius: 6px; font: 900 9px var(--font-body); letter-spacing: 1.2px; vertical-align: 2px; color: #04122e; background: #9fe870; }
-#hud .scorebox .lvtag2.normal { background: #7fe6ff; }
-#hud .scorebox .lvtag2.hard { background: #ff7a5c; color: #fff; }
+#hud .scorebox .lvtag2 { margin-left: 6px; padding: 1px 6px; border-radius: 6px; font: 900 9px var(--font-body); letter-spacing: 1.2px; vertical-align: 2px; color: #064a22; background: #5ef08e; }
+#hud .scorebox .lvtag2.normal { background: #ffc84a; color: #5a2a00; }
+#hud .scorebox .lvtag2.hard { background: #ff5a48; color: #fff; }
 #hud .scorebox .hnext { display: flex; align-items: center; gap: 5px; margin-top: 3px; font: 800 10.5px var(--font-body); color: #d6e2ff; }
 #hud .scorebox .hnext[hidden] { display: none; }
 #hud .scorebox .hnext small { font-size: 8.5px; letter-spacing: 1.3px; color: var(--muted); }
@@ -2481,3 +2481,15 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 #start .rbtn .tag { font-size: 8.5px !important; padding: 1px 5px !important; bottom: 14px; right: -8px !important; }
 #start .minirow .mini { border-width: 1px !important; border-color: color-mix(in srgb, var(--mb) 45%, transparent) !important; }
 #start .speedsel { border-width: 1px !important; border-color: rgba(110,150,255,.22) !important; }
+
+/* v2.2.11: each speed level has its own colour (Easy green · Normal gold · Hard red) */
+#start .speedsel button[data-v="easy"] .chev, #start .speedsel button[data-v="easy"] small { color: #5ef08e !important; }
+#start .speedsel button[data-v="normal"] .chev, #start .speedsel button[data-v="normal"] small { color: #ffc84a !important; }
+#start .speedsel button[data-v="hard"] .chev, #start .speedsel button[data-v="hard"] small { color: #ff6b5c !important; }
+#start .speedsel button[data-v="easy"].on { background: linear-gradient(180deg, #6df59c, #1aa857) !important; box-shadow: 0 0 16px rgba(60,220,120,.55), inset 0 1px 0 rgba(255,255,255,.6) !important; }
+#start .speedsel button[data-v="normal"].on { background: linear-gradient(180deg, #ffd46a, #f0a020) !important; box-shadow: 0 0 16px rgba(255,180,40,.55), inset 0 1px 0 rgba(255,255,255,.6) !important; }
+#start .speedsel button[data-v="hard"].on { background: linear-gradient(180deg, #ff8a6a, #d9302a) !important; box-shadow: 0 0 16px rgba(255,80,60,.6), inset 0 1px 0 rgba(255,255,255,.55) !important; }
+#start .speedsel button[data-v="easy"].on .chev, #start .speedsel button[data-v="easy"].on small { color: #064a22 !important; }
+#start .speedsel button[data-v="normal"].on .chev, #start .speedsel button[data-v="normal"].on small { color: #7a3a00 !important; }
+#start .speedsel button[data-v="hard"].on .chev, #start .speedsel button[data-v="hard"].on small { color: #5a0a06 !important; }
+#start .speedsel button.on b { color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,.45) !important; }
