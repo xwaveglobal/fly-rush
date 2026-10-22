@@ -124,3 +124,15 @@ Status: **DONE in v2.1.0** (2026-10-22). G2 note: new per-world obstacles are ne
 - **L2.** Starting items: **1 HYPER + 2 Roadster** for new players (existing players get the difference once as a gift).
 - **L3.** Tapping an owned special (pre-race pick) opens a **confirm popup**: "Take Roadster into this race?" → [Take it] / [Cancel].
 - **L4.** The empty option reads clearly: **"Race without a special"** (instead of "None").
+
+## M. Round 8 — Home, Missions, first Play (owner 2026-10-22 06:59) — chốt, chưa code
+- **M1.** Language button only in **Settings** (remove it from the Home top bar).
+- **M2.** Home profile chip: the avatar must not cover text; show name + rank badge + EXP cleanly (today "#33,045 EXP ⋮" is cut).
+- **M3.** **Missions back as their own screen** (separate from Daily, like v1): auto-collect switch (on by default); when off, finished missions wait in a list with a Claim button each + "Claim all".
+- **M4.** Write many fun scenarios for both:
+  - *Daily* (4 a day, reset at midnight, coins): pass a rank gate · reach the 2nd world of a rank · clear a car block with a special · pick up 2 hearts in one race · finish a Bonus road · 3 races on Hard · 1,000 EXP without losing a heart · grab a Turbo and keep it to the end · fly through 10 rings · drive 8 km in one race …
+  - *Missions* (long career chains, 3 active, tiers with growing rewards + a pilot level): reach rank C → B → A → AA → AAA · drive 50 / 200 / 1,000 km in total · visit all 12 Endless worlds · finish 5 / 20 / 50 Bonus roads · use 10 / 50 specials · collect 5k / 25k / 100k coins · unlock every car · beat your best EXP 10 times …
+- **M5.** Remove the line explaining Easy / Normal / Hard under the speed selector.
+- **M6.** Remove the Bonus strip on Home (the Bonus button on the left rail is enough).
+- **M7.** Bigger **Play** button.
+- **M8.** First Play: show the **training card** first (what you will learn) with **Start training** and **Skip**; Skip goes straight to the track list.
