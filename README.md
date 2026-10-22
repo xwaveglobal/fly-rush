@@ -208,6 +208,12 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v3.0.10 changes — training button
+
+- First **Play** still opens the training card (Start training / Skip). After that, training is a **Training** button next to the "SELECT TRACK" title (both UIs).
+- Track list aligned: every card has its text on the same left edge and its number in the same top-right circle; upcoming tracks show a soft "?" instead of a left column.
+- No flag on the home profile chip (flags stay on leaderboards and the profile).
+
 ## v3.0.9 changes — Android smoothness · flags · rank table
 
 - **Smoother on Android** (home + race start): pooled obstacle / pickup meshes are now compiled at load (their shaders used to build on the first race frames); Android renders the 3D view at ≤ 1.5× pixel ratio; the home screen's canvas UI redraws/uploads at ~11 fps (it only pulses) instead of 25; baked audio is rendered in tiny slices (one music step per tick at 22 kHz, envelopes/filters every 16 samples, SFX one per tick after 1.5 s) and the next music intensity is prepared in the background, never at race start.

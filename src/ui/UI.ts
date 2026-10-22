@@ -341,7 +341,7 @@ export class UI {
     </section>
 
     <section id="tracks" class="screen">
-      ${this.head('SELECT TRACK')}
+      ${this.head('SELECT TRACK', `<button class="btn sm blue" data-a="help">${ICON.hand}<span>Training</span></button>`)}
       <div class="track-list" data-k="tracklist"></div>
       <div class="boost-row" data-k="boosts" hidden></div>
       <button class="btn gold adbtn" data-a="adboost" data-k="adboost" hidden>${ICON.play}</button>

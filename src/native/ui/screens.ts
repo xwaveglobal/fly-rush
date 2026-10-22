@@ -1,6 +1,5 @@
 /** v3 native UI — full screens (home, tracks, garage, missions, ranks, daily, shop…) */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { flagSvg } from '../../meta/Flags.ts';
 import { C, Gfx, bar, button, card, fmt, iconBtn, panel, rankBadge, toggle } from './gfx.ts';
 import type { UI } from './NativeUI.ts';
 import { BAG_ICON, BOLT, CAR_LINE, ICON, ITEM_ICON, RARITY_COLOR, ROCKET_W, SPECIAL_SHORT, TUT_ICON } from './consts.ts';
@@ -140,7 +139,7 @@ function start(ui: UI, g: Gfx) {
   if (o) {
     const pk = 'profile';
     // v3.0.8: chip fits its content and keeps a clear gap to the coin chip
-    const content = Math.max(g.measure(o.name, { size: 13.5, font: 'b' }), 24 + g.measure(fmt(o.bolts), { size: 12.5 }) + 34 + 26);
+    const content = Math.max(g.measure(o.name, { size: 13.5, font: 'b' }), 24 + g.measure(fmt(o.bolts), { size: 12.5 }) + 34);
     const cw = Math.max(110, Math.min(172, 54 + content + 14, wl - 14 - 18));
     const cc = CLASS_COLOR[ui.myClass];
     g.rr(18, top + 6, cw, 44, 22, g.isPressed(pk) ? 'rgba(79,195,255,.3)' : 'rgba(12,24,70,.86)', 'rgba(110,160,255,.45)', 1.2);
@@ -151,7 +150,6 @@ function start(ui: UI, g: Gfx) {
     g.text(o.name, 64, top + 18, { size: 13.5, maxW: cw - 54, noTr: true, weight: 800, font: 'b' });
     shieldBadge(g, ui.myClass, 64, top + 27, 18);
     g.rich(`<b>${fmt(o.bolts)}</b> ${BOLT}`, 88, top + 27, cw - 72, { size: 12.5 });
-    g.icon(flagSvg(s?.country || 'US'), 18 + cw - 30, top + 31, 20);
     const rk = o.allRank ? `#${o.allRank >= 10000 ? `${Math.round(o.allRank / 1000)}K` : fmt(o.allRank)}` : '#—';
     const rw = g.measure(rk, { size: 9 }) + 14;
     g.rr(40 - rw / 2, top + 44, rw, 15, 7.5, g.lin(0, top + 44, 0, top + 59, [[0, '#ffd84a'], [1, '#f0a800']]), '#7a4a00', 1);
@@ -288,8 +286,23 @@ function shieldBadge(g: Gfx, cls: RankClass, x: number, y: number, h: number) {
 function tracks(ui: UI, g: Gfx) {
   pageBg(g, 0.55);
   const s = ui.save;
-  const top = pageHead(ui, g, 'SELECT TRACK');
   if (!s) return;
+  // ---- header: back · SELECT TRACK · [Training] (v3.0.10: training lives here after the first run)
+  const row = capRow(g);
+  const hy = row.top + 2;
+  iconBtn(g, 'back', 12, hy, 40, ICON.chevL, () => ui.h.home());
+  const tw = 104;
+  const tx = row.right - tw;
+  {
+    const k = 'tr-training';
+    const pr = g.isPressed(k);
+    g.rr(tx, hy + 3, tw, 34, 17, pr ? 'rgba(79,195,255,.35)' : g.lin(0, hy, 0, hy + 34, [[0, '#2a4fb8'], [1, '#14286e']]), 'rgba(140,190,255,.6)', 1.2);
+    g.icon(ICON.hand, tx + 10, hy + 10, 20, '#ffffff');
+    g.text('Training', tx + 34, hy + 20.5, { size: 13, maxW: tw - 42 });
+    g.hit(tx - 4, hy - 2, tw + 8, 44, k, () => ui.h.help());
+  }
+  g.text('SELECT TRACK', 62, hy + 20, { size: 18, italic: true, maxW: tx - 62 - 10 });
+  const top = Math.max(hy + 50, safeTop(g) + 4);
   const col = column(g);
   const rank = playerRank(s.expBest, s.exp2Best);
   const aaa = CLASSES.indexOf(rank) >= CLASSES.indexOf('AAA');
@@ -310,7 +323,8 @@ function tracks(ui: UI, g: Gfx) {
       g.rich(sub, x + 16, y + 40, w * 0.62, { size: 11, font: 'b', color: C.muted });
       g.rich(meta, x + 16, y + h - 34, w * 0.75, { size: 13 });
       g.circle(x + w - 24, y + 24, 14, 'rgba(0,0,0,.5)', 'rgba(255,255,255,.5)');
-      g.rich(num, x + w - 38, y + 15, 28, { size: 13, align: 'center' });
+      if (num.startsWith('<svg')) g.icon(num, x + w - 32, y + 16, 16, '#ffffff');
+      else g.text(num, x + w - 24, y + 24.5, { size: 13, align: 'center', noTr: true });
       g.hit(x, y, w, h, key, fn);
       y += h + 10;
     };
@@ -321,12 +335,12 @@ function tracks(ui: UI, g: Gfx) {
     (['S', 'SS', 'SSS'] as RankClass[]).forEach((r, i) => {
       const key = `soon-${r}`;
       const h = 70;
-      g.rr(x, y, w, h, 14, 'rgba(20,14,50,.85)', 'rgba(167,123,255,.35)');
-      g.text('?', x + 34, y + h / 2, { size: 30, align: 'center', color: '#a77bff' });
-      g.text(['Ocean Drive', 'Volcano Run', 'Aurora Peak'][i], x + 64, y + 24, { size: 15, italic: true });
-      g.rich(`${ICON.lock} Reach rank <span class="clsb" style="--cc:${CLASS_COLOR[r]}">${r}</span>`, x + 64, y + 36, w - 110, { size: 11, font: 'b', color: C.muted });
-      g.circle(x + w - 24, y + h / 2, 13, 'rgba(0,0,0,.5)', 'rgba(255,255,255,.4)');
-      g.text(String(i + 3), x + w - 24, y + h / 2 + 0.5, { size: 12, align: 'center', noTr: true });
+      g.rr(x, y, w, h, 16, 'rgba(20,14,50,.85)', 'rgba(167,123,255,.35)');
+      g.text('?', x + w - 70, y + h / 2 + 1, { size: 40, align: 'center', color: 'rgba(167,123,255,.35)', shadow: null });
+      g.text(['Ocean Drive', 'Volcano Run', 'Aurora Peak'][i], x + 16, y + 24, { size: 17, italic: true, maxW: w - 120 });
+      g.rich(`${ICON.lock} Reach rank <span class="clsb" style="--cc:${CLASS_COLOR[r]}">${r}</span>`, x + 16, y + 38, w - 120, { size: 11, font: 'b', color: C.muted });
+      g.circle(x + w - 24, y + 24, 14, 'rgba(0,0,0,.5)', 'rgba(255,255,255,.5)');
+      g.text(String(i + 3), x + w - 24, y + 24.5, { size: 13, align: 'center', noTr: true });
       g.hit(x, y, w, h, key, () => ui.toast(`${ICON.lock} Reach rank ${r} on Mega Rush to open this track`, '#b7a6ff'));
       y += h + 10;
     });

@@ -4,6 +4,12 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-23 — v3.0.10
+
+**Done**: Training button in the track page header (`screens.ts tracks`, `UI.ts head`), card alignment, home chip flag removed. First Play → `openTutorialIntro` while `tutorialDone` is false (unchanged, verified in the sim).
+
+---
+
 ## 2026-10-22 — v3.0.9
 
 **Done**: Android jank (owner: home + race start) → compile hidden pooled meshes at load (Game.ts), `platform.android` + `scaleCap 1.5`, home UI redraw throttle (NativeUI.frame), audio baking sliced (Audio.ts). SVG flags `src/meta/Flags.ts` used by native gfx.rich (emoji → SVG) and pickers. Rank guide rows wrap (popups.ts rankguideOv).
