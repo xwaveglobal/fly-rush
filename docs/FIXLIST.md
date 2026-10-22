@@ -124,6 +124,7 @@ Status: **DONE in v2.1.0** (2026-10-22). G2 note: new per-world obstacles are ne
 - **L2.** Starting items: **1 HYPER + 2 Roadster** for new players (existing players get the difference once as a gift).
 - **L3.** Tapping an owned special (pre-race pick) opens a **confirm popup**: "Take Roadster into this race?" → [Take it] / [Cancel].
 - **L4.** The empty option reads clearly: **"Race without a special"** (instead of "None").
+- **L5.** (07:03) Buying is **separate** from the bag: the bag shows only what you own + a **"Buy items"** button; tapping it opens a **Buy popup** (SOS / Roadster / HYPER with coin prices). After buying, back to the bag.
 
 ## M. Round 8 — Home, Missions, first Play (owner 2026-10-22 06:59) — chốt, chưa code
 - **M1.** Language button only in **Settings** (remove it from the Home top bar).
