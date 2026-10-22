@@ -1,3 +1,4 @@
+import { platform } from '../platform.ts';
 export type Action = 'left' | 'right' | 'up' | 'down';
 
 /**
@@ -21,9 +22,16 @@ export class Input {
   private fired = false;
   private readonly threshold: number;
 
+  /**
+   * v3 native: touches come from tt.onTouch* through the touch router (src/native/main.ts), which
+   * gives the canvas UI first pick and calls touchBegin / touchMove / touchEnd for swipes.
+   * The keyboard still works in the desktop preview.
+   */
   constructor(el: HTMLElement) {
     this.threshold = Math.max(22, Math.min(window.innerWidth, window.innerHeight) * 0.045);
     window.addEventListener('keydown', this.onKey);
+    if (platform.native) return;
+    // web build: the page's own touch / mouse events
     el.addEventListener('touchstart', this.onTouchStart, { passive: false });
     el.addEventListener('touchmove', this.onTouchMove, { passive: false });
     el.addEventListener('touchend', this.onTouchEnd);
@@ -32,6 +40,43 @@ export class Input {
     el.addEventListener('pointerdown', this.onPointerDown);
     window.addEventListener('pointermove', this.onPointerMove);
     window.addEventListener('pointerup', this.onPointerUp);
+  }
+  private onTouchStart = (e: TouchEvent) => {
+    if (!this.enabled) return;
+    const t = e.changedTouches[0];
+    this.begin(t.clientX, t.clientY);
+    e.preventDefault();
+  };
+  private onTouchMove = (e: TouchEvent) => {
+    if (!this.enabled) return;
+    const t = e.changedTouches[0];
+    this.move(t.clientX, t.clientY);
+    e.preventDefault();
+  };
+  private onTouchEnd = () => this.end();
+  private pointerActive = false;
+  private onPointerDown = (e: PointerEvent) => {
+    if (e.pointerType !== 'mouse' || !this.enabled) return;
+    this.pointerActive = true;
+    this.begin(e.clientX, e.clientY);
+  };
+  private onPointerMove = (e: PointerEvent) => {
+    if (e.pointerType !== 'mouse' || !this.pointerActive) return;
+    this.move(e.clientX, e.clientY);
+  };
+  private onPointerUp = (e: PointerEvent) => {
+    if (e.pointerType !== 'mouse') return;
+    this.pointerActive = false;
+    this.end();
+  };
+  touchBegin(x: number, y: number) {
+    if (this.enabled) this.begin(x, y);
+  }
+  touchMove(x: number, y: number) {
+    if (this.enabled) this.move(x, y);
+  }
+  touchEnd() {
+    this.end();
   }
 
   private emit(a: Action) {
@@ -101,36 +146,6 @@ export class Input {
   private end() {
     this.tracking = false;
   }
-
-  private onTouchStart = (e: TouchEvent) => {
-    if (!this.enabled) return;
-    const t = e.changedTouches[0];
-    this.begin(t.clientX, t.clientY);
-    e.preventDefault();
-  };
-  private onTouchMove = (e: TouchEvent) => {
-    if (!this.enabled) return;
-    const t = e.changedTouches[0];
-    this.move(t.clientX, t.clientY);
-    e.preventDefault();
-  };
-  private onTouchEnd = () => this.end();
-
-  private pointerActive = false;
-  private onPointerDown = (e: PointerEvent) => {
-    if (e.pointerType !== 'mouse' || !this.enabled) return;
-    this.pointerActive = true;
-    this.begin(e.clientX, e.clientY);
-  };
-  private onPointerMove = (e: PointerEvent) => {
-    if (e.pointerType !== 'mouse' || !this.pointerActive) return;
-    this.move(e.clientX, e.clientY);
-  };
-  private onPointerUp = (e: PointerEvent) => {
-    if (e.pointerType !== 'mouse') return;
-    this.pointerActive = false;
-    this.end();
-  };
 
   /** milliseconds since current gesture began (diagnostics) */
   get gestureAge() {

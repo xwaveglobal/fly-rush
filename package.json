@@ -1,8 +1,8 @@
 {
   "name": "xwave-flying-run",
   "private": true,
-  "version": "1.0.0",
-  "description": "XWAVE Flying Run \u2014 mobile-first 3D flying-car endless runner (Three.js + TypeScript + Vite)",
+  "version": "3.0.0",
+  "description": "Sky Roadster — 3D flying-car endless runner: native TikTok mini game (v3) + web build (Three.js + TypeScript)",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
@@ -17,7 +17,11 @@
     "test:exp": "node --experimental-transform-types --no-warnings tests/exp.test.ts",
     "test:phases": "node --experimental-transform-types --no-warnings tests/phases.test.ts",
     "test:bonus": "node --experimental-transform-types --no-warnings tests/bonus.test.ts",
-    "test:server": "node --experimental-transform-types --no-warnings tests/server.test.ts"
+    "test:server": "node --experimental-transform-types --no-warnings tests/server.test.ts",
+    "build:tiktok": "node scripts/build-tiktok.mjs",
+    "check:tiktok": "node hs-sdk/hs-check.mjs tiktok",
+    "preview:tiktok": "node hs-sdk/web/hs-web.mjs preview tiktok",
+    "pack:tiktok": "node hs-sdk/web/hs-web.mjs pack tiktok --tiktok"
   },
   "dependencies": {
     "three": "0.169.0"

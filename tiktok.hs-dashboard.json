@@ -1,0 +1,131 @@
+{
+  "iaa_config": {
+    "placements": [
+      {
+        "label": "revive",
+        "ads": [
+          {
+            "id": "ad_REPLACE_rewarded_revive"
+          }
+        ]
+      },
+      {
+        "label": "end_bonus",
+        "ads": [
+          {
+            "id": "ad_REPLACE_rewarded_end_bonus"
+          }
+        ]
+      },
+      {
+        "label": "free_coins",
+        "ads": [
+          {
+            "id": "ad_REPLACE_rewarded_free_coins",
+            "config": {
+              "cooldown": 30
+            }
+          }
+        ]
+      },
+      {
+        "label": "head_start",
+        "ads": [
+          {
+            "id": "ad_REPLACE_rewarded_head_start"
+          }
+        ]
+      },
+      {
+        "label": "race_end",
+        "ads": [
+          {
+            "id": "ad_REPLACE_interstitial_race_end",
+            "config": {
+              "cooldown": 45
+            }
+          }
+        ]
+      }
+    ],
+    "rewards": {
+      "share": {
+        "coins": 300,
+        "$limit": "daily"
+      },
+      "tiktok_profile": {
+        "coins": 300
+      },
+      "tiktok_shortcut": {
+        "coins": 300
+      }
+    },
+    "items": {
+      "coins": {
+        "category": "currency",
+        "name": "Coins"
+      },
+      "super": {
+        "category": "consumable",
+        "name": "Roadster Jump"
+      },
+      "hyper": {
+        "category": "consumable",
+        "name": "HYPER Jump"
+      },
+      "escape": {
+        "category": "consumable",
+        "name": "SOS Escape"
+      },
+      "no_ads": {
+        "category": "unlock",
+        "name": "No Ads"
+      }
+    }
+  },
+  "products": [
+    {
+      "id": 1,
+      "name": "1,000 coins",
+      "beans_cost": 99,
+      "rewards": {
+        "coins": 1000
+      }
+    },
+    {
+      "id": 2,
+      "name": "6,000 coins",
+      "beans_cost": 499,
+      "rewards": {
+        "coins": 6000
+      },
+      "badge": "POPULAR"
+    },
+    {
+      "id": 3,
+      "name": "13,000 coins",
+      "beans_cost": 999,
+      "rewards": {
+        "coins": 13000
+      }
+    },
+    {
+      "id": 4,
+      "name": "30,000 coins",
+      "beans_cost": 1999,
+      "rewards": {
+        "coins": 30000
+      },
+      "badge": "BEST VALUE"
+    },
+    {
+      "id": 5,
+      "name": "Remove Ads",
+      "beans_cost": 299,
+      "rewards": {
+        "no_ads": 1
+      },
+      "consumable": false
+    }
+  ]
+}

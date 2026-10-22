@@ -58,10 +58,13 @@ export class Renderer {
   /** max anisotropic filtering supported (road/lane textures stay sharp at grazing angles) */
   maxAniso = 4;
 
-  constructor(private container: HTMLElement, quality: Quality, private camera: THREE.PerspectiveCamera) {
+  /** v3 native: drawn after everything else each frame (the canvas UI layer) */
+  uiPass: ((r: THREE.WebGLRenderer) => void) | null = null;
+
+  constructor(private container: HTMLElement, quality: Quality, private camera: THREE.PerspectiveCamera, private canvas?: HTMLCanvasElement) {
     this.quality = quality;
     this.renderer = this.makeRenderer(quality);
-    container.appendChild(this.renderer.domElement);
+    if (!canvas) container.appendChild(this.renderer.domElement);
     this.maxAniso = Math.min(8, this.renderer.capabilities.getMaxAnisotropy());
     const pmrem = new THREE.PMREMGenerator(this.renderer);
     this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
@@ -71,10 +74,11 @@ export class Renderer {
   }
 
   private makeRenderer(_q: Quality) {
-    const r = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', alpha: false, stencil: false });
+    const r = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', alpha: false, stencil: false, ...(this.canvas ? { canvas: this.canvas } : {}) });
     r.outputColorSpace = THREE.SRGBColorSpace;
     r.toneMapping = THREE.ACESFilmicToneMapping;
     r.toneMappingExposure = 1.05;
+    if (this.canvas) return r; // v3 native: the screen canvas is sized by the runtime adapter
     r.domElement.style.display = 'block';
     r.domElement.style.width = '100%';
     r.domElement.style.height = '100%';
@@ -116,6 +120,7 @@ export class Renderer {
     this.width = w;
     this.height = h;
     this.renderer.setSize(w, h, false);
+
     if (this.composer) {
       this.composer.setPixelRatio(this.pixelRatio);
       this.composer.setSize(w, h);
@@ -167,6 +172,10 @@ export class Renderer {
     r.render(this.scene, this.camera);
     this.camera.layers.set(0);
     this.scene.background = bg;
+    if (this.uiPass) {
+      r.clearDepth();
+      this.uiPass(r);
+    }
     r.autoClear = auto;
   }
 

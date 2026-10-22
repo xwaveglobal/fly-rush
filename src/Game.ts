@@ -56,8 +56,9 @@ import { BonusTunnels } from './render/BonusTunnels.ts';
 import { drawShareCard, shareImage, copyText } from './ui/ShareCard.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
+import { platform } from './platform.ts';
 
-const VERSION = 'v2.3.0';
+const VERSION = 'v3.0.0';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -267,7 +268,7 @@ export class Game {
   private tutorialT = 0;
 
   constructor(container: HTMLElement) {
-    this.renderer = new Renderer(container, this.save.settings.quality, this.rig.camera);
+    this.renderer = new Renderer(container, this.save.settings.quality, this.rig.camera, platform.canvas);
     this.vehicle.camera = this.rig.camera;
     const scene = this.renderer.scene;
     this.scenery = new Scenery(scene);
@@ -874,6 +875,7 @@ export class Game {
 
   private async shareLink(kind: 'share' | 'invite') {
     if (kind === 'share') return this.shareCard(false);
+    if (platform.share) return platform.share(`Race me in Sky Roadster! Best ${this.bestExp.toLocaleString('en-US')} EXP.`);
     const url = `${location.origin}${location.pathname}${kind === 'invite' ? `?ref=${this.save.pid.toString(36)}` : ''}`;
     const text = kind === 'invite' ? `Race me in Sky Roadster! Join with my link and we both get ${PERK.invite} coins.` : `I'm racing in Sky Roadster — best score ${this.save.best.toLocaleString('en-US')}. Can you beat me?`;
     try {
@@ -990,6 +992,18 @@ export class Game {
     const p = productBySku(sku);
     if (!p) return;
     this.audio.play('click');
+    if (platform.buy) {
+      // v3 native: HSGame delivers the items into the profile (coins / no_ads) — never granted here
+      const r = await platform.buy(p.sku);
+      if (!r.ok) return void (r.error && r.error !== 'cancel' ? this.ui.toast(`${ICON.info} ${r.error}`, 'var(--red)') : undefined);
+      this.save.purchases++;
+      this.persist();
+      this.audio.play('mission');
+      this.ui.toast(r.delivered === false ? `${ICON.clock} ${p.name} · paid — it arrives next time you open the game` : `${ICON.check} ${p.name} · thank you!`, 'var(--gold)');
+      this.ui.shopSync(this.save);
+      this.ui.refreshProfile(this.save);
+      return;
+    }
     const ok = await this.store.purchase(p);
     if (!ok) return;
     const g = p.grant;
@@ -1064,6 +1078,7 @@ export class Game {
   private async shareGameLink(copyOnly = false) {
     const url = this.shareUrl;
     const text = `Race me in Sky Roadster! Rank ${this.rank} · ${this.bestExp.toLocaleString('en-US')} EXP.`;
+    if (platform.share) return platform.share(text);
     if (!copyOnly) {
       try {
         if (navigator.share) {
@@ -1086,6 +1101,7 @@ export class Game {
     return `${ofRun}-${this.run?.exp ?? 0}-${this.bestExp}-${this.save.vehicle}-${this.save.avatar}-${this.meta.name}`;
   }
   private prepareCard(ofRun: boolean) {
+    if (platform.native) return Promise.resolve(null); // v3 native: the platform share sheet takes text only
     const key = this.cardKey(ofRun);
     if (this.cardCache?.key === key) return this.cardCache.blob;
     const run = this.run;
@@ -1103,6 +1119,7 @@ export class Game {
     const rank = ofRun && run && !this.course ? classFor(run.exp) : this.rank;
     const sub = ofRun && run && !this.course ? `${(run.distance / 1000).toFixed(1)} km · ${LEVELS[this.runLevel].label} · ${this.variant === 'track2' ? 'Mega Rush' : 'Endless'}` : `${this.meta.name} · best race`;
     void sub;
+    if (platform.share) return platform.share(`Rank ${rank} · ${exp.toLocaleString('en-US')} EXP in Sky Roadster! Can you beat me?`);
     const ready = this.cardCache?.key === this.cardKey(ofRun);
     if (!ready) this.ui.toast(`${ICON.share} Making your card…`, '#9b6bff');
     const blob = await this.prepareCard(ofRun);

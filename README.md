@@ -6,7 +6,28 @@ Sky Roadster (formerly "XWAVE Flying Run") is a high-speed 3D endless runner. Pi
 
 ---
 
-## Quick start
+## v3 — native TikTok mini game (main)
+
+From v3.0 the game ships as a **native TikTok mini game** (TikTok Minis). The v2 web game is kept on the GitHub branch `v2` (v1 on `v1`).
+
+```bash
+npm run build:tiktok    # src/native/main.ts → tiktok/game.js + tiktok/assets/ (the folder you upload)
+npm run check:tiktok    # HS SDK check (must say 0 FAIL)
+npm run preview:tiktok  # the native game in a phone frame on your desktop (http://127.0.0.1:8090)
+npm run pack:tiktok     # tiktok-tiktok.zip to upload (needs the App ID in tiktok/project.config.json)
+```
+
+- `tiktok/` = the game folder TikTok receives: `game.js`, `game.json`, `project.config.json`, `hs-game.js`, `hs-sdk.min.js`, `assets/`. Never put keys, keystores, `.env` files or the HS kit in it.
+- `hs-sdk/` = the HS SDK kit (kept OUTSIDE the game folder). `tiktok.hs-dashboard.json` (next to the folder) = what to paste into the HS dashboard: ad places, rewards, items, products (TikTok Beans).
+- How it works: `src/native/adapter.ts` gives Three.js a `window` / `document` over the `tt` runtime; the 3D game (`src/Game.ts`, unchanged logic) draws on the runtime's screen canvas; the UI is redrawn on a 2D canvas (`src/native/ui/*`, same API as the DOM UI, swapped in by the build) and shown on top of the 3D view; the game's inline SVG icons are drawn by a small SVG→canvas renderer.
+- Progress lives in ONE `HSGame.profile` (device save): `coins`, `super`, `hyper`, `escape`, `no_ads` are profile fields (rewards and purchases land in them directly), the rest of the save is the `game` field.
+- Ads: `HSGame.showAd('revive' | 'end_bonus' | 'free_coins' | 'head_start' | 'race_end')`. Ad buttons are drawn only while `HSGame.canShowAd(place)` is true; with nothing in the dashboard the game simply has no ads.
+- Entry Reward / Launch Reward / Share (TikTok review) are on the home screen's right rail, only where `HSGame.has(...)` says so.
+- Credentials: `GAME_ID` / `SDK_KEY` in `src/native/hs.ts` (empty = the game plays offline). Never write the TikTok Client Secret anywhere.
+
+`npm run dev` still runs the web build (DOM UI) for quick gameplay work.
+
+## Quick start (web build)
 
 ```bash
 npm install
@@ -186,6 +207,12 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 ### Meta
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
+
+## v3.0.0 changes — native TikTok mini game
+- New: native TikTok mini game build (`tiktok/`) — no HTML/DOM: Three.js on the TikTok canvas, the whole UI redrawn on a canvas (home, tracks, garage, missions, ranks, daily, shop, Magic Bag, results, pause, revive, tutorial, settings, profile, popups, race HUD, toasts, pops).
+- HS SDK 1.1.2 (kit 3.2.3): device save in one profile, rewarded ads at revive / end bonus / free coins / head start + race-end ad, coin packs + Remove Ads for TikTok Beans, share, Entry / Launch Reward (TikTok review).
+- Cloud accounts of v2.3 are off in the native build (the HS profile is the save); the web build keeps them.
+- v2 web game kept on branch `v2`.
 
 ## v2.3.0 changes — accounts & cloud save
 

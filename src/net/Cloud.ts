@@ -8,6 +8,7 @@
  * - The session token lives under its own localStorage key (never inside the save itself).
  * - EXP can only grow through verified runs (POST /runs); finished runs are queued while offline.
  */
+import { kv } from '../core/kv.ts';
 import { CLOUD } from '../config.ts';
 
 export interface CloudAccount {
@@ -56,7 +57,7 @@ function apiBase() {
 
 function load<T>(k: string, d: T): T {
   try {
-    const r = localStorage.getItem(k);
+    const r = kv.get(k);
     return r ? (JSON.parse(r) as T) : d;
   } catch {
     return d;
@@ -64,8 +65,8 @@ function load<T>(k: string, d: T): T {
 }
 function store(k: string, v: unknown) {
   try {
-    if (v === null) localStorage.removeItem(k);
-    else localStorage.setItem(k, JSON.stringify(v));
+    if (v === null) kv.del(k);
+    else kv.set(k, JSON.stringify(v));
   } catch {
     /* storage blocked */
   }

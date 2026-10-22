@@ -8,3 +8,7 @@ dist-esbuild
 .vscode/
 .idea/
 server/data.json
+
+# HS pack output (zip to upload)
+*-tiktok.zip
+*-android.zip

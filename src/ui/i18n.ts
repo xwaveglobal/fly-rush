@@ -190,3 +190,8 @@ export function setLang(lang: Lang, root: Node) {
   document.documentElement.lang = lang === 'pt' ? 'pt-BR' : lang;
   translateTree(root, lang);
 }
+
+/** v3 native: switch language without a DOM (the canvas UI translates while drawing) */
+export function setLangCode(lang: Lang) {
+  current = lang;
+}

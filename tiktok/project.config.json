@@ -1,0 +1,6 @@
+{
+  "appid": "",
+  "projectname": "sky-roadster",
+  "description": "Sky Roadster — native TikTok mini game (v3). Put the TikTok App ID in appid before `node hs-sdk/web/hs-web.mjs pack tiktok --tiktok`.",
+  "setting": { "es6": true, "minified": true }
+}

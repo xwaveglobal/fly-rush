@@ -4,6 +4,27 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-22 — v3.0.0: native TikTok mini game (main) · v2 kept on branch `v2`
+
+**Owner asked**: release as a native game for TikTok Minis with the HS SDK kit (hs-sdk 1.1.2); "clone thành native version 3.0, giữ bản 2.0 ở GitHub, 3.0 làm main". HS answers: SAVE local · no Game ID / SDK key yet · shop + ads at revive / end bonus / free coins / head start · no sign-in button.
+
+**Done**
+- `v2` branch = v2.3.0 (untouched). `main` = v3.
+- `src/native/`: `adapter.ts` (window/document/localStorage/Image/AudioContext over `tt`, first `tt.createCanvas()` = screen), `hs.ts` (HSGame.profile local + DEFAULTS + literal showAd / share / tiktokMission / shop / buy), `save.ts` (SaveData → profile; wallet / super / hyper / escape / noAds are accessors on profile fields; other data via `src/core/kv.ts` → profile `kv`), `main.ts` (Game on the screen canvas, canvas UI layer via `Renderer.uiPass`, tt touch → UI first, else `Input.touchBegin/Move/End`, HS pause/resume/given), `text.ts` (name entry via tt.showModal editable).
+- Canvas UI (`src/native/ui/`): `gfx.ts` (painter, hit regions, scroll areas, rich text for the game's HTML strings, rank badges, buttons), `svg.ts` (SVG → canvas for every inline icon/avatar/art), `NativeUI.ts` (same 69-member API as the DOM UI; the build aliases `src/ui/UI.ts` to it), `screens.ts`, `popups.ts`, `hud.ts`. All screens ported.
+- Hooks in shared code: `src/platform.ts`, `setAdProvider` (Ads.ts), `setSaveBackend` (Save.ts), `kv.ts`, Renderer optional canvas + `uiPass`, Input touch methods, `setLangCode` (i18n).
+- `scripts/build-tiktok.mjs` (esbuild or Bun) → `tiktok/game.js` 1.27 MB + assets (folder 2.5 MB of 4 MB). `tiktok/package.json` = `{"type":"commonjs"}` so Node's hs-check loads the kit inside this ESM repo.
+- `tiktok.hs-dashboard.json`: 5 ad places (placeholder ad ids), share / tiktok_profile / tiktok_shortcut rewards, items, 5 Beans products (coin packs + Remove Ads, prices = guesses to adjust).
+- `npm run check:tiktok`: **0 FAIL** (warns: App ID not set, placeholder ad ids). Headless preview (hs-web build + Chromium): home, tutorial, tracks, special pick, race HUD + countdown all render and respond to taps.
+
+**Not tested here / risks**
+- Real TikTok device: Three r169 needs **WebGL 2** in the TikTok runtime; audio via `tt.createWebAudioContext`. Test on a phone with the TikTok developer tool before review.
+- v2.3 cloud accounts are off in native (profile is the save). Missions / daily quests / check-in stay game-side rewards (not HS claim keys yet).
+
+**Next**: owner gets App ID + HS Game ID / SDK key → put App ID in `tiktok/project.config.json`, keys in `src/native/hs.ts`, real ad unit ids + products in the HS dashboard, then `npm run pack:tiktok`. Possible: map daily check-in / missions to `HSGame.claim` keys so the dashboard can tune them.
+
+---
+
 ## 2026-10-22 — v2.3.0: accounts & cloud save (owner chose "cách 2", server coming)
 
 **Done**: `src/net/Cloud.ts` (guest token, email code, Google/Apple via server-side OAuth popup/redirect, GET/PUT /save with rev + 409 conflict, run queue), Game: `cloudSync` / `resolveCloud` / `applyCloud` (writes the cloud save then reloads) / `cloudAction` / `reportRun`; UI: Settings → Account popup, "Which progress?" chooser. Server rewritten: `server/index.mjs` + `server/core.mjs` + `schema.sql` + README (env vars, go-live). Tested end-to-end headless with a local server: device A (4,600 EXP, 7,054 coins) signs in by email → device B fresh install signs in → same progress restored.

@@ -34,13 +34,19 @@ export const ADS = {
   continueSeconds: 7,
 };
 
-interface AdProvider {
+export interface AdProvider {
   readonly name: string;
   rewarded(placement: RewardPlacement): Promise<boolean>;
   interstitial(placement: InterPlacement): Promise<void>;
 }
 
 type AdBreakFn = (o: Record<string, unknown>) => void;
+
+/** v3 native: the platform's own ad provider (HSGame.showAd) — set before the Game is created */
+let platformProvider: AdProvider | null = null;
+export function setAdProvider(p: AdProvider) {
+  platformProvider = p;
+}
 
 /** Google Ad Placement API (H5 Games Ads). */
 class H5GamesAdsProvider implements AdProvider {
@@ -147,7 +153,7 @@ export class Ads {
 
   constructor(parent: HTMLElement, private hooks: AdHooks) {
     const w = window as unknown as { adBreak?: AdBreakFn };
-    this.provider = typeof w.adBreak === 'function' ? new H5GamesAdsProvider(w.adBreak) : new MockAdProvider(parent);
+    this.provider = platformProvider ?? (typeof w.adBreak === 'function' ? new H5GamesAdsProvider(w.adBreak) : new MockAdProvider(parent));
     this.lastInterstitial = performance.now();
   }
 
