@@ -136,3 +136,8 @@ Status: **DONE in v2.1.0** (2026-10-22). G2 note: new per-world obstacles are ne
 - **M6.** Remove the Bonus strip on Home (the Bonus button on the left rail is enough).
 - **M7.** Bigger **Play** button.
 - **M8.** First Play: show the **training card** first (what you will learn) with **Start training** and **Skip**; Skip goes straight to the track list.
+
+## N. Round 9 — Garage (owner 2026-10-22 07:02) — chốt, chưa code
+- **N1.** Move the 3D car lower in the garage so the info panel does not cover it.
+- **N2.** Car thumbnails must show the real in-race car: the Zenith "In use" card still shows the old studio art (blue exhaust flames) → rebuild the Zenith thumb from the in-race rear render (same style as Vega's), and keep thumbs in sync with each car's race sprite.
+- **N3.** After the last car (Nexus, AAA) add a **"MORE"** card: more cars that unlock beyond AAA (S / SS / SSS) — shown as locked silhouettes with the rank badge, tap → "Reach rank S on Mega Rush".
