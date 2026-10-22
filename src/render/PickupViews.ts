@@ -110,6 +110,7 @@ export const POWER_COLORS: Record<Exclude<PickupKind, 'coin'>, number> = {
   wall: 0x9b6bff,
   rail: 0xffc21a,
   tunnel: 0x5ee6ff,
+  mystery: 0xff4fd8,
 };
 
 interface PowerView {
@@ -193,6 +194,17 @@ function buildPower(kind: Exclude<PickupKind, 'coin'>): PowerView {
       g.add(new THREE.Mesh(extrude(rocketShape()), mat));
       const ring = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.06, 8, 32), new THREE.MeshBasicMaterial({ color: 0xfff3a0, toneMapped: false }));
       g.add(ring);
+      icon = g;
+      break;
+    }
+    case 'mystery': {
+      // spinning gift cube with a "?" on every face
+      const face = new THREE.MeshBasicMaterial({ map: labelTexture('?', color), toneMapped: false });
+      const g = new THREE.Group();
+      g.add(new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.78, 0.78), face));
+      const band = new THREE.MeshStandardMaterial({ color: 0xffd24a, emissive: 0xffb300, emissiveIntensity: 0.6, metalness: 0.5, roughness: 0.3 });
+      g.add(new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.16, 0.82), band));
+      g.add(new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.82, 0.82), band));
       icon = g;
       break;
     }

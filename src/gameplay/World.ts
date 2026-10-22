@@ -145,26 +145,7 @@ export class World {
     const sp = this.spawner;
     sp.generateUntil(this.dist + SPAWN_AHEAD + 60);
     while (sp.rows.length && sp.rows[0].dist - this.dist < SPAWN_AHEAD) {
-      const row = sp.rows.shift()!;
-      this.upcoming.push(row);
-      for (const spec of row.obstacles) {
-        const o: LiveObstacle = {
-          id: nextId++,
-          spec,
-          row,
-          z: 0,
-          sx: 0,
-          boxes: [],
-          hit: false,
-          smashed: false,
-          passed: false,
-          minGap: Infinity,
-          vz: this.speed,
-        };
-        this.placeObstacle(o, 0);
-        this.obstacles.push(o);
-        this.hooks.spawnObstacle?.(o);
-      }
+      this.spawnRow(sp.rows.shift()!);
     }
     while (sp.pickups.length && sp.pickups[0].dist - this.dist < SPAWN_AHEAD) {
       const spec = sp.pickups.shift()!;
@@ -269,6 +250,42 @@ export class World {
       }
     }
     return ev;
+  }
+
+  /** a row reaches spawn distance: its obstacles go live */
+  private spawnRow(row: RowSpec) {
+    this.upcoming.push(row);
+    for (const spec of row.obstacles) {
+      const o: LiveObstacle = {
+        id: nextId++,
+        spec,
+        row,
+        z: 0,
+        sx: 0,
+        boxes: [],
+        hit: false,
+        smashed: false,
+        passed: false,
+        minGap: Infinity,
+        vz: this.speed,
+      };
+      this.placeObstacle(o, 0);
+      this.obstacles.push(o);
+      this.hooks.spawnObstacle?.(o);
+    }
+  }
+
+  /** v2.2 Bonus set pieces: rows added after the fact (rows already in view spawn at once, the rest queue) */
+  injectRows(rows: RowSpec[]) {
+    for (const row of rows) {
+      if (row.dist - this.dist < SPAWN_AHEAD) {
+        this.spawnRow(row);
+        this.upcoming.sort((a, b) => a.dist - b.dist);
+      } else {
+        this.spawner.rows.push(row);
+        this.spawner.rows.sort((a, b) => a.dist - b.dist);
+      }
+    }
   }
 
   private placeObstacle(o: LiveObstacle, dt: number) {

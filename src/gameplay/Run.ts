@@ -1,4 +1,4 @@
-import { POWERUP_DURATION, SCORE, SPEED } from '../config.ts';
+import { GIFTS, POWERUP_DURATION, SCORE, SPEED } from '../config.ts';
 import type { MissionStat } from './Missions.ts';
 import type { PickupKind } from './types.ts';
 import type { WorldEvent } from './World.ts';
@@ -18,7 +18,9 @@ export type Feedback =
   | { t: 'shieldBreak' }
   | { t: 'smash'; x: number; y: number; z: number; type: string }
   | { t: 'crash'; final: boolean; x: number; y: number; z: number; type: string }
-  | { t: 'expire'; kind: PickupKind };
+  | { t: 'expire'; kind: PickupKind }
+  /** v2.2 random reward from a mystery box or a ring */
+  | { t: 'gift'; src: 'box' | 'ring'; coins: number; kind: PickupKind | null };
 
 /**
  * Per-run rules: score, combo, power-ups, lives. Consumes World events and
@@ -67,8 +69,10 @@ export class Run {
 
   /** v2: EXP earned so far (distance × level rate) */
   get exp() {
-    return Math.floor(this.distance * this.expRate);
+    return Math.floor(this.distance * this.expRate + this.expBonus);
   }
+  /** v2.2 extra EXP from Double EXP (×2 while it lasts) */
+  expBonus = 0;
   get mult() {
     return Math.min(SCORE.comboMax, 1 + Math.floor(this.combo / SCORE.comboStep) * 0.5) * (this.doubleT > 0 ? 2 : 1) * this.scoreMul;
   }
@@ -99,6 +103,7 @@ export class Run {
 
   update(dt: number, distDelta: number) {
     this.distance += distDelta;
+    if (this.doubleT > 0) this.expBonus += distDelta * this.expRate;
     this.score += distDelta * SCORE.perMeter * this.mult;
     const tick = (k: 'magnetT' | 'turboT' | 'doubleT' | 'shieldT', kind: PickupKind) => {
       if (this[k] > 0) {
@@ -129,6 +134,9 @@ export class Run {
             this.coins++;
             this.score += SCORE.coin * this.mult;
             this.feedback.push({ t: 'coin', x: p.x, y: p.y, z: p.z });
+          } else if (p.spec.kind === 'mystery') {
+            this.powerups++;
+            this.gift('box', p.x, p.y, p.z);
           } else {
             this.powerups++;
             this.applyPower(p.spec.kind);
@@ -158,6 +166,8 @@ export class Run {
           const pts = SCORE.ringPass * this.mult;
           this.score += pts;
           this.feedback.push({ t: 'ring', points: pts });
+          const b = e.o.boxes[0];
+          if (b) this.gift('ring', (b.minX + b.maxX) / 2, (b.minY + b.maxY) / 2, 0);
           break;
         }
         case 'smash': {
@@ -194,6 +204,35 @@ export class Run {
       }
     }
     return result;
+  }
+
+  /** random source (tests can seed it) */
+  rand: () => number = Math.random;
+
+  /** v2.2: roll a random reward (mystery box / ring) and apply it */
+  private gift(src: 'box' | 'ring', x: number, y: number, z: number) {
+    const t = GIFTS[src];
+    const opts = Object.entries(t.w).filter(([k]) => k !== 'life' || this.lives < this.maxLives);
+    let roll = this.rand() * opts.reduce((a, [, w]) => a + w, 0);
+    let pick = 'coins';
+    for (const [k, w] of opts) {
+      roll -= w;
+      if (roll <= 0) {
+        pick = k;
+        break;
+      }
+    }
+    if (pick === 'coins') {
+      const n = t.coins[Math.floor(this.rand() * t.coins.length)];
+      this.coins += n;
+      this.score += SCORE.coin * n * this.mult;
+      this.feedback.push({ t: 'gift', src, coins: n, kind: null });
+      return;
+    }
+    const k = pick as PickupKind;
+    this.applyPower(k);
+    this.feedback.push({ t: 'power', kind: k, x, y, z });
+    this.feedback.push({ t: 'gift', src, coins: 0, kind: k });
   }
 
   private applyPower(kind: PickupKind) {

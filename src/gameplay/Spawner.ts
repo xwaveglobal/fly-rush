@@ -1,4 +1,4 @@
-import { HEIGHT, SPEED, WORLD_LENGTH, FAIRNESS, COIN_LINES, HEARTS, EXP } from '../config.ts';
+import { HEIGHT, SPEED, WORLD_LENGTH, FAIRNESS, COIN_LINES, HEARTS, EXP, BONUS_SET, GIFTS } from '../config.ts';
 import { clamp01, lerp } from '../core/math.ts';
 import { Rng } from '../core/Rng.ts';
 import { START_STATE, step, lanesOf, modeIn, MODE_H, MODE_L, stateBit } from './Fairness.ts';
@@ -57,6 +57,14 @@ export const worldAt = (dist: number): WorldId => WORLDS[Math.floor(dist / WORLD
 
 type Pattern = { k: PatternKey; w: number; make: () => ObstacleSpec[]; heavy?: boolean };
 
+export interface SetPiece {
+  kind: PickupKind;
+  pick: number;
+  from: number;
+  to: number;
+  filled?: boolean;
+}
+
 /**
  * Generates rows of obstacles plus coin/power-up lines ahead of the player.
  * Every candidate row is validated against the reachability model; patterns that
@@ -70,8 +78,13 @@ export class Spawner {
   private coinLane = 1;
   private nextPowerAt = 320;
   private nextHeartAt = 2500;
+  private nextBoxAt = 400;
   rejected = 0;
   generated = 0;
+  /** v2.2 Bonus: stretches reserved for a special's set piece (filled only once its pickup is collected) */
+  setPieces: SetPiece[] = [];
+  private pendingSet: PickupKind | null = null;
+  private tunnelOffered = new Set<number>();
   /** Track mode course (null = endless) */
   course: Course | null = null;
   /** speed level multipliers (see config LEVELS) */
@@ -170,6 +183,9 @@ export class Spawner {
 
   reset(startDist = 0) {
     this.scripted = false;
+    this.setPieces = [];
+    this.pendingSet = null;
+    this.tunnelOffered.clear();
     this.rows.length = 0;
     this.pickups.length = 0;
     this.reach = START_STATE;
@@ -177,6 +193,7 @@ export class Spawner {
     this.coinLane = 1;
     this.nextPowerAt = startDist + 300;
     this.nextHeartAt = startDist + HEARTS.everyExp / expRate(this.level, this.variant);
+    this.nextBoxAt = startDist + 400;
     this.prevRecovery = 0;
     this.prevOccludes = false;
     this.hardStreak = 0;
@@ -222,6 +239,92 @@ export class Spawner {
     return rows;
   }
 
+  /** v2.2 Bonus: tunnel sections along the road (scenery + Tunnel Rider) */
+  tunnels(): { from: number; to: number }[] {
+    const c = this.course;
+    if (!c?.bonus) return [];
+    return BONUS_SET.tunnels.map((f) => {
+      const mid = Math.round(c.length * f);
+      return { from: mid - BONUS_SET.tunnelLen / 2, to: mid + BONUS_SET.tunnelLen / 2 };
+    });
+  }
+
+  /** reserve an empty stretch for a set piece: pickup (with a short coin line to it), then nothing */
+  private reserve(kind: PickupKind, pick: number, from: number, to: number) {
+    for (let i = 4; i >= 1; i--) if (pick - i * 4 > this.lastDist + 3) this.pickups.push({ kind: 'coin', lane: 1, dist: pick - i * 4, y: HEIGHT.NORMAL });
+    this.pickups.push({ kind, lane: 1, dist: pick, y: HEIGHT.NORMAL });
+    this.pickups.sort((a, b) => a.dist - b.dist);
+    this.setPieces.push({ kind, pick, from, to });
+    this.lastDist = to + 22;
+    this.reach = stateBit(0, 0) | stateBit(1, 0) | stateBit(2, 0);
+    this.prevRecovery = 0;
+    this.prevOccludes = false;
+    this.hardStreak = 0;
+    return true;
+  }
+
+  private trySetPiece(): boolean {
+    const c = this.course!;
+    const L = this.lastDist;
+    // Tunnel Rider: only right in front of a tunnel
+    for (const t of this.tunnels()) {
+      if (this.tunnelOffered.has(t.from)) continue;
+      const ahead = t.from - L;
+      if (ahead <= BONUS_SET.lead + 30 && ahead > BONUS_SET.lead + 8) {
+        this.tunnelOffered.add(t.from);
+        if (this.rng.chance(BONUS_SET.tunnelChance)) return this.reserve('tunnel', t.from - BONUS_SET.lead, t.from, t.to);
+      }
+    }
+    if (!this.pendingSet) return false;
+    const k = this.pendingSet;
+    const pick = L + 30;
+    const from = pick + BONUS_SET.lead;
+    const to = from + (BONUS_SET.len[k] ?? 40);
+    // never into a tunnel or the finish run-out (try again later)
+    if (to > c.length - 90) {
+      this.pendingSet = null;
+      return false;
+    }
+    if (this.tunnels().some((t) => to > t.from - 120 && pick < t.to + 20)) return false;
+    this.pendingSet = null;
+    return this.reserve(k, pick, from, to);
+  }
+
+  /** the obstacles of a set piece (only built once its pickup is collected; the special clears them) */
+  buildSetPiece(sp: SetPiece): RowSpec[] {
+    const r = this.rng;
+    const mk = (dist: number, obstacles: ObstacleSpec[]): RowSpec => ({ dist, dt: 1, masks: rowMasks(obstacles), obstacles });
+    const cars = (dist: number, v: number) => mk(dist, [0, 1, 2].map((lane) => ({ type: 'traffic' as const, lane, variant: lane === v % 3 ? 4 : (v + lane) % 4 })));
+    const out: RowSpec[] = [];
+    const { from, to } = sp;
+    switch (sp.kind) {
+      case 'super':
+        // 4 car walls spaced to the Roadster jump (the jump clears all four)
+        for (let k = 0; k < 4; k++) out.push(cars(from + k * 8, k));
+        break;
+      case 'hyper':
+      case 'escape':
+        for (let d = from, i = 0; d <= to; d += 12, i++) out.push(cars(d, i));
+        break;
+      case 'wall':
+        for (let d = from, i = 0; d <= to; d += 14, i++) out.push(mk(d, [{ type: 'laser', lane: 0, laser: ['block', 'block', 'block'], variant: i % 2 }]));
+        break;
+      case 'ghost':
+        for (let d = from, i = 0; d <= to; d += 9, i++) {
+          const m: LaserMode[] = [0, 1, 2].map((l) => ((l + i) % 3 === 0 ? 'high' : 'low'));
+          out.push(mk(d, [{ type: 'laser', lane: 0, laser: m as [LaserMode, LaserMode, LaserMode], variant: i % 2 }]));
+        }
+        break;
+      case 'rail':
+        for (let d = from, i = 0; d <= to; d += 10, i++) out.push(i % 2 ? cars(d, i) : mk(d, [0, 1, 2].map((lane) => ({ type: r.chance(0.5) ? 'barrier' : 'beam', lane, variant: 0 }) as ObstacleSpec)));
+        break;
+      case 'tunnel':
+        for (let d = from + 10, i = 0; d <= to - 10; d += 16, i++) out.push(cars(d, i));
+        break;
+    }
+    return out;
+  }
+
   /** tutorial: rows/pickups are supplied by a script instead of generated */
   scripted = false;
 
@@ -246,6 +349,7 @@ export class Spawner {
   }
 
   private generateRow() {
+    if (this.course?.bonus && this.trySetPiece()) return;
     const r = this.rng;
     const lv = LEVEL_RULES[this.level];
     const map0 = this.mapAt(this.lastDist);
@@ -362,6 +466,15 @@ export class Spawner {
         else if (mode === MODE_L && Math.abs(dist - row.dist) < 4) y = HEIGHT.LOW;
       }
       let kind: PickupKind = 'coin';
+      // v2.2 trick spot: a mystery box right at the obstacle — grab it only with a well-timed hop / duck
+      if (masked && (mode === MODE_H || mode === MODE_L) && Math.abs(dist - row.dist) < 1.7 && dist >= this.nextBoxAt) {
+        this.nextBoxAt = dist + GIFTS.boxGap * 0.5;
+        if (r.chance(GIFTS.boxChance)) {
+          this.nextBoxAt = dist + GIFTS.boxGap;
+          this.pickups.push({ kind: 'mystery', lane, dist, y });
+          continue;
+        }
+      }
       // v2 hearts on the EXP roads: one about every HEARTS.everyExp EXP
       if (!this.course && dist >= this.nextHeartAt && i === Math.floor(n / 2)) {
         this.nextHeartAt = dist + HEARTS.everyExp / expRate(this.level, this.variant);
@@ -370,20 +483,31 @@ export class Spawner {
       }
       if (dist >= this.nextPowerAt && i === Math.floor(n / 2)) {
         if (this.course?.bonus) {
-          // v2 Bonus road: a parade of specials that fire by themselves (incl. the AAA teasers)
-          kind = r.weighted<PickupKind>([
-            { w: 2, v: 'magnet' },
-            { w: 1.2, v: 'double' },
-            { w: 2.2, v: 'super' },
-            { w: 1.2, v: 'hyper' },
-            { w: 1.4, v: 'ghost' },
-            { w: 1.4, v: 'wall' },
-            { w: 1.2, v: 'rail' },
-            { w: 1.2, v: 'tunnel' },
-          ]);
+          // v2.2 Bonus road: normal items as usual; a special only now and then (it brings its own set piece)
+          if (!this.pendingSet && r.chance(BONUS_SET.chance)) {
+            this.pendingSet = r.weighted<PickupKind>([
+              { w: 2, v: 'super' },
+              { w: 1.2, v: 'hyper' },
+              { w: 1.2, v: 'escape' },
+              { w: 1.2, v: 'wall' },
+              { w: 1, v: 'rail' },
+              { w: 1.2, v: 'ghost' },
+            ]);
+          } else {
+            kind = r.weighted<PickupKind>([
+              { w: 3, v: 'magnet' },
+              { w: 2.5, v: 'shield' },
+              { w: 1.6, v: 'turbo' },
+              { w: 2, v: 'double' },
+              { w: 1, v: 'life' },
+              { w: 1.6, v: 'mystery' },
+            ]);
+          }
           this.nextPowerAt = dist + r.range(170, 280);
-          this.pickups.push({ kind, lane, dist, y });
-          continue;
+          if (kind !== 'coin') {
+            this.pickups.push({ kind, lane, dist, y });
+            continue;
+          }
         }
         // v2 Endless / Track 2: specials (Roadster, SOS…) and extra lives are never on the road
         const v1 = !!this.course;
@@ -391,6 +515,7 @@ export class Spawner {
           { w: 3, v: 'magnet' },
           { w: 3, v: 'shield' },
           { w: v1 ? 2.2 : 0.7, v: 'turbo' }, // v2: turbo is rare (it also adds EXP)
+          { w: v1 ? 0 : 1.6, v: 'mystery' }, // v2.2 random reward box
           { w: 2, v: 'double' },
           { w: v1 && dist > 600 ? 1 : 0, v: 'life' },
           { w: v1 && dist > 250 ? 2 : 0, v: 'super' },

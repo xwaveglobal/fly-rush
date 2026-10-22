@@ -34,14 +34,14 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
 export const TUTORIAL_HINTS: { dist: number; text: string }[] = [
   { dist: 8, text: 'Drive as far as you can — distance is your EXP' },
   { dist: 352, text: 'Coins buy specials like the Roadster Jump' },
-  { dist: 404, text: 'Road power-ups: Shield, Magnet, Turbo, ×2 coins — they work at once' },
+  { dist: 404, text: 'Road power-ups like Magnet, Turbo and ×2 EXP work at once' },
   { dist: 470, text: 'You carry 1 special per race — today: a free Roadster Jump' },
   { dist: 590, text: 'EXP gives your rank D → AAA. Hard rank gates guard every new rank!' },
 ];
 
 const row = (dist: number, obstacles: ObstacleSpec[]): RowSpec => ({ dist, dt: 1, masks: rowMasks(obstacles), obstacles });
 
-/** Hand-built practice road: crates (left), crates (right), barriers (up), beams (down), coins, a shield. */
+/** Hand-built practice road: crates (left), crates (right), barriers (up), beams (down), coins. */
 export function tutorialScript(): { rows: RowSpec[]; pickups: PickupSpec[] } {
   const rows = [
     row(80, [{ type: 'crate', lane: 1, variant: 0 }, { type: 'crate', lane: 2, variant: 1 }]),
@@ -49,15 +49,12 @@ export function tutorialScript(): { rows: RowSpec[]; pickups: PickupSpec[] } {
     row(245, [0, 1, 2].map((lane) => ({ type: 'barrier' as const, lane, variant: 0 }))),
     row(330, [0, 1, 2].map((lane) => ({ type: 'beam' as const, lane, variant: 0 }))),
     row(455, [{ type: 'crate', lane: 1, variant: 0 }, { type: 'crate', lane: 2, variant: 2 }]),
-    // two walls of cars across the whole road: only the rocket clears them
-    row(545, [0, 1, 2].map((lane) => ({ type: 'traffic' as const, lane, variant: lane === 1 ? 4 : lane }))),
-    row(561, [0, 1, 2].map((lane) => ({ type: 'traffic' as const, lane, variant: lane === 0 ? 4 : lane + 1 }))),
+    // four walls of cars across the whole road, spaced to the Roadster jump: one rocket clears all four
+    ...[0, 1, 2, 3].map((k) => row(545 + k * 8, [0, 1, 2].map((lane) => ({ type: 'traffic' as const, lane, variant: lane === (k + 1) % 3 ? 4 : (lane + k) % 4 })))),
   ];
   const pickups: PickupSpec[] = [];
   for (let d = 30; d <= 66; d += 6) pickups.push({ kind: 'coin', lane: 1, dist: d, y: HEIGHT.NORMAL });
   for (let d = 360; d <= 396; d += 4) pickups.push({ kind: 'coin', lane: 1, dist: d, y: HEIGHT.NORMAL });
-  pickups.push({ kind: 'shield', lane: 1, dist: 412, y: HEIGHT.NORMAL });
-  for (let d = 600; d <= 630; d += 5) pickups.push({ kind: 'coin', lane: 0, dist: d, y: HEIGHT.NORMAL });
   return { rows, pickups };
 }
 

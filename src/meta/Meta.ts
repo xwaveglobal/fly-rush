@@ -21,6 +21,12 @@ export interface RunSummary {
   finished: boolean;
   /** EXP of this run */
   exp: number;
+  /** rank gates broken through this run · worlds reached · hearts picked up · on Hard · EXP before the first lost heart */
+  gates?: number;
+  worlds?: number;
+  hearts?: number;
+  hard?: boolean;
+  clean?: number;
 }
 
 export interface EventResult {
@@ -170,6 +176,12 @@ export class Meta {
       finish: r.finished ? 1 : 0,
       rings: r.rings,
       exp: Math.floor(r.exp),
+      gates: r.gates ?? 0,
+      worlds: r.worlds ?? 0,
+      hearts: r.hearts ?? 0,
+      hard: r.hard ? 1 : 0,
+      clean: Math.floor(r.clean ?? 0),
+      far: Math.floor(r.distance),
     };
     for (const q of questsFor(this.s.dailyDay)) {
       const v = add[q.stat];

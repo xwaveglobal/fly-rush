@@ -187,6 +187,23 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v2.2.0 changes (owner fix rounds H–X, `docs/FIXLIST.md`)
+
+- **Training**: no ad after training/practice; no shield or end coin line in basic training; end card with Race / Replay (or Practise again) / **Home**; replay repeats the same practice; HUD shows EXP + rank with a TRAINING tag (nothing saved); a **Skip ›** button during training; first Play opens the training card (Start / Skip).
+- **Bonus**: 5-minute road, **one play per event**; normal items as usual; specials are a rare drop and each brings its own **set piece** (car walls, convoy, jam, blocked row, busy stretch, laser zone, tunnel) spawned only after the pickup; **tunnel sections** on every Bonus road (Tunnel Rider only there); finish +500 coins. `tests/bonus.test.ts`.
+- **Rings & mystery boxes**: every ring gives a random reward; mystery boxes on the road and at trick spots (hop / duck at the right moment).
+- **Beat your best**: best EXP + bar in the race HUD, two short cheers when close, "YOU BEAT YOURSELF!" banner when passed.
+- **Roadster jump**: clears 4 car rows; the roll plays in slow motion with a camera swing. Turbo eases back to the chosen speed. Double score → **Double EXP**. Smaller pickup notices. No car outline for Magnet / ×2.
+- **Speed levels** +5 % / +10 % / +15 % (Easy / Normal / Hard); EXP per metre re-calibrated (×1 / ×1.15 / ×1.9).
+- **END → FINISH**; from rank C a **brag card** (rank shield, big EXP, car, Share). Real **share**: a 1080×1350 card image → share sheet, or a preview to save/copy when sharing is blocked. Entry steps open the profile; Share popup car = tap to share.
+- **Leaderboard**: pyramid of bots (few AAA), RANK "#N" pill (top-3 colours), EXP with badge, header RANK · PILOT · EXP, glowing YOU row, "Top x%" for far positions.
+- **Rank guide**: RANK · EXP · UNLOCKS (cars, Mega Rush, AAA specials, S/SS/SSS roads); opens on top of the result screen.
+- **Magic Bag**: always shows SOS / Roadster / HYPER with counts, "Race without a special", confirm popup before taking one, separate **Buy items** popup; starting kit 1 HYPER + 2 Roadster (+1/+1 once for everyone).
+- **Home / profile**: no language button (Settings only), clean profile chip, no Bonus strip / speed line, bigger Play; profile shows a big rank shield + big EXP; avatar effects from rank A (glow → gold pulse → neon ring → flame ring).
+- **Missions** are their own screen again: career chains with tiers + pilot level, auto-collect or manual claim / Claim all; **Daily** pool of 15 fun challenges.
+- **Garage**: car sits lower, Zenith thumbnail = in-race car, MORE card for S/SS/SSS cars.
+- Spacing rhythm for every popup; avatar SVG ids made unique (empty avatars fixed); "Eye comfort" setting explained.
+
 ## v2.1.0 changes (owner fix list — all of `docs/FIXLIST.md`)
 
 - **Before every race (Retry too)**: one big SPECIAL button → the Magic Bag opens to pick; "Get with coins" at the bottom. Prices SOS 1,200 · Roadster 1,800 · HYPER 4,000.

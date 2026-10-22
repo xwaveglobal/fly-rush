@@ -60,16 +60,24 @@ export function rng(seed: number) {
 export const avatarColor = (seed: number) => COLORS[seed % COLORS.length];
 
 /**
- * Score curve of a board: score(rank) = top · (rank)^-k. Generated rows follow
- * the curve with jitter; ranks below the materialised rows come from inverting it.
+ * Score curve of a board (a realistic pyramid): the top 100 rows follow
+ * score(rank) = top · ((rank + c) / (1 + c))^-k — only a few AAA at the very top, then AA, A, B, C
+ * and D by row 100. Below row 100 the rest of the field spreads down to 0 EXP:
+ * rank(s) = 100 + (total − 100) · (1 − s / s100)².
  */
 interface Curve {
   top: number;
   k: number;
   total: number;
 }
-const scoreAt = (c: Curve, r: number) => c.top * Math.pow(r, -c.k);
-const rankFor = (c: Curve, s: number) => Math.min(c.total, Math.max(1, Math.round(Math.pow(c.top / Math.max(1, s), 1 / c.k))));
+const C_OFF = 4;
+const scoreAt = (c: Curve, r: number) => c.top * Math.pow((r + C_OFF) / (1 + C_OFF), -c.k);
+function rankFor(c: Curve, s: number) {
+  const s100 = scoreAt(c, 100);
+  if (s >= s100) return Math.max(1, Math.round((1 + C_OFF) * Math.pow(c.top / Math.max(1, s), 1 / c.k) - C_OFF));
+  const f = 1 - Math.max(0, s) / s100;
+  return Math.min(c.total, Math.max(101, Math.round(100 + (c.total - 100) * f * f)));
+}
 
 export function sampleBoard(seedKey: string, curve: Curve, rows = 100): Omit<LbRow, 'rank'>[] {
   const r = rng(hashStr(seedKey));
@@ -114,14 +122,14 @@ export function weekProgress(now = new Date()) {
 }
 
 export function allTimeBoard(you: { name: string; score: number; color: string; pass?: boolean; av?: number; flag?: string }): Board {
-  // v2: boards rank EXP (best single run). Top pilots sit around AAA.
-  const curve: Curve = { top: 46200, k: 0.36, total: 248_316 };
+  // v2: boards rank EXP (best single run). Only 2–3 pilots reach AAA; row 100 sits around rank D.
+  const curve: Curve = { top: 58000, k: 0.985, total: 248_316 };
   return rankBoard(sampleBoard('xwave-all-time-v2', curve), curve, you);
 }
 
 export function weeklyBoard(week: string, you: { name: string; score: number; color: string; pass?: boolean; av?: number; flag?: string }, now = new Date()): Board {
   // rivals keep playing through the week: scores and field size grow over time
   const f = 0.35 + 0.65 * Math.min(1, weekProgress(now) * 1.4);
-  const curve: Curve = { top: 39800 * f, k: 0.4, total: Math.round(9000 + 31000 * f) };
+  const curve: Curve = { top: 47000 * f, k: 1.05, total: Math.round(9000 + 31000 * f) };
   return rankBoard(sampleBoard(`xwave-exp-week-${week}`, curve), curve, you);
 }

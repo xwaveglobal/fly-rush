@@ -23,6 +23,13 @@ export class CameraRig {
   private baseFov = 70;
   private pushBack = 0;
   private orbit = 0;
+  /** cinematic swing (seconds left / total) */
+  private swingT = 0;
+  private swingDur = 0;
+  /** slow camera swing around the car, e.g. during the Roadster roll */
+  swing(dur: number) {
+    this.swingT = this.swingDur = dur;
+  }
   private roll = 0;
   fovKick = 0;
 
@@ -102,19 +109,22 @@ export class CameraRig {
         // look point well below the car lifts it into the space above the garage panels
         const ga = this.rearOnly ? Math.sin(this.orbit * 0.6) * 0.2 : this.orbit;
         wantPos.set(px + Math.sin(ga) * 8.4, 3.1, Math.cos(ga) * 8.4);
-        wantLook.set(px, -1.75, 0);
+        wantLook.set(px, -0.55, 0); // v2.2: car sits lower, clear of the info panel
         fov = this.baseFov * 0.72;
         break;
       }
       case 'run': {
-        const sway = Math.sin(t * 0.55) * 0.18;
+        // cinematic swing (Roadster roll): eases out to one side and back
+        if (this.swingT > 0) this.swingT = Math.max(0, this.swingT - dt);
+        const sk = this.swingDur > 0 ? Math.sin(Math.PI * (1 - this.swingT / this.swingDur)) : 0;
+        const sway = Math.sin(t * 0.55) * 0.18 + sk * 2.6;
         const back = 6.6 + this.pushBack - speedFactor * 0.6;
         // above the normal HIGH hop (Roadster / HYPER jumps) the camera climbs almost 1:1 so the car stays framed
         // a normal hop is seen rising clearly over the obstacle (camera follows only a little);
         // above it (Roadster / HYPER) the camera climbs almost 1:1 so the car stays framed
         const base = Math.min(py, 3.05) - 1;
         const extra = Math.max(0, py - 3.05);
-        wantPos.set(px * 0.72 + sway, 3.25 + base * 0.22 + extra * 0.95, back);
+        wantPos.set(px * 0.72 + sway, 3.25 + base * 0.22 + extra * 0.95 + sk * 0.9, back - sk * 0.8);
         wantLook.set(px * 0.55, 1.15 + base * 0.3 + extra * 0.8, -9);
         fov = this.baseFov + speedFactor * 7 + turbo * 9 + this.fovKick;
         break;

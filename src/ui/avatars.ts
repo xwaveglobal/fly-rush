@@ -49,11 +49,13 @@ const EMBLEMS: string[] = [
 
 export const AVATAR_COUNT = 32;
 
+/** every avatar gets its own gradient/filter ids: a shared id inside a hidden screen makes Chrome draw the avatar empty */
+let uid = 0;
 export function avatarSvg(i: number) {
   const k = ((i % AVATAR_COUNT) + AVATAR_COUNT) % AVATAR_COUNT;
   const emblem = EMBLEMS[k % EMBLEMS.length];
   const [c1, c2, hi] = PALETTES[(k * 3 + Math.floor(k / EMBLEMS.length) * 5) % PALETTES.length];
-  const id = `av${k}`;
+  const id = `av${k}_${(uid = (uid + 1) % 1e9).toString(36)}`;
   return `<svg viewBox="0 0 64 64" class="avsvg" aria-hidden="true"><defs>
     <radialGradient id="${id}g" cx="35%" cy="28%" r="80%"><stop offset="0" stop-color="${hi}"/><stop offset=".45" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></radialGradient>
     <filter id="${id}s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="1.6" stdDeviation="1.2" flood-color="#000" flood-opacity=".45"/></filter></defs>

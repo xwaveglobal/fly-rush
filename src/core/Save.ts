@@ -1,3 +1,4 @@
+import type { CareerStats } from '../meta/Career.ts';
 /** Persistent player profile in localStorage (wrapped: storage can be blocked). */
 
 /** v1.17 and older car ids → the v1.18 line-up (bought cars map to the tier of what was paid) */
@@ -91,7 +92,11 @@ export interface SaveData {
   giftDay: string;
   popDay: string;
   /** one-off / daily reward popups (entry, launch, share, invite, rate) */
-  perks: { profileSeen?: boolean; avatarPicked?: boolean; entry?: boolean; launch?: boolean; shareDay?: string; inviteDay?: string; invites?: number; rated?: boolean; rateAsked?: boolean; countryDetected?: boolean };
+  perks: { profileSeen?: boolean; avatarPicked?: boolean; entry?: boolean; launch?: boolean; shareDay?: string; inviteDay?: string; invites?: number; rated?: boolean; rateAsked?: boolean; countryDetected?: boolean; kit2?: boolean };
+  /** v2.2: key of the Bonus event already played (one play per event) */
+  bonusPlayed?: string;
+  /** v2.2 career missions: lifetime counters + tiers paid (src/meta/Career.ts) */
+  career?: CareerStats;
   /** danger-hint gestures the player has answered (hint stops after 3) */
   hintsLearned?: Record<string, number>;
 }

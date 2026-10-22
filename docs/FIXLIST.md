@@ -78,7 +78,7 @@ Status: **DONE in v2.1.0** (2026-10-22). G2 note: new per-world obstacles are ne
 2. A8 special prices: SOS 1,200 · Roadster 1,800 · HYPER 4,000 OK?
 3. F10: name of the rank-C car? Cars B → AAA keep Volt / Phantom / Inferno / Nexus?
 
-## H. Round 3 — training (owner 2026-10-22 06:30) — chốt, chưa code
+## H. Round 3 — training (owner 2026-10-22 06:30) — done v2.2.0
 - **H1.** No ad after a training / practice ends (`afterResults` must skip the interstitial when the finished run was training).
 - **H2.** Basic training: no Shield pickup on the road (remove the shield at 412 m), and its hint "Road power-ups: Shield, …" → mention only Magnet / Turbo / ×2.
 - **H3.** Basic training: remove the coin line at the very end (600–630 m) — the road just runs out to the finish.
@@ -88,7 +88,7 @@ Status: **DONE in v2.1.0** (2026-10-22). G2 note: new per-world obstacles are ne
 - **H6.** During training the HUD shows "EXP 0" and the daily-mission strip ("Play 3 races") — training earns nothing → hide the EXP box value / show "TRAINING", hide the mission strip.
 - **H7.** The end card text says "Race Endless" even after a special practice → for practices show "Back to the bag" / "Race" + "Home".
 
-## I. Round 4 — Bonus redesign (owner 2026-10-22 06:34) — chốt, chưa code
+## I. Round 4 — Bonus redesign (owner 2026-10-22 06:34) — done v2.2.0
 - **I1.** A Bonus road lasts **5 minutes** (finish line at 5 min of non-stop driving), **one play per event** (after the finish / end, the card shows "Played · next at hh:mm").
 - **I2.** **Normal items appear as usual** on Bonus roads (Magnet, Shield, Turbo, ×2 coins, hearts).
 - **I3.** **Special items appear only now and then (probability)**, not as a parade. Coin-bought specials (SOS / Roadster / HYPER) are a rare drop.
@@ -103,7 +103,7 @@ Status: **DONE in v2.1.0** (2026-10-22). G2 note: new per-world obstacles are ne
 - **I5.** Bonus roads get **tunnel sections** (needed for Tunnel Rider): e.g. rock tunnel in the desert, tree tunnel in the forest, barn/haystack tunnel in the country, sea tunnel on the causeway.
 - **I6.** Bonus coin reward re-balanced for 5 minutes (finish bonus + coins on the road), still coins only.
 
-## J. Round 5 — leaderboard (owner 2026-10-22 06:47) — chốt, chưa code
+## J. Round 5 — leaderboard (owner 2026-10-22 06:47) — done v2.2.0
 - **J1.** Sample bots: only a **few AAA** at the very top; the rest spread over D → AA (realistic pyramid: many D/C, fewer B/A, a handful of AA, very few AAA).
 - **J2.** Row layout, left → right: **position with a label** ("#12" in a "RANK" pill; top 3 = gold / silver / bronze) · avatar · name + flag · rank-class badge · **EXP value with the EXP badge** on the right.
 - **J3.** Make the two numbers impossible to confuse: **position** = "#…" (lower is better, #1 best) vs **EXP** = number with the EXP badge (higher is better). Column header line: "RANK · PILOT · EXP".
@@ -111,7 +111,7 @@ Status: **DONE in v2.1.0** (2026-10-22). G2 note: new per-world obstacles are ne
 - **J5.** YOU row today shows the rank class twice (corner on the avatar + separate D badge) → keep one.
 - **J6.** Far-down positions (e.g. #33,051) → show "#33,051" with "Top 14%" underneath so a low position still reads as progress.
 
-## K. Round 6 — EXP & rank guide (owner 2026-10-22 06:48) — chốt, chưa code
+## K. Round 6 — EXP & rank guide (owner 2026-10-22 06:48) — done v2.2.0
 - **K1.** Remove the minutes columns (Hard / Normal / Easy). Table = **RANK · EXP · UNLOCKS**.
 - **K2.** "Unlocks" per rank (icon + short name):
   D Zenith · C XWAVE Vega · B Volt · A Phantom · AA Inferno ·
@@ -119,14 +119,14 @@ Status: **DONE in v2.1.0** (2026-10-22). G2 note: new per-world obstacles are ne
   S Ocean Drive · SS Volcano Run · SSS Aurora Peak.
 - **K3.** Keep only the EXP conversion line (EXP = metres × Hard 2 · Normal 1.15 · Easy 1) and "EXP can't be bought"; the S/SS/SSS note is covered by the table.
 
-## L. Round 7 — Magic Bag (owner 2026-10-22 06:50) — chốt, chưa code
+## L. Round 7 — Magic Bag (owner 2026-10-22 06:50) — done v2.2.0
 - **L1.** Re-organise "what's in my bag": an **"In your bag"** row that always shows all 3 specials (SOS · Roadster · HYPER) with their count (×0 greyed out), so it is obvious what you own; "Get with coins" below; AAA teasers last.
 - **L2.** Starting items: **1 HYPER + 2 Roadster** for new players (existing players get the difference once as a gift).
 - **L3.** Tapping an owned special (pre-race pick) opens a **confirm popup**: "Take Roadster into this race?" → [Take it] / [Cancel].
 - **L4.** The empty option reads clearly: **"Race without a special"** (instead of "None").
 - **L5.** (07:03) Buying is **separate** from the bag: the bag shows only what you own + a **"Buy items"** button; tapping it opens a **Buy popup** (SOS / Roadster / HYPER with coin prices). After buying, back to the bag.
 
-## M. Round 8 — Home, Missions, first Play (owner 2026-10-22 06:59) — chốt, chưa code
+## M. Round 8 — Home, Missions, first Play (owner 2026-10-22 06:59) — done v2.2.0
 - **M1.** Language button only in **Settings** (remove it from the Home top bar).
 - **M2.** Home profile chip: the avatar must not cover text; show name + rank badge + EXP cleanly (today "#33,045 EXP ⋮" is cut).
 - **M3.** **Missions back as their own screen** (separate from Daily, like v1): auto-collect switch (on by default); when off, finished missions wait in a list with a Claim button each + "Claim all".
@@ -138,7 +138,7 @@ Status: **DONE in v2.1.0** (2026-10-22). G2 note: new per-world obstacles are ne
 - **M7.** Bigger **Play** button.
 - **M8.** First Play: show the **training card** first (what you will learn) with **Start training** and **Skip**; Skip goes straight to the track list.
 
-## N. Round 9 — Garage (owner 2026-10-22 07:02) — chốt, chưa code
+## N. Round 9 — Garage (owner 2026-10-22 07:02) — done v2.2.0
 - **N1.** Move the 3D car lower in the garage so the info panel does not cover it.
 - **N2.** Car thumbnails must show the real in-race car: the Zenith "In use" card still shows the old studio art (blue exhaust flames) → rebuild the Zenith thumb from the in-race rear render (same style as Vega's), and keep thumbs in sync with each car's race sprite.
 - **N3.** After the last car (Nexus, AAA) add a **"MORE"** card: more cars that unlock beyond AAA (S / SS / SSS) — shown as locked silhouettes with the rank badge, tap → "Reach rank S on Mega Rush".
@@ -148,3 +148,46 @@ Status: **DONE in v2.1.0** (2026-10-22). G2 note: new per-world obstacles are ne
 - (= H4) Training complete card needs a **Home** button.
 
 Owner 07:05: "rà soát sửa toàn bộ" → fix H–O now.
+
+## P. Round 11 — entry reward, share, Endless FINISH card (owner 2026-10-22 07:09)
+- **P1.** Entry Reward card: tapping a step box opens the profile panel (steps 1–3 all lead to the profile).
+- **P2.** Share card: tapping the car (arrow) captures that image and opens the share sheet with it.
+- **P3.** Endless end screen titled **FINISH**. From rank **C** up, a special "brag" card (big rank shield, EXP, car, glow) built to be shared; below C keep the normal card.
+- **P4.** Share button must really share (Web Share with the image; fallback download + copy link).
+- **P5.** Check every button's action works.
+
+## Q. Round 12 — profile (owner 2026-10-22 07:15)
+- **Q1.** Profile: remove the "week" line; show the rank (e.g. D) and the EXP **very big** so players feel how important / cool they are.
+- **Q2.** From rank **A** the avatar gets a glowing outline; higher ranks get stronger special effects (AA gold pulse, AAA rotating neon ring, S/SS/SSS flame/aurora ring + sparkles).
+
+## R. Round 13 — END screen (owner 2026-10-22 07:18)
+- **R1.** Distance / Best boxes: borders drawn inside a bordered box → overlapping frames; flatten to one clean row.
+- **R2.** "EXP guide" link on the END screen does nothing → must open the guide on top of the result.
+- (Claude) "Top 100% this week" is meaningless for a weak run → hide the position chip when it is worse than Top 50%.
+
+## S. Round 14 — car glow (owner 2026-10-22 07:21)
+- **S1.** After Turbo / Shield end, the car keeps a glowing outline → the outline must show only while a power-up that needs it is active (no glow for Magnet / ×2).
+
+## T. Round 15 — rings & mystery boxes (owner 2026-10-22 07:22)
+- **T1.** Flying through an energy RING gives a random reward (coins or a road power-up).
+- **T2.** Random **mystery boxes** on the road (coins / power-up / heart).
+- **T3.** Combine difficulty and item placement for tricks: boxes sit where you must hop over a barrier or duck under a beam at the right moment to grab them.
+
+## U. Round 16 — beat your best (owner 2026-10-22 07:25)
+- **U1.** During a race show the **Best EXP** ever next to the run EXP, so there is a target to chase.
+- **U2.** When the run gets close to the best: a short, non-blocking encouragement ("1,000 EXP to your best!", "So close!").
+- **U3.** When the best is beaten: a celebration ("YOU BEAT YOURSELF!") that never gets in the way of driving.
+
+## V. Round 17 — Roadster jump feel (owner 2026-10-22 07:27)
+- **V1.** Roadster jump (training and set pieces): spacing tuned so the jump clears **4 car rows** exactly.
+- **V2.** At the end of the jump, while the car rolls in the air: short **slow motion** + a slow camera swing — a "wow" moment.
+
+## W. Round 18 (owner 2026-10-22 07:31–07:32)
+- **W1.** When Turbo ends, the road speed must go back to the speed level the player chose (Easy / Normal / Hard).
+- **W2.** "Double score" → **Double EXP** (×2 EXP while it lasts).
+- **W3.** Item pickup notices are too big → smaller.
+
+## X. Round 19 (owner 2026-10-22 07:36)
+- **X1.** Speed levels faster: Easy +5 %, Normal +10 %, Hard +15 % (EXP per metre re-calibrated so the minutes per rank stay as designed).
+
+**H–X: all done in v2.2.0.**

@@ -2,7 +2,7 @@
  * v2 BONUS events (docs/GAME-DESIGN.md §5) — replace the old cups.
  *
  * Every 2 hours (local time: 00:00, 02:00, …) a Bonus road opens for 60 minutes. Each event is a
- * brand-new everyday place (desert → forest → country → sea, rotating), a 30-minute road with a
+ * brand-new everyday place (desert → forest → country → sea, rotating), a 5-minute road (one play) with a
  * FINISH line, and it pays only coins (no EXP, no ranking). Special items lie on the road and fire
  * by themselves when picked up. Pure logic — no DOM.
  */
@@ -11,10 +11,10 @@ import type { BonusWorld } from '../gameplay/Spawner.ts';
 export const BONUS = {
   everyHours: 2,
   openMinutes: 60,
-  /** non-stop minutes from START to FINISH */
-  raceMinutes: 30,
+  /** non-stop minutes from START to FINISH (v2.2: a short 5-minute road, one play per event) */
+  raceMinutes: 5,
   /** coins for reaching the finish line (× speed-level coin multiplier) */
-  finishCoins: 800,
+  finishCoins: 500,
   themes: ['desert', 'forest', 'country', 'sea'] as BonusWorld[],
 };
 

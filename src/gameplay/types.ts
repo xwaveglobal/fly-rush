@@ -51,7 +51,9 @@ export interface RowSpec {
 
 export type PickupKind = 'coin' | 'shield' | 'magnet' | 'turbo' | 'double' | 'life' | 'super' | 'dash' | 'escape'
   // v2 Bonus-road specials: fire by themselves on pickup (showcase of the AAA specials)
-  | 'hyper' | 'ghost' | 'wall' | 'rail' | 'tunnel';
+  | 'hyper' | 'ghost' | 'wall' | 'rail' | 'tunnel'
+  // v2.2 mystery box: a random reward (coins / road power-up / heart)
+  | 'mystery';
 
 export interface PickupSpec {
   kind: PickupKind;

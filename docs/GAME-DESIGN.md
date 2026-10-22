@@ -77,7 +77,7 @@ Bỏ toàn bộ 20 đường cũ, sao ★ của đường, mở đường bằng
 | Nguồn | Mức |
 |---|---|
 | Nhặt coin trên Endless | ~40 coin / phút |
-| Bonus (về đích 30 phút) | ~2.000 coin |
+| Bonus (5 phút, 1 lần/đợt) | ~800 coin |
 | Nhiệm vụ ngày (Daily + Mission gộp chung) | ~600 coin / ngày |
 | Điểm danh 7 ngày | tăng dần, ngày 7 lớn nhất |
 
@@ -119,8 +119,8 @@ Bỏ: XWAVE Pass, Starter Pack, mọi bundle.
 
 - Mở **mỗi 2 tiếng**, mỗi lần mở 60 phút. Không có cup 1/2/3, không thứ hạng, không EXP — **chỉ để lấy coin**.
 - Mỗi lần là một **đường mới hoàn toàn**, bối cảnh gần đời sống, xoay vòng: sa mạc → rừng → đồng quê → biển.
-- Giới hạn **30 phút**, có vạch **Finish** (về đích thưởng lớn).
-- Là sân khấu trình diễn special: vật phẩm special nằm trên đường, **ăn là tự dùng ngay** (tự bay qua cả loạt chướng ngại, không phải bấm), kể cả các special chưa mở (Tunnel Rider, Wall Run…) để người chơi thèm.
+- Giới hạn **5 phút**, chơi **1 lần** mỗi đợt, có vạch **Finish** (về đích thưởng lớn). Có đoạn đường hầm.
+- Item thường xuất hiện như bình thường; special chỉ **thỉnh thoảng** rơi ra. Ăn special → ngay sau đó mới sinh ra tình huống riêng của nó (dàn xe, đoàn xe, hàng rào laser, đường hầm…) và special **tự kích hoạt** vượt qua, kể cả các special chưa mở (Tunnel Rider chỉ ở bàn có hầm).
 - Special nhặt trong Bonus **không** vào túi, chỉ dùng trong đường đó.
 
 ---

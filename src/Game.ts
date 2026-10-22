@@ -26,7 +26,7 @@ import { setObstacleContrast, OBSTACLE_FX } from './render/ObstacleViews.ts';
 import { Particles, SpeedLines, RingPulses, Debris, makeShield, makePortal } from './render/Effects.ts';
 import { Audio } from './audio/Audio.ts';
 import { AssetLoader } from './assets/AssetLoader.ts';
-import { UI, UPGRADE_MAX, upgradeCost, type UpgradeKey } from './ui/UI.ts';
+import { UI, UPGRADE_MAX, upgradeCost, carImage, logoImg, type UpgradeKey } from './ui/UI.ts';
 import { ICON } from './ui/icons.ts';
 import { COURSES, sectionAt, trackLock, type Course } from './gameplay/Courses.ts';
 import { makeArch } from './render/Arches.ts';
@@ -35,7 +35,7 @@ import { Ads, ADS } from './ads/Ads.ts';
 import { advancedScript, basicScript, boostScript, WORLD_LESSONS, type BoostKind, type TrainingScript, type TutorialStep } from './gameplay/Tutorial.ts';
 import { PASS_H, PASS_L, PASS_N } from './gameplay/types.ts';
 import { MAPS, TIER_NAME, type Tier } from './gameplay/Difficulty.ts';
-import { FAIRNESS, V2_POWERUPS } from './config.ts';
+import { FAIRNESS, V2_POWERUPS, BONUS_SET } from './config.ts';
 import { RANK_ORDER, rankDist, expRate, VARIANTS, type Variant } from './gameplay/Difficulty.ts';
 import type { Box, PickupKind, RowSpec } from './gameplay/types.ts';
 import { Meta, type EventResult, type RunSummary } from './meta/Meta.ts';
@@ -46,13 +46,17 @@ import { crashTip, type CrashTip } from './gameplay/CrashTip.ts';
 import { createStore, weekBoard, type PlayerStore } from './net/PlayerStore.ts';
 import { hashStr } from './meta/Leaderboard.ts';
 import { classForScore } from './meta/Rank.ts';
-import { avatarForName } from './ui/avatars.ts';
+import { avatarForName, avatarSvg } from './ui/avatars.ts';
 import { productBySku, DemoStore, type Store } from './meta/Shop.ts';
 import type { ItemKey, QuestStat, Reward } from './meta/Daily.ts';
+import { careerDefaults, settleCareer } from './meta/Career.ts';
+import type { SetPiece } from './gameplay/Spawner.ts';
+import { BonusTunnels } from './render/BonusTunnels.ts';
+import { drawShareCard, shareImage, copyText } from './ui/ShareCard.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v2.1.0';
+const VERSION = 'v2.2.0';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -87,7 +91,7 @@ const POWER_LABEL: Record<Exclude<PickupKind, 'coin'>, string> = {
   shield: 'SHIELD',
   magnet: 'MAGNET',
   turbo: 'TURBO BOOST',
-  double: 'DOUBLE SCORE',
+  double: 'DOUBLE EXP',
   life: 'EXTRA LIFE',
   super: 'ROADSTER JUMP',
   dash: 'AIR DASH',
@@ -97,13 +101,14 @@ const POWER_LABEL: Record<Exclude<PickupKind, 'coin'>, string> = {
   wall: 'WALL RUN',
   rail: 'SKY RAIL',
   tunnel: 'TUNNEL RIDER',
+  mystery: 'MYSTERY BOX',
 };
 
 const POWER_SUB: Record<Exclude<PickupKind, 'coin'>, string> = {
   shield: '',
   magnet: 'coins fly to you',
   turbo: 'smash through obstacles',
-  double: 'every coin ×2',
+  double: 'EXP ×2 for a while',
   life: '+1 heart',
   super: 'tap ROADSTER to launch',
   dash: 'flip across 2 lanes',
@@ -113,6 +118,7 @@ const POWER_SUB: Record<Exclude<PickupKind, 'coin'>, string> = {
   wall: 'along the wall · AAA special',
   rail: 'glide the sky rail · AAA special',
   tunnel: 'ride the roof · AAA special',
+  mystery: 'a random reward',
 };
 
 const POWER_ICON: Record<Exclude<PickupKind, 'coin'>, string> = {
@@ -129,6 +135,7 @@ const POWER_ICON: Record<Exclude<PickupKind, 'coin'>, string> = {
   wall: ICON.dash,
   rail: ICON.rocket,
   tunnel: ICON.rocket,
+  mystery: ICON.gift,
 };
 
 /**
@@ -186,7 +193,10 @@ export class Game {
   private nextBoost = false;
   private lastResult = { coins: 0, reward: 0, doubled: false };
   /** first-run pilot training */
+  private bonusTunnels = new BonusTunnels();
   private tutorialMode = false;
+  /** the special practice that is running (null = basic / advanced training) */
+  private lastPractice: BoostKind | null = null;
   private tutStep = 0;
   private tutHint = 0;
   private tutPrompting = false;
@@ -216,12 +226,31 @@ export class Game {
   private time = 0;
   private stateT = 0;
   private speedScale = 1;
+  /** v2.2 turbo blend 0..1: speeds up in ~0.3 s and eases back to the chosen speed level in ~0.6 s */
+  private turboK = 0;
+  private turboMulNow(run: Run, dt: number) {
+    const want = run.turboT > 0 ? 1 : 0;
+    this.turboK += (want - this.turboK) * (1 - Math.exp(-(want ? 9 : 5) * dt));
+    if (!want && this.turboK < 0.01) this.turboK = 0;
+    return 1 + (SPEED.turboMul - 1) * this.turboK;
+  }
   private countdownStep = -1;
   private runMissionsDone: { text: string; reward: number }[] = [];
   /** v2: rank reached by the current run's EXP (for the in-run rank-up notice) */
   private runRank: RankClass = 'D';
   /** v2: personal-best EXP already beaten in this run (notice shown once) */
   private runBeatBest = false;
+  /** 0 = no cheer yet, 1 = "getting close" shown, 2 = "so close" shown */
+  private bestCheer = 0;
+  /** the run just passed the player's best EXP: light confetti + banner, no slow-motion, no pause */
+  private celebrateBest() {
+    this.ui.banner('NEW BEST!', 'YOU BEAT YOURSELF!');
+    this.audio.play('mission');
+    this.vibrate([20, 30, 20]);
+    const p = this.vehicle.root.position;
+    const colors = [0xffc21a, 0x7fe6ff, 0xff4fd8];
+    for (let k = 0; k < 3; k++) window.setTimeout(() => this.particles.burst(p.x + (Math.random() - 0.5) * 4, p.y + 3, -8, 14, colors[k], 6, 0.2, 1.2, { grav: 7, up: 3 }), k * 200);
+  }
   /** run started with ?rank=… (test shortcut) — its EXP is not saved */
   private debugStart = false;
   /** last rank gate announced in this run */
@@ -249,6 +278,7 @@ export class Game {
     this.particles = new Particles(this.renderer.pixelRatio);
     this.smoke = new Particles(this.renderer.pixelRatio, false);
     this.renderer.scene.add(this.smoke.points);
+    scene.add(this.bonusTunnels.group);
     scene.add(this.particles.points, this.speedLines.lines, this.rings.group, this.debris.group, this.shatter.group, this.shield.mesh, this.portal.group, this.startArch, this.finishArch);
 
     this.world.hooks = {
@@ -282,7 +312,7 @@ export class Game {
     this.ui = new UI(container, {
       play: () => {
         this.returnTo = null;
-        this.afterResults(() => (this.save.tutorialDone ? this.openTracks() : this.startTutorial())); // v2: first Play = training
+        this.afterResults(() => (this.save.tutorialDone ? this.openTracks() : this.openTutorialIntro())); // v2: first Play = training card (Start / Skip)
       },
       help: () => this.openTutorialIntro(),
       startTutorial: () => this.startTutorial(),
@@ -290,6 +320,13 @@ export class Game {
       skipTutorial: () => {
         this.save.tutorialDone = true;
         this.persist();
+        // skipping from inside a running training: stop it cleanly first (no ad, nothing recorded)
+        if (this.tutorialMode) {
+          this.ui.tutPrompt(null);
+          this.timeScale = this.timeScaleTarget = 1;
+          this.showHome();
+        }
+        this.ui.hideOverlay('tutintro');
         this.openTracks();
       },
       startTrack: (id) => this.startTrack(id),
@@ -306,7 +343,7 @@ export class Game {
       setSpeed: (lv) => this.setSpeed(lv),
       nextTrack: () => this.afterResults(() => this.nextTrack()),
       garage: () => this.openGarage(),
-      missions: () => this.openDaily(), // v2: Daily + Missions merged
+      missions: () => this.openMissions(), // v2.2: Missions are their own screen again (career chains)
       home: () => {
         const back = this.returnTo;
         this.returnTo = null;
@@ -338,6 +375,7 @@ export class Game {
       boostInfo: (k) => this.openBoostInfo(k as ItemKey),
       bag: () => this.openBag(),
       boostTrain: (k) => this.startBoostTraining(k as BoostKind),
+      trainAgain: () => (this.lastPractice ? this.startBoostTraining(this.lastPractice) : this.startTutorial(this.trainWorld)),
       toggleAutoClaim: () => {
         this.save.settings.autoClaim = this.save.settings.autoClaim === false;
         this.persist();
@@ -422,9 +460,9 @@ export class Game {
       resume: () => this.resume(),
       retry: () =>
         this.afterResults(() => {
-          // Bonus roads only while the event is open
-          if (this.course?.bonus && !bonusState().live) {
-            this.ui.toast(`${ICON.clock} This Bonus has closed — next one ${localTime(bonusState().next.start)}`, '#ffc21a');
+          // Bonus roads: one play per event
+          if (this.course?.bonus) {
+            this.ui.toast(`${ICON.check} Bonus played · next one ${localTime(bonusState().next.start)}`, '#ffc21a');
             return this.goHome();
           }
           // v2: every EXP race starts with the special choice (Retry too)
@@ -802,7 +840,7 @@ export class Game {
 
   private openPerk(kind: PerkKind, click = false) {
     if (click) this.audio.play('click');
-    this.ui.popup(kind, { ...this.perkState(), avatar: this.save.avatar, name: this.save.name, entryReward: PERK.entry, launchReward: PERK.launch, shareReward: PERK.share, inviteReward: PERK.invite });
+    this.ui.popup(kind, { ...this.perkState(), vehicle: this.save.vehicle, avatar: this.save.avatar, name: this.save.name, entryReward: PERK.entry, launchReward: PERK.launch, shareReward: PERK.share, inviteReward: PERK.invite });
   }
 
   private grantCoins(n: number, title: string) {
@@ -814,12 +852,13 @@ export class Game {
   }
 
   private async shareLink(kind: 'share' | 'invite') {
+    if (kind === 'share') return this.shareCard(false);
     const url = `${location.origin}${location.pathname}${kind === 'invite' ? `?ref=${this.save.pid.toString(36)}` : ''}`;
     const text = kind === 'invite' ? `Race me in Sky Roadster! Join with my link and we both get ${PERK.invite} coins.` : `I'm racing in Sky Roadster — best score ${this.save.best.toLocaleString('en-US')}. Can you beat me?`;
     try {
       if (navigator.share) await navigator.share({ title: 'Sky Roadster', text, url });
       else {
-        await navigator.clipboard.writeText(`${text} ${url}`);
+        copyText(`${text} ${url}`);
         this.ui.toast(`${ICON.share} Link copied — paste it to a friend`);
       }
       return true;
@@ -980,18 +1019,43 @@ export class Game {
     this.showHome();
   }
 
-  private async share() {
-    const score = this.state === 'finish' || this.state === 'gameover' ? Math.floor(this.run?.score ?? 0) : this.save.best;
-    const text = `I scored ${score.toLocaleString('en-US')} in Sky Roadster! Can you beat me?`;
-    try {
-      if (navigator.share) await navigator.share({ title: 'Sky Roadster', text, url: location.href });
-      else {
-        await navigator.clipboard.writeText(`${text} ${location.href}`);
-        this.ui.toast(`${ICON.share} Copied — paste it anywhere`);
-      }
-    } catch {
-      /* share sheet dismissed */
-    }
+  private get bestExp() {
+    return CLASSES.indexOf(this.rank) >= 6 ? this.save.exp2Best : this.save.expBest;
+  }
+
+  private share() {
+    void this.shareCard(this.state === 'finish' || this.state === 'gameover');
+  }
+
+  /** a public link to the game (none inside sandboxed previews) */
+  private get shareUrl() {
+    const h = location.hostname;
+    return /^https?:$/.test(location.protocol) && !/claudeusercontent|localhost|^127\.|^192\.168\./.test(h) ? `${location.origin}${location.pathname}` : '';
+  }
+
+  /** draw the brag card (this run, or the pilot's best) and open the share sheet; preview if sharing is blocked */
+  private async shareCard(ofRun: boolean): Promise<boolean> {
+    const run = this.run;
+    const exp = ofRun && run && !this.course ? run.exp : this.bestExp;
+    const rank = ofRun && run && !this.course ? classFor(run.exp) : this.rank;
+    const sub = ofRun && run && !this.course ? `${(run.distance / 1000).toFixed(1)} km · ${LEVELS[this.runLevel].label} · ${this.variant === 'track2' ? 'Mega Rush' : 'Endless'}` : `${this.meta.name} · best race`;
+    this.ui.toast(`${ICON.share} Making your card…`, '#9b6bff');
+    const blob = await drawShareCard({
+      title: ofRun ? 'FINISH' : 'MY PILOT CARD',
+      name: this.meta.name || 'Pilot',
+      rank,
+      exp,
+      sub,
+      car: carImage(this.save.vehicle),
+      avatar: avatarSvg(this.save.avatar),
+      logo: logoImg,
+    });
+    const text = `Rank ${rank} · ${exp.toLocaleString('en-US')} EXP in Sky Roadster! Can you beat me?`;
+    const r = await shareImage(blob, text, this.shareUrl);
+    if (r === 'shared') return true;
+    if (r === 'cancel') return false;
+    this.ui.sharePreview(blob, `${text}${this.shareUrl ? ` ${this.shareUrl}` : ''}`);
+    return true;
   }
 
   /** best EXP before the last recorded run (result screen bar) */
@@ -1019,9 +1083,22 @@ export class Game {
       this.audio.play('mission');
       this.vibrate([20, 40, 30]);
     }
-    if (!this.runBeatBest && exp > (this.variant === 'track2' ? this.save.exp2Best : this.save.expBest)) {
+    const best = this.variant === 'track2' ? this.save.exp2Best : this.save.expBest;
+    // closing in on the best: two short cheers (toasts only — nothing stops the race)
+    if (!this.runBeatBest && best >= 600) {
+      const left = best - exp;
+      if (this.bestCheer === 0 && exp >= best * 0.85) {
+        this.bestCheer = 1;
+        this.ui.toast(`${XPT_ICON} ${left.toLocaleString('en-US')} EXP to your best — keep going!`, '#7fe6ff');
+      } else if (this.bestCheer === 1 && exp >= best * 0.96) {
+        this.bestCheer = 2;
+        this.ui.toast(`${ICON.flag} SO CLOSE! Just ${left.toLocaleString('en-US')} EXP to beat yourself`, '#ffd24a');
+        this.vibrate(15);
+      }
+    }
+    if (!this.runBeatBest && exp > best) {
       this.runBeatBest = true;
-      this.ui.toast(`${XPT_ICON} NEW BEST EXP`, '#7fe6ff');
+      this.celebrateBest();
     }
   }
 
@@ -1041,10 +1118,23 @@ export class Game {
       rings: run.rings,
       finished,
       exp: this.debugStart ? 0 : run.exp,
+      gates: this.debugStart ? 0 : this.runGates(run),
+      worlds: this.runWorlds,
+      hearts: this.runHearts,
+      hard: this.runLevel === 'hard',
+      clean: this.debugStart ? 0 : this.cleanExp(run),
     };
     this.prevExpBest = this.variant === 'track2' ? this.save.exp2Best : this.save.expBest;
     const rankBefore = this.rank;
     const done = this.meta.recordRun(sum);
+    // career missions: lifetime counters, then pay every tier reached
+    const cs = this.career();
+    cs.km += run.distance / 1000;
+    cs.coins += run.coins;
+    cs.gates += sum.gates ?? 0;
+    if (!this.debugStart && sum.exp > this.prevExpBest && !this.course) cs.bests++;
+    if (this.course?.bonus && finished) cs.bonus++;
+    this.settleMissions();
     const newCar = this.syncCarUnlocks();
     if (newCar) window.setTimeout(() => this.ui.toast(`${ICON.car} NEW CAR UNLOCKED · ${newCar}`, '#2fd36b'), 1200);
     done.forEach((t, i) => window.setTimeout(() => this.ui.toast(`${ICON.calendar} DAILY QUEST DONE · ${t}`, 'var(--green)'), 400 + i * 900));
@@ -1091,7 +1181,8 @@ export class Game {
   // =============================================================== ads
   /** Leaving a results screen is a natural break: maybe show an interstitial first. */
   private afterResults(next: () => void) {
-    if (!this.save.noAds && (this.state === 'gameover' || (this.state === 'finish' && this.finishShown))) {
+    // never an ad after training / practice
+    if (!this.save.noAds && !this.tutorialMode && (this.state === 'gameover' || (this.state === 'finish' && this.finishShown))) {
       void this.ads.maybeInterstitial('between_runs', this.save.totalRuns).then(next);
     } else next();
   }
@@ -1196,6 +1287,7 @@ export class Game {
   }
 
   startTutorial(world: WorldId | null = null) {
+    this.lastPractice = null;
     this.trainWorld = world;
     this.tut = world ? advancedScript(world) : basicScript();
     this.tutorialMode = true;
@@ -1205,6 +1297,7 @@ export class Game {
 
   /** practice road for one boost (opened from its info card) */
   startBoostTraining(kind: BoostKind) {
+    this.lastPractice = kind;
     this.trainWorld = null;
     this.tut = boostScript(kind);
     this.tutorialMode = true;
@@ -1280,10 +1373,12 @@ export class Game {
    * garage upgrades are refunded as coins, rank starts at D (EXP is measured from the first v2 run).
    */
   private migrateV2() {
-    // v2: Missions merged into Daily — rewards still waiting go to the wallet
-    if (this.save.pendingMissions.length) {
-      this.save.wallet += this.save.pendingMissions.reduce((a, m) => a + m.reward, 0);
-      this.save.pendingMissions = [];
+    // v2.2: starting kit is 1 HYPER + 2 Roadster — everyone gets the difference (+1 / +1) once
+    if (!this.save.perks.kit2) {
+      this.save.perks.kit2 = true;
+      this.save.items.super += 1;
+      this.save.items.hyper += 1;
+      if (!this.save.special) this.save.special = 'super';
       this.persist();
     }
     if (!this.save.carsRelocked) {
@@ -1331,6 +1426,7 @@ export class Game {
     this.carried = null;
     this.save.items[k] = Math.max(0, this.save.items[k] - 1);
     if (this.save.items[k] <= 0 && this.save.special === k) this.save.special = null;
+    this.career().specials++;
     this.persist();
   }
 
@@ -1353,7 +1449,10 @@ export class Game {
   private bagPickMode = false;
   private chooseSpecial(k: string) {
     const key = (SPECIALS as readonly string[]).includes(k) ? (k as SpecialKey) : null;
-    if (key && this.save.items[key] <= 0) return this.buySpecial(key);
+    if (key && this.save.items[key] <= 0) {
+      this.ui.buySync(this.save);
+      return this.ui.showOverlay('bagbuy');
+    }
     this.save.special = key;
     this.persist();
     this.audio.play('click');
@@ -1379,6 +1478,7 @@ export class Game {
     this.persist();
     this.audio.play('power');
     this.ui.toast(`${ICON.bag} +1 ${{ super: 'Roadster', hyper: 'HYPER', escape: 'SOS' }[key]} · in your bag`, '#9b6bff');
+    this.ui.hideOverlay('bagbuy'); // after buying: back to the bag
     if (this.ui.isShown('bag')) this.ui.bagSync(this.save, this.bagPickMode);
     if (this.ui.isShown('specialpick')) this.ui.specialPick(this.save, this.pickLabel());
     this.ui.refreshProfile(this.save);
@@ -1402,6 +1502,8 @@ export class Game {
       opensAt: localTime(bs.next.start),
       next: bs.live ? `${BONUS_NAME[bs.next.theme]} · ${localTime(bs.next.start)}` : '',
       finish: Math.round(BONUS.finishCoins * LEVELS[this.save.settings.speed].reward),
+      minutes: BONUS.raceMinutes,
+      played: !!bs.live && this.save.bonusPlayed === bs.live.key,
     });
   }
 
@@ -1412,7 +1514,14 @@ export class Game {
       this.ui.toast(`${ICON.clock} Next Bonus opens ${localTime(bs.next.start)}`, '#ffc21a');
       return;
     }
+    if (this.save.bonusPlayed === bs.live.key) {
+      this.ui.toast(`${ICON.check} Bonus played · next one ${localTime(bs.next.start)}`, '#ffc21a');
+      return;
+    }
     this.ui.hideOverlay('bonus');
+    // one play per event: it counts as played from the start (revives still work inside the race)
+    this.save.bonusPlayed = bs.live.key;
+    this.persist();
     const level = this.save.settings.speed;
     const theme = bs.live.theme;
     // the finish line sits where 30 minutes of non-stop driving end (no turbo)
@@ -1423,7 +1532,7 @@ export class Game {
     let d = 0;
     for (let t = 0; t < BONUS.raceMinutes * 60; t += 0.1) d += sp.speed(d) * 0.1;
     const length = Math.round(d / 100) * 100;
-    const names = BONUS_SECTIONS[theme];
+    const names = BONUS_SECTIONS[theme].slice(0, 3);
     const seg = length / names.length;
     this.tutorialMode = false;
     this.course = {
@@ -1445,22 +1554,90 @@ export class Game {
   private showcaseK: 'ghost' | 'wall' | 'rail' | 'tunnel' | null = null;
   private showcaseT = 0;
   private showcaseDur = 0;
+  /** v2.2 Bonus: set piece built after its special was picked up; the special fires itself just before it */
+  private setPiece: SetPiece | null = null;
   private autoSpecial(k: PickupKind) {
     if (!this.course?.bonus || this.state !== 'run') return;
+    const w = this.world;
+    const sp = w.spawner.setPieces.find((x) => !x.filled && x.kind === k && Math.abs(x.pick - w.dist) < 30);
+    if (sp) {
+      sp.filled = true;
+      w.injectRows(w.spawner.buildSetPiece(sp));
+      this.setPiece = sp;
+      // safety: whatever happens, the stretch the pickup created never costs a heart
+      this.run.invulnT = Math.max(this.run.invulnT, (sp.to - w.dist) / Math.max(1, w.speed) + 0.6);
+      const msg: Record<string, string> = { super: 'CAR WALL AHEAD', hyper: 'TRUCK CONVOY AHEAD', escape: 'TRAFFIC JAM AHEAD', wall: 'ROAD BLOCKED AHEAD', rail: 'BUSY STRETCH AHEAD', ghost: 'LASER ZONE AHEAD', tunnel: 'TUNNEL AHEAD' };
+      this.ui.toast(`${ICON.rocket} ${msg[k] ?? 'SPECIAL'} · it fires by itself!`, '#9b6bff');
+      return;
+    }
     if (k === 'super' || k === 'hyper') {
       if (this.world.player.air > 0.05 || this.superFlight) return; // already flying: keep the charge for the button
       this.launchSuperJump(k === 'hyper');
       return;
     }
     if (k === 'ghost' || k === 'wall' || k === 'rail' || k === 'tunnel') {
+      this.startShowcase(k, { ghost: 4.5, wall: 4, rail: 5, tunnel: 4 }[k]);
+    }
+  }
+
+  private startShowcase(k: 'ghost' | 'wall' | 'rail' | 'tunnel', dur: number) {
+    {
       this.showcaseK = k;
-      this.showcaseDur = this.showcaseT = { ghost: 4.5, wall: 4, rail: 5, tunnel: 4 }[k];
+      this.showcaseDur = this.showcaseT = dur;
       this.run.invulnT = Math.max(this.run.invulnT, this.showcaseT + 0.6);
       this.vehicle.boostKick(0.6);
       this.rig.fovKick += 6;
       this.audio.play('warp');
       this.vibrate(25);
     }
+  }
+
+  /** fire the picked-up Bonus special just before its set piece */
+  private updateSetPiece() {
+    const sp = this.setPiece;
+    if (!sp || this.state !== 'run') return;
+    const w = this.world;
+    const lead = (BONUS_SET.fire[sp.kind] ?? 0.4) * w.speed;
+    if (w.dist < sp.from - lead) return;
+    this.setPiece = null;
+    const k = sp.kind;
+    if (k === 'super' || k === 'hyper') {
+      if (!this.superFlight) this.launchSuperJump(k === 'hyper');
+    } else if (k === 'escape') {
+      this.useEscape();
+    } else if (k === 'ghost' || k === 'wall' || k === 'rail' || k === 'tunnel') {
+      this.startShowcase(k, (sp.to - w.dist) / Math.max(1, w.speed) + 0.5);
+    }
+    this.run.invulnT = Math.max(this.run.invulnT, (sp.to - w.dist) / Math.max(1, w.speed) + 0.6);
+  }
+
+  private career() {
+    return (this.save.career ??= careerDefaults());
+  }
+  private noteWorld(id: string) {
+    const cs = this.career();
+    if (!cs.worlds.includes(id)) cs.worlds.push(id);
+  }
+  /** career tiers reached → wallet (auto-collect) or the "ready to collect" list */
+  private settleMissions() {
+    const done = settleCareer(this.save);
+    done.forEach((m, i) => {
+      if (this.save.settings.autoClaim !== false) this.save.wallet += m.reward;
+      else this.save.pendingMissions.push(m);
+      window.setTimeout(() => this.ui.toast(`${ICON.target} MISSION COMPLETE · ${m.text} <span class="price">${ICON.coin}+${m.reward}</span>`, 'var(--green)'), 1600 + i * 900);
+    });
+    if (done.length) this.persist();
+  }
+
+  /** per-run counters for daily challenges / career missions */
+  private runWorlds = 1;
+  private runHearts = 0;
+  private firstLossExp = -1;
+  private runGates(run: Run) {
+    return this.course || this.tutorialMode || run.expRate <= 0 ? 0 : Math.min(CLASSES.indexOf(classFor(run.exp)), VARIANTS[this.variant].top);
+  }
+  private cleanExp(run: Run) {
+    return this.firstLossExp >= 0 ? this.firstLossExp : run.exp;
   }
 
   /** v2: the HUD strip shows the next unfinished daily mission, with this race's live progress */
@@ -1475,6 +1652,7 @@ export class Game {
     const live: Record<QuestStat, number> = {
       runs: 0, coins: run.coins, distance: Math.floor(run.distance), near: run.nearMiss, powerups: run.powerups,
       jumps: run.superUsed, score: Math.floor(run.score), finish: 0, rings: run.rings, exp: run.exp,
+      gates: this.runGates(run), worlds: this.runWorlds, hearts: this.runHearts, hard: 0, clean: this.cleanExp(run), far: Math.floor(run.distance),
     };
     const v = live[q.stat];
     return { text: q.text, progress: Math.min(q.target, q.mode === 'max' ? Math.max(q.base, v) : q.base + v), target: q.target };
@@ -1530,7 +1708,8 @@ export class Game {
     this.audio.play('click');
     this.setState('missions');
     this.rig.mode = 'menu';
-    this.ui.missionsSync(this.save, this.missions.active);
+    this.settleMissions();
+    this.ui.missionsSync(this.save);
     this.ui.show('missions');
   }
 
@@ -1545,6 +1724,7 @@ export class Game {
     const startDist = want ? Math.max(0, rankDist(RANK_ORDER.indexOf(want as (typeof RANK_ORDER)[number]), level, this.variant) - 2600) : 0;
     this.debugStart = startDist > 0;
     this.world.reset(Math.floor(Math.random() * 1e9), this.course, level, startDist, this.course || this.tutorialMode ? 'endless' : this.variant);
+    this.bonusTunnels.set(this.course?.bonus ? this.world.spawner.tunnels() : [], this.course?.bonus ? this.course.world : null);
     this.tutStep = 0;
     this.tutHint = 0;
     this.tutPrompting = false;
@@ -1552,11 +1732,14 @@ export class Game {
     this.ui.tutPrompt(null);
     const car = SKINS.find((x) => x.id === this.save.vehicle) ?? SKINS[0];
     this.run = new Run({ ...V2_POWERUPS }, LEVELS[level].score * (1 + (car.bonus ?? 0) / 100)); // v2: same power-ups for everyone
-    this.run.expRate = this.tutorialMode || this.course ? 0 : expRate(level, this.variant); // Bonus roads pay coins only
+    // Bonus roads pay coins only; training counts EXP on the HUD for practice (recordMeta never saves it)
+    this.run.expRate = this.course ? 0 : this.tutorialMode ? expRate('easy', 'endless') : expRate(level, this.variant);
     this.run.distance = startDist;
     this.gateShown = '';
     this.runRank = 'D';
     this.runBeatBest = (this.variant === 'track2' ? this.save.exp2Best : this.save.expBest) <= 0;
+    this.bestCheer = 0;
+    this.ui.hudBest = this.course || this.tutorialMode ? 0 : this.variant === 'track2' ? this.save.exp2Best : this.save.expBest;
     this.superFlight = false;
     this.blockade = null;
     this.nextBlockadeAt = 420;
@@ -1571,8 +1754,10 @@ export class Game {
     // v2: ONE special per race, picked before the start; it leaves the Magic Bag only when it is used
     this.carried = null;
     this.showcaseK = null;
+    this.setPiece = null;
     this.showcaseT = 0;
     this.ui.bonusHud = !!this.course?.bonus;
+    this.ui.trainHud = this.tutorialMode;
     this.obstacleViews.theme = (PROP_THEMES as string[]).includes(this.world.world) ? (this.world.world as PropTheme) : null;
     if (!this.tutorialMode && !this.course?.bonus) {
       const k = this.save.special ?? null;
@@ -1604,12 +1789,16 @@ export class Game {
       sp.pickups.push(...script.pickups);
     }
     this.livesLost = 0;
+    this.runWorlds = 1;
+    this.runHearts = 0;
+    this.firstLossExp = -1;
     this.continuesUsed = 0;
     this.finishShown = false;
     this.runTime = 0;
     this.sectionName = '';
     this.missions.beginRun();
     this.pickHudQuest();
+    if (!this.course && !this.tutorialMode && !this.debugStart) this.noteWorld('city');
     this.runMissionsDone = [];
     this.applySkin(this.save.vehicle);
     this.vehicle.resetPose();
@@ -1622,6 +1811,7 @@ export class Game {
     this.startArch.position.z = -14;
     this.finishArch.visible = false;
     this.speedScale = 1;
+    this.turboK = 0;
     this.setState('countdown');
     this.countdownStep = -1;
     this.rig.mode = 'run';
@@ -2105,7 +2295,7 @@ export class Game {
       smash: run.turboT > 0 || (!!this.showcaseK && this.showcaseK !== 'ghost'),
       magnet: run.magnetActive || (!!this.showcaseK && this.showcaseK !== 'ghost'),
       magnetRadius: run.magnetRadius,
-      speedMul: run.speedMul * this.speedScale,
+      speedMul: this.turboMulNow(run, dt) * this.speedScale,
     };
     for (let i = 0; i < steps; i++) {
       const before = w.dist;
@@ -2154,13 +2344,18 @@ export class Game {
         this.superRolled = true;
         this.vehicle.barrelRoll(p.isHyper ? 2 : 1);
         this.vibrate(20);
+        // v2.2: the roll plays in slow motion while the camera swings around the car (world slows too,
+        // so the jump still lands exactly where it would)
+        if (!p.isEscape && this.state === 'run') {
+          this.slowmoT = p.isHyper ? 1.25 : 1.05;
+          this.timeScaleTarget = 0.36;
+          this.rig.swing(0.95); // camera time is slowed too: ≈ the whole slow-motion + a soft return
+          this.rig.fovKick -= 4;
+        }
       }
       // the roll comes out of the apex and the car starts down: brief slow motion to savour it
       if (this.superRolled && !this.slowmoDone && !p.isEscape && (p.vphase === 'hold' && p.airTimeLeft < 0.35 || p.vphase === 'recover')) {
         this.slowmoDone = true;
-        this.slowmoT = 0.85;
-        this.timeScaleTarget = 0.38;
-        this.rig.fovKick -= 4;
         this.audio.play('ring');
         if (p.isHyper && this.state === 'run') {
           // mythic bonus at the apex: coin shower + score
@@ -2215,7 +2410,7 @@ export class Game {
         this.save.tutorialDone = true;
         this.missions.endRun();
         this.persist();
-        this.ui.show('tutdone');
+        this.ui.tutDone(this.lastPractice && this.lastPractice !== "shield" ? this.lastPractice : null);
       }
     }
 
@@ -2223,6 +2418,7 @@ export class Game {
     const c = this.course;
     if (c) {
       if (this.state === 'run' || this.state === 'respawn') this.runTime += dt;
+      this.bonusTunnels.update(w.dist);
       this.startArch.position.z = -(14 - w.dist);
       this.startArch.visible = w.dist < 40;
       this.finishArch.position.z = -(c.length - w.dist);
@@ -2263,6 +2459,7 @@ export class Game {
     if (Math.floor(this.time * 20) !== Math.floor((this.time - dt) * 20)) {
       this.ui.updateHud(run, w.speed, SPEED.max * SPEED.turboMul * LEVELS[this.runLevel].speed, this.questHud(run));
       this.expMilestones(run);
+      this.updateSetPiece();
       if (c) this.ui.trackHud({ section: this.sectionName, dist: w.dist, length: c.length, marks: c.sections.slice(1).map((s) => s.from) });
     }
   }
@@ -2401,7 +2598,10 @@ export class Game {
             this.rig.shake(0.25);
             this.rig.fovKick += 6;
           }
-          if (k === 'life') this.ui.toast(`${POWER_ICON.life} EXTRA LIFE`, 'var(--red)');
+          if (k === 'life') {
+            this.runHearts++;
+            this.ui.toast(`${POWER_ICON.life} EXTRA LIFE`, 'var(--red)');
+          }
           if (k === 'super') this.ui.toast(`${POWER_ICON.super} ROADSTER JUMP ready · tap the ROADSTER button`, '#9b6bff');
           if (k === 'dash') this.ui.toast(`${POWER_ICON.dash} AIR DASH ×${this.run.dashes} · from an edge lane: jump, swipe twice → flip`, '#2ee6c8');
           if (k === 'escape') this.ui.toast(`${POWER_ICON.escape} SKY ESCAPE ready · tap SOS (E) in an emergency`, '#ff5a3c');
@@ -2410,6 +2610,17 @@ export class Game {
         case 'near':
           // v2: near misses are not a feature any more (owner: nobody understands them) — no sound, no pop
           break;
+        case 'gift': {
+          // mystery box / ring reward: coins pop here; a power-up also shows its own pickup title
+          const src = f.src === 'box' ? 'MYSTERY BOX' : 'RING BONUS';
+          if (f.coins > 0) {
+            this.audio.play('combo');
+            this.ui.pop(`+${f.coins}`, '#ffd24a', `${src} · COINS`, -14);
+            const s = this.toScreen(this.vehicle.root.position.x, this.vehicle.root.position.y + 1, 0);
+            if (s) this.ui.flyTo(s.x, s.y, ICON.coin, 'coins', 70);
+          } else if (f.kind) this.ui.toast(`${ICON.gift} ${src} · ${POWER_LABEL[f.kind as Exclude<PickupKind, 'coin'>]}`, '#ff4fd8');
+          break;
+        }
         case 'ring':
           this.audio.play('ring');
           this.vibrate(8);
@@ -2472,6 +2683,7 @@ export class Game {
     this.dangerHint = null;
     this.ui.danger(null);
     const p = this.world.player;
+    if (this.livesLost === 0 && this.run) this.firstLossExp = this.run.exp;
     this.livesLost++;
     this.setState('dying');
     p.frozen = true;
@@ -2655,9 +2867,10 @@ export class Game {
     if (!isBonus && run.exp > 0) {
       const wb = this.meta.weekly();
       const r = wb.you.rank;
-      pos = r <= 999 ? `#${r.toLocaleString('en-US')} this week` : `Top ${Math.max(1, Math.ceil((r / wb.total) * 100))}% this week`;
+      const pct = Math.max(1, Math.ceil((r / wb.total) * 100));
+      pos = r <= 999 ? `#${r.toLocaleString('en-US')} this week` : pct <= 50 ? `Top ${pct}% this week` : ''; // a weak run shows no position
     }
-    this.ui.gameOver({ score: isBonus ? run.coins : run.exp, best: this.variant === 'track2' ? this.save.exp2Best : this.save.expBest, isBest: !!rewards && rewards.exp > 0 && rewards.to > rewards.from, dist: run.distance, length: this.course?.length, coins: run.coins, near: run.nearMiss, missions: this.runMissionsDone, rewards, speedBonus, level: lvg.label, tip: this.lastTip, runRank: isBonus || run.expRate <= 0 ? null : this.runRank, pos });
+    this.ui.gameOver({ score: isBonus ? run.coins : run.exp, best: this.variant === 'track2' ? this.save.exp2Best : this.save.expBest, isBest: !!rewards && rewards.exp > 0 && rewards.to > rewards.from, dist: run.distance, length: this.course?.length, coins: run.coins, near: run.nearMiss, missions: this.runMissionsDone, rewards, speedBonus, level: lvg.label, tip: this.lastTip, runRank: isBonus || run.expRate <= 0 ? null : this.runRank, pos, car: this.save.vehicle, bonus: isBonus });
     this.lastResult = { coins: run.coins, reward: 0, doubled: false };
     this.ui.adButton('ad2x', run.coins > 0 ? 'ready' : 'used', 'No coins to double');
     this.ui.hideEl('ad2x', run.coins <= 0); // nothing to double → no button
@@ -2667,6 +2880,10 @@ export class Game {
   }
 
   private onWorldChange(id: WorldId) {
+    if (this.state === 'run' && !this.course) {
+      this.runWorlds++;
+      this.noteWorld(id);
+    }
     this.scenery.setWorld(id);
     // each place has its own obstacle looks (same hitboxes)
     this.obstacleViews.theme = (PROP_THEMES as string[]).includes(id) ? (id as PropTheme) : null;
@@ -2745,7 +2962,8 @@ export class Game {
     // power-up visuals only while actually racing (never on the game-over / menu screens: the
     // last run's shield or turbo used to stay glowing around the car on the next run)
     const racing = !!run && (this.state === 'run' || this.state === 'respawn' || this.state === 'countdown');
-    this.vehicle.auraTarget = racing && (run.magnetActive || run.doubleT > 0 || this.showcaseK === 'ghost') ? 1 : 0;
+    // v2.2: no outline for Magnet / ×2 (the HUD chip shows them) — only Phase Ghost glows
+    this.vehicle.auraTarget = racing && this.showcaseK === 'ghost' ? 1 : 0;
     this.vehicle.shieldTarget = racing && run.shield ? 1 : 0;
     // boost look while Turbo runs or a Roadster / HYPER / SOS rocket is climbing
     this.vehicle.boostTarget = run && this.state === 'run' && (run.turboT > 0 || (this.world.player.isSuper && this.world.player.vphase !== 'recover')) ? 1 : 0;
@@ -2914,6 +3132,7 @@ export class Game {
     this.applyReadability();
     this.ui.refreshProfile(this.save);
     this.audio.play('click');
+    this.ui.toast(this.save.settings.comfort !== false ? '◐ Eye comfort ON · fewer speed lines, less blur & shake, softer glows' : '◐ Eye comfort OFF · full speed effects', '#9fb3dd');
   }
 
   private toggleQuality() {

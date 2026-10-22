@@ -4,6 +4,16 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-22 — v2.2.0: owner rounds H–X done
+
+**Done**: all of `docs/FIXLIST.md` H–X (see README "v2.2.0"). New code: `meta/Career.ts` (career missions), `ui/ShareCard.ts` (share image), `render/BonusTunnels.ts`, `Spawner.setPieces / buildSetPiece / tunnels`, `World.injectRows`, `GIFTS` + `BONUS_SET` in config, `tests/bonus.test.ts`.
+
+**Notes**: double EXP can push the run's EXP ahead of the distance-based rank gates (by design request). Base road speed still rises slowly with distance / rank phase on Endless (turbo itself now eases back to that base). Headless checks only — feel of slow-mo swing, set pieces and tunnels needs a phone test.
+
+**Next**: owner playtest; rear renders for Volt / Phantom / Inferno / Nexus; delete dead v1 code (cups, courses, MissionTracker, upgrades, pass).
+
+---
+
 ## 2026-10-22 — v2.1.0: owner fix list done
 
 **Done**: everything in `docs/FIXLIST.md` (A–G) — see README "v2.1.0". New: `ENDLESS_LADDER` / `ladderAt` / `nextWorldAt` (Spawner), 7 ladder sceneries (`buildLadder` in Scenery), themed obstacle props per place (`buildThemed` / `buildLadderProp` in ObstacleViews, keyed pools), `HEARTS`, XWAVE Vega (`rear` skin field), emblem avatars, `docs/assets-inbox/` (owner's original logo + car image).
