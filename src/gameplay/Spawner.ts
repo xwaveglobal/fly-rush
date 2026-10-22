@@ -500,10 +500,10 @@ export class Spawner {
               { w: 1.6, v: 'turbo' },
               { w: 2, v: 'double' },
               { w: 1, v: 'life' },
-              { w: 1.6, v: 'mystery' },
+              { w: 0.5, v: 'mystery' },
             ]);
           }
-          this.nextPowerAt = dist + r.range(170, 280);
+          this.nextPowerAt = dist + r.range(240, 380); // a few fewer items than before
           if (kind !== 'coin') {
             this.pickups.push({ kind, lane, dist, y });
             continue;
@@ -515,7 +515,7 @@ export class Spawner {
           { w: 3, v: 'magnet' },
           { w: 3, v: 'shield' },
           { w: v1 ? 2.2 : 0.7, v: 'turbo' }, // v2: turbo is rare (it also adds EXP)
-          { w: v1 ? 0 : 1.6, v: 'mystery' }, // v2.2 random reward box
+          { w: v1 ? 0 : 0.5, v: 'mystery' }, // v2.2 random reward box (now and then)
           { w: 2, v: 'double' },
           { w: v1 && dist > 600 ? 1 : 0, v: 'life' },
           { w: v1 && dist > 250 ? 2 : 0, v: 'super' },

@@ -24,6 +24,8 @@ export const ADS = {
   /** no interstitial right after the player chose to watch a rewarded ad */
   rewardedGraceSec: 30,
   freeCoinsPerDay: 5,
+  /** v2.2 end-screen ad: +this share of the race's coins (not ×2) */
+  endBonus: 0.2,
   freeCoinsAmount: 100,
   /** v1 only — v2 revives are by rewarded ad only (docs/GAME-DESIGN.md §6) */
   continueCoinCost: 300,

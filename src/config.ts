@@ -78,9 +78,9 @@ export const GIFTS = {
   box: { coins: [20, 40, 80], w: { coins: 4, magnet: 1.5, shield: 1.2, turbo: 0.8, double: 1.3, life: 1 } as Record<string, number> },
   ring: { coins: [5, 10, 15], w: { coins: 6, magnet: 1.2, shield: 0.8, turbo: 0.4, double: 1.2, life: 0.4 } as Record<string, number> },
   /** mystery boxes: chance per obstacle row to hang a box at the trick spot (over / under / beside it) */
-  boxChance: 0.35,
+  boxChance: 0.15,
   /** min metres between two boxes */
-  boxGap: 260,
+  boxGap: 600,
 };
 
 /**
@@ -105,8 +105,9 @@ export const BONUS_SET = {
 };
 
 export const COIN_LINES = {
-  endless: { skip: 0.62, max: 5 },
-  bonus: { skip: 0.4, max: 6 },
+  // v2.2: main road +20 % coins; Bonus only ~10 % above the main road
+  endless: { skip: 0.545, max: 5 },
+  bonus: { skip: 0.5, max: 5 },
   /** old courses (v1) */
   course: { skip: 0.18, max: 8 },
 };

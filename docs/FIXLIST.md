@@ -201,3 +201,18 @@ Owner 07:05: "rà soát sửa toàn bộ" → fix H–O now.
 - **Y6.** Normal and Hard another **+10 %** speed (EXP re-calibrated).
 
 **Y: done in v2.2.2.**
+
+## Z. Round 21 (owner 2026-10-22 08:17)
+- **Z1.** Bonus card: lines still too close.
+- **Z2.** Coins: main road +20 %; Bonus road only ~10 % more coins than the main road.
+- **Z3.** Bonus: a few fewer items. **Z4.** Mystery boxes only now and then.
+- **Z5.** Celebration when finishing a Bonus road.
+- **Z6.** Quitting a race half-way to Home must not show the result screen.
+- **Z7.** Speed levels (Easy / Normal / Hard) are critical: check for bugs, make them clearly different and smooth.
+- **Z8.** Show the speed level (EASY / NORMAL / HARD) on the race HUD.
+- **Z9.** Race HUD shows the next goal (next rank + EXP needed).
+- **Z10.** End-screen ad: **+20 % coins**, not ×2.
+- **Z11.** Leaderboard row: the badge after the name looks broken.
+- **Z12.** Car pictures (brag card, share card): use the clean transparent in-race car, no stretched thumbnail; nicer layout.
+
+**Z: done in v2.2.3.**

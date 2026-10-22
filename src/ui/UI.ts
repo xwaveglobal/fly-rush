@@ -31,7 +31,7 @@ import vegaRear from '../assets/images/car/vega-back.webp';
 const CAR_IMG: Record<string, string> = { zenith: carZenith, vega: carVega, volt: carVolt, phantom: carPhantom, inferno: carInferno, nexus: carNexus };
 export const carImage = (id: string) => CAR_IMG[id] ?? carZenith;
 /** transparent in-race rear render (share card); cars without one use their thumbnail */
-export const carRear = (id: string) => ({ zenith: carShadow, vega: vegaRear } as Record<string, string>)[id] ?? carImage(id);
+export const carRear = (id: string) => (id === 'vega' ? vegaRear : carShadow);
 export const logoImg = logoUrl;
 const RARITY_COLOR: Record<string, string> = { Common: '#4fb3ff', Rare: '#a77bff', Epic: '#ffc24a', Legendary: '#ff4a3c', Mythic: '#d04dff' };
 import { LEVELS } from '../config.ts';
@@ -368,7 +368,7 @@ export class UI {
         </div>
         <div class="star-rules" data-k="frules"></div>
         <div class="rwd" data-k="frwd"></div>
-        <button class="btn gold adbtn" data-a="ad2x" data-k="ad2xf">${ICON.play} Watch ad · ×2 reward</button>
+        <button class="btn gold adbtn" data-a="ad2x" data-k="ad2xf">${ICON.play} Watch ad · +20% coins</button>
         <button class="btn big" data-a="nexttrack" data-k="fnext">${ICON.play} Next track</button>
         <div class="navrow">
           <button class="btn nav blue" data-a="retry">${ICON.retry}<span>Retry</span></button>
@@ -594,7 +594,7 @@ export class UI {
       <div class="row">
         <button class="icon-btn hit" data-a="pause" aria-label="Pause">${ICON.pause}</button>
         <button class="trskip" data-a="tutskip" data-k="trskip" hidden>Skip ›</button>
-        <div class="scorebox panel exp"><div class="label" data-h="scorelabel">${XPT}</div><div class="val"><span data-h="score">0</span><span class="rankp" data-h="rankp"></span></div><div class="hbest" data-h="hbest" hidden><small>BEST</small><b data-h="hbestv">0</b><i><em data-h="hbestbar"></em></i></div></div>
+        <div class="scorebox panel exp"><div class="label" data-h="scorelabel">${XPT}</div><div class="val"><span data-h="score">0</span><span class="rankp" data-h="rankp"></span></div><div class="hbest" data-h="hbest" hidden><small>BEST</small><b data-h="hbestv">0</b><i><em data-h="hbestbar"></em></i></div><div class="hnext" data-h="hnext" hidden></div></div>
         <div class="side">
           <span class="pill coins">${ICON.coin}<b data-h="coins">0</b></span>
           <span class="pill">${ICON.flag}<b data-h="dist">0 m</b></span>
@@ -711,7 +711,7 @@ export class UI {
           <div class="stat"><span class="label">Best</span><span class="v"><span data-k="gbest">0</span></span></div>
         </div>
         <div class="rwd" data-k="grwd"></div>
-        <button class="btn gold adbtn" data-a="ad2x" data-k="ad2x">${ICON.play} Watch ad · ×2 coins</button>
+        <button class="btn gold adbtn" data-a="ad2x" data-k="ad2x">${ICON.play} Watch ad · +20% coins</button>
         <button class="btn big retry" data-a="retry">${ICON.retry} Retry</button>
         <div class="navrow">
           <button class="btn nav blue" data-a="home">${ICON.home}<span>Home</span></button>
@@ -1044,6 +1044,10 @@ export class UI {
   trainHud = false;
   /** best EXP to chase this race (0 = none yet / not an EXP race) */
   hudBest = 0;
+  /** speed level shown on the race HUD ('' = hide) */
+  hudLevel = '';
+  /** highest rank this road can give (Endless AAA, Mega Rush SSS) */
+  hudTop: RankClass = 'AAA';
 
   /** v2: rank-gate strip under the HUD (null = hidden) */
   gateHud(g: { next: RankClass; k: number } | null) {
@@ -1074,7 +1078,7 @@ export class UI {
       this.hset('score', fmt(run.coins));
       this.hset('rankp', '', true);
     } else {
-      this.hset('scorelabel', `${XPT}`, true);
+      this.hset('scorelabel', `${XPT}${this.hudLevel ? `<small class="lvtag2 ${this.hudLevel.toLowerCase()}">${this.hudLevel}</small>` : ''}`, true);
       this.hset('score', fmt(run.exp));
       this.hset('rankp', run.expRate > 0 ? classBadge(classOfBolts(run.exp)) : '', true);
     }
@@ -1091,6 +1095,15 @@ export class UI {
         const w = `${Math.min(100, (run.exp / this.hudBest) * 100).toFixed(0)}%`;
         if (bar.style.width !== w) bar.style.width = w;
       }
+    }
+    // next goal: the next rank and the EXP still needed for it
+    const hn = this.root.querySelector<HTMLElement>('[data-h="hnext"]');
+    if (hn) {
+      const cur = classOfBolts(run.exp);
+      const nx = CLASSES.indexOf(cur) < CLASSES.indexOf(this.hudTop) ? CLASSES[CLASSES.indexOf(cur) + 1] : null;
+      const show = !!nx && !this.trainHud && !this.bonusHud && run.expRate > 0;
+      if (hn.hidden === show) hn.hidden = !show;
+      if (show && nx) this.hset('hnext', `<small>NEXT</small>${classBadge(nx)}<b>${fmt(CLASS_MIN[nx] - run.exp)}</b><small>EXP</small>`, true);
     }
     this.hset('coins', fmt(run.coins));
     this.hset('dist', `${fmt(run.distance)} m`);
@@ -1344,7 +1357,7 @@ export class UI {
          <div class="bg-rank">RANK ${o.runRank}${o.isBest ? ` · <b>${ICON.trophy} NEW BEST</b>` : ''}</div>
          <div class="bg-exp"><b>${fmt(o.score)}</b>${XPT}</div>
          <div class="bg-meta">${ICON.flag}${fmt(o.dist)} m${o.pos ? ` · ${ICON.podium}${o.pos}` : ''}</div>
-         <img class="bg-car" src="${carImage(o.car ?? 'zenith')}" alt="" />
+         <img class="bg-car" src="${carRear(o.car ?? 'zenith')}" alt="" />
          <button class="btn gold bg-share" data-a="share">${ICON.share} Share my rank</button>`
       : '';
     this.setAll('final', fmt(o.score));

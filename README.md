@@ -187,6 +187,16 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v2.2.3 changes (owner round Z)
+
+- **Speed**: the road speed now glides to every new target (level, rank phase, turbo, respawn) — no jolts; the race HUD shows the level (EASY / NORMAL / HARD tag).
+- Race HUD: **NEXT** line = next rank + EXP still needed (under BEST).
+- Quitting a race half-way → straight Home (never an old result screen, no ad).
+- Coins: main road +20 %; Bonus road ~10 % above it, finish +300; fewer items on Bonus; mystery boxes only now and then.
+- Bonus finish celebration (banner + coin shower + vibration).
+- End-screen ad gives **+20 % coins** (was ×2).
+- Brag card uses the transparent in-race car on a glow; Bonus card and leaderboard row spacing fixed.
+
 ## v2.2.2 changes (owner round Y)
 
 - Flying through a **ring = double coins** for 8 s (HUD chip "coin ×2"); mystery boxes keep their random rewards.

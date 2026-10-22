@@ -129,7 +129,10 @@ export class World {
     const ev = this.events;
     ev.length = 0;
     this.time += dt;
-    this.speed = this.spawner.speed(this.dist) * opt.speedMul;
+    // v2.2: the road speed glides to its target (level, rank phase, turbo, respawn) — never a jolt
+    const want = this.spawner.speed(this.dist) * opt.speedMul;
+    this.speed += (want - this.speed) * Math.min(1, dt * (want < this.speed ? 3 : 4));
+    if (Math.abs(want - this.speed) < 0.05) this.speed = want;
     const dz = this.speed * dt;
     this.dist += dz;
 

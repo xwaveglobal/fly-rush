@@ -2322,3 +2322,27 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .pztile2:active { transform: scale(.94); }
 .pztile2 small { line-height: 1.2; }
 .shpv .td-row .btn { font-size: 15px; padding-left: 8px; padding-right: 8px; }
+
+/* ---- v2.2.3 (round Z) ---- */
+/* Z12 brag card: clean transparent car on a glow, nothing stretched */
+.bg-car { width: auto !important; height: 92px !important; max-width: 86%; max-height: none !important; object-fit: contain !important; border-radius: 0 !important; background: none !important; filter: drop-shadow(0 8px 14px rgba(0,0,0,.55)) drop-shadow(0 0 18px color-mix(in srgb, var(--cc) 45%, transparent)); margin: 2px 0 0 !important; }
+.brag { gap: 8px !important; padding: 16px 12px 14px !important; }
+.bg-rank { letter-spacing: 1.5px; }
+/* Z1 Bonus card rhythm */
+#bonus [data-k="bnbody"], .bnm [data-k="bnbody"] { display: flex; flex-direction: column; gap: 14px; }
+.bn-rules { display: flex; flex-direction: column; gap: 9px !important; }
+.bn-rules span { padding: 10px 12px !important; line-height: 1.35; }
+.bn-next { margin-top: -4px; text-align: center; }
+/* Z8 / Z9 race HUD: level tag + next goal */
+#hud .scorebox .lvtag2 { margin-left: 6px; padding: 1px 6px; border-radius: 6px; font: 900 9px var(--font-body); letter-spacing: 1.2px; vertical-align: 2px; color: #04122e; background: #9fe870; }
+#hud .scorebox .lvtag2.normal { background: #7fe6ff; }
+#hud .scorebox .lvtag2.hard { background: #ff7a5c; color: #fff; }
+#hud .scorebox .hnext { display: flex; align-items: center; gap: 5px; margin-top: 3px; font: 800 10.5px var(--font-body); color: #d6e2ff; }
+#hud .scorebox .hnext[hidden] { display: none; }
+#hud .scorebox .hnext small { font-size: 8.5px; letter-spacing: 1.3px; color: var(--muted); }
+#hud .scorebox .hnext .clsb { height: 14px; min-width: 16px; font-size: 8.5px; padding: 0 3px; }
+#hud .scorebox .hnext b { color: #fff; font-variant-numeric: tabular-nums; }
+/* Z11 leaderboard: flag + rank badge on one tidy line */
+.lbrow .ln { display: flex; flex-direction: column; align-items: flex-start; gap: 3px !important; }
+.lbrow .ln small { display: inline-flex !important; align-items: center; gap: 6px !important; line-height: 1; }
+.lbrow .ln small .clsb { height: 16px !important; min-width: 20px !important; font-size: 9.5px !important; padding: 0 4px !important; flex: none; }

@@ -14,7 +14,7 @@ export const BONUS = {
   /** non-stop minutes from START to FINISH (v2.2: a short 5-minute road, one play per event) */
   raceMinutes: 5,
   /** coins for reaching the finish line (× speed-level coin multiplier) */
-  finishCoins: 500,
+  finishCoins: 300,
   themes: ['desert', 'forest', 'country', 'sea'] as BonusWorld[],
 };
 

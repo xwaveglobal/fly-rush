@@ -56,7 +56,7 @@ import { drawShareCard, shareImage, copyText } from './ui/ShareCard.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v2.2.2';
+const VERSION = 'v2.2.3';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -347,6 +347,8 @@ export class Game {
       home: () => {
         const back = this.returnTo;
         this.returnTo = null;
+        // quitting a race half-way: straight Home — never back to an old result screen, no ad
+        if (this.state === 'paused' || this.state === 'run' || this.state === 'respawn' || this.state === 'continue' || this.state === 'countdown') return this.goHome();
         if (back) return back();
         this.afterResults(() => this.goHome());
       },
@@ -1262,7 +1264,7 @@ export class Game {
     if (this.lastResult.doubled) return;
     const ok = await this.ads.rewarded('double_coins');
     if (!ok) return;
-    const extra = this.lastResult.coins + this.lastResult.reward;
+    const extra = Math.max(1, Math.round((this.lastResult.coins + this.lastResult.reward) * ADS.endBonus));
     this.lastResult.doubled = true;
     this.save.wallet += extra;
     this.persist();
@@ -1740,6 +1742,7 @@ export class Game {
   }
 
   startRun() {
+    this.returnTo = null;
     this.audio.unlock();
     this.audio.startMusic();
     this.audio.play('click');
@@ -1765,6 +1768,8 @@ export class Game {
     this.runRank = 'D';
     this.runBeatBest = (this.variant === 'track2' ? this.save.exp2Best : this.save.expBest) <= 0;
     this.bestCheer = 0;
+    this.ui.hudLevel = this.course?.bonus || this.tutorialMode ? '' : LEVELS[level].label;
+    this.ui.hudTop = this.variant === 'track2' && !this.course ? 'SSS' : 'AAA';
     this.ui.hudBest = this.course || this.tutorialMode ? 0 : this.variant === 'track2' ? this.save.exp2Best : this.save.expBest;
     this.superFlight = false;
     this.blockade = null;
@@ -2815,6 +2820,14 @@ export class Game {
       this.save.totalRuns++;
       this.recordMeta(true);
       this.persist();
+      // celebration: coin shower + banner (the result card opens right after)
+      this.ui.banner('BONUS COMPLETE!', `+${(run.coins + speedBonus + reward).toLocaleString('en-US')} COINS`);
+      this.audio.play('combo');
+      this.vibrate([30, 40, 30, 40, 60]);
+      {
+        const p = this.vehicle.root.position;
+        for (let k = 0; k < 6; k++) window.setTimeout(() => this.particles.burst(p.x + (Math.random() - 0.5) * 6, p.y + 4, -6, 22, k % 2 ? 0xffd23d : 0xffffff, 7, 0.22, 1.4, { grav: 6, up: 4 }), k * 160);
+      }
       this.ui.finish({ rewards: null, track: `BONUS · ${c.name}`, stars: 0, score: run.coins + speedBonus + reward, isBest: false, time: this.runTime, coins: run.coins, coinTarget: 0, lost: this.livesLost, reward, speedBonus, level: lv.label, hasNext: false, bonus: true });
       this.ui.show('finish');
       this.lastResult = { coins: run.coins, reward, doubled: false };
