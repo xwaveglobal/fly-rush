@@ -80,7 +80,7 @@ function cleanName(n: string) {
   return out.trim().slice(0, 14);
 }
 
-const VERSION = 'v3.0.8';
+const VERSION = 'v3.0.9';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -291,6 +291,11 @@ export class Game {
 
   constructor(container: HTMLElement) {
     this.renderer = new Renderer(container, this.save.settings.quality, this.rig.camera, platform.canvas);
+    if (platform.android) {
+      // v3.0.9: Android phones drew 2× (up to 3×) pixels through bloom — 1.5× keeps it sharp and smooth
+      this.renderer.scaleCap = 1.5;
+      this.renderer.setQuality(this.renderer.quality);
+    }
     this.vehicle.camera = this.rig.camera;
     const scene = this.renderer.scene;
     this.scenery = new Scenery(scene);
@@ -592,7 +597,22 @@ export class Game {
     this.scenery.setWorld('city', true);
     this.track.setAccent(this.scenery.accent);
     this.applyReadability();
-    this.renderer.renderer.compile(this.renderer.scene, this.rig.camera);
+    {
+      // v3.0.9: compile the pooled (hidden) obstacle / pickup meshes too — compile() skips invisible
+      // objects, so their shaders were built on the first race frames (the hitch at race start)
+      const hidden: THREE.Object3D[] = [];
+      this.renderer.scene.traverse((o) => {
+        if (!o.visible) {
+          hidden.push(o);
+          o.visible = true;
+        }
+      });
+      try {
+        this.renderer.renderer.compile(this.renderer.scene, this.rig.camera);
+      } finally {
+        for (const o of hidden) o.visible = false;
+      }
+    }
     this.ui.setLoading(1);
     this.ui.setLoadingText('Ready');
     // let the loading key art be seen (≥1.6 s from page start), never a blank flash

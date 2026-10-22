@@ -162,7 +162,10 @@ export class UI {
     const run = this.shown.has('hud') && !OVERLAYS.some((o) => this.shown.has(o));
     let need = this.dirty;
     if (!need && this.hudDirty && since > (run ? 66 : 33)) need = true;
-    if (!need && this.animating(t) && since > (run ? 33 : 40)) need = true;
+    // v3.0.9: the home screen only pulses — redraw (and re-upload the full-screen UI texture) at ~11 fps
+    // there instead of 25 fps; the 3D city keeps its full frame rate (smoother on Android)
+    const homeIdle = this.shown.has('start') && !OVERLAYS.some((o) => this.shown.has(o)) && !this.notice && !this.notices.length && !this.pops && !this.flyers.length;
+    if (!need && this.animating(t) && since > (run ? 33 : homeIdle ? 90 : 40)) need = true;
     if (!need) return false;
     this.dirty = false;
     this.hudDirty = false;

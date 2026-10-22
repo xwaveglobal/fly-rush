@@ -5,6 +5,8 @@
 export interface Platform {
   /** true in the native mini game (canvas UI, HS SDK) */
   native: boolean;
+  /** v3.0.9: Android phone in the native build (lower render scale, lighter effects) */
+  android?: boolean;
   /** the screen canvas the 3D view draws into (native: the runtime's first canvas) */
   canvas?: HTMLCanvasElement;
   /** share sheet of the platform — resolves true when shared */

@@ -23,6 +23,11 @@ const T: any = G.tt;
 
 // ---------------------------------------------------------------- platform services (HS SDK)
 platform.native = true;
+try {
+  platform.android = /android/i.test(String(T?.getSystemInfoSync?.()?.platform ?? ''));
+} catch {
+  /* not Android */
+}
 platform.canvas = screenCanvas;
 platform.share = (text) => hs.share('Sky Roadster', text).then((r) => r === 'shared');
 platform.buy = (sku) => hs.buy(sku);

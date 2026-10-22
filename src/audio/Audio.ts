@@ -342,9 +342,9 @@ export class Audio {
     return pcm;
   }
 
-  private toBuffer(pcm: Float32Array): AudioBuffer {
+  private toBuffer(pcm: Float32Array, sr = this.rtSr): AudioBuffer {
     const c = this.ctx!;
-    const b = c.createBuffer(1, Math.max(1, pcm.length), this.rtSr);
+    const b = c.createBuffer(1, Math.max(1, pcm.length), sr);
     const d = b.getChannelData(0);
     for (let i = 0; i < pcm.length; i++) d[i] = softClip(pcm[i]);
     return b;
@@ -496,9 +496,8 @@ export class Audio {
       if (lv === this.loopLevel && this.loopSrc) return;
       const buf = this.loops[lv];
       if (!buf) {
-        this.bakeLoopAsync(lv);
+        if (this.loopJobs.size === 0 || this.loopJobs.has(lv)) this.bakeLoopAsync(lv);
         // keep the next levels warm too
-        for (let k = 0; k < 3; k++) if (k !== lv) setTimeout(() => this.bakeLoopAsync(k), 2500 + k * 500);
         return;
       }
       const bar = this.loopLen / 4;
@@ -539,7 +538,9 @@ export class Audio {
     const spb = 60 / this.bpm / 4;
     const len = 64 * spb;
     this.loopLen = len;
-    const sr = this.rtSr;
+    // v3.0.9: music renders at ≤ 22.05 kHz (it is low-passed at 2.6 kHz anyway) — half the work
+    const sfxSr = this.rtSr;
+    const sr = Math.min(sfxSr, 22050);
     const pcm = new Float32Array(Math.ceil((len + 3) * sr));
     const echo = new Float32Array(pcm.length);
     let st = 0;
@@ -549,14 +550,18 @@ export class Audio {
         this.intensity = level;
         this.rt = pcm;
         this.rtEcho = echo;
+        this.rtSr = sr;
         try {
-          for (const end = Math.min(64, st + 6); st < end; st++) this.note(st, st * spb, spb);
+          // one step per tick: a few ms of work, never a visible hitch
+          this.note(st, st * spb, spb);
+          st++;
         } finally {
           this.rt = null;
           this.rtEcho = null;
+          this.rtSr = sfxSr;
           this.intensity = keep;
         }
-        if (st < 64) return void setTimeout(step, 16);
+        if (st < 64) return void setTimeout(step, 20);
         const n = Math.round(len * sr);
         // fold the tails (notes ringing past the loop end) back to the start → seamless
         for (let i = n; i < pcm.length; i++) {
@@ -566,12 +571,15 @@ export class Audio {
         const out = pcm.subarray(0, n);
         addEcho(out, echo.subarray(0, n), sr, (60 / this.bpm) * 0.75, 0.32, 0.55, 1800);
         lowpass(out, sr, 2600);
-        this.loops[level] = this.toBuffer(out);
+        this.loops[level] = this.toBuffer(out, sr);
       } catch (e) {
         console.warn('[audio] bake', e);
       }
       this.loopJobs.delete(level);
       if (this.playing) this.loopTick();
+      // then the next intensity, in the background (ready before the race needs it)
+      const next = this.loops.findIndex((b, i) => !b && !this.loopJobs.has(i));
+      if (next >= 0 && this.loopJobs.size === 0) setTimeout(() => this.bakeLoopAsync(next), 400);
     };
     setTimeout(step, 0);
   }
@@ -582,16 +590,16 @@ export class Audio {
       'near', 'ring', 'beep', 'go', 'mission', 'turbo', 'respawn', 'bump', 'combo', 'warp', 'expire'];
     let i = 0;
     const tick = () => {
-      for (const end = Math.min(all.length, i + 3); i < end; i++) {
+      for (const end = Math.min(all.length, i + 1); i < end; i++) {
         try {
           this.bakeSfx(all[i], all[i] === 'coin' ? 0 : -1);
         } catch {
           /* rendered on first play instead */
         }
       }
-      if (i < all.length) setTimeout(tick, 30);
+      if (i < all.length) setTimeout(tick, 60);
     };
-    setTimeout(tick, 200);
+    setTimeout(tick, 1500);
   }
 
   private schedule() {
@@ -749,9 +757,19 @@ function bakeOsc(out: Float32Array, sr: number, type: string, f0: number, f1: nu
   let ph = 0;
   let tri = 0;
   const glide = f1 !== f0 && dur > 0;
+  // envelope + glide are evaluated every 16 samples and interpolated (Math.pow per sample is slow on phones)
+  let e0 = 0,
+    e1 = 0,
+    f = f0,
+    nextK = i0;
   for (let i = i0; i < i1; i++) {
     const t = i / sr - t0;
-    const f = glide ? f0 * Math.pow(f1 / f0, Math.min(1, t / dur)) : f0;
+    if (i >= nextK) {
+      e0 = env(t);
+      e1 = env(t + 16 / sr);
+      if (glide) f = f0 * Math.pow(f1 / f0, Math.min(1, t / dur));
+      nextK = i + 16;
+    }
     const dt = f / sr;
     let v: number;
     if (type === 'sine') v = Math.sin(ph * 2 * Math.PI);
@@ -769,7 +787,7 @@ function bakeOsc(out: Float32Array, sr: number, type: string, f0: number, f1: nu
     }
     // fade the last 4 ms so a voice never ends on a step
     const tailK = Math.min(1, (t0 + dur + 0.02 - i / sr) / 0.004);
-    out[i] += v * env(t) * tailK;
+    out[i] += v * (e0 + (e1 - e0) * (1 - (nextK - i) / 16)) * tailK;
     ph += dt;
     if (ph >= 1) ph -= 1;
   }
@@ -782,13 +800,21 @@ function bakeNoise(out: Float32Array, sr: number, t0: number, dur: number, vol: 
     ic2 = 0;
   const k = 1 / Math.max(0.05, q);
   const nyq = sr * 0.45;
+  let a1 = 0,
+    a2 = 0,
+    a3 = 0,
+    ev = 0;
   for (let i = i0; i < i1; i++) {
     const t = i / sr - t0;
-    const fc = Math.min(nyq, f0 * Math.pow(Math.max(30, f1) / f0, Math.min(1, t / Math.max(0.001, dur))));
-    const g = Math.tan((Math.PI * fc) / sr);
-    const a1 = 1 / (1 + g * (g + k));
-    const a2 = g * a1;
-    const a3 = g * a2;
+    if ((i - i0) % 16 === 0) {
+      // filter coefficients + envelope every 16 samples (tan / pow per sample is slow on phones)
+      const fc = Math.min(nyq, f0 * Math.pow(Math.max(30, f1) / f0, Math.min(1, t / Math.max(0.001, dur))));
+      const g = Math.tan((Math.PI * fc) / sr);
+      a1 = 1 / (1 + g * (g + k));
+      a2 = g * a1;
+      a3 = g * a2;
+      ev = envAD(t + 8 / sr, 0.01, dur, vol);
+    }
     const v0 = Math.random() * 2 - 1;
     const v3 = v0 - ic2;
     const v1 = a1 * ic1 + a2 * v3;
@@ -797,7 +823,7 @@ function bakeNoise(out: Float32Array, sr: number, t0: number, dur: number, vol: 
     ic2 = 2 * v2 - ic2;
     const y = type === 'lowpass' ? v2 : type === 'highpass' ? v0 - k * v1 - v2 : v1;
     const tailK = Math.min(1, (t0 + dur + 0.02 - i / sr) / 0.004);
-    out[i] += y * envAD(t, 0.01, dur, vol) * tailK;
+    out[i] += y * (t < 0.012 ? envAD(t, 0.01, dur, vol) : ev) * tailK;
   }
 }
 /** dotted-eighth echo with damped feedback, wrapping around the loop */

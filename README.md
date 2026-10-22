@@ -208,6 +208,12 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v3.0.9 changes — Android smoothness · flags · rank table
+
+- **Smoother on Android** (home + race start): pooled obstacle / pickup meshes are now compiled at load (their shaders used to build on the first race frames); Android renders the 3D view at ≤ 1.5× pixel ratio; the home screen's canvas UI redraws/uploads at ~11 fps (it only pulses) instead of 25; baked audio is rendered in tiny slices (one music step per tick at 22 kHz, envelopes/filters every 16 samples, SFX one per tick after 1.5 s) and the next music intensity is prepared in the background, never at race start.
+- **Country flags** drawn as SVG (`src/meta/Flags.ts`, all 62 countries) — emoji flags were blank / letters on Android. Leaderboards, podium, pilot card, profile, country + language pickers, and a flag on the home profile chip.
+- **Rank table**: AAA's three unlocks wrap inside the row instead of running off the card.
+
 ## v3.0.8 changes — shop · top row beside the TikTok capsule
 
 - **Top row on the capsule line**: home (profile · coins · settings), page headers and the race HUD (pause · score box) now sit on the same line as TikTok's "… ×" capsule, left of it; the race coin card + distance sit just under the capsule. "How to play" lives in Settings when space is short. Profile chip fits its content with a clear gap to the coin chip.

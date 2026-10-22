@@ -4,6 +4,7 @@
  * Coordinates are CSS pixels; the backing canvas is `scale` × larger.
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { svgFlags } from '../../meta/Flags.ts';
 import { drawSvg, roundRectPath, svgAspect, svgImage, withAlpha } from './svg.ts';
 import { CLASS_COLOR, type RankClass } from '../../meta/Rank.ts';
 import { getLang, tr as tr0 } from '../../ui/i18n.ts';
@@ -476,7 +477,7 @@ export class Gfx {
     const size = o.size ?? 14;
     const lh = size * (o.lh ?? 1.3);
     const c = this.ctx;
-    const toks = tokenize(html);
+    const toks = tokenize(svgFlags(html));
     // translate a whole plain run when it is a known label
     type Item = { w: number; draw: (x: number, mid: number) => void; space?: boolean; br?: boolean };
     const items: Item[] = [];

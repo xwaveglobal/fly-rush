@@ -8,7 +8,8 @@ import { avatar } from './screens.ts';
 import { AVATAR_COUNT, avatarSvg, avatarForName } from '../../ui/avatars.ts';
 import { CLASSES, CLASS_COLOR, CLASS_MIN, type RankClass } from '../../meta/Rank.ts';
 import { CHECKIN, ITEM_PRICE, LOCKED_SPECIALS, SPECIALS, type ItemKey, type SpecialKey } from '../../meta/Daily.ts';
-import { COUNTRIES, countryName, flagOf } from '../../meta/Country.ts';
+import { COUNTRIES, countryName } from '../../meta/Country.ts';
+import { codeOfFlag, flagSvg, svgFlags } from '../../meta/Flags.ts';
 import { LANGS } from '../../ui/i18n.ts';
 import { SKINS } from '../../render/Vehicle.ts';
 import { carImage, carRear, logoImg } from '../../ui/shared.ts';
@@ -573,7 +574,7 @@ function profileOv(ui: UI, g: Gfx) {
       y += 58;
     };
     rowBtn('p-bag', BAG_ICON, 'Magic Bag', 'Specials · 1 per race', 'Open', () => ui.h.bag());
-    rowBtn('p-ctry', flagOf(o.country), 'Country', countryName(o.country || 'US'), 'Change', () => ui.countryPicker());
+    rowBtn('p-ctry', flagSvg(o.country || 'US'), 'Country', countryName(o.country || 'US'), 'Change', () => ui.countryPicker());
     // rank hero
     const cc = CLASS_COLOR[o.cls];
     card(g, x, y, w, 132, 16, cc, 'rgba(10,20,52,.9)');
@@ -617,7 +618,7 @@ function rivalOv(ui: UI, g: Gfx) {
     avatar(g, r.av ?? avatarForName(r.name), x, y, 70, cls);
     if (r.rank <= 3) g.icon(ICON.crown, x + 23, y - 14, 24);
     g.text(r.name, x + 86, y + 24, { size: 18, maxW: w - 90, color: r.pass ? C.gold : '#fff', noTr: true });
-    g.text(`${r.flag} · ${p.seen}`, x + 86, y + 48, { size: 11, font: 'b', color: p.online ? C.green : C.muted, noTr: true });
+    g.rich(`${svgFlags(r.flag ?? '')} · ${p.seen}`, x + 86, y + 41, w - 90, { size: 11, font: 'b', color: p.online ? C.green : C.muted });
     y += 84;
     card(g, x, y, w, 60, 14, CLASS_COLOR[cls]);
     rankBadge(g, cls, x + 12, y + 14, 32);
@@ -837,17 +838,36 @@ function rankguideOv(ui: UI, g: Gfx) {
     g.text('Unlocks', x + 140, y + 8, { size: 10, font: 'b', color: C.muted });
     y += 20;
     for (const c of CLASSES) {
-      g.rr(x, y, w, 36, 8, 'rgba(255,255,255,.04)');
-      rankBadge(g, c, x + 6, y + 8, 20);
-      g.text(fmt(CLASS_MIN[c]), x + 70, y + 18, { size: 12, noTr: true });
-      let ux = x + 140;
-      for (const [ic, n] of UNL[c]) {
-        if (ic.startsWith('car:')) g.img(carImage(ic.slice(4)), ux, y + 6, 34, 24, 'contain');
-        else g.icon(ic === 'flag' ? ICON.flag : ICON.rocket, ux + 6, y + 9, 18, C.cyan);
-        g.text(n, ux + 36, y + 18, { size: 10, font: 'b', maxW: Math.max(30, (w - 150) / UNL[c].length - 40), noTr: true });
-        ux += Math.max(80, (w - 140) / UNL[c].length);
+      // v3.0.9: unlocks wrap onto extra lines inside the row (AAA has three) — never past the card
+      const ux0 = x + 140,
+        right = x + w - 6;
+      const items = UNL[c].map(([ic, n]) => ({ ic, n, iw: 34 + Math.min(g.measure(n, { size: 10, font: 'b' }), right - ux0 - 36) + 10 }));
+      let lines = 1,
+        cx = ux0;
+      for (const it of items) {
+        if (cx > ux0 && cx + it.iw > right) {
+          lines++;
+          cx = ux0;
+        }
+        cx += it.iw;
       }
-      y += 40;
+      const rh = 36 + (lines - 1) * 28;
+      g.rr(x, y, w, rh, 8, 'rgba(255,255,255,.04)');
+      rankBadge(g, c, x + 6, y + rh / 2 - 10, 20);
+      g.text(fmt(CLASS_MIN[c]), x + 70, y + rh / 2, { size: 12, noTr: true });
+      let ux = ux0,
+        ly = y;
+      for (const it of items) {
+        if (ux > ux0 && ux + it.iw > right) {
+          ux = ux0;
+          ly += 28;
+        }
+        if (it.ic.startsWith('car:')) g.img(carImage(it.ic.slice(4)), ux, ly + 6, 34, 24, 'contain');
+        else g.icon(it.ic === 'flag' ? ICON.flag : ICON.rocket, ux + 8, ly + 9, 18, C.cyan);
+        g.text(it.n, ux + 36, ly + 18, { size: 10, font: 'b', maxW: it.iw - 44, noTr: true });
+        ux += it.iw;
+      }
+      y += rh + 4;
     }
     y += 4;
     y += g.rich(`${BOLT} = metres × <b>Hard 1.7 · Normal 1.05 · Easy 1</b>`, x, y, w, { size: 12, font: 'b' }) + 4;
@@ -1082,7 +1102,7 @@ function countryOv(ui: UI, g: Gfx) {
     if (y < top - 44 || y > top + lh) return;
     const key = `ct-${c}`;
     g.rr(px + 10, y, pw - 20, 38, 10, g.isPressed(key) ? 'rgba(79,195,255,.25)' : 'rgba(255,255,255,.04)');
-    g.text(flagOf(c), px + 30, y + 19, { size: 18, align: 'center', noTr: true });
+    g.icon(flagSvg(c), px + 18, y + 11, 24);
     g.text(n, px + 52, y + 19, { size: 13, font: 'b', maxW: pw - 80, noTr: true });
     g.hit(px + 10, y, pw - 20, 38, key, () => {
       ui.closePopup();
@@ -1102,7 +1122,7 @@ function langOv(ui: UI, g: Gfx) {
       const on = l.code === ui.lang;
       const key = `lg-${l.code}`;
       g.rr(bx, by, bw, 42, 12, on ? 'rgba(79,195,255,.25)' : g.isPressed(key) ? 'rgba(255,255,255,.12)' : 'rgba(10,20,52,.8)', on ? C.cyan : 'rgba(255,255,255,.15)');
-      g.text(l.flag, bx + 20, by + 21, { size: 17, align: 'center', noTr: true });
+      g.icon(flagSvg(codeOfFlag(l.flag)), bx + 8, by + 13, 24);
       g.text(l.name, bx + 40, by + 21, { size: 12, font: 'b', maxW: bw - 64, noTr: true });
       if (on) g.icon(ICON.check, bx + bw - 24, by + 12, 18, C.green);
       g.hit(bx, by, bw, 42, key, () => {

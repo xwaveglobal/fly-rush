@@ -4,6 +4,14 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-22 — v3.0.9
+
+**Done**: Android jank (owner: home + race start) → compile hidden pooled meshes at load (Game.ts), `platform.android` + `scaleCap 1.5`, home UI redraw throttle (NativeUI.frame), audio baking sliced (Audio.ts). SVG flags `src/meta/Flags.ts` used by native gfx.rich (emoji → SVG) and pickers. Rank guide rows wrap (popups.ts rankguideOv).
+
+**Next**: web UI still shows emoji flags (fine on iOS/macOS, letters on Windows) — could switch to `flagSvg` too.
+
+---
+
 ## 2026-10-22 — v3.0.8
 
 **Done**: `layout.ts capRow()/belowCap()` + capsule rect in `SAFE` (main.ts) → first row beside the capsule (home, pageHead, HUD). Native shop rewritten (`screens.ts shop`): Remove Ads, free coins, pack tiles. New products in `tiktok.hs-dashboard.json` (owner must paste into the HS dashboard — the game reads products from there). `ITEM_PRICE` specials raised. Shield 2 hits, timer ×0.7 (`SHIELD` in config). Owner confirmed sound OK on iPhone.

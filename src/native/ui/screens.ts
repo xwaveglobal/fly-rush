@@ -1,5 +1,6 @@
 /** v3 native UI — full screens (home, tracks, garage, missions, ranks, daily, shop…) */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { flagSvg } from '../../meta/Flags.ts';
 import { C, Gfx, bar, button, card, fmt, iconBtn, panel, rankBadge, toggle } from './gfx.ts';
 import type { UI } from './NativeUI.ts';
 import { BAG_ICON, BOLT, CAR_LINE, ICON, ITEM_ICON, RARITY_COLOR, ROCKET_W, SPECIAL_SHORT, TUT_ICON } from './consts.ts';
@@ -139,7 +140,7 @@ function start(ui: UI, g: Gfx) {
   if (o) {
     const pk = 'profile';
     // v3.0.8: chip fits its content and keeps a clear gap to the coin chip
-    const content = Math.max(g.measure(o.name, { size: 13.5, font: 'b' }), 24 + g.measure(fmt(o.bolts), { size: 12.5 }) + 34);
+    const content = Math.max(g.measure(o.name, { size: 13.5, font: 'b' }), 24 + g.measure(fmt(o.bolts), { size: 12.5 }) + 34 + 26);
     const cw = Math.max(110, Math.min(172, 54 + content + 14, wl - 14 - 18));
     const cc = CLASS_COLOR[ui.myClass];
     g.rr(18, top + 6, cw, 44, 22, g.isPressed(pk) ? 'rgba(79,195,255,.3)' : 'rgba(12,24,70,.86)', 'rgba(110,160,255,.45)', 1.2);
@@ -150,6 +151,7 @@ function start(ui: UI, g: Gfx) {
     g.text(o.name, 64, top + 18, { size: 13.5, maxW: cw - 54, noTr: true, weight: 800, font: 'b' });
     shieldBadge(g, ui.myClass, 64, top + 27, 18);
     g.rich(`<b>${fmt(o.bolts)}</b> ${BOLT}`, 88, top + 27, cw - 72, { size: 12.5 });
+    g.icon(flagSvg(s?.country || 'US'), 18 + cw - 30, top + 31, 20);
     const rk = o.allRank ? `#${o.allRank >= 10000 ? `${Math.round(o.allRank / 1000)}K` : fmt(o.allRank)}` : '#—';
     const rw = g.measure(rk, { size: 9 }) + 14;
     g.rr(40 - rw / 2, top + 44, rw, 15, 7.5, g.lin(0, top + 44, 0, top + 59, [[0, '#ffd84a'], [1, '#f0a800']]), '#7a4a00', 1);
