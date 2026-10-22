@@ -232,3 +232,4 @@ Owner 07:05: "rà soát sửa toàn bộ" → fix H–O now.
 - (09:09) Home buttons exactly like the reference shot (style + colours) — done v2.2.7.
 - (09:12) Home exactly like the owner's mock-up image — done v2.2.8.
 - (09:16) Side tiles smaller + same size, balanced fonts (tiles, speed, bottom row) — done v2.2.9.
+- (09:18) Side tiles a bit smaller, equal squares; softer borders incl. the bottom row — done v2.2.10.

@@ -2470,3 +2470,14 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 #start .minirow .mini { height: 44px !important; gap: 6px !important; }
 #start .minirow .mini span { font-size: 12px !important; letter-spacing: .2px !important; }
 #start .minirow .mini svg { width: 17px !important; height: 17px !important; }
+
+/* v2.2.10: 6 side tiles = equal squares, a bit smaller; softer borders (tiles + bottom row) */
+#start .rbtn { width: 50px !important; min-width: 50px; max-width: 50px; height: 50px !important; padding: 4px 1px 3px !important; gap: 2px !important; border-radius: 13px !important; }
+#start .rbtn .ri { width: 22px !important; height: 20px !important; }
+#start .rbtn .ri svg { width: 19px !important; height: 19px !important; }
+#start .rbtn .rl { font-size: 8px !important; letter-spacing: .2px !important; }
+#start .rbtn { border-width: 1px !important; border-color: color-mix(in srgb, var(--tb) 45%, transparent) !important; }
+#start .rbtn .badge { min-width: 17px !important; height: 17px !important; font-size: 10px !important; top: -5px !important; right: -5px !important; }
+#start .rbtn .tag { font-size: 8.5px !important; padding: 1px 5px !important; bottom: 14px; right: -8px !important; }
+#start .minirow .mini { border-width: 1px !important; border-color: color-mix(in srgb, var(--mb) 45%, transparent) !important; }
+#start .speedsel { border-width: 1px !important; border-color: rgba(110,150,255,.22) !important; }
