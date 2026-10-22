@@ -2456,3 +2456,17 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 #start .minirow .mini.garage { --m1: #2b3f80; --m2: #18255c; --mb: rgba(120,160,255,.5); }
 #start .minirow .mini.shop { --m1: #8b5cff; --m2: #5a2fd6; --mb: rgba(200,170,255,.6); }
 #start .minirow .mini.missions { --m1: #d98a4a; --m2: #9a5222; --mb: rgba(255,200,140,.6); }
+
+/* v2.2.9: smaller, equal side tiles; balanced type on tiles, speed selector and bottom row */
+#start .rbtn { width: 56px !important; min-width: 56px; max-width: 56px; height: 60px !important; padding: 6px 2px 5px !important; gap: 3px !important; border-radius: 15px !important; box-sizing: border-box; }
+#start .rbtn .ri { width: 26px !important; height: 24px !important; }
+#start .rbtn .ri svg { width: 22px !important; height: 22px !important; }
+#start .rbtn .rl { font-size: 9px !important; letter-spacing: .3px !important; line-height: 1; }
+#start .rail { gap: 10px !important; }
+#start .speedsel button { padding: 5px 2px !important; gap: 1px !important; }
+#start .speedsel button .chev { font-size: 9.5px !important; line-height: 1; }
+#start .speedsel button b { font-size: 13px !important; line-height: 1.1; }
+#start .speedsel button small { font-size: 10px !important; line-height: 1.1; }
+#start .minirow .mini { height: 44px !important; gap: 6px !important; }
+#start .minirow .mini span { font-size: 12px !important; letter-spacing: .2px !important; }
+#start .minirow .mini svg { width: 17px !important; height: 17px !important; }
