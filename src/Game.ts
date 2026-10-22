@@ -56,7 +56,7 @@ import { drawShareCard, shareImage, copyText } from './ui/ShareCard.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v2.2.0';
+const VERSION = 'v2.2.1';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -1283,7 +1283,8 @@ export class Game {
     this.setState('tracks');
     this.rig.mode = 'menu';
     this.input.enabled = false;
-    this.ui.show('tutintro');
+    // keep Home underneath: closing the card must bring every Home button back
+    this.ui.show('start', 'tutintro');
   }
 
   startTutorial(world: WorldId | null = null) {

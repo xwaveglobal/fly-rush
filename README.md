@@ -187,6 +187,10 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v2.2.1 changes
+
+- Fix: opening the Tutorial card from Home and closing it left Home without its buttons (the card now opens over Home and closes back to it).
+
 ## v2.2.0 changes (owner fix rounds H–X, `docs/FIXLIST.md`)
 
 - **Training**: no ad after training/practice; no shield or end coin line in basic training; end card with Race / Replay (or Practise again) / **Home**; replay repeats the same practice; HUD shows EXP + rank with a TRAINING tag (nothing saved); a **Skip ›** button during training; first Play opens the training card (Start / Skip).

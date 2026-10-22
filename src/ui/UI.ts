@@ -622,7 +622,7 @@ export class UI {
 
     <section id="tutintro" class="screen overlay">
       <div class="panel tut-panel">
-        <div class="mhead"><h2>${TUT_ICON} TUTORIAL</h2><button class="icon-btn sm" data-a="closeov" data-v="tutintro" aria-label="Close">${ICON.close}</button></div>
+        <div class="mhead"><h2>${TUT_ICON} TUTORIAL</h2><button class="icon-btn sm" data-a="closemodal" aria-label="Close">${ICON.close}</button></div>
         <p class="tut-lead">Learn the moves and practise each special. You can't crash in training.</p>
         <div class="tuthub">
           <div class="th-sec"><div class="th-h"><i>1</i><b>Basics · first flight</b></div>
