@@ -7,6 +7,86 @@ export type Sfx =
   | 'coin' | 'lane' | 'up' | 'down' | 'land' | 'power' | 'shield' | 'shieldBreak' | 'crash' | 'explode'
   | 'near' | 'ring' | 'beep' | 'go' | 'mission' | 'click' | 'turbo' | 'respawn' | 'bump' | 'combo' | 'warp' | 'expire';
 
+/**
+ * v3: make a partial Web Audio implementation (a mini-game runtime's tt.createWebAudioContext)
+ * usable: missing node factories fall back to a pass-through gain, missing AudioParam automation
+ * falls back to timed value changes. Every sound and the music then play instead of going silent.
+ */
+function compat(c: any) {
+  const fixParam = (p: any) => {
+    if (!p || typeof p !== 'object') return p;
+    const at = (t: number, fn: () => void) => {
+      const ms = Math.max(0, (t - (c.currentTime ?? 0)) * 1000);
+      if (ms < 4) fn();
+      else setTimeout(fn, ms);
+    };
+    const set = (v: number) => {
+      try {
+        p.value = v;
+      } catch {
+        /* read-only */
+      }
+    };
+    if (typeof p.setValueAtTime !== 'function') p.setValueAtTime = (v: number, t: number) => (at(t, () => set(v)), p);
+    if (typeof p.exponentialRampToValueAtTime !== 'function') p.exponentialRampToValueAtTime = (v: number, t: number) => (at(t, () => set(v)), p);
+    if (typeof p.linearRampToValueAtTime !== 'function') p.linearRampToValueAtTime = (v: number, t: number) => (at(t, () => set(v)), p);
+    if (typeof p.setTargetAtTime !== 'function') p.setTargetAtTime = (v: number, t: number) => (at(t, () => set(v)), p);
+    if (typeof p.cancelScheduledValues !== 'function') p.cancelScheduledValues = () => p;
+    return p;
+  };
+  const fakeParam = (v: number) => fixParam({ value: v });
+  const PARAMS = ['gain', 'frequency', 'detune', 'Q', 'pan', 'delayTime', 'threshold', 'ratio', 'knee', 'attack', 'release', 'playbackRate'];
+  const fixNode = (n: any) => {
+    if (!n) return n;
+    for (const k of PARAMS) {
+      if (k in n) {
+        if (n[k] && typeof n[k] === 'object') fixParam(n[k]);
+      }
+    }
+    // an oscillator without detune (the pads detune two saws)
+    if (n.frequency && !n.detune) {
+      try {
+        n.detune = fakeParam(0);
+      } catch {
+        /* ignore */
+      }
+    }
+    return n;
+  };
+  /** a pass-through node standing in for a missing one (gain = 1, extra params ignored) */
+  const passThrough = (extra: Record<string, unknown>) => {
+    const g = c.createGain();
+    for (const [k, v] of Object.entries(extra)) {
+      try {
+        if (!(k in g)) g[k] = v;
+      } catch {
+        /* ignore */
+      }
+    }
+    return fixNode(g);
+  };
+  const wrap = (name: string, fallback: (() => any) | null) => {
+    const orig = typeof c[name] === 'function' ? c[name].bind(c) : null;
+    c[name] = (...a: unknown[]) => {
+      let n = null;
+      try {
+        n = orig ? orig(...a) : null;
+      } catch {
+        n = null;
+      }
+      if (!n && fallback) n = fallback();
+      return fixNode(n);
+    };
+  };
+  wrap('createGain', null);
+  wrap('createOscillator', null);
+  wrap('createBufferSource', null);
+  wrap('createDynamicsCompressor', () => passThrough({ threshold: fakeParam(-14), ratio: fakeParam(4) }));
+  wrap('createBiquadFilter', () => passThrough({ type: 'lowpass', frequency: fakeParam(1000), Q: fakeParam(1) }));
+  wrap('createDelay', () => passThrough({ delayTime: fakeParam(0) }));
+  if (typeof c.createStereoPanner === 'function') wrap('createStereoPanner', null);
+}
+
 export class Audio {
   ctx: AudioContext | null = null;
   private master!: GainNode;
@@ -49,6 +129,13 @@ export class Audio {
     if (!AC) return;
     this.ctx = new AC();
     const c = this.ctx;
+    try {
+      compat(c);
+    } catch (e) {
+      console.warn('[audio] compat', e);
+    }
+    // iOS / mini-game runtimes start the context suspended until resumed inside a touch
+    if (c.state !== 'running') void c.resume?.();
     this.master = c.createGain();
     this.master.gain.value = 0.8;
     const comp = c.createDynamicsCompressor();

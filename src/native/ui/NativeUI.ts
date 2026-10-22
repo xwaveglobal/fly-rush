@@ -23,7 +23,7 @@ import { drawScreens } from './screens.ts';
 import { drawHud, drawNotices } from './hud.ts';
 import { hs } from '../hs.ts';
 
-export { carImage, carRear, logoImg, UPGRADE_MAX, upgradeCost, SAMPLE_BOARD_NOTE, MEGA_ICON } from '../../ui/UI.ts';
+export { carImage, carRear, logoImg, UPGRADE_MAX, upgradeCost, SAMPLE_BOARD_NOTE, MEGA_ICON } from '../../ui/shared.ts';
 export type { UIHandlers, RunRewards, UpgradeKey } from '../../ui/UI.ts';
 
 export interface GameOverData { score: number; best: number; isBest: boolean; dist: number; length?: number; coins: number; near: number; missions: { text: string; reward: number }[]; rewards: RunRewards | null; speedBonus: number; level: string; tip: CrashTip | null; runRank?: RankClass | null; pos?: string; car?: string; bonus?: boolean }
@@ -113,6 +113,8 @@ export class UI {
   rocketReady = false;
   /** colour calibration control (src/native/color.ts), set by main */
   colorCtl: { mode: () => string; line: () => string; cycle: () => void } | null = null;
+  verTaps = 0;
+  showDiag = false;
 
   // ---------------------------------------------------------------- effects
   notices: Notice[] = [];

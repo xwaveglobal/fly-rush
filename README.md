@@ -208,6 +208,12 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v3.0.5 changes
+- Race HUD: coin card shows this race's coins (+37) and the wallet total; score box reorganised (EXP · level / big race EXP / RACE rank on the right, footer YOU · BEST and NEXT, progress bar to the next rank with the best EXP marked).
+- Sound & music on TikTok: Web Audio compatibility layer (missing compressor / filter / delay nodes and AudioParam automation fall back instead of silencing everything), the context is resumed on touches and after the app returns.
+- Settings → Colour removed (iPhone OK): calibration stays automatic; test info behind 5 taps on the version.
+- Smaller package: the native build no longer pulls in the DOM UI's art (`src/ui/shared.ts`) — guide pictures, unused track pictures and the app icon are gone (2.86 → 2.75 MB).
+
 ## v3.0.4 changes — colour calibration · Android start
 - Colour calibration at start (`src/native/color.ts`): two tiny off-screen draws measure whether the screen re-encodes sRGB (fix: output linear) and whether sRGB textures are decoded (fix: decode in the shader). Only what is measured is compensated. Settings → Colour: Auto / Normal / Screen fix / Texture fix, and a line with the measured values + GPU for testing.
 - The UI layer is copied to the screen raw (no sRGB round trip a runtime could get wrong).

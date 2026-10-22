@@ -9,7 +9,7 @@ import { avatarSvg, avatarForName } from '../../ui/avatars.ts';
 import { CLASSES, CLASS_COLOR, classFor, playerRank, type RankClass } from '../../meta/Rank.ts';
 import { LEVELS } from '../../config.ts';
 import { SKINS, carVisibility } from '../../render/Vehicle.ts';
-import { carImage, logoImg } from '../../ui/UI.ts';
+import { carImage, logoImg } from '../../ui/shared.ts';
 import { CHAINS, activeChains, pilotLevel } from '../../meta/Career.ts';
 import { CHECKIN, SPECIALS, type ItemKey } from '../../meta/Daily.ts';
 import { fmtLeft, localTime } from '../../meta/Events.ts';

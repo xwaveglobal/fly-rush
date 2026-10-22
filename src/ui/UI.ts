@@ -20,19 +20,8 @@ import guide3 from '../assets/images/guide/guide-3.jpg';
 import { CHAINS, activeChains, pilotLevel } from '../meta/Career.ts';
 import type { SaveData } from '../core/Save.ts';
 import { SKINS, carVisibility } from '../render/Vehicle.ts';
-import carZenith from '../assets/images/cars/zenith.webp';
-import carVolt from '../assets/images/cars/volt.webp';
-import carPhantom from '../assets/images/cars/phantom.webp';
-import carInferno from '../assets/images/cars/inferno.webp';
-import carNexus from '../assets/images/cars/nexus.webp';
-import carVega from '../assets/images/cars/vega.webp';
-import carShadow from '../assets/images/car/x1-back.webp';
-import vegaRear from '../assets/images/car/vega-back.webp';
-const CAR_IMG: Record<string, string> = { zenith: carZenith, vega: carVega, volt: carVolt, phantom: carPhantom, inferno: carInferno, nexus: carNexus };
-export const carImage = (id: string) => CAR_IMG[id] ?? carZenith;
-/** transparent in-race rear render (share card); cars without one use their thumbnail */
-export const carRear = (id: string) => (id === 'vega' ? vegaRear : carShadow);
-export const logoImg = logoUrl;
+import { CAR_IMG, carImage, carRear, carShadow, logoImg } from './shared.ts';
+export { carImage, carRear, logoImg };
 const RARITY_COLOR: Record<string, string> = { Common: '#4fb3ff', Rare: '#a77bff', Epic: '#ffc24a', Legendary: '#ff4a3c', Mythic: '#d04dff' };
 import { LEVELS } from '../config.ts';
 import type { Run } from '../gameplay/Run.ts';
@@ -55,12 +44,12 @@ const THUMBS: Record<string, string> = {
   'mega-city': thMega,
 };
 
-export type UpgradeKey = 'engine' | 'shield' | 'magnet';
-export const UPGRADE_MAX = 5;
-export const upgradeCost = (lvl: number) => Math.round(150 * Math.pow(lvl + 1, 1.6) / 10) * 10;
+import { UPGRADE_MAX, upgradeCost, type UpgradeKey } from './shared.ts';
+export { UPGRADE_MAX, upgradeCost, type UpgradeKey };
 
 /** Show a small "demo rivals" note under sample leaderboards (set false once boards are online). */
-export const SAMPLE_BOARD_NOTE = true;
+import { SAMPLE_BOARD_NOTE } from './shared.ts';
+export { SAMPLE_BOARD_NOTE };
 
 export interface UIHandlers {
   play(): void;
@@ -154,7 +143,8 @@ const BAG_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradi
 
 /** tutorial (book + ?) and launch (megaphone) icons */
 const TUT_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M10.2 8.3a2 2 0 1 1 2.6 1.9c-.5.2-.8.6-.8 1.1v.6"/><path d="M12 14.4h.01"/></g></svg>`;
-export const MEGA_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.6" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M12 6.2c1.7 1.2 2.4 3 2.2 5.4l-.9.9h-2.6l-.9-.9c-.2-2.4.5-4.2 2.2-5.4z" fill="#fff"/><circle cx="12" cy="9.3" r=".9" fill="#2a7bff"/><path d="M10.6 13.2 12 16.4l1.4-3.2z" fill="#ffc21a"/><path d="M10.4 18.6h3.2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+import { MEGA_ICON } from './shared.ts';
+export { MEGA_ICON };
 
 /** what a finished / crashed run paid out (result screens) */
 export interface RunRewards {
@@ -2203,7 +2193,7 @@ export class UI {
           `<div class="pzsteps">
             ${step(1, 'Open your pilot profile', st[0], `<div class="pzrow"><span class="pztile plus">${ICON.plus}</span><span class="pztile chat">${ICON.user}<em>99+</em></span><span class="pztile ava on">${avatarSvg(av)}${tapMarks()}</span></div>`, 'profile')}
             ${step(2, 'Set your pilot name', st[1], `<div class="pzbanner"><img src="${logoUrl}" alt="" /><span class="pzname">${name}</span><span class="pzmenu">≡</span></div>`, 'profile')}
-            ${step(3, 'Pick your racing helmet', st[2], `<div class="pzcard"><img src="${carZenith}" alt="" /><span class="pzhelm">${avatarSvg(av)}</span>${hand}${tapMarks('r')}</div>`, 'profile')}
+            ${step(3, 'Pick your racing helmet', st[2], `<div class="pzcard"><img src="${carImage('zenith')}" alt="" /><span class="pzhelm">${avatarSvg(av)}</span>${hand}${tapMarks('r')}</div>`, 'profile')}
             ${step(4, 'Claim your rewards', done, coinBanner(d.entryReward))}
           </div>` +
           (done

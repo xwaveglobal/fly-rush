@@ -15260,6 +15260,40 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         let s = new Mesh(new BoxGeometry(1.6, 0.5, 0.6), ringMat), a = i / 6 * Math.PI * 2;
         s.position.set(Math.cos(a) * 8.3, Math.sin(a) * 8.3, 0), s.rotation.z = a, segs.add(s);
     } return g.add(segs), g.visible = !1, { group: g, setColor(c) { ringMat.color.copy(c), inner.material.color.copy(c); }, update(dt) { segs.rotation.z += dt * 0.8, ring.rotation.z -= dt * 0.3; } }; }
+    function compat(c) { let fixParam = (p) => { if (!p || typeof p !== "object")
+        return p; let at = (t, fn) => { var _a; let ms = Math.max(0, (t - ((_a = c.currentTime) !== null && _a !== void 0 ? _a : 0)) * 1000); if (ms < 4)
+        fn();
+    else
+        setTimeout(fn, ms); }, set = (v) => { try {
+        p.value = v;
+    }
+    catch (_a) { } }; if (typeof p.setValueAtTime !== "function")
+        p.setValueAtTime = (v, t) => (at(t, () => set(v)), p); if (typeof p.exponentialRampToValueAtTime !== "function")
+        p.exponentialRampToValueAtTime = (v, t) => (at(t, () => set(v)), p); if (typeof p.linearRampToValueAtTime !== "function")
+        p.linearRampToValueAtTime = (v, t) => (at(t, () => set(v)), p); if (typeof p.setTargetAtTime !== "function")
+        p.setTargetAtTime = (v, t) => (at(t, () => set(v)), p); if (typeof p.cancelScheduledValues !== "function")
+        p.cancelScheduledValues = () => p; return p; }, fakeParam = (v) => fixParam({ value: v }), PARAMS = ["gain", "frequency", "detune", "Q", "pan", "delayTime", "threshold", "ratio", "knee", "attack", "release", "playbackRate"], fixNode = (n) => { if (!n)
+        return n; for (let k of PARAMS)
+        if (k in n) {
+            if (n[k] && typeof n[k] === "object")
+                fixParam(n[k]);
+        } if (n.frequency && !n.detune)
+        try {
+            n.detune = fakeParam(0);
+        }
+        catch (_a) { } return n; }, passThrough = (extra) => { let g = c.createGain(); for (let [k, v] of Object.entries(extra))
+        try {
+            if (!(k in g))
+                g[k] = v;
+        }
+        catch (_a) { } return fixNode(g); }, wrap = (name, fallback) => { let orig = typeof c[name] === "function" ? c[name].bind(c) : null; c[name] = (...a) => { let n = null; try {
+        n = orig ? orig(...a) : null;
+    }
+    catch (_a) {
+        n = null;
+    } if (!n && fallback)
+        n = fallback(); return fixNode(n); }; }; if (wrap("createGain", null), wrap("createOscillator", null), wrap("createBufferSource", null), wrap("createDynamicsCompressor", () => passThrough({ threshold: fakeParam(-14), ratio: fakeParam(4) })), wrap("createBiquadFilter", () => passThrough({ type: "lowpass", frequency: fakeParam(1000), Q: fakeParam(1) })), wrap("createDelay", () => passThrough({ delayTime: fakeParam(0) })), typeof c.createStereoPanner === "function")
+        wrap("createStereoPanner", null); }
     class Audio {
         constructor() {
             this.ctx = null;
@@ -15282,12 +15316,18 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         catch (e) {
             console.warn("[audio] off:", e), this.ctx = null;
         } }
-        unlockInner() { var _a, _b; if (this.ctx) {
+        unlockInner() { var _a, _b, _c; if (this.ctx) {
             if (this.ctx.state === "suspended")
                 (_b = (_a = this.ctx).resume) === null || _b === void 0 ? void 0 : _b.call(_a);
             return;
         } let AC = window.AudioContext || window.webkitAudioContext; if (!AC)
-            return; this.ctx = new AC; let c = this.ctx; this.master = c.createGain(), this.master.gain.value = 0.8; let comp = c.createDynamicsCompressor(); comp.threshold.value = -14, comp.ratio.value = 4, this.master.connect(comp), comp.connect(c.destination), this.sfxBus = c.createGain(), this.sfxBus.gain.value = this.sfxOn ? 0.9 : 0, this.sfxBus.connect(this.master), this.musicBus = c.createGain(), this.musicBus.gain.value = this.musicOn ? 0.32 : 0, this.musicBus.connect(this.master), this.musicTone = c.createBiquadFilter(), this.musicTone.type = "lowpass", this.musicTone.frequency.value = 2600, this.musicTone.Q.value = 0.5, this.musicTone.connect(this.musicBus), this.echo = c.createGain(), this.echo.gain.value = 0.55; let dl = c.createDelay(1); dl.delayTime.value = 60 / this.bpm * 0.75; let fb = c.createGain(); fb.gain.value = 0.32; let damp = c.createBiquadFilter(); damp.type = "lowpass", damp.frequency.value = 1800, this.echo.connect(dl), dl.connect(damp), damp.connect(fb), fb.connect(dl), damp.connect(this.musicTone), this.noiseBuf = c.createBuffer(1, c.sampleRate, c.sampleRate); let d = this.noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++)
+            return; this.ctx = new AC; let c = this.ctx; try {
+            compat(c);
+        }
+        catch (e) {
+            console.warn("[audio] compat", e);
+        } if (c.state !== "running")
+            (_c = c.resume) === null || _c === void 0 ? void 0 : _c.call(c); this.master = c.createGain(), this.master.gain.value = 0.8; let comp = c.createDynamicsCompressor(); comp.threshold.value = -14, comp.ratio.value = 4, this.master.connect(comp), comp.connect(c.destination), this.sfxBus = c.createGain(), this.sfxBus.gain.value = this.sfxOn ? 0.9 : 0, this.sfxBus.connect(this.master), this.musicBus = c.createGain(), this.musicBus.gain.value = this.musicOn ? 0.32 : 0, this.musicBus.connect(this.master), this.musicTone = c.createBiquadFilter(), this.musicTone.type = "lowpass", this.musicTone.frequency.value = 2600, this.musicTone.Q.value = 0.5, this.musicTone.connect(this.musicBus), this.echo = c.createGain(), this.echo.gain.value = 0.55; let dl = c.createDelay(1); dl.delayTime.value = 60 / this.bpm * 0.75; let fb = c.createGain(); fb.gain.value = 0.32; let damp = c.createBiquadFilter(); damp.type = "lowpass", damp.frequency.value = 1800, this.echo.connect(dl), dl.connect(damp), damp.connect(fb), fb.connect(dl), damp.connect(this.musicTone), this.noiseBuf = c.createBuffer(1, c.sampleRate, c.sampleRate); let d = this.noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++)
             d[i] = Math.random() * 2 - 1; for (let [n, u] of this.pendingOverrides)
             this.loadOverride(n, u); this.pendingOverrides.length = 0; }
         async loadOverride(name, url) { if (!this.ctx) {
@@ -16082,45 +16122,15 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
     function questsFor(day) { let r = rng2(hashStr(`daily-${day}`)), pool = [...POOL], out = [pool.splice(0, 1)[0]]; while (out.length < 4)
         out.push(pool.splice(Math.floor(r() * pool.length), 1)[0]); return out; }
     var CHESTS = [];
-    var W2 = 1080, H = 1350;
-    function load(src) { return new Promise((res) => { let im = new Image; im.crossOrigin = "anonymous", im.onload = () => res(im), im.onerror = () => res(null), im.src = src; }); }
-    function shield(g, cx, cy, r) { g.beginPath(), g.moveTo(cx, cy - r), g.lineTo(cx + r * 0.86, cy - r * 0.62), g.lineTo(cx + r * 0.78, cy + r * 0.28), g.quadraticCurveTo(cx + r * 0.5, cy + r * 0.82, cx, cy + r), g.quadraticCurveTo(cx - r * 0.5, cy + r * 0.82, cx - r * 0.78, cy + r * 0.28), g.lineTo(cx - r * 0.86, cy - r * 0.62), g.closePath(); }
-    var fmt2 = (n) => Math.floor(n).toLocaleString("en-US");
-    async function drawShareCard(d) { let c = document.createElement("canvas"); c.width = W2, c.height = H; let g = c.getContext("2d"); if (!g)
-        return null; let col = CLASS_COLOR[d.rank], bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#120a3a"), bg.addColorStop(0.55, "#1d0f52"), bg.addColorStop(1, "#07051a"), g.fillStyle = bg, g.fillRect(0, 0, W2, H); let glow = g.createRadialGradient(W2 / 2, 470, 40, W2 / 2, 470, 620); glow.addColorStop(0, `${col}66`), glow.addColorStop(1, "transparent"), g.fillStyle = glow, g.fillRect(0, 0, W2, H), g.strokeStyle = "rgba(255,255,255,.06)", g.lineWidth = 3; for (let i = 0; i < 26; i++) {
-        let y = 120 + i * 47;
-        g.beginPath(), g.moveTo(i * 137 % 300 - 40, y), g.lineTo(i * 137 % 300 + 160 + i % 3 * 90, y), g.stroke();
-    } let [logo, car, ava] = await Promise.all([load(d.logo), load(d.car), load(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(d.avatar.includes("xmlns") ? d.avatar : d.avatar.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"'))}`)]); if (logo)
-        g.drawImage(logo, (W2 - 560) / 2, 40, 560, 560 * logo.height / logo.width); g.textAlign = "center", g.fillStyle = "#ffffff", g.font = "900 italic 92px system-ui, -apple-system, Segoe UI, sans-serif", g.shadowColor = col, g.shadowBlur = 30, g.fillText(d.title, W2 / 2, 300), g.shadowBlur = 0, shield(g, W2 / 2, 500, 150); let sg = g.createLinearGradient(0, 350, 0, 650); if (sg.addColorStop(0, col), sg.addColorStop(1, "#1a0f40"), g.fillStyle = sg, g.shadowColor = col, g.shadowBlur = 50, g.fill(), g.shadowBlur = 0, g.lineWidth = 12, g.strokeStyle = "#ffffff", g.stroke(), g.fillStyle = "#ffffff", g.font = `900 ${d.rank.length > 2 ? 110 : d.rank.length > 1 ? 140 : 170}px system-ui, -apple-system, Segoe UI, sans-serif`, g.textBaseline = "middle", g.fillText(d.rank, W2 / 2, 510), g.textBaseline = "alphabetic", g.font = "800 40px system-ui, -apple-system, Segoe UI, sans-serif", g.fillStyle = col, g.fillText(`RANK ${d.rank}`, W2 / 2, 712), g.fillStyle = "#ffffff", g.font = "900 128px system-ui, -apple-system, Segoe UI, sans-serif", g.fillText(fmt2(d.exp), W2 / 2, 850), g.font = "800 44px system-ui, -apple-system, Segoe UI, sans-serif", g.fillStyle = "#ffd94a", g.fillText("EXP", W2 / 2, 910), d.sub)
-        g.fillStyle = "rgba(220,225,255,.8)", g.font = "600 36px system-ui, -apple-system, Segoe UI, sans-serif", g.fillText(d.sub, W2 / 2, 964); if (car) {
-        let k = Math.min(680 / car.width, 250 / car.height), cw = car.width * k, ch = car.height * k, halo = g.createRadialGradient(W2 / 2, 1110, 20, W2 / 2, 1110, 380);
-        halo.addColorStop(0, `${col}55`), halo.addColorStop(1, "transparent"), g.fillStyle = halo, g.fillRect(0, 980, W2, 260), g.drawImage(car, (W2 - cw) / 2, 1235 - ch, cw, ch);
-    } if (g.fillStyle = "rgba(0,0,0,.45)", g.fillRect(0, H - 110, W2, 110), ava)
-        g.drawImage(ava, 40, H - 98, 86, 86); return g.textAlign = "left", g.fillStyle = "#ffffff", g.font = "800 44px system-ui, -apple-system, Segoe UI, sans-serif", g.fillText(d.name.slice(0, 18), 146, H - 42), g.textAlign = "right", g.fillStyle = "rgba(220,225,255,.85)", g.font = "700 34px system-ui, -apple-system, Segoe UI, sans-serif", g.fillText("Can you beat me?", W2 - 40, H - 44), new Promise((res) => c.toBlob((b) => res(b), "image/png")); }
-    async function shareImage(blob, text, url) { let nav = navigator; try {
-        if (blob && nav.share && nav.canShare) {
-            let file = new File([blob], "sky-roadster.png", { type: "image/png" });
-            if (nav.canShare({ files: [file] }))
-                return await nav.share({ files: [file], title: "Sky Roadster", text: url ? `${text} ${url}` : text }), "shared";
-        }
-        if (nav.share)
-            return await nav.share(Object.assign({ title: "Sky Roadster", text }, url ? { url } : {})), "shared";
-    }
-    catch (e) {
-        if ((e === null || e === void 0 ? void 0 : e.name) === "AbortError")
-            return "cancel";
-    } return "fallback"; }
-    function copyText(t) { var _a; try {
-        (_a = navigator.clipboard) === null || _a === void 0 ? void 0 : _a.writeText(t).catch(() => legacyCopy(t));
-    }
-    catch (_b) {
-        legacyCopy(t);
-    } }
-    function legacyCopy(t) { let ta = document.createElement("textarea"); ta.value = t, ta.style.position = "fixed", ta.style.opacity = "0", document.body.appendChild(ta), ta.select(); try {
-        document.execCommand("copy");
-    }
-    catch (_a) { } ta.remove(); }
     var sky_roadster_logo_default = "./assets/sky-roadster-logo-8aykebqt.png";
+    var cars_zenith_default = "./assets/cars-zenith-jr6r7s6d.jpg";
+    var cars_volt_default = "./assets/cars-volt-3k12frs4.jpg";
+    var cars_phantom_default = "./assets/cars-phantom-14qxtrxt.jpg";
+    var cars_inferno_default = "./assets/cars-inferno-xd9rwxaw.jpg";
+    var cars_nexus_default = "./assets/cars-nexus-wspcw182.jpg";
+    var cars_vega_default = "./assets/cars-vega-3asb6w9b.jpg";
+    var CAR_IMG = { zenith: cars_zenith_default, vega: cars_vega_default, volt: cars_volt_default, phantom: cars_phantom_default, inferno: cars_inferno_default, nexus: cars_nexus_default }, carImage = (id) => { var _a; return (_a = CAR_IMG[id]) !== null && _a !== void 0 ? _a : cars_zenith_default; }, carRear = (id) => id === "vega" ? car_vega_back_default : car_x1_back_default, logoImg = sky_roadster_logo_default;
+    var UPGRADE_MAX = 5, upgradeCost = (lvl) => Math.round(150 * Math.pow(lvl + 1, 1.6) / 10) * 10;
     var uid2 = 0, id = (p) => `${p}${++uid2}`;
     function coinPile(w = 220, h = 120) {
         let top = id("ct"), side = id("cs"), glow = id("cg"), stack = (x, y, n) => { let s = ""; for (let i = 0; i < n; i++) {
@@ -16192,85 +16202,6 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
     <rect x="15" y="5" width="5" height="11" rx="2.5" fill="#fff"/><rect x="36" y="5" width="5" height="11" rx="2.5" fill="#fff"/>
     <rect x="18" y="28" width="20" height="15" rx="2.5" fill="#fff"/><rect x="26" y="28" width="4" height="15" fill="#ff7ad9"/><path d="M28 28c-3-6-9-5-8-2s6 2 8 2zm0 0c3-6 9-5 8-2s-6 2-8 2z" fill="#ff7ad9"/></svg>`;
     }
-    var loading_default = "./assets/loading-sahazapp.jpg";
-    var mega_city_default = "./assets/mega-city-exjqpzcj.jpg";
-    var endless_default = "./assets/endless-cjmr3yq9.jpg";
-    var careerDefaults = () => ({ km: 0, coins: 0, bonus: 0, specials: 0, bests: 0, worlds: [], gates: 0, tier: {} }), RANK_NAMES = ["D", "C", "B", "A", "AA", "AAA"], c = (s) => { var _a; return (_a = s.career) !== null && _a !== void 0 ? _a : careerDefaults(); }, k = (n) => n >= 1000 ? `${n / 1000}k` : String(n), CHAINS = [{ id: "rank", icon: "rank", text: (t) => `Reach rank ${RANK_NAMES[t]}`, tiers: [1, 2, 3, 4, 5], rewards: [300, 500, 800, 1200, 2000], value: (s) => Math.min(5, CLASSES.indexOf(playerRank(s.expBest, s.exp2Best))) }, { id: "km", icon: "flag", text: (t) => `Drive ${k(t)} km in total`, tiers: [50, 200, 1000, 5000], rewards: [200, 500, 1200, 3000], value: (s) => Math.floor(c(s).km) }, { id: "worlds", icon: "globe", text: (t) => `Visit ${t} Endless worlds`, tiers: [3, 6, 9, 12], rewards: [200, 400, 700, 1200], value: (s) => c(s).worlds.length }, { id: "gates", icon: "gate", text: (t) => `Break through ${t} rank gates`, tiers: [1, 5, 15, 40], rewards: [200, 400, 900, 2000], value: (s) => c(s).gates }, { id: "bonus", icon: "gift", text: (t) => `Finish ${t} Bonus road${t > 1 ? "s" : ""}`, tiers: [1, 5, 20, 50], rewards: [200, 400, 900, 2000], value: (s) => c(s).bonus }, { id: "specials", icon: "rocket", text: (t) => `Use ${t} specials`, tiers: [3, 10, 50, 150], rewards: [150, 300, 800, 1800], value: (s) => c(s).specials }, { id: "coins", icon: "coin", text: (t) => `Collect ${k(t)} coins on the road`, tiers: [5000, 25000, 1e5, 500000], rewards: [200, 600, 1500, 4000], value: (s) => c(s).coins }, { id: "cars", icon: "car", text: (t) => `Unlock ${t} cars`, tiers: [2, 3, 4, 6], rewards: [300, 600, 1000, 2000], value: (s) => s.unlocked.length }, { id: "bests", icon: "trophy", text: (t) => `Beat your best EXP ${t} times`, tiers: [3, 10, 25, 60], rewards: [200, 400, 800, 1600], value: (s) => c(s).bests }, { id: "races", icon: "play", text: (t) => `Play ${t} races`, tiers: [10, 50, 200, 1000], rewards: [100, 300, 800, 2000], value: (s) => s.totalRuns }];
-    function chainView(s, ch) { var _a; let t = (_a = c(s).tier[ch.id]) !== null && _a !== void 0 ? _a : 0, maxed = t >= ch.tiers.length, i = Math.min(t, ch.tiers.length - 1); return { id: ch.id, icon: ch.icon, text: ch.text(ch.tiers[i]), value: Math.min(ch.value(s), ch.tiers[i]), target: ch.tiers[i], reward: ch.rewards[i], tier: t, tiers: ch.tiers.length, maxed }; }
-    function pilotLevel(s) { return 1 + Object.values(c(s).tier).reduce((a, b) => a + b, 0); }
-    function activeChains(s) { return CHAINS.map((ch) => chainView(s, ch)).filter((v) => !v.maxed).sort((a, b) => b.value / b.target - a.value / a.target).slice(0, 3); }
-    function settleCareer(s) { var _a, _b; (_a = s.career) !== null && _a !== void 0 ? _a : (s.career = careerDefaults()); let out = []; for (let ch of CHAINS)
-        for (let guard = 0; guard < 10; guard++) {
-            let t = (_b = s.career.tier[ch.id]) !== null && _b !== void 0 ? _b : 0;
-            if (t >= ch.tiers.length || ch.value(s) < ch.tiers[t])
-                break;
-            s.career.tier[ch.id] = t + 1, out.push({ text: ch.text(ch.tiers[t]), reward: ch.rewards[t] });
-        } return out; }
-    var cars_zenith_default = "./assets/cars-zenith-jr6r7s6d.jpg";
-    var cars_volt_default = "./assets/cars-volt-3k12frs4.jpg";
-    var cars_phantom_default = "./assets/cars-phantom-14qxtrxt.jpg";
-    var cars_inferno_default = "./assets/cars-inferno-xd9rwxaw.jpg";
-    var cars_nexus_default = "./assets/cars-nexus-wspcw182.jpg";
-    var cars_vega_default = "./assets/cars-vega-3asb6w9b.jpg";
-    var SESSION_HOURS_ET = [12, 22], LIVE_HOURS = 3, HOUR = 3600000, TRACKS = [{ id: "future-city", name: "Future City", km: "3.2 km", color: "#2fd36b", scale: 1 }, { id: "cloud-city", name: "Cloud City", km: "2.8 km", color: "#4fc3ff", scale: 0.92 }, { id: "neon-tunnel", name: "Neon Tunnel", km: "2.4 km", color: "#ff4fd8", scale: 0.85 }, { id: "space-zone", name: "Space Zone", km: "3.0 km", color: "#9b6bff", scale: 1.02 }, { id: "mega-city", name: "XWAVE Megacity", km: "3.6 km", color: "#ffc21a", scale: 1.15 }, { id: "endless", name: "Endless", km: "all worlds", color: "#ff7a3a", scale: 1.7 }], DIV_TOP = { D: 6500, C: 10500, B: 16000, A: 22500, AA: 30000, AAA: 39000 }, DIV_FIELD = { D: 4200, C: 3100, B: 2200, A: 1400, AA: 800, AAA: 380 }, DIV_MULT = { D: 1, C: 1.2, B: 1.4, A: 1.7, AA: 2, AAA: 2.5 }, BASE_PRIZES = [{ from: 1, to: 1, label: "#1", bolts: 120, coins: 3000, hyper: 3, trophy: "gold" }, { from: 2, to: 3, label: "#2–3", bolts: 80, coins: 1500, hyper: 2, trophy: "silver" }, { from: 4, to: 10, label: "#4–10", bolts: 50, coins: 800, hyper: 1, trophy: "bronze" }, { from: 11, to: 100, label: "Top 100", bolts: 25, coins: 300, hyper: 0 }, { from: 101, to: 1 / 0, label: "Everyone who races", bolts: 10, coins: 100, hyper: 0, superJ: 1 }];
-    function prizesFor(div) { let m = DIV_MULT[div]; return BASE_PRIZES.map((p) => (Object.assign(Object.assign({}, p), { bolts: Math.round(p.bolts * m), coins: Math.round(p.coins * m / 10) * 10 }))); }
-    var prizeFor = (rank, div) => prizesFor(div).find((p) => rank >= p.from && rank <= p.to), etFmt = (() => { try {
-        return new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
-    }
-    catch (_a) {
-        return null;
-    } })();
-    function etParts(ms) { if (!etFmt) {
-        let d = new Date(ms - 5 * HOUR);
-        return { y: d.getUTCFullYear(), m: d.getUTCMonth() + 1, d: d.getUTCDate(), h: d.getUTCHours(), min: d.getUTCMinutes() };
-    } let p = {}; for (let x of etFmt.formatToParts(new Date(ms)))
-        if (x.type !== "literal")
-            p[x.type] = Number(x.value); return { y: p.year, m: p.month, d: p.day, h: p.hour % 24, min: p.minute }; }
-    function etToUtc(y, m, d, h) { let guess = Date.UTC(y, m - 1, d, h) + 5 * HOUR; for (let i = 0; i < 2; i++) {
-        let p = etParts(guess), shown = Date.UTC(p.y, p.m - 1, p.d, p.h, p.min);
-        guess += Date.UTC(y, m - 1, d, h) - shown;
-    } return guess; }
-    function sessionsAround(now) { let out = []; for (let dd = -3; dd <= 1; dd++) {
-        let p = etParts(now + dd * 24 * HOUR), dayNo = Math.floor(Date.UTC(p.y, p.m - 1, p.d) / (24 * HOUR));
-        SESSION_HOURS_ET.forEach((h, k) => { let start = etToUtc(p.y, p.m, p.d, h); out.push({ index: dayNo * 2 + k, start, end: start + LIVE_HOURS * HOUR }); });
-    } let seen = new Set; return out.filter((s) => seen.has(s.index) ? !1 : (seen.add(s.index), !0)).sort((a, b) => a.start - b.start); }
-    function cupFor(session, division) { let di = BASE_CLASSES.indexOf(division), t = TRACKS[(session.index + di) % TRACKS.length]; return { cup: { id: `${t.id}-${division}`, name: `${t.name} Cup`, tag: `${t.name} · ${t.km}`, track: t.id, color: t.color, top: Math.round(DIV_TOP[division] * t.scale), field: DIV_FIELD[division] }, division, index: session.index, key: `s${session.index}-${division}`, start: session.start, end: session.end }; }
-    function schedule(now = Date.now()) { var _a; let all = sessionsAround(now), live = (_a = all.find((s) => now >= s.start && now < s.end)) !== null && _a !== void 0 ? _a : null, next = all.find((s) => s.start > now), past = all.filter((s) => s.end <= now).slice(-4); return { live, next, past, upcoming: all.filter((s) => s.start > now).slice(0, 2) }; }
-    var localTime = (ms) => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    function eventBoard(e, you, now = Date.now()) { let f = Math.min(1, Math.max(0, (now - e.start) / (e.end - e.start))), g = 0.3 + 0.7 * Math.min(1, f * 1.3), curve = { top: e.cup.top * g, k: 0.38, total: Math.round(e.cup.field * (0.25 + 0.75 * g)) }; return rankBoard(sampleBoard(`xwave-cup-${e.key}`, curve, 100), curve, you); }
-    function fmtLeft(ms) { if (ms <= 0)
-        return "0m"; let h = Math.floor(ms / HOUR), d = Math.floor(h / 24), m = Math.floor(ms % HOUR / 60000); if (d > 0)
-        return `${d}d ${h % 24}h`; if (h > 0)
-        return `${h}h ${m}m`; return `${m}m`; }
-    var PRODUCTS = [{ sku: "coins_s", name: "1,000 coins", desc: "A handful", price: "$0.99", grant: { coins: 1000 }, kind: "coins", art: "coins-s" }, { sku: "coins_m", name: "6,000 coins", desc: "+20% bonus", price: "$4.99", grant: { coins: 6000 }, badge: "POPULAR", kind: "coins", art: "coins-m" }, { sku: "coins_l", name: "13,000 coins", desc: "+30% bonus", price: "$9.99", grant: { coins: 13000 }, kind: "coins", art: "coins-l" }, { sku: "coins_xl", name: "30,000 coins", desc: "+50% bonus", price: "$19.99", grant: { coins: 30000 }, badge: "BEST VALUE", kind: "coins", art: "coins-xl" }, { sku: "no_ads", name: "Remove Ads", desc: "No ad after a race ends, forever. Revive ads stay optional.", price: "$2.99", grant: { noAds: !0 }, kind: "special", once: !0, art: "noads" }], productBySku = (sku) => PRODUCTS.find((p) => p.sku === sku);
-    class DemoStore {
-        constructor(parent) {
-            this.name = "demo";
-            this.parent = parent;
-        }
-        purchase(p) {
-            return new Promise((resolve) => {
-                let el = document.createElement("div");
-                el.className = "iapsheet", el.innerHTML = `
-        <div class="iapsheet-box">
-          <div class="admock-tag">DEMO STORE</div>
-          <div class="iapsheet-name">${p.name}</div>
-          <div class="iapsheet-desc">${p.desc}</div>
-          <div class="iapsheet-price">${p.price}</div>
-          <div class="iapsheet-note">Demo only — no payment is taken. A real build opens Google Play / App Store billing here.</div>
-          <div class="admock-actions">
-            <button class="btn ghost sm" data-x="no">Cancel</button>
-            <button class="btn sm" data-x="ok">Confirm (demo)</button>
-          </div>
-        </div>`, this.parent.appendChild(el);
-                let done = (ok) => { el.remove(), resolve(ok); };
-                el.querySelector('[data-x="ok"]').addEventListener("click", () => done(!0)), el.querySelector('[data-x="no"]').addEventListener("click", () => done(!1)), el.addEventListener("touchstart", (e) => e.stopPropagation(), { passive: !0 });
-            });
-        }
-    }
-    var CAR_IMG = { zenith: cars_zenith_default, vega: cars_vega_default, volt: cars_volt_default, phantom: cars_phantom_default, inferno: cars_inferno_default, nexus: cars_nexus_default }, carImage = (id) => { var _a; return (_a = CAR_IMG[id]) !== null && _a !== void 0 ? _a : cars_zenith_default; }, carRear = (id) => id === "vega" ? car_vega_back_default : car_x1_back_default, logoImg = sky_roadster_logo_default;
-    var UPGRADE_MAX = 5, upgradeCost = (lvl) => Math.round(150 * Math.pow(lvl + 1, 1.6) / 10) * 10;
-    var ITEM_ICON2 = { super: ICON.rocket, hyper: ICON.hyper, shield: ICON.shield, escape: ICON.sos, turbo: ICON.bolt, magnet: ICON.magnet, double: ICON.x2, life: ICON.heart };
     function askText(title, current, max = 14) { let G = typeof GameGlobal < "u" ? GameGlobal : globalThis, T = G.tt; return new Promise((resolve) => { let done = (v) => resolve(typeof v === "string" ? v.slice(0, max) : null); try {
         if (T === null || T === void 0 ? void 0 : T.showModal) {
             T.showModal({ title, content: current, editable: !0, placeholderText: current || title, showCancel: !0, success: (r) => done(r && r.confirm ? typeof r.content === "string" ? r.content : null : null), fail: () => fallback() });
@@ -16379,7 +16310,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
     else
         g.icon(ICON.rocket, tx + 12, ty + 18, 28); g.text(b, tx + 48, ty + 22, { size: 11.5, maxW: tw - 54 }), g.para(s, tx + 48, ty + 32, tw - 54, { size: 9.5, font: "b", color: C.muted }); }), y += 144, button(g, "tutstart", x, y, w, 46, `${ICON.play} Start training`, () => ui.h.startTutorial(), { style: "blue", size: 16 }), y += 56, g.text("2  Special items", x, y + 8, { size: 13, color: C.cyan }), y += 22; let iw = (w - 16) / 3; return ["super", "hyper", "escape"].forEach((k, i) => { let ix = x + i * (iw + 8), key = `bt-${k}`; g.rr(ix, y, iw, 76, 12, g.isPressed(key) ? "rgba(79,195,255,.25)" : "rgba(10,20,52,.8)", SPECIAL_COLOR[k]), g.icon(ITEM_ICON[k], ix + iw / 2 - 15, y + 8, 30), g.text(ITEM_NAME[k], ix + iw / 2, y + 50, { size: 10, align: "center", maxW: iw - 6 }), g.rich(`${ICON.target} <small>Practise</small>`, ix, y + 58, iw, { size: 11, align: "center", color: C.cyan }), g.hit(ix, y, iw, 76, key, () => ui.h.boostTrain(k)); }), y += 86, button(g, "tutskip", x + 40, y, w - 80, 38, "Skip · go racing", () => ui.h.skipTutorial(), { style: "ghost", size: 13 }), y + 42; }); }
     function settingsOv(ui, g) { let s = ui.save; if (!s)
-        return; modal(ui, g, "settings", { title: "SETTINGS", close: "modal" }, (x, y, w) => { var _a, _b, _c, _d; let tiles = [["sound", ICON.sound, "Sound", s.settings.sound, () => ui.h.toggleSound()], ["music", ICON.music, "Music", s.settings.music, () => ui.h.toggleMusic()], ["vibrate", "≋", "Vibration", s.settings.vibrate !== !1, () => ui.h.toggleVibrate()], ["assist", ICON.info, "Hint arrows", s.settings.assist !== !1, () => ui.h.toggleAssist()], ["comfort", "◐", "Eye comfort", s.settings.comfort !== !1, () => ui.h.toggleComfort()]], tw = (w - 8) / 2; tiles.forEach(([k, ic, l, on, fn], i) => { let tx = x + i % 2 * (tw + 8), ty = y + Math.floor(i / 2) * 56; if (card(g, tx, ty, tw, 48, 12), ic.startsWith("<svg"))
+        return; modal(ui, g, "settings", { title: "SETTINGS", close: "modal" }, (x, y, w) => { var _a, _b, _c; let tiles = [["sound", ICON.sound, "Sound", s.settings.sound, () => ui.h.toggleSound()], ["music", ICON.music, "Music", s.settings.music, () => ui.h.toggleMusic()], ["vibrate", "≋", "Vibration", s.settings.vibrate !== !1, () => ui.h.toggleVibrate()], ["assist", ICON.info, "Hint arrows", s.settings.assist !== !1, () => ui.h.toggleAssist()], ["comfort", "◐", "Eye comfort", s.settings.comfort !== !1, () => ui.h.toggleComfort()]], tw = (w - 8) / 2; tiles.forEach(([k, ic, l, on, fn], i) => { let tx = x + i % 2 * (tw + 8), ty = y + Math.floor(i / 2) * 56; if (card(g, tx, ty, tw, 48, 12), ic.startsWith("<svg"))
         g.icon(ic, tx + 8, ty + 13, 22, C.cyan);
     else
         g.text(ic, tx + 19, ty + 24, { size: 16, align: "center", color: C.cyan, noTr: !0 }); g.text(l, tx + 36, ty + 24, { size: 11.5, maxW: tw - 92 }), toggle(g, `s-${k}`, tx + tw - 54, ty + 11, on, fn); }); {
@@ -16387,9 +16318,9 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         card(g, tx, ty, tw, 48, 12), g.icon(ICON.gear, tx + 8, ty + 13, 22, C.cyan), g.text("Graphics", tx + 36, ty + 24, { size: 11.5, maxW: tw - 110 });
         let q = (_a = ui.liveQuality) !== null && _a !== void 0 ? _a : s.settings.quality;
         ["high", "low"].forEach((v, i) => { let bx = tx + tw - 76 + i * 34, on = q === v; g.rr(bx, ty + 12, 32, 24, 8, on ? C.blue : "rgba(255,255,255,.1)", "rgba(255,255,255,.25)"), g.text(v === "high" ? "HI" : "LO", bx + 16, ty + 24, { size: 11, align: "center", noTr: !0 }), g.hit(bx - 2, ty + 6, 36, 36, `q-${v}`, () => on ? void 0 : ui.h.toggleQuality()); });
-    } y += 172; let row = (key, ic, label, val, fn) => { g.rr(x, y, w, 44, 12, g.isPressed(key) ? "rgba(79,195,255,.2)" : "rgba(10,20,52,.8)", "rgba(130,175,255,.2)"), g.text(ic, x + 18, y + 22, { size: 16, align: "center", noTr: !0 }), g.text(label, x + 38, y + 22, { size: 13 }), g.text(val, x + w - 30, y + 22, { size: 12, align: "right", font: "b", color: C.muted, maxW: w / 2, noTr: !0 }), g.icon(ICON.chevR, x + w - 24, y + 14, 16, "#fff"), g.hit(x, y, w, 44, key, fn), y += 52; }; row("s-lang", "\uD83C\uDF10", "Language", (_c = (_b = LANGS.find((l) => l.code === ui.lang)) === null || _b === void 0 ? void 0 : _b.name) !== null && _c !== void 0 ? _c : "English", () => ui.langPicker()); let cc = ui.colorCtl; if (cc)
-        row("s-color", "\uD83C\uDFA8", "Colour", (_d = { auto: "Auto", normal: "Normal", surface: "Screen fix", texture: "Texture fix" }[cc.mode()]) !== null && _d !== void 0 ? _d : cc.mode(), () => cc.cycle()); let bw = (w - 8) / 2; if (button(g, "s-prof", x, y, bw, 40, `${ICON.user} Profile`, () => ui.h.profile(), { style: "ghost", size: 12 }), button(g, "s-help", x + bw + 8, y, bw, 40, `${ICON.info} How to play`, () => ui.h.help(), { style: "ghost", size: 12 }), y += 50, g.text(`Sky Roadster ${ui.version}`, x + w / 2, y + 6, { size: 10, align: "center", font: "b", color: C.muted, noTr: !0 }), y += 16, cc)
-        y += g.para(cc.line(), x, y, w, { size: 8.5, font: "b", color: C.muted, align: "center", noTr: !0 }); return y + 4; }); }
+    } y += 172, ((key, ic, label, val, fn) => { g.rr(x, y, w, 44, 12, g.isPressed(key) ? "rgba(79,195,255,.2)" : "rgba(10,20,52,.8)", "rgba(130,175,255,.2)"), g.text(ic, x + 18, y + 22, { size: 16, align: "center", noTr: !0 }), g.text(label, x + 38, y + 22, { size: 13 }), g.text(val, x + w - 30, y + 22, { size: 12, align: "right", font: "b", color: C.muted, maxW: w / 2, noTr: !0 }), g.icon(ICON.chevR, x + w - 24, y + 14, 16, "#fff"), g.hit(x, y, w, 44, key, fn), y += 52; })("s-lang", "\uD83C\uDF10", "Language", (_c = (_b = LANGS.find((l) => l.code === ui.lang)) === null || _b === void 0 ? void 0 : _b.name) !== null && _c !== void 0 ? _c : "English", () => ui.langPicker()); let bw = (w - 8) / 2; if (button(g, "s-prof", x, y, bw, 40, `${ICON.user} Profile`, () => ui.h.profile(), { style: "ghost", size: 12 }), button(g, "s-help", x + bw + 8, y, bw, 40, `${ICON.info} How to play`, () => ui.h.help(), { style: "ghost", size: 12 }), y += 50, g.text(`Sky Roadster ${ui.version}`, x + w / 2, y + 6, { size: 10, align: "center", font: "b", color: C.muted, noTr: !0 }), g.hit(x + w / 2 - 60, y - 6, 120, 24, "s-ver", () => { var _a; if (ui.verTaps = ((_a = ui.verTaps) !== null && _a !== void 0 ? _a : 0) + 1, ui.verTaps >= 5)
+        ui.showDiag = !ui.showDiag; }), y += 16, ui.showDiag && ui.colorCtl)
+        y += g.para(ui.colorCtl.line(), x, y, w, { size: 8.5, font: "b", color: C.muted, align: "center", noTr: !0 }); return y + 4; }); }
     function guideOv(ui, g) { modal(ui, g, "guide", { title: "ROADSTER JUMP", close: "modal" }, (x, y, w) => (y += g.rich("The rocket jump that clears <b>two rows</b> of obstacles and rolls 360° in the sky.", x, y, w, { size: 12, font: "b", color: "#cfe0ff", align: "center" }) + 8, [["Spot the purple rocket", "Appears after 250 m, floating in a lane. Swipe into its lane to grab it."], ["The ROADSTER button appears", "A purple ROADSTER button shows bottom-right with how many you hold."], ["Tap ROADSTER to launch", "Flies 5.6 m over cars blocking every lane, barrel roll at the top."]].forEach(([b, s], i) => { g.dry++; let hh = g.para(s, 0, 0, w - 60, { size: 11, font: "b" }); g.dry--, card(g, x, y, w, hh + 34, 12), g.circle(x + 20, y + 20, 12, C.purple), g.text(String(i + 1), x + 20, y + 20.5, { size: 12, align: "center", noTr: !0 }), g.text(b, x + 42, y + 18, { size: 13, maxW: w - 50 }), g.para(s, x + 42, y + 28, w - 54, { size: 11, font: "b", color: C.muted }), y += hh + 42; }), card(g, x, y, w, 64, 12, C.gold), g.icon(ICON.hyper, x + 10, y + 14, 34), g.text("Mythic HYPER JUMP", x + 52, y + 16, { size: 13, color: C.gold }), g.para("7.4 m high, double roll, golden trail. Fires from the same button (gold).", x + 52, y + 26, w - 60, { size: 10.5, font: "b", color: C.muted }), y += 72, button(g, "g-train", x, y, w, 48, `${ICON.play} Practice it`, () => ui.h.boostTrain("super"), { style: "blue", size: 16 }), y + 52)); }
     function eventresOv(ui, g) { modal(ui, g, "eventres", { close: "none" }, (x, y, w) => { g.icon(ICON.cup, x + w / 2 - 24, y, 48), y += 56, g.text("CUP RESULTS", x + w / 2, y + 8, { size: 20, align: "center", italic: !0 }), y += 26; for (let r of ui.eventRes)
         card(g, x, y, w, 80, 12, r.inst.cup.color), g.rich(`${badge(r.inst.division)} <b>${r.inst.cup.name}</b>`, x + 10, y + 8, w - 20, { size: 13 }), g.text(`#${fmt(r.rank)}`, x + w - 14, y + 20, { size: 22, align: "right", color: C.gold, noTr: !0 }), g.text(`Your best ${fmt(r.score)} · ${r.prize.label}`, x + 10, y + 42, { size: 10.5, font: "b", color: C.muted, maxW: w - 20, noTr: !0 }), g.rich(`${BOLT}${r.prize.bolts}  <span class="price">${ICON.coin}${fmt(r.prize.coins)}</span>${r.prize.hyper ? `  ${ICON.hyper}×${r.prize.hyper}` : ""}`, x + 10, y + 54, w - 20, { size: 12 }), y += 88; return button(g, "claimresults", x, y, w, 52, `${ICON.gift} Collect`, () => ui.h.claimResults(), { style: "gold", size: 18 }), y + 56; }); }
@@ -16540,6 +16471,50 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         return; let key = `ct-${c}`; g.rr(px + 10, y, pw - 20, 38, 10, g.isPressed(key) ? "rgba(79,195,255,.25)" : "rgba(255,255,255,.04)"), g.text(flagOf(c), px + 30, y + 19, { size: 18, align: "center", noTr: !0 }), g.text(n, px + 52, y + 19, { size: 13, font: "b", maxW: pw - 80, noTr: !0 }), g.hit(px + 10, y, pw - 20, 38, key, () => { ui.closePopup(), ui.h.setCountry(c); }); }), g.unclip(); }
     function langOv(ui, g) { modal(ui, g, "popup", { title: "LANGUAGE", close: "none", w: 340 }, (x, y, w) => { iconBtn(g, "lg-x", x + w - 30, y - 50, 34, ICON.close, () => ui.closePopup()); let bw = (w - 8) / 2; return LANGS.forEach((l, i) => { let bx = x + i % 2 * (bw + 8), by = y + Math.floor(i / 2) * 50, on = l.code === ui.lang, key = `lg-${l.code}`; if (g.rr(bx, by, bw, 42, 12, on ? "rgba(79,195,255,.25)" : g.isPressed(key) ? "rgba(255,255,255,.12)" : "rgba(10,20,52,.8)", on ? C.cyan : "rgba(255,255,255,.15)"), g.text(l.flag, bx + 20, by + 21, { size: 17, align: "center", noTr: !0 }), g.text(l.name, bx + 40, by + 21, { size: 12, font: "b", maxW: bw - 64, noTr: !0 }), on)
         g.icon(ICON.check, bx + bw - 24, by + 12, 18, C.green); g.hit(bx, by, bw, 42, key, () => { ui.closePopup(), ui.h.setLang(l.code); }); }), y + Math.ceil(LANGS.length / 2) * 50; }); }
+    var careerDefaults = () => ({ km: 0, coins: 0, bonus: 0, specials: 0, bests: 0, worlds: [], gates: 0, tier: {} }), RANK_NAMES = ["D", "C", "B", "A", "AA", "AAA"], c = (s) => { var _a; return (_a = s.career) !== null && _a !== void 0 ? _a : careerDefaults(); }, k = (n) => n >= 1000 ? `${n / 1000}k` : String(n), CHAINS = [{ id: "rank", icon: "rank", text: (t) => `Reach rank ${RANK_NAMES[t]}`, tiers: [1, 2, 3, 4, 5], rewards: [300, 500, 800, 1200, 2000], value: (s) => Math.min(5, CLASSES.indexOf(playerRank(s.expBest, s.exp2Best))) }, { id: "km", icon: "flag", text: (t) => `Drive ${k(t)} km in total`, tiers: [50, 200, 1000, 5000], rewards: [200, 500, 1200, 3000], value: (s) => Math.floor(c(s).km) }, { id: "worlds", icon: "globe", text: (t) => `Visit ${t} Endless worlds`, tiers: [3, 6, 9, 12], rewards: [200, 400, 700, 1200], value: (s) => c(s).worlds.length }, { id: "gates", icon: "gate", text: (t) => `Break through ${t} rank gates`, tiers: [1, 5, 15, 40], rewards: [200, 400, 900, 2000], value: (s) => c(s).gates }, { id: "bonus", icon: "gift", text: (t) => `Finish ${t} Bonus road${t > 1 ? "s" : ""}`, tiers: [1, 5, 20, 50], rewards: [200, 400, 900, 2000], value: (s) => c(s).bonus }, { id: "specials", icon: "rocket", text: (t) => `Use ${t} specials`, tiers: [3, 10, 50, 150], rewards: [150, 300, 800, 1800], value: (s) => c(s).specials }, { id: "coins", icon: "coin", text: (t) => `Collect ${k(t)} coins on the road`, tiers: [5000, 25000, 1e5, 500000], rewards: [200, 600, 1500, 4000], value: (s) => c(s).coins }, { id: "cars", icon: "car", text: (t) => `Unlock ${t} cars`, tiers: [2, 3, 4, 6], rewards: [300, 600, 1000, 2000], value: (s) => s.unlocked.length }, { id: "bests", icon: "trophy", text: (t) => `Beat your best EXP ${t} times`, tiers: [3, 10, 25, 60], rewards: [200, 400, 800, 1600], value: (s) => c(s).bests }, { id: "races", icon: "play", text: (t) => `Play ${t} races`, tiers: [10, 50, 200, 1000], rewards: [100, 300, 800, 2000], value: (s) => s.totalRuns }];
+    function chainView(s, ch) { var _a; let t = (_a = c(s).tier[ch.id]) !== null && _a !== void 0 ? _a : 0, maxed = t >= ch.tiers.length, i = Math.min(t, ch.tiers.length - 1); return { id: ch.id, icon: ch.icon, text: ch.text(ch.tiers[i]), value: Math.min(ch.value(s), ch.tiers[i]), target: ch.tiers[i], reward: ch.rewards[i], tier: t, tiers: ch.tiers.length, maxed }; }
+    function pilotLevel(s) { return 1 + Object.values(c(s).tier).reduce((a, b) => a + b, 0); }
+    function activeChains(s) { return CHAINS.map((ch) => chainView(s, ch)).filter((v) => !v.maxed).sort((a, b) => b.value / b.target - a.value / a.target).slice(0, 3); }
+    function settleCareer(s) { var _a, _b; (_a = s.career) !== null && _a !== void 0 ? _a : (s.career = careerDefaults()); let out = []; for (let ch of CHAINS)
+        for (let guard = 0; guard < 10; guard++) {
+            let t = (_b = s.career.tier[ch.id]) !== null && _b !== void 0 ? _b : 0;
+            if (t >= ch.tiers.length || ch.value(s) < ch.tiers[t])
+                break;
+            s.career.tier[ch.id] = t + 1, out.push({ text: ch.text(ch.tiers[t]), reward: ch.rewards[t] });
+        } return out; }
+    var SESSION_HOURS_ET = [12, 22], LIVE_HOURS = 3, HOUR = 3600000, TRACKS = [{ id: "future-city", name: "Future City", km: "3.2 km", color: "#2fd36b", scale: 1 }, { id: "cloud-city", name: "Cloud City", km: "2.8 km", color: "#4fc3ff", scale: 0.92 }, { id: "neon-tunnel", name: "Neon Tunnel", km: "2.4 km", color: "#ff4fd8", scale: 0.85 }, { id: "space-zone", name: "Space Zone", km: "3.0 km", color: "#9b6bff", scale: 1.02 }, { id: "mega-city", name: "XWAVE Megacity", km: "3.6 km", color: "#ffc21a", scale: 1.15 }, { id: "endless", name: "Endless", km: "all worlds", color: "#ff7a3a", scale: 1.7 }], DIV_TOP = { D: 6500, C: 10500, B: 16000, A: 22500, AA: 30000, AAA: 39000 }, DIV_FIELD = { D: 4200, C: 3100, B: 2200, A: 1400, AA: 800, AAA: 380 }, DIV_MULT = { D: 1, C: 1.2, B: 1.4, A: 1.7, AA: 2, AAA: 2.5 }, BASE_PRIZES = [{ from: 1, to: 1, label: "#1", bolts: 120, coins: 3000, hyper: 3, trophy: "gold" }, { from: 2, to: 3, label: "#2–3", bolts: 80, coins: 1500, hyper: 2, trophy: "silver" }, { from: 4, to: 10, label: "#4–10", bolts: 50, coins: 800, hyper: 1, trophy: "bronze" }, { from: 11, to: 100, label: "Top 100", bolts: 25, coins: 300, hyper: 0 }, { from: 101, to: 1 / 0, label: "Everyone who races", bolts: 10, coins: 100, hyper: 0, superJ: 1 }];
+    function prizesFor(div) { let m = DIV_MULT[div]; return BASE_PRIZES.map((p) => (Object.assign(Object.assign({}, p), { bolts: Math.round(p.bolts * m), coins: Math.round(p.coins * m / 10) * 10 }))); }
+    var prizeFor = (rank, div) => prizesFor(div).find((p) => rank >= p.from && rank <= p.to), etFmt = (() => { try {
+        return new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+    }
+    catch (_a) {
+        return null;
+    } })();
+    function etParts(ms) { if (!etFmt) {
+        let d = new Date(ms - 5 * HOUR);
+        return { y: d.getUTCFullYear(), m: d.getUTCMonth() + 1, d: d.getUTCDate(), h: d.getUTCHours(), min: d.getUTCMinutes() };
+    } let p = {}; for (let x of etFmt.formatToParts(new Date(ms)))
+        if (x.type !== "literal")
+            p[x.type] = Number(x.value); return { y: p.year, m: p.month, d: p.day, h: p.hour % 24, min: p.minute }; }
+    function etToUtc(y, m, d, h) { let guess = Date.UTC(y, m - 1, d, h) + 5 * HOUR; for (let i = 0; i < 2; i++) {
+        let p = etParts(guess), shown = Date.UTC(p.y, p.m - 1, p.d, p.h, p.min);
+        guess += Date.UTC(y, m - 1, d, h) - shown;
+    } return guess; }
+    function sessionsAround(now) { let out = []; for (let dd = -3; dd <= 1; dd++) {
+        let p = etParts(now + dd * 24 * HOUR), dayNo = Math.floor(Date.UTC(p.y, p.m - 1, p.d) / (24 * HOUR));
+        SESSION_HOURS_ET.forEach((h, k) => { let start = etToUtc(p.y, p.m, p.d, h); out.push({ index: dayNo * 2 + k, start, end: start + LIVE_HOURS * HOUR }); });
+    } let seen = new Set; return out.filter((s) => seen.has(s.index) ? !1 : (seen.add(s.index), !0)).sort((a, b) => a.start - b.start); }
+    function cupFor(session, division) { let di = BASE_CLASSES.indexOf(division), t = TRACKS[(session.index + di) % TRACKS.length]; return { cup: { id: `${t.id}-${division}`, name: `${t.name} Cup`, tag: `${t.name} · ${t.km}`, track: t.id, color: t.color, top: Math.round(DIV_TOP[division] * t.scale), field: DIV_FIELD[division] }, division, index: session.index, key: `s${session.index}-${division}`, start: session.start, end: session.end }; }
+    function schedule(now = Date.now()) { var _a; let all = sessionsAround(now), live = (_a = all.find((s) => now >= s.start && now < s.end)) !== null && _a !== void 0 ? _a : null, next = all.find((s) => s.start > now), past = all.filter((s) => s.end <= now).slice(-4); return { live, next, past, upcoming: all.filter((s) => s.start > now).slice(0, 2) }; }
+    var localTime = (ms) => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    function eventBoard(e, you, now = Date.now()) { let f = Math.min(1, Math.max(0, (now - e.start) / (e.end - e.start))), g = 0.3 + 0.7 * Math.min(1, f * 1.3), curve = { top: e.cup.top * g, k: 0.38, total: Math.round(e.cup.field * (0.25 + 0.75 * g)) }; return rankBoard(sampleBoard(`xwave-cup-${e.key}`, curve, 100), curve, you); }
+    function fmtLeft(ms) { if (ms <= 0)
+        return "0m"; let h = Math.floor(ms / HOUR), d = Math.floor(h / 24), m = Math.floor(ms % HOUR / 60000); if (d > 0)
+        return `${d}d ${h % 24}h`; if (h > 0)
+        return `${h}h ${m}m`; return `${m}m`; }
+    var loading_default = "./assets/loading-sahazapp.jpg";
+    var endless_default = "./assets/endless-cjmr3yq9.jpg";
+    var mega_city_default = "./assets/mega-city-exjqpzcj.jpg";
     var SCREENS = { loading, start, tracks, garage, missions, ranks, daily, events, shop, countdown, tutprompt };
     function drawScreens(ui, g, ids, layer) { for (let id of ids) {
         if (!ui.shown.has(id))
@@ -16651,35 +16626,44 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         g.icon(st.need === "sos" ? ICON.sos : ICON.rocket, W / 2 - 20 + shake, y + 28, 40); g.text(st.title, W / 2 + shake, y + 92, { size: 20, align: "center", italic: !0, maxW: w - 20, noTr: !0 }), g.para(st.sub, x + 14, y + 106, w - 28, { size: 11.5, font: "b", color: "#cfe0ff", align: "center", noTr: !0 }); }
     function swipeHint(g) { let t = g.time % 1400 / 1400, y = g.H * 0.62; g.icon(ICON.hand, g.W / 2 - 20 + Math.sin(t * Math.PI * 2) * 50, y, 40), g.text("SWIPE TO DODGE", g.W / 2, y + 60, { size: 18, align: "center", italic: !0, stroke: "rgba(0,0,0,.5)", strokeW: 4 }), g.text("← → change lane · ↑ fly up · ↓ fly down", g.W / 2, y + 84, { size: 11, align: "center", font: "b" }); }
     var CHIP_COL = { coin2: "#ffd24a", shield: "#3d9bff", magnet: "#ff3b4e", turbo: "#b6ff2e", double: "#ffc21a", super: "#9b6bff", hyper: "#ffc21a", dash: "#2ee6c8" }, CHIP_IC = { coin2: ICON.coin, shield: ICON.shield, magnet: ICON.magnet, turbo: ICON.bolt, double: ICON.x2, super: ICON.rocket, hyper: ICON.hyper, dash: ICON.dash }, hudPos = {};
-    function drawHud(ui, g) { var _a, _b; let run = ui.hud.run, W = g.W, top = safeTop(g) + 8, t = g.time; {
+    function drawHud(ui, g) { var _a, _b, _c, _d; let run = ui.hud.run, W = g.W, top = safeTop(g) + 8, t = g.time; {
         let pr = g.isPressed("pause");
         g.shadow("rgba(0,0,0,.45)", 6, 2), g.rr(12, top, 44, 44, 14, g.lin(0, top, 0, top + 44, [[0, pr ? "#2a3f8f" : "#3a55c0"], [1, "#18286a"]]), "rgba(170,200,255,.55)", 1.2), g.shadow(null), g.rr(15, top + 3, 38, 16, 10, "rgba(255,255,255,.14)"), g.icon(ICON.pause, 23, top + 11, 22, "#ffffff"), g.hit(8, top - 4, 52, 52, "pause", () => ui.h.pause());
     } if (ui.trainHud)
         g.rr(12, top + 52, 64, 28, 14, g.isPressed("tutskip") ? "rgba(255,255,255,.3)" : "rgba(10,22,60,.85)", "rgba(255,255,255,.3)"), g.text("Skip ›", 44, top + 66, { size: 12.5, align: "center" }), g.hit(12, top + 48, 64, 36, "tutskip", () => ui.h.skipTutorial()); if (!run)
-        return; let pillW = (html) => Math.max(58, g.richW(html, 15) + 22), cHtml = `${ICON.coin} <b>${fmt(run.coins)}</b>`, dHtml = `${ICON.flag} <b>${fmt(run.distance)} m</b>`, pw = Math.max(pillW(cHtml), pillW(dHtml)), px = W - 12 - pw; pill(g, px, top, pw, 30, cHtml, bump(ui, "coins", t), "rgba(255,194,26,.6)"), hudPos.coins = { x: px + 18, y: top + 15 }, pill(g, px, top + 36, pw, 30, dHtml, 1); let exp = run.exp, bx = 66, bw = Math.max(170, px - 8 - bx), showBest = ui.hudBest > 0 && !ui.trainHud && !ui.bonusHud && run.expRate > 0, cur = classFor(exp), ni = CLASSES.indexOf(cur), nx = ni < CLASSES.indexOf(ui.hudTop) ? CLASSES[ni + 1] : null, showNext = !!nx && !ui.trainHud && !ui.bonusHud && run.expRate > 0, bh = 50 + (showBest ? 20 : 0) + (showNext ? 18 : 0), by = top - 1; g.shadow("rgba(0,0,0,.35)", 10, 3), g.rr(bx, by, bw, bh, 14, g.lin(0, by, 0, by + bh, [[0, "rgba(18,32,76,.92)"], [1, "rgba(8,15,40,.94)"]]), "rgba(98,170,255,.42)", 1.2), g.shadow(null); let ix = bx + 14; if (ui.bonusHud)
-        g.rich(`${ICON.coin} <b>BONUS COINS</b>`, ix, by + 6, bw - 28, { size: 11, color: C.gold }), g.text(fmt(run.coins), ix, by + 36, { size: 28, italic: !0, noTr: !0 });
+        return; let wallet = (_b = (_a = ui.save) === null || _a === void 0 ? void 0 : _a.wallet) !== null && _b !== void 0 ? _b : 0, cw = 104, px = W - 12 - cw; {
+        let s = bump(ui, "coins", t);
+        if (g.ctx.save(), s !== 1)
+            g.ctx.translate(px + cw / 2, top + 21), g.ctx.scale(s, s), g.ctx.translate(-(px + cw / 2), -(top + 21));
+        g.rr(px, top, cw, 42, 14, g.lin(0, top, 0, top + 42, [[0, "rgba(48,36,4,.9)"], [1, "rgba(22,16,2,.92)"]]), "rgba(255,194,26,.7)", 1.3), g.icon(ICON.coin, px + 8, top + 6, 20), g.text(`+${fmt(run.coins)}`, px + 33, top + 16.5, { size: 16, color: "#ffe28a", maxW: cw - 40, noTr: !0, weight: 900, font: "b" }), g.text("TOTAL", px + 9, top + 33, { size: 8, color: "rgba(255,226,138,.7)", font: "b", weight: 800, noTr: !0, shadow: null }), g.text(fmt(wallet + run.coins), px + cw - 9, top + 33, { size: 10.5, align: "right", color: "#ffffff", font: "b", weight: 800, maxW: cw - 48, noTr: !0, shadow: null }), g.ctx.restore();
+    } hudPos.coins = { x: px + 18, y: top + 16 }, pill(g, px, top + 48, cw, 28, `${ICON.flag} <b>${fmt(run.distance)} m</b>`, 1); let exp = run.exp, bx = 66, bw = Math.max(176, px - 8 - bx), expRace = run.expRate > 0 && !ui.bonusHud, showBest = ui.hudBest > 0 && !ui.trainHud && expRace, cur = classFor(exp), ni = CLASSES.indexOf(cur), nx = ni < CLASSES.indexOf(ui.hudTop) ? CLASSES[ni + 1] : null, showNext = !!nx && !ui.trainHud && expRace, foot = showBest || showNext, bh = foot ? 86 : 58, by = top - 1; g.shadow("rgba(0,0,0,.35)", 10, 3), g.rr(bx, by, bw, bh, 16, g.lin(0, by, 0, by + bh, [[0, "rgba(20,34,82,.94)"], [1, "rgba(8,15,40,.96)"]]), "rgba(98,170,255,.45)", 1.2), g.shadow(null); let ix = bx + 12, rx = bx + bw - 12; if (ui.bonusHud)
+        g.rich(`${ICON.coin} <b>BONUS COINS</b>`, ix, by + 7, bw - 24, { size: 11, color: C.gold }), g.text(fmt(run.coins), ix, by + 40, { size: 30, italic: !0, noTr: !0 });
     else {
-        g.icon(BOLT, ix, by + 7, 26, "#fff", 14);
-        let lx = ix + 32;
-        if (ui.trainHud)
-            levelPill(g, lx, by + 7, "TRAINING", "#9fb3dd", "#0b1436");
+        if (g.icon(BOLT, ix, by + 8, 26, "#fff", 14), ui.trainHud)
+            levelPill(g, ix + 31, by + 8, "TRAINING", "#9fb3dd", "#0b1436");
         else if (ui.hudLevel) {
-            let lv = ui.hudLevel.toUpperCase(), [bg, fg] = lv === "HARD" ? ["#ff5a48", "#ffffff"] : lv === "EASY" ? ["#5ef08e", "#064a22"] : ["#ffc84a", "#5a2a00"];
-            lx += levelPill(g, lx, by + 7, lv, bg, fg);
+            let lv = ui.hudLevel.toUpperCase(), [lb, lf] = lv === "HARD" ? ["#ff5a48", "#ffffff"] : lv === "EASY" ? ["#5ef08e", "#064a22"] : ["#ffc84a", "#5a2a00"];
+            levelPill(g, ix + 31, by + 8, lv, lb, lf);
         }
-        let num = fmt(exp);
-        g.text(num, ix, by + 37, { size: 28, italic: !0, noTr: !0 });
-        let nw = g.measure(num, { size: 28, italic: !0 });
-        if (run.expRate > 0 || ui.trainHud)
-            g.text("RACE", ix + nw + 12, by + 38, { size: 9, color: C.muted, font: "b", weight: 800, noTr: !0, shadow: null }), shieldBadge2(g, cur, ix + nw + 46, by + 26, 24);
-    } let yy = by + 52; if (showBest) {
-        let beat = exp > ui.hudBest;
-        g.text("YOU", ix, yy + 7, { size: 8.5, color: C.muted, font: "b", weight: 800, noTr: !0, shadow: null }), shieldBadge2(g, ui.hudMe, ix + 24, yy, 14), g.text("BEST", ix + 46, yy + 7, { size: 8.5, color: C.muted, font: "b", weight: 800, noTr: !0, shadow: null }), g.text(beat ? "BEATEN!" : fmt(ui.hudBest), ix + 74, yy + 7, { size: 11, color: beat ? C.gold : "#fff", font: "b", weight: 900, maxW: bw - 110, noTr: !0, shadow: null }), bar(g, ix, yy + 15, bw - 28, 3, exp / ui.hudBest, beat ? C.gold : C.cyan), yy += 20;
-    } if (showNext && nx) {
-        g.text("NEXT", ix, yy + 7, { size: 8.5, color: C.muted, font: "b", weight: 800, noTr: !0, shadow: null }), shieldBadge2(g, nx, ix + 30, yy - 1, 15);
-        let need = fmt(CLASS_MIN[nx] - exp);
-        g.text(need, ix + 52, yy + 7, { size: 11, font: "b", weight: 900, noTr: !0, shadow: null }), g.text("EXP", ix + 56 + g.measure(need, { size: 11, font: "b", weight: 900 }), yy + 7, { size: 8.5, color: C.muted, font: "b", weight: 800, noTr: !0, shadow: null });
-    } let r2 = Math.max(by + bh, top + 66) + 12; g.text(`SPEED ${fmt(ui.hud.speed * 3.6)} KM/H`, 14, r2 + 6, { size: 11.5, font: "b", weight: 800, color: "#cfe0ff", noTr: !0 }), bar(g, 14, r2 + 15, 118, 6, ui.hud.speed / Math.max(1, ui.hud.maxSpeed), g.lin(14, 0, 132, 0, [[0, "#39b6ff"], [0.5, "#b6ff2e"], [1, "#ff8a1f"]])); for (let i = 0; i < run.maxLives; i++)
+        if (g.text(fmt(exp), ix, by + 41, { size: 30, italic: !0, noTr: !0, maxW: bw - 80 }), expRace || ui.trainHud)
+            g.text("RACE", rx - 15, by + 11, { size: 8.5, align: "center", color: C.muted, font: "b", weight: 800, noTr: !0, shadow: null }), shieldBadge2(g, cur, rx - 30, by + 18, 32);
+    } if (foot) {
+        g.rr(ix, by + 57, bw - 24, 1, 0, "rgba(160,190,255,.18)");
+        let fy = by + 67;
+        if (showBest) {
+            let beat = exp > ui.hudBest;
+            g.text("YOU", ix, fy, { size: 8.5, color: C.muted, font: "b", weight: 800, noTr: !0, shadow: null }), shieldBadge2(g, ui.hudMe, ix + 22, fy - 7, 14), g.text("BEST", ix + 42, fy, { size: 8.5, color: C.muted, font: "b", weight: 800, noTr: !0, shadow: null }), g.text(beat ? "BEATEN!" : fmt(ui.hudBest), ix + 67, fy, { size: 11, color: beat ? C.gold : "#fff", font: "b", weight: 900, noTr: !0, shadow: null });
+        }
+        if (showNext && nx) {
+            let need = fmt(CLASS_MIN[nx] - exp), nw = g.measure(need, { size: 11, font: "b", weight: 900 });
+            g.text(need, rx, fy, { size: 11, align: "right", font: "b", weight: 900, noTr: !0, shadow: null }), shieldBadge2(g, nx, rx - nw - 18, fy - 7, 14), g.text("NEXT", rx - nw - 22, fy, { size: 8.5, align: "right", color: C.muted, font: "b", weight: 800, noTr: !0, shadow: null });
+        }
+        let lo = CLASS_MIN[cur], hi = nx ? CLASS_MIN[nx] : lo + 1, k = nx ? (exp - lo) / Math.max(1, hi - lo) : 1, beat = showBest && exp > ui.hudBest;
+        if (bar(g, ix, by + 76, bw - 24, 4, k, beat ? C.gold : g.lin(ix, 0, rx, 0, [[0, "#4fc3ff"], [1, "#a77bff"]])), showBest && ui.hudBest > lo && ui.hudBest < hi) {
+            let mx = ix + (bw - 24) * ((ui.hudBest - lo) / Math.max(1, hi - lo));
+            g.rr(mx - 1, by + 73, 2, 10, 1, "#ffffff");
+        }
+    } let r2 = Math.max(by + bh, top + 76) + 12; g.text(`SPEED ${fmt(ui.hud.speed * 3.6)} KM/H`, 14, r2 + 6, { size: 11.5, font: "b", weight: 800, color: "#cfe0ff", noTr: !0 }), bar(g, 14, r2 + 15, 118, 6, ui.hud.speed / Math.max(1, ui.hud.maxSpeed), g.lin(14, 0, 132, 0, [[0, "#39b6ff"], [0.5, "#b6ff2e"], [1, "#ff8a1f"]])); for (let i = 0; i < run.maxLives; i++)
         g.icon(i < run.lives ? ICON.heart : ICON.heartEmpty, W - 12 - (run.maxLives - i) * 25, r2 - 1, 23); hudPos.hearts = { x: W - 40, y: r2 + 10 }; let ly = r2 + 30; if (ui.hud.gate) {
         let gx = (W - 220) / 2;
         g.rr(gx, ly, 220, 24, 12, "rgba(60,8,30,.82)", "#ff5a8a"), g.text("RANK GATE", gx + 10, ly + 12, { size: 10, color: "#ff8ab0" }), rankBadge(g, ui.hud.gate.next, gx + 82, ly + 5, 14), bar(g, gx + 116, ly + 9, 92, 6, ui.hud.gate.k, "#ff5a8a"), ly += 28;
@@ -16709,7 +16693,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             g.rr(W / 2 - 70, yy, 140, 44, 22, withAlpha(col, 0.85), "#fff", 1.5), g.icon(dg === "rocket" ? ICON.rocket : ICON.sos, W / 2 - 60, yy + 8, 28), g.text(dg === "rocket" ? "ROADSTER" : "TAP SOS!", W / 2 + 14, yy + 22, { size: 15, align: "center" });
         }
         else {
-            let pos = { left: [30, g.H * 0.5, 180], right: [W - 30, g.H * 0.5, 0], up: [W / 2, g.H * 0.36, 270], down: [W / 2, g.H * 0.64, 90] }, p = (_a = pos[dg]) !== null && _a !== void 0 ? _a : pos.up;
+            let pos = { left: [30, g.H * 0.5, 180], right: [W - 30, g.H * 0.5, 0], up: [W / 2, g.H * 0.36, 270], down: [W / 2, g.H * 0.64, 90] }, p = (_c = pos[dg]) !== null && _c !== void 0 ? _c : pos.up;
             g.circle(p[0], p[1], 26, "rgba(255,194,26,.25)", C.gold, 2), g.icon(CHEV(p[2]), p[0] - 18, p[1] - 18, 36, C.gold), g.text(dg.toUpperCase(), p[0], p[1] + 40, { size: 12, align: "center", color: C.gold });
         }
         g.alpha(1);
@@ -16717,7 +16701,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         let s = dg === "sos" ? 1 + 0.06 * Math.sin(t / 90) : 1;
         roundBtn(g, "sos", bx2 + 8, byy + 12, 60 * s, "#ff5a3c", ICON.sos, "SOS", String(run.escapes), () => ui.h.sos()), hudPos.sos = { x: bx2 + 38, y: byy + 42 }, byy -= 86;
     } if (rockets > 0) {
-        let hyper = run.hyperJumps > 0, call = ((_b = ui.tut) === null || _b === void 0 ? void 0 : _b.need) === "rocket", ready = ui.rocketReady || call, wait = t - ui.hud.rocketWaitT < 600 ? Math.sin((t - ui.hud.rocketWaitT) / 40) * 4 : 0, s = ready ? 1 + 0.07 * Math.sin(t / 110) : 1;
+        let hyper = run.hyperJumps > 0, call = ((_d = ui.tut) === null || _d === void 0 ? void 0 : _d.need) === "rocket", ready = ui.rocketReady || call, wait = t - ui.hud.rocketWaitT < 600 ? Math.sin((t - ui.hud.rocketWaitT) / 40) * 4 : 0, s = ready ? 1 + 0.07 * Math.sin(t / 110) : 1;
         if (ready)
             g.circle(bx2 + 38 + wait, byy + 38, 50, withAlpha(hyper ? "#ffc21a" : "#9b6bff", 0.25 + 0.15 * Math.sin(t / 110)));
         roundBtn(g, "rocket", bx2 + wait, byy, 76 * s, hyper ? "#ffb31a" : "#8a4dff", hyper ? ICON.hyper : ICON.rocket, ready ? "TAP!" : hyper ? "HYPER" : "ROADSTER", String(rockets), () => ui.h.rocket(), hyper ? { c0: "#ffe07a", c1: "#e79a00", rim: "rgba(255,255,255,.8)", text: "#3a2000" } : { c0: "#2a1d5c", c1: "#120a33", rim: "#b48cff", text: "#e6dcff" }), hudPos.rocket = { x: bx2 + 38, y: byy + 38 };
@@ -16838,6 +16822,8 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.hud = { run: null, speed: 0, maxSpeed: 1, mission: null, gate: null, track: null, danger: null, dangerOkT: -1e9, rocketWaitT: -1e9 };
             this.rocketReady = !1;
             this.colorCtl = null;
+            this.verTaps = 0;
+            this.showDiag = !1;
             this.notices = [];
             this.notice = null;
             this.pops = null;
@@ -17172,6 +17158,32 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
     }
     catch (_c) { } return api ? new RemotePlayerStore(api.replace(/\/$/, "")) : new LocalPlayerStore; }
     function weekBoard(d = new Date) { let t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())), day = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - day); let y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)), w = Math.ceil(((t.getTime() - y0.getTime()) / 86400000 + 1) / 7); return `week:${t.getUTCFullYear()}-W${String(w).padStart(2, "0")}`; }
+    var PRODUCTS = [{ sku: "coins_s", name: "1,000 coins", desc: "A handful", price: "$0.99", grant: { coins: 1000 }, kind: "coins", art: "coins-s" }, { sku: "coins_m", name: "6,000 coins", desc: "+20% bonus", price: "$4.99", grant: { coins: 6000 }, badge: "POPULAR", kind: "coins", art: "coins-m" }, { sku: "coins_l", name: "13,000 coins", desc: "+30% bonus", price: "$9.99", grant: { coins: 13000 }, kind: "coins", art: "coins-l" }, { sku: "coins_xl", name: "30,000 coins", desc: "+50% bonus", price: "$19.99", grant: { coins: 30000 }, badge: "BEST VALUE", kind: "coins", art: "coins-xl" }, { sku: "no_ads", name: "Remove Ads", desc: "No ad after a race ends, forever. Revive ads stay optional.", price: "$2.99", grant: { noAds: !0 }, kind: "special", once: !0, art: "noads" }], productBySku = (sku) => PRODUCTS.find((p) => p.sku === sku);
+    class DemoStore {
+        constructor(parent) {
+            this.name = "demo";
+            this.parent = parent;
+        }
+        purchase(p) {
+            return new Promise((resolve) => {
+                let el = document.createElement("div");
+                el.className = "iapsheet", el.innerHTML = `
+        <div class="iapsheet-box">
+          <div class="admock-tag">DEMO STORE</div>
+          <div class="iapsheet-name">${p.name}</div>
+          <div class="iapsheet-desc">${p.desc}</div>
+          <div class="iapsheet-price">${p.price}</div>
+          <div class="iapsheet-note">Demo only — no payment is taken. A real build opens Google Play / App Store billing here.</div>
+          <div class="admock-actions">
+            <button class="btn ghost sm" data-x="no">Cancel</button>
+            <button class="btn sm" data-x="ok">Confirm (demo)</button>
+          </div>
+        </div>`, this.parent.appendChild(el);
+                let done = (ok) => { el.remove(), resolve(ok); };
+                el.querySelector('[data-x="ok"]').addEventListener("click", () => done(!0)), el.querySelector('[data-x="no"]').addEventListener("click", () => done(!1)), el.addEventListener("touchstart", (e) => e.stopPropagation(), { passive: !0 });
+            });
+        }
+    }
     var AUTH_KEY = "xwave-cloud-auth", QUEUE_KEY = "xwave-cloud-runs";
     function apiBase() { var _a, _b; try {
         let q = new URLSearchParams(location.search).get("api"), w = window.XWAVE_API;
@@ -17180,7 +17192,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
     catch (_c) {
         return CLOUD.api.replace(/\/$/, "");
     } }
-    function load2(k, d) { try {
+    function load(k, d) { try {
         let r = kv.get(k);
         return r ? JSON.parse(r) : d;
     }
@@ -17197,7 +17209,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
     class Cloud {
         constructor() {
             this.api = apiBase();
-            this.st = load2(AUTH_KEY, null);
+            this.st = load(AUTH_KEY, null);
             this.onSignedIn = () => { };
         }
         get enabled() { return !!this.api; }
@@ -17246,9 +17258,9 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         acceptServer(rev) { if (!this.st)
             return; this.st.rev = rev, this.st.dirty = !1, this.st.lastSync = Date.now(), this.save(); }
         async reportRun(run) { if (!this.enabled)
-            return; let q = load2(QUEUE_KEY, []); q.push(run), store(QUEUE_KEY, q.slice(-30)), await this.flushRuns(); }
+            return; let q = load(QUEUE_KEY, []); q.push(run), store(QUEUE_KEY, q.slice(-30)), await this.flushRuns(); }
         async flushRuns() { if (!this.st)
-            return; let q = load2(QUEUE_KEY, []); while (q.length) {
+            return; let q = load(QUEUE_KEY, []); while (q.length) {
             try {
                 let r = await this.call("POST", "/runs", q[0]);
                 if (r.status >= 500 || r.status === 401)
@@ -17287,7 +17299,45 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             it.g.position.z = z, it.g.visible = z > -260 && z - it.len < 20;
         } }
     }
-    var BONUS_DIFF_OFFSET = 900, VERSION = "v3.0.4", ROCKET_PRICE = 250, WELCOME_AFTER_H = 12, WELCOME_GIFT = { coins: 200, shield: 1 }, PERK = { entry: 300, launch: 300, share: 300, invite: 100 }, WORLD_NAMES = { city: "FUTURE CITY", tunnel: "NEON TUNNEL", cloud: "CLOUD CITY", space: "SPACE ZONE", mega: "XWAVE MEGACITY", desert: "DESERT HIGHWAY", forest: "PINE FOREST", country: "COUNTRY ROAD", sea: "OCEAN CAUSEWAY", harbor: "NEON HARBOR", solar: "SOLAR FARMS", canyon: "CRYSTAL CANYON", belt: "ASTEROID BELT", storm: "STORM FRONT", volcano: "VOLCANO CORE", ice: "AURORA ICE" }, POWER_LABEL = { shield: "SHIELD", magnet: "MAGNET", turbo: "TURBO BOOST", double: "DOUBLE EXP", life: "EXTRA LIFE", super: "ROADSTER JUMP", dash: "AIR DASH", escape: "SKY ESCAPE", hyper: "HYPER JUMP", ghost: "PHASE GHOST", wall: "WALL RUN", rail: "SKY RAIL", tunnel: "TUNNEL RIDER", mystery: "MYSTERY BOX" }, POWER_SUB = { shield: "", magnet: "coins fly to you", turbo: "smash through obstacles", double: "EXP ×2 for a while", life: "+1 heart", super: "tap ROADSTER to launch", dash: "flip across 2 lanes", escape: "tap SOS to fly up", hyper: "fires by itself", ghost: "through everything · AAA special", wall: "along the wall · AAA special", rail: "glide the sky rail · AAA special", tunnel: "ride the roof · AAA special", mystery: "a random reward" }, POWER_ICON = { shield: ICON.shield, magnet: ICON.magnet, turbo: ICON.bolt, double: ICON.x2, life: ICON.heart, super: ICON.rocket, dash: ICON.dash, escape: ICON.sos, hyper: ICON.hyper, ghost: ICON.shield, wall: ICON.dash, rail: ICON.rocket, tunnel: ICON.rocket, mystery: ICON.gift };
+    var W2 = 1080, H = 1350;
+    function load2(src) { return new Promise((res) => { let im = new Image; im.crossOrigin = "anonymous", im.onload = () => res(im), im.onerror = () => res(null), im.src = src; }); }
+    function shield(g, cx, cy, r) { g.beginPath(), g.moveTo(cx, cy - r), g.lineTo(cx + r * 0.86, cy - r * 0.62), g.lineTo(cx + r * 0.78, cy + r * 0.28), g.quadraticCurveTo(cx + r * 0.5, cy + r * 0.82, cx, cy + r), g.quadraticCurveTo(cx - r * 0.5, cy + r * 0.82, cx - r * 0.78, cy + r * 0.28), g.lineTo(cx - r * 0.86, cy - r * 0.62), g.closePath(); }
+    var fmt2 = (n) => Math.floor(n).toLocaleString("en-US");
+    async function drawShareCard(d) { let c = document.createElement("canvas"); c.width = W2, c.height = H; let g = c.getContext("2d"); if (!g)
+        return null; let col = CLASS_COLOR[d.rank], bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#120a3a"), bg.addColorStop(0.55, "#1d0f52"), bg.addColorStop(1, "#07051a"), g.fillStyle = bg, g.fillRect(0, 0, W2, H); let glow = g.createRadialGradient(W2 / 2, 470, 40, W2 / 2, 470, 620); glow.addColorStop(0, `${col}66`), glow.addColorStop(1, "transparent"), g.fillStyle = glow, g.fillRect(0, 0, W2, H), g.strokeStyle = "rgba(255,255,255,.06)", g.lineWidth = 3; for (let i = 0; i < 26; i++) {
+        let y = 120 + i * 47;
+        g.beginPath(), g.moveTo(i * 137 % 300 - 40, y), g.lineTo(i * 137 % 300 + 160 + i % 3 * 90, y), g.stroke();
+    } let [logo, car, ava] = await Promise.all([load2(d.logo), load2(d.car), load2(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(d.avatar.includes("xmlns") ? d.avatar : d.avatar.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"'))}`)]); if (logo)
+        g.drawImage(logo, (W2 - 560) / 2, 40, 560, 560 * logo.height / logo.width); g.textAlign = "center", g.fillStyle = "#ffffff", g.font = "900 italic 92px system-ui, -apple-system, Segoe UI, sans-serif", g.shadowColor = col, g.shadowBlur = 30, g.fillText(d.title, W2 / 2, 300), g.shadowBlur = 0, shield(g, W2 / 2, 500, 150); let sg = g.createLinearGradient(0, 350, 0, 650); if (sg.addColorStop(0, col), sg.addColorStop(1, "#1a0f40"), g.fillStyle = sg, g.shadowColor = col, g.shadowBlur = 50, g.fill(), g.shadowBlur = 0, g.lineWidth = 12, g.strokeStyle = "#ffffff", g.stroke(), g.fillStyle = "#ffffff", g.font = `900 ${d.rank.length > 2 ? 110 : d.rank.length > 1 ? 140 : 170}px system-ui, -apple-system, Segoe UI, sans-serif`, g.textBaseline = "middle", g.fillText(d.rank, W2 / 2, 510), g.textBaseline = "alphabetic", g.font = "800 40px system-ui, -apple-system, Segoe UI, sans-serif", g.fillStyle = col, g.fillText(`RANK ${d.rank}`, W2 / 2, 712), g.fillStyle = "#ffffff", g.font = "900 128px system-ui, -apple-system, Segoe UI, sans-serif", g.fillText(fmt2(d.exp), W2 / 2, 850), g.font = "800 44px system-ui, -apple-system, Segoe UI, sans-serif", g.fillStyle = "#ffd94a", g.fillText("EXP", W2 / 2, 910), d.sub)
+        g.fillStyle = "rgba(220,225,255,.8)", g.font = "600 36px system-ui, -apple-system, Segoe UI, sans-serif", g.fillText(d.sub, W2 / 2, 964); if (car) {
+        let k = Math.min(680 / car.width, 250 / car.height), cw = car.width * k, ch = car.height * k, halo = g.createRadialGradient(W2 / 2, 1110, 20, W2 / 2, 1110, 380);
+        halo.addColorStop(0, `${col}55`), halo.addColorStop(1, "transparent"), g.fillStyle = halo, g.fillRect(0, 980, W2, 260), g.drawImage(car, (W2 - cw) / 2, 1235 - ch, cw, ch);
+    } if (g.fillStyle = "rgba(0,0,0,.45)", g.fillRect(0, H - 110, W2, 110), ava)
+        g.drawImage(ava, 40, H - 98, 86, 86); return g.textAlign = "left", g.fillStyle = "#ffffff", g.font = "800 44px system-ui, -apple-system, Segoe UI, sans-serif", g.fillText(d.name.slice(0, 18), 146, H - 42), g.textAlign = "right", g.fillStyle = "rgba(220,225,255,.85)", g.font = "700 34px system-ui, -apple-system, Segoe UI, sans-serif", g.fillText("Can you beat me?", W2 - 40, H - 44), new Promise((res) => c.toBlob((b) => res(b), "image/png")); }
+    async function shareImage(blob, text, url) { let nav = navigator; try {
+        if (blob && nav.share && nav.canShare) {
+            let file = new File([blob], "sky-roadster.png", { type: "image/png" });
+            if (nav.canShare({ files: [file] }))
+                return await nav.share({ files: [file], title: "Sky Roadster", text: url ? `${text} ${url}` : text }), "shared";
+        }
+        if (nav.share)
+            return await nav.share(Object.assign({ title: "Sky Roadster", text }, url ? { url } : {})), "shared";
+    }
+    catch (e) {
+        if ((e === null || e === void 0 ? void 0 : e.name) === "AbortError")
+            return "cancel";
+    } return "fallback"; }
+    function copyText(t) { var _a; try {
+        (_a = navigator.clipboard) === null || _a === void 0 ? void 0 : _a.writeText(t).catch(() => legacyCopy(t));
+    }
+    catch (_b) {
+        legacyCopy(t);
+    } }
+    function legacyCopy(t) { let ta = document.createElement("textarea"); ta.value = t, ta.style.position = "fixed", ta.style.opacity = "0", document.body.appendChild(ta), ta.select(); try {
+        document.execCommand("copy");
+    }
+    catch (_a) { } ta.remove(); }
+    var BONUS_DIFF_OFFSET = 900, VERSION = "v3.0.5", ROCKET_PRICE = 250, WELCOME_AFTER_H = 12, WELCOME_GIFT = { coins: 200, shield: 1 }, PERK = { entry: 300, launch: 300, share: 300, invite: 100 }, WORLD_NAMES = { city: "FUTURE CITY", tunnel: "NEON TUNNEL", cloud: "CLOUD CITY", space: "SPACE ZONE", mega: "XWAVE MEGACITY", desert: "DESERT HIGHWAY", forest: "PINE FOREST", country: "COUNTRY ROAD", sea: "OCEAN CAUSEWAY", harbor: "NEON HARBOR", solar: "SOLAR FARMS", canyon: "CRYSTAL CANYON", belt: "ASTEROID BELT", storm: "STORM FRONT", volcano: "VOLCANO CORE", ice: "AURORA ICE" }, POWER_LABEL = { shield: "SHIELD", magnet: "MAGNET", turbo: "TURBO BOOST", double: "DOUBLE EXP", life: "EXTRA LIFE", super: "ROADSTER JUMP", dash: "AIR DASH", escape: "SKY ESCAPE", hyper: "HYPER JUMP", ghost: "PHASE GHOST", wall: "WALL RUN", rail: "SKY RAIL", tunnel: "TUNNEL RIDER", mystery: "MYSTERY BOX" }, POWER_SUB = { shield: "", magnet: "coins fly to you", turbo: "smash through obstacles", double: "EXP ×2 for a while", life: "+1 heart", super: "tap ROADSTER to launch", dash: "flip across 2 lanes", escape: "tap SOS to fly up", hyper: "fires by itself", ghost: "through everything · AAA special", wall: "along the wall · AAA special", rail: "glide the sky rail · AAA special", tunnel: "ride the roof · AAA special", mystery: "a random reward" }, POWER_ICON = { shield: ICON.shield, magnet: ICON.magnet, turbo: ICON.bolt, double: ICON.x2, life: ICON.heart, super: ICON.rocket, dash: ICON.dash, escape: ICON.sos, hyper: ICON.hyper, ghost: ICON.shield, wall: ICON.dash, rail: ICON.rocket, tunnel: ICON.rocket, mystery: ICON.gift };
     class Game {
         turboMulNow(run, dt) { let want = run.turboT > 0 ? 1 : 0; if (this.turboK += (want - this.turboK) * (1 - Math.exp(-(want ? 9 : 5) * dt)), !want && this.turboK < 0.01)
             this.turboK = 0; return 1 + (SPEED.turboMul - 1) * this.turboK; }
@@ -18485,9 +18535,7 @@ speed ${w.speed.toFixed(1)}  dist ${w.dist.toFixed(0)}  obst ${w.obstacles.lengt
         let quad = new Mesh(new PlaneGeometry(2, 2), mat);
         quad.frustumCulled = !1, uiScene.add(quad);
         let renderer = game.renderer, now = () => typeof performance < "u" ? performance.now() : Date.now(), r0 = renderer.renderer;
-        measure(r0, () => { var _a; return ((_a = G3.document) === null || _a === void 0 ? void 0 : _a.createElement) ? G3.document.createElement("canvas") : T3.createCanvas(); });
-        let savedMode = kv.get("colorMode") || "auto";
-        applyColor(r0, COLOR_MODES.includes(savedMode) ? savedMode : "auto"), ui.colorCtl = { mode: () => color.mode, line: () => colorLine(), cycle: () => { let i = COLOR_MODES.indexOf(color.mode), next = COLOR_MODES[(i + 1) % COLOR_MODES.length]; if (kv.set("colorMode", next), applyColor(r0, next), next === "normal" && color.applied.texture === !1)
+        measure(r0, () => { var _a; return ((_a = G3.document) === null || _a === void 0 ? void 0 : _a.createElement) ? G3.document.createElement("canvas") : T3.createCanvas(); }), applyColor(r0, "auto"), ui.colorCtl = { mode: () => color.mode, line: () => { var _a, _b; return `${colorLine()} · audio ${((_a = game === null || game === void 0 ? void 0 : game.audio) === null || _a === void 0 ? void 0 : _a.ctx) ? (_b = game.audio.ctx.state) !== null && _b !== void 0 ? _b : "on" : "off"}`; }, cycle: () => { let i = COLOR_MODES.indexOf(color.mode), next = COLOR_MODES[(i + 1) % COLOR_MODES.length]; if (applyColor(r0, next), next === "normal" && color.applied.texture === !1)
                 ui.toast("Colour: normal · reopen the game if textures still look pale", "#4fc3ff"); } }, renderer.uiPass = (r) => { if (ui.frame(now()))
             uiTex.needsUpdate = !0; mat.uniforms.decode.value = color.applied.surface ? 1 : 0, r.render(uiScene, uiCam), opaque(r); };
         let opaque = (r) => { let gl = r.getContext(); r.setRenderTarget(null), gl.colorMask(!1, !1, !1, !0), gl.clearColor(0, 0, 0, 1), gl.clear(gl.COLOR_BUFFER_BIT), gl.colorMask(!0, !0, !0, !0), r.resetState(); }, booted = !1, r3 = renderer.renderer, orig = r3.setAnimationLoop.bind(r3);
@@ -18515,15 +18563,20 @@ speed ${w.speed.toFixed(1)}  dist ${w.dist.toFixed(0)}  obst ${w.obstacles.lengt
         }
     }
     catch (_b) { } }
-    function onStart(e) { var _a; takeFocus(); let p = pt(e); if (!p)
+    function onStart(e) { var _a, _b; takeFocus(); let p = pt(e); if (!p)
         return; if (firstTouch)
-        firstTouch = !1, emitWindow("pointerdown"), emitWindow("touchstart"); if (touchId !== null) {
+        firstTouch = !1, emitWindow("pointerdown"), emitWindow("touchstart");
+    else
+        try {
+            (_a = game === null || game === void 0 ? void 0 : game.audio) === null || _a === void 0 ? void 0 : _a.unlock();
+        }
+        catch (_c) { } if (touchId !== null) {
         ui === null || ui === void 0 ? void 0 : ui.touchStart(p.x, p.y), ui === null || ui === void 0 ? void 0 : ui.touchEnd();
         return;
     } if (touchId = p.id, ui && ui.touchStart(p.x, p.y))
         owner = "ui";
     else
-        owner = "input", (_a = input()) === null || _a === void 0 ? void 0 : _a.touchBegin(p.x, p.y); }
+        owner = "input", (_b = input()) === null || _b === void 0 ? void 0 : _b.touchBegin(p.x, p.y); }
     function onMove(e) { var _a, _b, _c, _d; let list = (_b = (_a = e === null || e === void 0 ? void 0 : e.changedTouches) !== null && _a !== void 0 ? _a : e === null || e === void 0 ? void 0 : e.touches) !== null && _b !== void 0 ? _b : []; for (let t of list) {
         if (((_c = t.identifier) !== null && _c !== void 0 ? _c : 0) !== touchId)
             continue;
@@ -18549,7 +18602,10 @@ speed ${w.speed.toFixed(1)}  dist ${w.dist.toFixed(0)}  obst ${w.obstacles.lengt
     hs.onPause(() => { var _a; let gm = game; if (!gm)
         return; if ((_a = gm.audio) === null || _a === void 0 ? void 0 : _a.duck(!0), gm.state === "run")
         gm.pause(); });
-    hs.onResume(() => { var _a; (_a = game === null || game === void 0 ? void 0 : game.audio) === null || _a === void 0 ? void 0 : _a.duck(!1); });
+    hs.onResume(() => { let a = game === null || game === void 0 ? void 0 : game.audio; a === null || a === void 0 ? void 0 : a.duck(!1); try {
+        a === null || a === void 0 ? void 0 : a.unlock();
+    }
+    catch (_a) { } });
     hs.onGiven((items) => { var _a, _b; let gm = game, parts = []; for (let [k, n] of Object.entries(items))
         if (n)
             parts.push(k === "coins" ? `+${n} coins` : `${hs.itemName(k)} ×${n}`); if (parts.length)

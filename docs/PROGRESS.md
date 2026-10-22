@@ -4,6 +4,14 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-22 — v3.0.5
+
+**Done**: HUD coin card (race + total) and cleaner score box (`hud.ts`); Audio compat layer + resume (`src/audio/Audio.ts`, `main.ts`); Colour row removed (auto calibration kept, diag = tap version ×5); `src/ui/shared.ts` so the native bundle skips UI.ts and its images.
+
+**Android 1007 ERROR_CANNOT_OPEN_MINIS**: shown by TikTok before the game loads (FPS 0 on the debug panel), same zip works on iPhone → not the game code. TikTok's troubleshooting page: the scanning account must be a test user, in the same region; latest package uploaded. Owner to check tester list / account region on the Android phones.
+
+---
+
 ## 2026-10-22 — v3.0.4: colour calibration + Android "Couldn't open TikTok Minis"
 
 **Owner report**: iPhone still washed out (menus much worse than home); 2 Android phones show "Couldn't open TikTok Minis".

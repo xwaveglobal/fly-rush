@@ -9,8 +9,7 @@ import { DPR, NATIVE, emitWindow, makeImage, safeArea, screenCanvas, sizeScreen,
 import { hs, profile } from './hs.ts';
 import './save.ts';
 import * as THREE from 'three';
-import { COLOR_MODES, applyColor, color, colorLine, measure, type ColorMode } from './color.ts';
-import { kv } from '../core/kv.ts';
+import { COLOR_MODES, applyColor, color, colorLine, measure } from './color.ts';
 import { setAdProvider, type RewardPlacement } from '../ads/Ads.ts';
 import { platform } from '../platform.ts';
 import { Game } from '../Game.ts';
@@ -159,15 +158,13 @@ if (ui && game) {
   // colour calibration (see color.ts) — before any 3D material is compiled
   const r0: THREE.WebGLRenderer = renderer.renderer;
   measure(r0, () => (G.document?.createElement ? G.document.createElement('canvas') : T.createCanvas()));
-  const savedMode = (kv.get('colorMode') as ColorMode) || 'auto';
-  applyColor(r0, COLOR_MODES.includes(savedMode) ? savedMode : 'auto');
+  applyColor(r0, 'auto'); // measured at start: compensates only what this phone needs
   ui.colorCtl = {
     mode: () => color.mode,
-    line: () => colorLine(),
+    line: () => `${colorLine()} · audio ${(game as any)?.audio?.ctx ? (game as any).audio.ctx.state ?? 'on' : 'off'}`,
     cycle: () => {
       const i = COLOR_MODES.indexOf(color.mode);
       const next = COLOR_MODES[(i + 1) % COLOR_MODES.length];
-      kv.set('colorMode', next);
       applyColor(r0, next);
       if (next === 'normal' && color.applied.texture === false) ui!.toast('Colour: normal · reopen the game if textures still look pale', '#4fc3ff');
     },
@@ -253,10 +250,17 @@ function onStart(e: any) {
   takeFocus();
   const p = pt(e);
   if (!p) return;
+  // audio: start on the first touch, and resume it on any later touch if the app suspended it
   if (firstTouch) {
     firstTouch = false;
     emitWindow('pointerdown');
     emitWindow('touchstart');
+  } else {
+    try {
+      (game as any)?.audio?.unlock();
+    } catch {
+      /* ignore */
+    }
   }
   if (touchId !== null) {
     // a second finger: only UI taps (ROADSTER / SOS while steering)
@@ -311,7 +315,13 @@ hs.onPause(() => {
   if (gm.state === 'run') gm.pause();
 });
 hs.onResume(() => {
-  (game as any)?.audio?.duck(false);
+  const a = (game as any)?.audio;
+  a?.duck(false);
+  try {
+    a?.unlock(); // resume a context the app suspended while it was hidden
+  } catch {
+    /* ignore */
+  }
 });
 hs.onGiven((items) => {
   const gm: any = game;
