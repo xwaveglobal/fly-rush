@@ -15,10 +15,12 @@ const LAMP_HEAD_X = 4.0;
 const SIGN_EVERY = 150;
 const SIGN_X = 5.7;
 
-let roadPx: RoadPixels | null = null;
-/** the procedural road tile, rasterised once per session (pure data → DataTextures) */
-function roadData() {
-  return (roadPx ??= roadPixels(512, 1024));
+const roadPx = new Map<number, RoadPixels>();
+/** the procedural road tile at width w (height 2w), rasterised once per size (pure data → DataTextures) */
+function roadData(w = 512) {
+  let px = roadPx.get(w);
+  if (!px) roadPx.set(w, (px = roadPixels(w, w * 2)));
+  return px;
 }
 function dataTex(data: Uint8Array, w: number, h: number, srgb: boolean) {
   const t = new THREE.DataTexture(data as Uint8Array<ArrayBuffer>, w, h, THREE.RGBAFormat);
@@ -333,8 +335,24 @@ export class Track {
   private lampRange = 0;
   private ringMat: THREE.MeshBasicMaterial;
 
-  /** graphics preset: road shader detail, roadside signs, texture sharpness (no recompile) */
+  /** graphics preset: road shader detail, roadside signs, texture size / sharpness (no recompile) */
   setQuality(p: GraphicsPreset) {
+    if (p.roadTex !== this.roadTex.image.width) {
+      // LOW: a 256 × 512 tile (¼ of the GPU memory); the old textures are disposed
+      const px = roadData(p.roadTex);
+      const old = this.roadTexs;
+      this.roadTex = dataTex(px.color, px.w, px.h, true);
+      this.roughTex = dataTex(px.rough, px.w, px.h, false);
+      this.emisTex = dataTex(px.emissive, px.w, px.h, true);
+      for (const t of this.roadTexs) {
+        t.repeat.set(1, ROAD_LEN / TILE);
+        t.offset.y = old[0].offset.y;
+      }
+      this.roadMat.map = this.roadTex;
+      this.roadMat.roughnessMap = this.roughTex;
+      this.roadMat.emissiveMap = this.emisTex;
+      for (const t of old) t.dispose();
+    }
     this.roadU.uDetail.value = p.roadDetail ? 1 : 0;
     for (const s of this.signs) s.g.visible = p.cityExtras && this.openAir;
     this.signsOn = p.cityExtras;

@@ -249,8 +249,11 @@ export function billboardTexture(variant: number) {
       ['#0a1f4a', '#1677ff', '#7af5ff'],
       ['#3a0a3f', '#ff3fae', '#ffd34f'],
       ['#06283d', '#00c2ff', '#ffffff'],
+      // v4.2.1: two more night palettes — 8 distinct boards (message × palette) instead of 4
+      ['#1d0626', '#b02bff', '#ff7ad8'],
+      ['#071a22', '#13b39a', '#d9fff4'],
     ];
-    const [a, b, accent] = palettes[variant % palettes.length];
+    const [a, b, accent] = palettes[(variant + Math.floor(variant / 4) * 3) % palettes.length];
     const grad = g.createLinearGradient(0, 0, 512, 256);
     grad.addColorStop(0, a);
     grad.addColorStop(1, b);

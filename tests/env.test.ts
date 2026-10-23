@@ -8,6 +8,7 @@ declare const globalThis: { localStorage?: unknown };
 import { CAR_HALF, GRAPHICS, GRAPHICS_ORDER, HEIGHT, LANES, LANE_WIDTH, ROAD, SPEED, nextGraphics } from '../src/config.ts';
 import { DIVIDERS, EDGES, roadPixels, roadSample, columnX } from '../src/render/roadSurface.ts';
 import { farFadeAt, wrapZ } from '../src/render/envFx.ts';
+import { PerfRecorder } from '../src/core/perf.ts';
 
 let fails = 0;
 const check = (ok: boolean, msg: string) => {
@@ -95,6 +96,9 @@ const check = (ok: boolean, msg: string) => {
   check(GRAPHICS_ORDER.join() === 'low,medium,high', 'three presets: LOW, MEDIUM, HIGH');
   check(lo.dprCap <= me.dprCap && me.dprCap <= hi.dprCap && lo.cityDensity <= me.cityDensity && me.cityDensity <= hi.cityDensity && lo.anisotropy <= me.anisotropy && me.anisotropy <= hi.anisotropy, 'cost rises LOW → MEDIUM → HIGH (pixel ratio, city density, anisotropy)');
   check(!lo.bloom && !lo.speedBlur && me.bloom && !me.speedBlur && hi.bloom && hi.speedBlur, 'post-processing: LOW none, MEDIUM bloom, HIGH bloom + speed blur');
+  check(lo.particles < me.particles && me.particles <= hi.particles && hi.particles === 1, 'v4.2.1 particle density: LOW < MEDIUM ≤ HIGH (HIGH = full)');
+  check(lo.roadTex < me.roadTex && me.roadTex === hi.roadTex && [lo, me, hi].every((p) => (p.roadTex & (p.roadTex - 1)) === 0), 'v4.2.1 road texture: LOW smaller, power-of-two sizes');
+  check(lo.dprCap < me.dprCap, 'v4.2.1 LOW renders fewer pixels than MEDIUM');
   check(nextGraphics('low') === 'medium' && nextGraphics('medium') === 'high' && nextGraphics('high') === 'low', 'settings cycle LOW → MEDIUM → HIGH → LOW');
 }
 
@@ -112,6 +116,19 @@ const check = (ok: boolean, msg: string) => {
   check(loadSave().settings.quality === 'low', 'old save on LOW stays LOW');
   store['xwave-sky-rush-v1'] = JSON.stringify({ settingsRev: 3, settings: { sound: true, music: true, quality: 'high', speed: 'normal', gfx3: true } });
   check(loadSave().settings.quality === 'high', 'a player who picked HIGH after the update keeps HIGH');
+}
+
+// ---- v4.2.1 ?perf=1 recorder: percentiles and ring buffer
+{
+  const rec = new PerfRecorder(100);
+  for (let i = 1; i <= 100; i++) rec.add({ frame: i, js: 1, render: 2 });
+  const r = rec.report();
+  check(r.frames === 100 && r.frame.p50 === 50 && r.frame.p95 === 95 && r.frame.max === 100 && r.slow === 67, 'perf: p50 / p95 / max / slow frames over 100 samples');
+  check(Math.abs(r.fps - 1000 / 50.5) < 0.1 && r.js.avg === 1 && r.render.avg === 2, 'perf: fps from the mean frame interval, JS / render averages');
+  for (let i = 0; i < 30; i++) rec.add({ frame: 16, js: 1, render: 2 });
+  check(rec.report(30).frame.max === 16 && rec.report().frames === 100, 'perf: ring buffer keeps the last N frames, report(last) looks back only that far');
+  rec.reset();
+  check(rec.report().frames === 0 && rec.report().fps === 0, 'perf: reset clears the samples');
 }
 
 // ---- gameplay constants untouched by the environment work (lanes, heights, hitbox, speeds)

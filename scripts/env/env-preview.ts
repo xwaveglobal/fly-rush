@@ -186,15 +186,19 @@ const info = () => {
   check('long run: no new shader programs (no recompiles)', p1 === p0, `programs ${p0}→${p1}`);
   // quality switching: every preset applies, nothing leaks, back to the same counts
   const counts: string[] = [];
+  const roadW: string[] = [];
   for (const qq of ['low', 'high', 'medium', 'low', 'medium'] as GraphicsQuality[]) {
     renderer.setQuality(qq);
     scenery.setQuality(GRAPHICS[qq]);
     track.setQuality(GRAPHICS[qq]);
     run(0.5);
     counts.push(`${qq}:${renderer.pixelRatio}`);
+    roadW.push(`${qq}:${(track as unknown as { roadTex: THREE.Texture }).roadTex.image.width}`);
   }
   run(1);
   const m2 = { ...renderer.renderer.info.memory };
+  check('v4.2.1 road texture per preset (LOW 256, MEDIUM / HIGH 512)', roadW.join(' ') === 'low:256 high:512 medium:512 low:256 medium:512', roadW.join(' '));
+  check('v4.2.1 quality switching: textures stable (old road textures disposed)', m2.textures === m1.textures, `${m1.textures}→${m2.textures}`);
   check('quality switching low ↔ medium ↔ high: presets applied', counts.join(' ') === `low:${Math.min(devicePixelRatio, 1.25)} high:${Math.min(devicePixelRatio, 2)} medium:${Math.min(devicePixelRatio, 1.5)} low:${Math.min(devicePixelRatio, 1.25)} medium:${Math.min(devicePixelRatio, 1.5)}`, counts.join(' '));
   check('quality switching: geometries stable', m2.geometries === m1.geometries, `${m1.geometries}→${m2.geometries}`);
   // road markings line up with the lanes on screen: project a divider point and the lane centres

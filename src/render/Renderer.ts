@@ -71,7 +71,25 @@ export class Renderer {
     (this.scene as THREE.Scene & { environmentIntensity?: number }).environmentIntensity = 0.6;
     pmrem.dispose();
     this.setQuality(quality);
+    // v4.2.1 context loss (phones reclaim GPU memory in the background): keep the page alive, skip
+    // rendering while lost, rebuild the post-processing chain when the context comes back. Three.js
+    // re-uploads geometries / textures by itself (our textures keep their pixel data).
+    const cv = this.renderer.domElement as HTMLCanvasElement & { addEventListener?: HTMLCanvasElement['addEventListener'] };
+    cv.addEventListener?.('webglcontextlost', (e: Event) => {
+      e.preventDefault();
+      this.lost = true;
+    });
+    cv.addEventListener?.('webglcontextrestored', () => {
+      this.lost = false;
+      this.composer?.dispose();
+      this.composer = null;
+      this.bloom = null;
+      this.speedBlur = null;
+      this.setQuality(this.quality);
+    });
   }
+  /** the WebGL context is lost (render calls are skipped until it is restored) */
+  lost = false;
 
   private makeRenderer(_q: Quality) {
     const r = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', alpha: false, stencil: false });
@@ -166,6 +184,10 @@ export class Renderer {
   }
 
   render() {
+    if (this.lost) return;
+    // count every pass of the frame (scene, post-processing, car overlay) in renderer.info
+    this.renderer.info.autoReset = false;
+    this.renderer.info.reset();
     if (this.composer) this.composer.render();
     else this.renderer.render(this.scene, this.camera);
     // overlay: the car render (layer OVERLAY_LAYER) is drawn last, straight onto the canvas,

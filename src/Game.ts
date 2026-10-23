@@ -1,6 +1,6 @@
 import { countryName, detectCountry, flagOf, guessCountry } from './meta/Country.ts';
 import * as THREE from 'three';
-import { AUTOPILOT, DEBUG, HEIGHT, LANES, LEVELS, LEFTOVER_POINTS, SPEED, TIMING, TRACK_ITEM_BONUS, TYRE, type SpeedLevel } from './config.ts';
+import { AUTOPILOT, DEBUG, PERF, HEIGHT, LANES, LEVELS, LEFTOVER_POINTS, SPEED, TIMING, TRACK_ITEM_BONUS, TYRE, type SpeedLevel } from './config.ts';
 import { clamp, damp } from './core/math.ts';
 import { Input, type Action } from './core/Input.ts';
 import { loadSave, writeSave, type SaveData } from './core/Save.ts';
@@ -25,6 +25,7 @@ import { READABILITY, COMFORT } from './render/Readability.ts';
 import { setObstacleContrast, OBSTACLE_FX } from './render/ObstacleViews.ts';
 import { Particles, SpeedLines, RingPulses, Debris, makePortal } from './render/Effects.ts';
 import { COLLISION_DEBUG, DebugCollision } from './render/DebugCollision.ts';
+import { PerfRecorder } from './core/perf.ts';
 import { Audio } from './audio/Audio.ts';
 import { AssetLoader } from './assets/AssetLoader.ts';
 import { UI, UPGRADE_MAX, upgradeCost, carRear, logoImg, type UpgradeKey } from './ui/UI.ts';
@@ -290,6 +291,7 @@ export class Game {
     this.pickupViews = new PickupViews(worldRoot);
     this.particles = new Particles(this.renderer.pixelRatio);
     this.smoke = new Particles(this.renderer.pixelRatio, false);
+    this.particles.density = this.smoke.density = GRAPHICS[this.renderer.quality].particles;
     this.renderer.scene.add(this.smoke.points);
     scene.add(this.bonusTunnels.group);
     scene.add(this.particles.points, this.speedLines.lines, this.rings.group, this.debris.group, this.shatter.group, this.vehicle.crash.group, this.portal.group, this.startArch, this.finishArch);
@@ -2132,7 +2134,7 @@ export class Game {
     this.rig.fovKick += 10;
     const c = this.vehicle.root.position;
     for (let k = 0; k < 4; k++) this.rings.spawn(this.tmpV.set(c.x, 0.1 + k * 0.6, 0), k % 2 ? 0xffffff : 0xff5a3c, 2.4 + k * 1.2, 0.6, true);
-    this.particles.burst(c.x, c.y, 0, 80, 0xff5a3c, 10, 0.35, 0.7, { up: 3 });
+    this.particles.burst(c.x, c.y, 0, 50, 0xff5a3c, 10, 0.26, 0.6, { up: 3 });
     this.ui.pop('SKY ESCAPE!', '#ff8a6a', 'SAFE ABOVE THE ROAD', -12);
     this.ui.flash();
   }
@@ -2161,7 +2163,7 @@ export class Game {
     const c = this.vehicle.root.position;
     const col = hyper ? 0xffc21a : 0x9b6bff;
     for (let k = 0; k < (hyper ? 5 : 3); k++) this.rings.spawn(this.tmpV.set(c.x, 0.08 + k * 0.5, 0), k ? col : hyper ? 0xfff3a0 : 0x5ad1ff, 2.5 + k * 1.4, 0.55, true);
-    this.particles.burst(c.x, 0.3, 0, hyper ? 110 : 60, col, hyper ? 12 : 9, 0.35, 0.7, { up: 4 });
+    this.particles.burst(c.x, 0.3, 0, hyper ? 70 : 40, col, hyper ? 12 : 9, 0.26, 0.6, { up: 4 });
     this.ui.pop(hyper ? 'HYPER JUMP!' : 'ROADSTER JUMP!', hyper ? '#ffd24a' : '#c8a8ff', hyper ? 'MYTHIC' : '', -10);
   }
 
@@ -2205,7 +2207,7 @@ export class Game {
           const px = this.world.player.x;
           for (let k = 0; k < (big ? 10 : 5); k++) {
             const a = Math.random() * Math.PI * 2;
-            this.smoke.emit(px + Math.cos(a) * 0.9, 0.12, 0.4 + Math.sin(a) * 0.8, Math.cos(a) * (big ? 2.4 : 1.5), 0.5 + Math.random() * 0.6, 1 + Math.random(), 0xc9d2e0, big ? 0.5 : 0.32, big ? 0.6 : 0.42, { drag: 3, grow: 1.6, locked: true });
+            this.smoke.emit(px + Math.cos(a) * 0.9, 0.12, 0.4 + Math.sin(a) * 0.8, Math.cos(a) * (big ? 2.4 : 1.5), 0.5 + Math.random() * 0.6, 1 + Math.random(), 0xc9d2e0, big ? 0.34 : 0.22, big ? 0.5 : 0.36, { drag: 3, grow: 1.3, locked: true });
           }
         }
         if (m === 'up' && this.superFlight) {
@@ -2260,9 +2262,48 @@ export class Game {
 
   private frame() {
     const rawDt = this.clock.getDelta();
+    const t0 = PERF ? performance.now() : 0;
     if (!this.manual) this.tick(Math.min(rawDt, 1 / 20), rawDt);
+    const t1 = PERF ? performance.now() : 0;
     this.renderer.render();
+    if (PERF) this.perfFrame(rawDt * 1000, t1 - t0, performance.now() - t1);
     if (DEBUG) this.updateDebug();
+  }
+
+  // ---- v4.2.1 ?perf=1: frame-time recorder + readout (profiling on real phones)
+  private perfRec = new PerfRecorder();
+  private perfEl: HTMLDivElement | null = null;
+  private perfT = 0;
+  private perfFrame(frameMs: number, jsMs: number, renderMs: number) {
+    this.perfRec.add({ frame: frameMs, js: jsMs, render: renderMs });
+    this.perfT += frameMs;
+    if (this.perfT < 500) return;
+    this.perfT = 0;
+    if (!this.perfEl) {
+      this.perfEl = document.createElement('div');
+      this.perfEl.style.cssText = 'position:fixed;left:4px;bottom:4px;z-index:99999;pointer-events:none;font:600 10px/1.3 monospace;color:#9fffb0;background:rgba(0,0,0,.55);padding:3px 5px;border-radius:4px;white-space:pre';
+      document.body.appendChild(this.perfEl);
+    }
+    const s = this.perfStats(120);
+    this.perfEl.textContent = `${s.fps} fps · p95 ${s.frame.p95} ms · JS ${s.js.avg} · draw ${s.render.avg} ms\n${s.calls} calls · ${Math.round(s.tris / 1000)}k tris · ${s.quality.toUpperCase()} @${s.dpr} · heap ${s.heapMB ?? '—'} MB`;
+  }
+  /** profiling snapshot: frame-time stats over the last `last` frames + renderer counters */
+  perfStats(last?: number) {
+    const i = this.renderer.info;
+    const mem = (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory;
+    return {
+      ...this.perfRec.report(last),
+      calls: i.render.calls,
+      tris: i.render.triangles,
+      geometries: i.memory.geometries,
+      textures: i.memory.textures,
+      quality: this.renderer.quality,
+      dpr: this.renderer.pixelRatio,
+      heapMB: mem ? Math.round(mem.usedJSHeapSize / 1048576) : null,
+    };
+  }
+  perfReset() {
+    this.perfRec.reset();
   }
 
   /** Deterministic fixed-step advance (test/tooling hook). */
@@ -2652,6 +2693,7 @@ export class Game {
     for (const e of ev) {
       if (e.type === 'world') this.onWorldChange(e.world);
       if (e.type === 'smash') this.obstacleViews.hide(e.o);
+      if (e.type === 'ring') this.obstacleViews.collect(e.o); // v4.2.1: the ring expands and fades
       if (e.type === 'hit') {
         const p = this.world.player;
         const m = e.o.row.masks[p.lane];
@@ -2721,7 +2763,11 @@ export class Game {
           this.audio.play('ring');
           this.vibrate(8);
           this.ui.pop('RING', '#ffd24a', 'COINS ×2', 2);
-          this.rings.spawn(this.tmpV.copy(this.vehicle.root.position), 0x39b6ff, 3, 0.5);
+          {
+            // a few small gold glints around the car (no big flash over the road)
+            const c = this.vehicle.root.position;
+            this.particles.burst(c.x, c.y + 0.3, -0.4, 10, 0xffd24a, 3.5, 0.1, 0.4, { grav: 2 });
+          }
           break;
         case 'combo':
           this.audio.play('combo');
@@ -2732,7 +2778,7 @@ export class Game {
           this.vehicle.shieldHit();
           this.vibrate([30, 40, 30]);
           this.rig.shake(0.35);
-          this.particles.burst(this.vehicle.root.position.x, this.vehicle.root.position.y, 0, 30, 0x3d9bff, 9, 0.3, 0.5);
+          this.particles.burst(this.vehicle.root.position.x, this.vehicle.root.position.y, 0, 18, 0x3d9bff, 8, 0.2, 0.45); // the aura flashes too
           const left = this.run.shield ? this.run.shieldHits : 0;
           this.ui.pop(left > 0 ? `SHIELD ×${left}` : 'SHIELD GONE', left > 0 ? '#6fc8ff' : '#9fb3dd', '', -8);
           break;
@@ -2741,9 +2787,9 @@ export class Game {
           this.audio.play('explode');
           // obstacle shattered: real chunks fly off + orange/blue sparks (no white flash)
           this.debris.explode(this.tmpV.set(f.x, f.y, f.z), 0x3a3f4c, 0x4fb8ff, true);
-          this.particles.burst(f.x, f.y, f.z, 46, 0xff8a1f, 13, 0.4, 0.75, { locked: true, grav: 7, up: 3 });
-          this.particles.burst(f.x, f.y, f.z, 24, 0x5cc2ff, 10, 0.3, 0.5, { locked: true, grav: 4 });
-          this.smoke.emit(f.x, f.y, f.z, 0, 1.2, 0, 0x9aa3b5, 0.6, 0.55, { drag: 2, grow: 2, locked: true });
+          this.particles.burst(f.x, f.y, f.z, 30, 0xff8a1f, 12, 0.28, 0.6, { locked: true, grav: 7, up: 3 });
+          this.particles.burst(f.x, f.y, f.z, 14, 0x5cc2ff, 9, 0.22, 0.45, { locked: true, grav: 4 });
+          this.smoke.emit(f.x, f.y, f.z, 0, 1.2, 0, 0x9aa3b5, 0.38, 0.45, { drag: 2, grow: 1.4, locked: true }); // small puff, no cloud
           this.rig.shake(0.32);
           this.vibrate(25);
           break;
@@ -2822,7 +2868,7 @@ export class Game {
     this.speedScale = 0.25;
     const c = this.tmpV.set(LANES[p.lane], HEIGHT.NORMAL, 0);
     for (let i = 0; i < 4; i++) window.setTimeout(() => this.rings.spawn(c.clone(), 0x39b6ff, 2.5 + i * 0.6, 0.6, i % 2 === 0), i * 90);
-    this.particles.burst(c.x, c.y, 0, 60, 0x6fd2ff, 6, 0.35, 0.7);
+    this.particles.burst(c.x, c.y, 0, 36, 0x6fd2ff, 6, 0.25, 0.6);
     this.audio.play('respawn');
     this.vibrate(20);
     this.vehicle.boostKick(0.8);
@@ -3383,6 +3429,7 @@ export class Game {
     this.renderer.setQuality(q);
     this.scenery.setQuality(GRAPHICS[q]);
     this.track.setQuality(GRAPHICS[q]);
+    this.particles.density = this.smoke.density = GRAPHICS[q].particles;
     this.particles.setPixelRatio(this.renderer.pixelRatio);
     this.smoke.setPixelRatio(this.renderer.pixelRatio);
     this.ui.refreshProfile(this.save, q);

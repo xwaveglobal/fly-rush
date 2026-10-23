@@ -259,6 +259,8 @@ export const POWERUP_DURATION = {
 export const WORLD_LENGTH = 1000; // metres per themed world
 
 export const DEBUG = typeof location !== 'undefined' && /[?&]debug/.test(location.search);
+/** v4.2.1 `?perf=1`: frame-time recorder + small on-screen readout, `window.__perf()` / `window.__game` for scripted profiling */
+export const PERF = typeof location !== 'undefined' && /[?&]perf/.test(location.search);
 export const AUTOPILOT = typeof location !== 'undefined' && /[?&]autopilot/.test(location.search);
 
 /**
@@ -365,8 +367,8 @@ export interface ChasePreset {
  */
 export const CAMERA = {
   presets: {
-    low: { height: 1.6, back: 5.3, speedBack: 0.4, lookY: 1.05, lookZ: -16, followX: 0.8, lookX: 0.6, lift: 0.35, lookLift: 0.35, hDamp: 6, vDamp: 5, lookDamp: 6.5, fov: -3 },
-    balanced: { height: 2.25, back: 5.9, speedBack: 0.5, lookY: 1.0, lookZ: -13, followX: 0.76, lookX: 0.58, lift: 0.28, lookLift: 0.32, hDamp: 6.5, vDamp: 5.5, lookDamp: 7, fov: -1 },
+    low: { height: 1.6, back: 5.3, speedBack: 0.4, lookY: 1.05, lookZ: -16, followX: 0.8, lookX: 0.6, lift: 1.7, lookLift: 0.1, hDamp: 6, vDamp: 8, lookDamp: 6.5, fov: -3 },
+    balanced: { height: 2.25, back: 5.9, speedBack: 0.5, lookY: 1.0, lookZ: -13, followX: 0.76, lookX: 0.58, lift: 1.7, lookLift: 0.1, hDamp: 6.5, vDamp: 8, lookDamp: 7, fov: -1 },
     high: { height: 3.25, back: 6.6, speedBack: 0.6, lookY: 1.15, lookZ: -9, followX: 0.72, lookX: 0.55, lift: 0.22, lookLift: 0.3, hDamp: 6.5, vDamp: 6, lookDamp: 7, fov: 0 },
   } as Record<'low' | 'balanced' | 'high', ChasePreset>,
   chase: ((typeof location !== 'undefined' && /[?&]cam=(low|balanced|high)/.exec(location.search)?.[1]) || 'balanced') as 'low' | 'balanced' | 'high',
@@ -400,11 +402,15 @@ export interface GraphicsPreset {
   roadDetail: boolean;
   /** max anisotropic filtering on the road (sharp markings at grazing angles) */
   anisotropy: number;
+  /** v4.2.1: share of burst particles (sparks, glints, dust) */
+  particles: number;
+  /** v4.2.1: road texture size (width; height = 2 ×) */
+  roadTex: number;
 }
 export const GRAPHICS: Record<GraphicsQuality, GraphicsPreset> = {
-  low: { dprCap: 1.25, bloom: false, speedBlur: false, cityDensity: 0.55, cityExtras: false, roadDetail: false, anisotropy: 2 },
-  medium: { dprCap: 1.5, bloom: true, speedBlur: false, cityDensity: 0.8, cityExtras: true, roadDetail: true, anisotropy: 4 },
-  high: { dprCap: 2, bloom: true, speedBlur: true, cityDensity: 1, cityExtras: true, roadDetail: true, anisotropy: 8 },
+  low: { dprCap: 1.25, bloom: false, speedBlur: false, cityDensity: 0.55, cityExtras: false, roadDetail: false, anisotropy: 2, particles: 0.5, roadTex: 256 },
+  medium: { dprCap: 1.5, bloom: true, speedBlur: false, cityDensity: 0.8, cityExtras: true, roadDetail: true, anisotropy: 4, particles: 0.8, roadTex: 512 },
+  high: { dprCap: 2, bloom: true, speedBlur: true, cityDensity: 1, cityExtras: true, roadDetail: true, anisotropy: 8, particles: 1, roadTex: 512 },
 };
 export const GRAPHICS_ORDER: GraphicsQuality[] = ['low', 'medium', 'high'];
 /** the next preset when the player taps the Graphics setting */

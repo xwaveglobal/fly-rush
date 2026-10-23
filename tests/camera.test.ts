@@ -7,7 +7,8 @@ declare const process: { exit(code: number): never };
 import * as THREE from 'three';
 import { CameraRig } from '../src/render/CameraRig.ts';
 import { Player } from '../src/gameplay/Player.ts';
-import { CAMERA, FAIRNESS, LANES, LEVELS, RENDER, SPEED } from '../src/config.ts';
+import { CAMERA, CAR_HALF, FAIRNESS, HEIGHT, LANES, LEVELS, RENDER, SPEED } from '../src/config.ts';
+import { carHeight } from '../src/render/car/carMotion.ts';
 
 let fails = 0;
 const check = (ok: boolean, msg: string) => {
@@ -91,6 +92,52 @@ for (const name of ['low', 'balanced', 'high'] as const) {
     return b.x1 - b.x0;
   };
   check(size('low') > size('balanced') && size('balanced') > size('high'), `car width on screen: low ${f(size('low'))} > balanced ${f(size('balanced'))} > high ${f(size('high'))}`);
+}
+
+// ---- v4.2.1 airborne framing: during a normal hop the 3D car stays in the middle band of the screen
+// (it used to climb to ~0.36 H and sit over the lane ahead), the camera moves smoothly
+{
+  const vis = (y: number) => carHeight(y, HEIGHT.LOW, HEIGHT.NORMAL, HEIGHT.HIGH, CAR_HALF.y, true) - 0.51;
+  for (const name of ['low', 'balanced'] as const)
+    for (const [label, aspect] of ASPECTS) {
+      const rig = rigFor(aspect, 'run', name);
+      const p = new Player();
+      p.reset(1);
+      for (let i = 0; i < 60; i++) {
+        p.update(1 / 60);
+        rig.update(1 / 60, p, 0.5, 0);
+      }
+      p.input('up');
+      let top = 1;
+      let bot = 0;
+      let step = 0;
+      let carStep = 0;
+      let crate = 0;
+      let prevY = rig.camera.position.y;
+      let prevCar = vis(p.y);
+      for (let i = 0; i < 110; i++) {
+        p.update(1 / 60);
+        rig.update(1 / 60, p, 0.5, 0);
+        const b0 = vis(p.y);
+        const b = screenBox(rig.camera, new THREE.Box3(new THREE.Vector3(car.min.x, b0, car.min.z), new THREE.Vector3(car.max.x, b0 + car.max.y, car.max.z)));
+        top = Math.min(top, b.y0);
+        bot = Math.max(bot, b.y1);
+        step = Math.max(step, Math.abs(rig.camera.position.y - prevY));
+        prevY = rig.camera.position.y;
+        carStep = Math.max(carStep, Math.abs(b0 - prevCar));
+        prevCar = b0;
+        // a 1.7 m crate 24–44 m ahead in the same lane: share hidden behind the airborne car
+        if (i >= 20 && i < 60)
+          for (const z of [24, 30, 36, 44]) {
+            const o = screenBox(rig.camera, new THREE.Box3(new THREE.Vector3(-0.85, 0, -z - 0.85), new THREE.Vector3(0.85, 1.7, -z + 0.85)));
+            crate = Math.max(crate, Math.max(0, Math.min(b.y1, o.y1) - Math.max(b.y0, o.y0)) / (o.y1 - o.y0));
+          }
+      }
+      // the camera climbs above the car and looks down: the car stays in the middle of the screen and the
+      // lane ahead stays visible above it; it never moves faster than the car itself (no snap)
+      // (BALANCED is the default; LOW is a close, low camera and keeps more of the car in front of the lane)
+      check(top > 0.38 && bot < 0.85 && step <= carStep && crate < (name === 'balanced' ? 0.3 : 1), `${name} ${label} jump: car between ${f(top)} and ${f(bot)} of the height, obstacle ahead hidden ≤ ${(crate * 100).toFixed(0)} %, camera ≤ ${(step * 100).toFixed(1)} cm / frame (car ${(carStep * 100).toFixed(1)})`);
+    }
 }
 
 // ---- home orbit: constant distance, car inside the free band above the difficulty panel.

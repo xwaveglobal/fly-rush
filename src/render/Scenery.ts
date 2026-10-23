@@ -106,7 +106,9 @@ export const LOOKS: Record<WorldId, ThemeLook> = {
 /** Instanced scrolling buildings with world-scaled lit windows (1 draw call). */
 class BuildingField {
   mesh: THREE.InstancedMesh;
-  private slots: { x: number; w: number; d: number; h: number; base: number; y: number; prevZ: number }[] = [];
+  private slots: { x: number; w: number; d: number; h: number; base: number; y: number; prevZ: number; crown: number }[] = [];
+  /** v4.2.1 set-back crowns on some buildings (same geometry + material: one extra draw call) */
+  crowns: THREE.InstancedMesh;
   private m = new THREE.Matrix4();
   private c = new THREE.Color();
   constructor(
@@ -120,6 +122,7 @@ class BuildingField {
     private rng: Rng,
     winSeed: number,
     private yBase = -24,
+    glow = 0.62,
   ) {
     const geo = new THREE.BoxGeometry(1, 1, 1);
     geo.translate(0, 0.5, 0);
@@ -129,33 +132,41 @@ class BuildingField {
       metalness: 0.6,
       emissive: 0xffffff,
       emissiveMap: windowsTexture(winSeed),
-      emissiveIntensity: 0.62, // calm: windows glow softly, no neon wall of light
+      emissiveIntensity: glow, // calm: windows glow softly, no neon wall of light
     });
     mat.onBeforeCompile = (sh) => {
       sh.vertexShader = sh.vertexShader
-        .replace('#include <common>', '#include <common>\nvarying vec2 vWinUv;\nvarying float vSide;')
+        .replace('#include <common>', '#include <common>\nvarying vec2 vWinUv;\nvarying float vSide;\nvarying float vLit;')
         .replace(
           '#include <uv_vertex>',
           `#include <uv_vertex>
           vec3 sc = vec3(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz), length(instanceMatrix[2].xyz));
           vec3 lp = position * sc;
-          vWinUv = vec2(abs(normal.x) > 0.5 ? lp.z : lp.x, lp.y) / vec2(9.0, 13.0);
+          // v4.2.1: every building gets its own window pattern offset and share of lit windows,
+          // hashed from its x and size (stable while it scrolls; no gl_InstanceID → WebGL1-safe)
+          float hid = fract(sin(dot(vec3(instanceMatrix[3].x, sc.y, sc.x), vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+          vWinUv = vec2(abs(normal.x) > 0.5 ? lp.z : lp.x, lp.y) / vec2(9.0, 13.0) + vec2(floor(hid * 7.0) * 0.37, floor(fract(hid * 13.0) * 5.0) * 0.21);
+          vLit = mix(0.3, 1.0, fract(hid * 29.0));
           vSide = 1.0 - abs(normal.y);`,
         );
       sh.fragmentShader = sh.fragmentShader
-        .replace('#include <common>', '#include <common>\nvarying vec2 vWinUv;\nvarying float vSide;')
-        .replace('#include <emissivemap_fragment>', 'totalEmissiveRadiance *= texture2D( emissiveMap, vWinUv ).rgb * vSide;');
+        .replace('#include <common>', '#include <common>\nvarying vec2 vWinUv;\nvarying float vSide;\nvarying float vLit;')
+        .replace('#include <emissivemap_fragment>', 'totalEmissiveRadiance *= texture2D( emissiveMap, vWinUv ).rgb * vSide * vLit;');
     };
     this.mesh = new THREE.InstancedMesh(geo, mat, n);
     this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.mesh.frustumCulled = false;
+    this.crowns = new THREE.InstancedMesh(geo, mat, n);
+    this.crowns.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.crowns.frustumCulled = false;
     for (let i = 0; i < n; i++) {
       // v4.2: low-discrepancy spacing, so any first-k slots (lower density presets) still spread
       // evenly along the whole range — no empty stretch of city
-      const s = { x: 0, w: 0, d: 0, h: 0, base: ((i * 0.6180339887) % 1) * range, y: 0, prevZ: 0 };
+      const s = { x: 0, w: 0, d: 0, h: 0, base: ((i * 0.6180339887) % 1) * range, y: 0, prevZ: 0, crown: 0 };
       this.roll(s, i);
       this.slots.push(s);
       this.mesh.setColorAt(i, this.c.setHex(this.rng.pick(this.palette)));
+      this.crowns.setColorAt(i, this.c);
     }
     addFarFade(mat, NEAR - range);
     this.count = n;
@@ -175,16 +186,35 @@ class BuildingField {
   setDensity(k: number) {
     this.count = Math.max(2, Math.round(this.n * k));
     this.mesh.count = this.count;
+    this.crowns.count = this.count;
     if (this.neon) this.neon.count = this.count * 2;
   }
   private count = 0;
-  private roll(s: { x: number; w: number; d: number; h: number; y: number }, i: number) {
+  /**
+   * v4.2.1 varied silhouettes (deterministic from the field's seeded Rng): mostly mid-rise blocks,
+   * a few slim towers and some low wide blocks; ~45 % get a set-back crown on the roof.
+   */
+  private roll(s: { x: number; w: number; d: number; h: number; y: number; crown: number }, i: number) {
     const side = i % 2 === 0 ? -1 : 1;
     s.x = side * this.rng.range(this.xMin, this.xMax);
-    s.w = this.rng.range(6, 16);
-    s.d = this.rng.range(6, 16);
-    s.h = this.rng.range(this.hMin, this.hMax);
+    const r = this.rng.next();
+    if (r < 0.18) {
+      // slim tower
+      s.w = this.rng.range(5, 8);
+      s.d = this.rng.range(5, 8);
+      s.h = this.rng.range(this.hMax * 0.85, this.hMax * 1.3);
+    } else if (r < 0.32) {
+      // low, wide block
+      s.w = this.rng.range(12, 20);
+      s.d = this.rng.range(10, 18);
+      s.h = this.rng.range(this.hMin * 0.6, this.hMin * 1.1);
+    } else {
+      s.w = this.rng.range(6, 16);
+      s.d = this.rng.range(6, 16);
+      s.h = this.rng.range(this.hMin, this.hMax);
+    }
     s.y = this.yBase - this.rng.range(0, 8);
+    s.crown = this.rng.next() < 0.45 ? this.rng.range(0.14, 0.3) : 0;
   }
   update(dist: number) {
     for (let i = 0; i < this.n; i++) {
@@ -194,10 +224,15 @@ class BuildingField {
         this.roll(s, i);
         this.mesh.setColorAt(i, this.c.setHex(this.rng.pick(this.palette)));
         this.mesh.instanceColor!.needsUpdate = true;
+        this.crowns.setColorAt(i, this.c);
+        this.crowns.instanceColor!.needsUpdate = true;
       }
       s.prevZ = z;
       this.m.makeScale(s.w, s.h, s.d).setPosition(s.x, s.y, z);
       this.mesh.setMatrixAt(i, this.m);
+      if (s.crown > 0) this.m.makeScale(s.w * 0.6, s.h * s.crown, s.d * 0.6).setPosition(s.x, s.y + s.h, z);
+      else this.m.makeScale(0, 0, 0);
+      this.crowns.setMatrixAt(i, this.m);
       if (this.neon && i < this.count) {
         const side = s.x < 0 ? -1 : 1;
         const face = s.x - (side * s.w) / 2 - side * 0.08; // road-facing wall
@@ -211,6 +246,7 @@ class BuildingField {
       }
     }
     this.mesh.instanceMatrix.needsUpdate = true;
+    this.crowns.instanceMatrix.needsUpdate = true;
     if (this.neon) this.neon.instanceMatrix.needsUpdate = true;
   }
 }
@@ -394,8 +430,9 @@ function buildCity(mega: boolean): Theme {
   const group = new THREE.Group();
   const pal = mega ? [0x2b3260, 0x3b3f78, 0x5a4a2a, 0x23284a, 0x8a7a50] : [0x2a3150, 0x3a3f66, 0x242a40, 0x4a3f6a, 0x2f3a5a];
   const near = new BuildingField(mega ? 54 : 40, 340, 14, 34, mega ? 30 : 18, mega ? 110 : 70, pal, rng, mega ? 3 : 1);
-  const far = new BuildingField(mega ? 60 : 50, 420, 40, 140, mega ? 60 : 30, mega ? 200 : 140, pal, rng, 2, -40);
-  group.add(near.mesh, far.mesh);
+  // far field: windows dimmer than the near one (depth: the city fades into the haze)
+  const far = new BuildingField(mega ? 60 : 50, 420, 40, 140, mega ? 60 : 30, mega ? 200 : 140, pal, rng, 2, -40, 0.42);
+  group.add(near.mesh, far.mesh, near.crowns, far.crowns);
   // v4.2 mid layer: neon edges on the road-facing side of the near buildings; far layer: city lights
   const neon = near.addNeon(mega ? [0xffc21a, 0xff7a3a, 0x5ad1ff, 0xffe08a] : [0x39b6ff, 0xff4fd8, 0x8a6bff, 0x5ee6ff, 0xff8a3a]);
   group.add(neon);
@@ -403,9 +440,14 @@ function buildCity(mega: boolean): Theme {
   group.add(lights.points);
 
   const sc = new Scroller(320);
+  let lastBb = -2;
   for (let i = 0; i < 10; i++) {
     const side = i % 2 ? 1 : -1;
-    const bb = makeBillboard(i % 3 === 0 ? -1 : mega ? (i % 3 === 0 ? 0 : i % 4) : i % 4, NEAR - 320);
+    // v4.2.1: 8 artworks + the XWAVE board, never the same one twice in a row
+    let v = i % 3 === 0 ? -1 : rng.int(0, 7);
+    if (v >= 0 && v === lastBb) v = (v + 3) % 8;
+    lastBb = v;
+    const bb = makeBillboard(v, NEAR - 320);
     bb.position.set(side * rng.range(11, 15), rng.range(7, 18), 0);
     bb.rotation.y = side * -0.95;
     group.add(bb);
