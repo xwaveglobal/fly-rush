@@ -66,7 +66,7 @@ Every statement below comes from reading the files named. Nothing was changed in
 - No curves, no hills, no lane markings as geometry.
 
 ### Environment — `src/render/Scenery.ts` (1,174 lines)
-- `LOOKS` per world: sky gradient, linear `Fog` (near 30–90, far 190–430), hemisphere light, one sun `DirectionalLight`, one rim `DirectionalLight`, accent colour.
+- `LOOKS` per world: sky gradient, linear `Fog` (near 30–100 m, far 190–460 m), hemisphere light, one sun `DirectionalLight`, one rim `DirectionalLight`, accent colour.
 - Worlds: city, tunnel, cloud, space, mega + ladder worlds (harbor, solar, canyon, …) + bonus worlds.
 - Buildings: `BuildingField` = `InstancedMesh` boxes with canvas window textures, recycled by `wrapZ`. Billboards, floating islands, cloud sea, starfield.
 - `SkyTraffic`: instanced hover cars drifting in the sky (background only, no collision).
