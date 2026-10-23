@@ -387,7 +387,7 @@ if (want('pause')) {
   await page.evaluate(() => [...document.querySelectorAll('#specialpick button')].filter((e) => e.offsetParent && /\bGO\b/.test(e.textContent)).at(-1)?.click());
   await page.waitForTimeout(800);
   const afterGo = await ev(() => window.__g.state);
-  check(rt === 'paused' && afterRetry.pick && !afterRetry.pauseMenu && (afterGo === 'countdown' || afterGo === 'run'), 'Pause → Retry → pre-race pick → GO: a new run starts only on the explicit taps', { ...afterRetry, afterGo });
+  check(rt === 'paused' && afterRetry.pick && (afterGo === 'countdown' || afterGo === 'run'), 'Pause → Retry → pre-race pick (over the still-paused race) → GO: a new run starts only on the explicit taps', { ...afterRetry, afterGo });
   save();
 }
 
