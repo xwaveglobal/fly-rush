@@ -25,3 +25,23 @@ export function spoilerStep(k: number, nitro: number, dt: number, up = 5, down =
 export function wheelStep(speed: number, radius: number, dt: number, maxStep: number) {
   return Math.min((Math.max(0, speed) * dt) / radius, maxStep);
 }
+
+/** spoiler controller state (mutated in place — no per-frame allocation) */
+export interface SpoilerState {
+  /** 0 = flush … 1 = fully raised */
+  k: number;
+  /** seconds the spoiler stays up after jump and nitro both ended */
+  hold: number;
+}
+
+/**
+ * v4.1.2 active spoiler: open while the car is jumping (take-off → airborne → touch-down, from the
+ * gameplay jump state) or nitro is running; once both have ended it holds `holdTime` before
+ * retracting, so landing and short gaps between effects never make it flicker.
+ */
+export function spoilerUpdate(s: SpoilerState, jumping: boolean, nitro: number, dt: number, up = 5, down = 2.2, holdTime = 0.25, threshold = 0.05) {
+  const open = jumping || nitro > threshold;
+  s.hold = open ? holdTime : Math.max(0, s.hold - dt);
+  s.k = approach(s.k, open || s.hold > 0 ? 1 : 0, up, down, dt);
+  return s.k;
+}

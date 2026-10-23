@@ -23,6 +23,14 @@ const W = +(q.get('w') ?? 720);
 const H = +(q.get('h') ?? 1280);
 const view = q.get('view') ?? 'chase';
 const studio = view !== 'chase' && view !== 'home';
+const followCamera = new THREE.PerspectiveCamera(34, W / H, 0.1, 300);
+const followAt = new THREE.Vector3();
+function followCam(at: THREE.Vector3) {
+  followAt.copy(at);
+  followCamera.position.set(at.x - 2.7, at.y + 1.35, at.z + 7.4);
+  followCamera.lookAt(at.x + 0.15, at.y - 0.15, at.z + 0.2);
+  return followCamera;
+}
 const r = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 r.setSize(W, H);
 r.outputColorSpace = THREE.SRGBColorSpace;
@@ -132,6 +140,36 @@ function meshLoaded() {
     turbo = 1;
     v.boostTarget = 1;
     step(40);
+  } else if (pose === 'air') {
+    p.input('up');
+    step(30); // airborne, spoiler up
+  } else if (pose === 'jumpnitro') {
+    turbo = 1;
+    v.boostTarget = 1;
+    step(30);
+    p.input('up');
+    step(30);
+  } else if (pose === 'landing') {
+    p.input('up');
+    for (let i = 0; i < 300 && p.vmode !== 'up'; i++) step(1);
+    for (let i = 0; i < 300 && p.vmode === 'up'; i++) step(1);
+    step(Math.round(+(q.get('after') ?? 0.45) * 60)); // after touch-down: spoiler retracting
+  }
+  // collision check: a crate whose front face touches the hitbox front (the moment a hit registers)
+  if (q.get('crate')) {
+    const hb = p.hitbox({ minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 });
+    const crate = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.7, 1.7), new THREE.MeshStandardMaterial({ color: 0xff8a2a, transparent: true, opacity: 0.75 }));
+    crate.position.set(p.x, 0.85, hb.minZ - 0.85);
+    scene.add(crate);
+    if (q.get('crash')) v.crashRecoil();
+  }
+  if (q.get('hitbox')) {
+    const hb = p.hitbox({ minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 });
+    const g = new THREE.BoxGeometry(hb.maxX - hb.minX, hb.maxY - hb.minY, hb.maxZ - hb.minZ);
+    const box = new THREE.LineSegments(new THREE.EdgesGeometry(g), new THREE.LineBasicMaterial({ color: 0x00c853, depthTest: false }));
+    box.position.set((hb.minX + hb.maxX) / 2, (hb.minY + hb.maxY) / 2, (hb.minZ + hb.maxZ) / 2);
+    box.renderOrder = 20;
+    scene.add(box);
   }
   if (view === 'home') {
     // home screen camera: orbit phase t (seconds) — the game steps the rig in 'menu' mode
@@ -157,7 +195,13 @@ function meshLoaded() {
     }
     return [x0, x1, y0, y1].map((n) => +n.toFixed(3));
   };
-  if (studio && view !== 'home') {
+  if (view === 'follow') {
+    // close rear-left camera that follows the car (shows the deck and the spoiler)
+    const cam = followCam(v.root.position);
+    v.camera = cam;
+    v.update(p, 0, speed, turbo);
+    r.render(scene, cam);
+  } else if (studio && view !== 'home') {
     const shots: Record<string, [number, number, number, number, number]> = {
       // yaw (deg), distance, camera height, look height, fov
       rear0: [0, 10.5, 1.35, 0.45, 16],
@@ -166,12 +210,14 @@ function meshLoaded() {
       side90: [-90, 19, 0.9, 0.45, 16],
       diff: [-18, 5.6, 0.42, 0.24, 22],
       deck: [-62, 4.6, 1.0, 0.62, 24],
+      fl45: [-140, 22, 2.2, 0.42, 16],
+      sidec: [-90, 11, 0.9, 0.55, 22],
     };
     const [yd, dist, ch, ly, fov] = shots[view] ?? shots.rear0;
     const yaw = THREE.MathUtils.degToRad(yd);
     const cam = new THREE.PerspectiveCamera(fov, W / H, 0.1, 300);
     // studio shots look at the rear half of the car (the subject of Step 03)
-    const zc = view === 'side90' || view === 'rl45' || view === 'rr45' ? 0 : view === 'deck' ? 1.45 : 0.9;
+    const zc = view === 'side90' || view === 'rl45' || view === 'rr45' || view === 'fl45' ? 0 : view === 'sidec' ? -1.2 : view === 'deck' ? 1.45 : 0.9;
     cam.position.set(p.x + Math.sin(yaw) * dist, ch, zc + Math.cos(yaw) * dist);
     cam.lookAt(p.x, ly, zc);
     v.camera = cam;
@@ -191,4 +237,57 @@ function meshLoaded() {
     r.autoClear = true;
   }
   return { box: view === 'chase' || view === 'home' ? bounds() : null, air: +p.air.toFixed(3), x: +p.x.toFixed(3), y: +p.y.toFixed(3), spoiler: mesh ? +mesh.spoilerK.toFixed(3) : null, cam: rig.camera.position.toArray().map((n) => +n.toFixed(2)), fov: +rig.camera.fov.toFixed(1) };
+};
+
+/**
+ * Deterministic animation capture (the real Vehicle / MeshCar / Player code, 60 Hz steps).
+ *   seq=jump       normal → jump → airborne → landing → normal
+ *   seq=nitrojump  normal → nitro → jump → landing → nitro end → normal
+ * Returns one PNG data URL every `every` frames plus the state at that frame.
+ */
+(window as unknown as { __seq: () => Promise<unknown> }).__seq = async () => {
+  for (let i = 0; i < 200 && !meshLoaded(); i++) await new Promise((res) => setTimeout(res, 50));
+  v.setSkin(SKINS[0]);
+  rig.car3d = true;
+  const name = q.get('seq') ?? 'jump';
+  const every = +(q.get('every') ?? 4);
+  const dt = 1 / 60;
+  const mesh = (v as unknown as { mesh: { spoilerK: number } }).mesh;
+  let turbo = 0;
+  const frames: { url: string; t: number; spoiler: number; jumping: boolean; nitro: number; air: number; label: string }[] = [];
+  // timeline (seconds): events fire once
+  const events: [number, string][] =
+    name === 'nitrojump'
+      ? [[0.6, 'nitro on'], [1.4, 'jump'], [3.6, 'nitro off']]
+      : [[0.8, 'jump']];
+  const total = name === 'nitrojump' ? 5.6 : 4.2;
+  let phase = 'normal';
+  const n = Math.round(total * 60);
+  for (let i = 0; i <= n; i++) {
+    const t = i * dt;
+    for (const [et, ev] of events)
+      if (Math.abs(t - et) < dt / 2) {
+        if (ev === 'jump') p.input('up');
+        if (ev === 'nitro on') {
+          turbo = 1;
+          v.boostTarget = 1;
+        }
+        if (ev === 'nitro off') {
+          turbo = 0;
+          v.boostTarget = 0;
+        }
+      }
+    p.update(dt);
+    v.update(p, dt, 30, turbo);
+    rig.update(dt, p, 0.4, turbo);
+    const jumping = p.vmode === 'up';
+    phase = jumping ? (p.air > 0.6 ? 'airborne' : p.vphase === 'recover' ? 'landing' : 'take-off') : turbo > 0 ? 'nitro' : mesh.spoilerK > 0.02 ? 'retracting' : 'normal';
+    if (i % every === 0) {
+      const cam = q.get('view') === 'chase' ? rig.camera : followCam(v.root.position);
+      v.camera = cam;
+      r.render(scene, cam);
+      frames.push({ url: r.domElement.toDataURL('image/png'), t: +t.toFixed(2), spoiler: +mesh.spoilerK.toFixed(3), jumping, nitro: turbo, air: +p.air.toFixed(2), label: phase });
+    }
+  }
+  return frames;
 };

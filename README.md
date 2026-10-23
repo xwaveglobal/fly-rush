@@ -187,6 +187,14 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v4.1.2 — shorter, mirrorless X1; spoiler opens on jumps (3D upgrade Step 03.1)
+
+- Body 8 % shorter (4.60 → 4.25 m), taken from the front overhang and hood only; the rear design is unchanged.
+- Side mirrors removed from the model.
+- Active spoiler opens on take-off, stays up in the air and retracts after landing; it also stays up during nitro and through jump + nitro.
+- Crashes: the 3D nose now meets the obstacle face instead of sinking into it (visual only; collision unchanged).
+- Details, renders and frame sequences: `docs/3d-upgrade/step03-1/`.
+
 ## v4.1.1 — integrated rear bumper, active spoiler, new cameras (3D upgrade Step 03)
 
 - Rear of the 3D X1 rebuilt: the rods, chrome rail, hanging fins and exposed nitro tubes are gone; one solid satin-black lower bumper with a recessed three-fin diffuser; nitro flames come out of the recess.

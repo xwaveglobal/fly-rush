@@ -1,6 +1,7 @@
 /** v4 3D car motion helpers: frame-rate independent, spoiler deploys with nitro and retracts after. */
 declare const process: { exit(code: number): never };
-import { approach, ease, spoilerStep, wheelStep } from '../src/render/car/carMotion.ts';
+import { approach, ease, spoilerStep, spoilerUpdate, wheelStep, type SpoilerState } from '../src/render/car/carMotion.ts';
+import { Player } from '../src/gameplay/Player.ts';
 import { RENDER } from '../src/config.ts';
 
 let fails = 0;
@@ -43,6 +44,104 @@ check(Math.abs(wheelStep(10, 0.28, dt, 1) - 10 / 0.28 / 60) < 1e-12, 'wheelStep(
 check(wheelStep(69, 0.28, dt, RENDER.wheelMaxStep) === RENDER.wheelMaxStep, `wheelStep(): capped at ${RENDER.wheelMaxStep} rad / frame at top speed`);
 check(RENDER.wheelMaxStep < Math.PI / 10, 'cap below half a spoke gap (10 spokes) → never rolls backwards');
 check(wheelStep(-5, 0.28, dt, 1) === 0, 'wheelStep(): never negative');
+
+// ---- v4.1.2 spoiler state machine, driven by the REAL gameplay jump (Player.vmode === 'up')
+{
+  const R = RENDER;
+  const sim = () => {
+    const p = new Player();
+    p.reset(1);
+    const st: SpoilerState = { k: 0, hold: 0 };
+    let nitro = 0;
+    let t = 0;
+    const log: { t: number; k: number; jumping: boolean; nitro: number }[] = [];
+    const step = (sec: number) => {
+      for (let i = 0; i < Math.round(sec * 60); i++) {
+        p.update(dt);
+        t += dt;
+        const jumping = p.vmode === 'up';
+        spoilerUpdate(st, jumping, nitro, dt, R.spoilerUp, R.spoilerDown, R.spoilerHold);
+        log.push({ t, k: st.k, jumping, nitro });
+      }
+    };
+    const untilLanded = () => {
+      let n = 0;
+      while (p.vmode === 'up' && n++ < 600) step(1 / 60);
+    };
+    return { p, st, step, untilLanded, setNitro: (v: number) => (nitro = v), log };
+  };
+  const flips = (log: { k: number }[]) => {
+    let dir = 0;
+    let n = 0;
+    for (let i = 1; i < log.length; i++) {
+      const d = Math.sign(Math.round((log[i].k - log[i - 1].k) * 1e6));
+      if (d && dir && d !== dir) n++;
+      if (d) dir = d;
+    }
+    return n;
+  };
+
+  // 1–4: normal → jump → airborne → landing → normal
+  {
+    const s = sim();
+    s.step(2);
+    check(s.st.k < 0.001, `normal driving: closed (k ${s.st.k.toFixed(3)})`);
+    s.p.input('up');
+    s.step(0.12);
+    check(s.p.vmode === 'up' && s.st.k > 0.2, `jump take-off: opening as the car leaves the ground (k ${s.st.k.toFixed(2)} after 0.12 s)`);
+    s.step(0.4);
+    check(s.p.air > 0.5 && s.st.k > 0.9, `airborne: open (k ${s.st.k.toFixed(3)}, air ${s.p.air.toFixed(2)})`);
+    s.untilLanded();
+    check(s.st.k > 0.9, `touch-down: still up (k ${s.st.k.toFixed(3)}) — holds ${R.spoilerHold} s, no snap`);
+    s.step(0.4);
+    const mid = s.st.k;
+    s.step(1.6);
+    check(mid < 0.99 && s.st.k < 0.03, `after landing (no nitro): retracts smoothly (k ${mid.toFixed(2)} → ${s.st.k.toFixed(3)})`);
+    check(flips(s.log) <= 1, `one open → close cycle, no flicker (${flips(s.log)} direction change)`);
+  }
+  // 5: nitro alone
+  {
+    const s = sim();
+    s.step(1);
+    s.setNitro(1);
+    s.step(1);
+    check(s.st.k > 0.99, `nitro: open (k ${s.st.k.toFixed(3)})`);
+    s.setNitro(0);
+    s.step(2);
+    check(s.st.k < 0.03, `nitro end: closes (k ${s.st.k.toFixed(3)})`);
+  }
+  // 6–9: nitro → jump → land while nitro → nitro ends while airborne on a second jump → both off
+  {
+    const s = sim();
+    s.setNitro(1);
+    s.step(1);
+    s.p.input('up');
+    let minK = 1;
+    for (let i = 0; i < 40; i++) {
+      s.step(1 / 60);
+      minK = Math.min(minK, s.st.k);
+    }
+    check(minK > 0.98, `jump + nitro: stays open, no re-animation (min k ${minK.toFixed(3)})`);
+    s.untilLanded();
+    s.step(0.6);
+    check(s.st.k > 0.98, `landing while nitro is active: stays open (k ${s.st.k.toFixed(3)})`);
+    s.p.input('up');
+    s.step(0.3);
+    s.setNitro(0);
+    s.step(0.2);
+    check(s.p.vmode === 'up' && s.st.k > 0.98, `nitro ends while airborne: stays open (k ${s.st.k.toFixed(3)})`);
+    s.untilLanded();
+    s.step(2.2);
+    check(s.st.k < 0.03, `both inactive: closed (k ${s.st.k.toFixed(3)})`);
+    check(flips(s.log) <= 1, `jump / nitro overlaps cause no flicker (${flips(s.log)} direction change)`);
+  }
+  // a faint boost tail (envelope fading out) does not hold the spoiler up
+  {
+    const st: SpoilerState = { k: 1, hold: 0 };
+    for (let i = 0; i < 180; i++) spoilerUpdate(st, false, 0.03, dt, R.spoilerUp, R.spoilerDown, R.spoilerHold);
+    check(st.k < 0.03, 'nitro below threshold (fading boost light) → closes');
+  }
+}
 
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED');
 if (fails) process.exit(1);

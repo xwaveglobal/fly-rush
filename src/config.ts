@@ -304,6 +304,8 @@ export const RENDER = {
   spoilerAngle: 0.28,
   spoilerUp: 5,
   spoilerDown: 2.2,
+  /** seconds the spoiler stays up after jump + nitro end (no flicker on landing) */
+  spoilerHold: 0.25,
   /** Bonus "Phase Ghost": opacity of the 3D car at full effect */
   ghostOpacity: 0.35,
 };

@@ -7,7 +7,7 @@
 import { build } from 'esbuild';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -53,6 +53,17 @@ for (const job of jobs) {
   page.on('console', (m) => m.type() === 'error' && console.log('[console]', m.text().slice(0, 200)));
   await page.goto(`http://127.0.0.1:${port}/?${query}`);
   await page.waitForFunction(() => window.__go, null, { timeout: 60000 });
+  if (qs.get('seq')) {
+    // frame sequence → <outDir>/<name>/0000.png … + frames.json
+    const frames = await page.evaluate(() => window.__seq());
+    const dir = join(outDir, name);
+    mkdirSync(dir, { recursive: true });
+    frames.forEach((f, k) => writeFileSync(join(dir, `${String(k).padStart(4, '0')}.png`), Buffer.from(f.url.split(',')[1], 'base64')));
+    writeFileSync(join(dir, 'frames.json'), JSON.stringify(frames.map(({ url, ...rest }) => rest), null, 1));
+    console.log(dir, frames.length, 'frames');
+    await page.close();
+    continue;
+  }
   const st = await page.evaluate(() => window.__go());
   const file = join(outDir, `${name}.png`);
   await page.locator('canvas').screenshot({ path: file, timeout: 120000 });

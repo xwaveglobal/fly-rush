@@ -17,9 +17,9 @@ const check = (ok: boolean, msg: string) => {
   } else console.log('  ✓ ' + msg);
 };
 
-// the 3D car's in-game box (model 2.19 × 1.18 × 4.69 m, rear at +2.24, front at −2.36) × scale
+// the 3D car's in-game box (v4.1.2 model 2.09 × 1.18 × 4.25 m, rear at +2.242, front at −2.007) × scale
 const s = RENDER.carScale;
-const car = new THREE.Box3(new THREE.Vector3(-1.095 * s, 0, -2.36 * s), new THREE.Vector3(1.095 * s, 1.18 * s, 2.24 * s));
+const car = new THREE.Box3(new THREE.Vector3(-1.045 * s, 0, -2.007 * s), new THREE.Vector3(1.045 * s, 1.18 * s, 2.242 * s));
 const ASPECTS: [string, number][] = [['9:16', 9 / 16], ['390×844', 390 / 844]];
 
 function rigFor(aspect: number, mode: 'run' | 'menu', preset: 'low' | 'balanced' | 'high' | null) {

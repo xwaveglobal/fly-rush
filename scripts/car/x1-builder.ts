@@ -248,7 +248,6 @@ const M = {
   ledHousing: new THREE.MeshPhysicalMaterial({ name: 'X1_LEDHousing', color: 0x1a0507, metalness: 0.2, roughness: 0.15, clearcoat: 1, clearcoatRoughness: 0.05 }),
   badge: new THREE.MeshStandardMaterial({ name: 'X1_Badge', color: 0xffffff, map: badgeTex, emissive: 0xffffff, emissiveMap: badgeTex, emissiveIntensity: 1.6, transparent: true, alphaTest: 0.05 }),
   head: new THREE.MeshStandardMaterial({ name: 'X1_Headlight', color: 0x9fd8ff, emissive: 0x6cc4ff, emissiveIntensity: 2.4, roughness: 0.2 }),
-  mirrorGlow: new THREE.MeshStandardMaterial({ name: 'X1_MirrorGlow', color: 0x3aa8ff, emissive: 0x2f8cff, emissiveIntensity: 1.6, roughness: 0.3 }),
   interior: new THREE.MeshStandardMaterial({ name: 'X1_Interior', color: 0x07080a, metalness: 0.1, roughness: 0.75, envMapIntensity: 0.3 }),
   seatTrim: new THREE.MeshStandardMaterial({ name: 'X1_SeatTrim', color: 0xff3a2a, emissive: 0xff2a1a, emissiveIntensity: 1.2, roughness: 0.5 }),
   tyre: new THREE.MeshStandardMaterial({ name: 'X1_Tyre', color: 0xffffff, map: tex(x1TreadCanvas()), metalness: 0, roughness: 0.88 }),
@@ -452,16 +451,13 @@ function buildBody(P: Parts) {
     P.add('Light_Head', M.head, slab([[0, 0], [0.34, 0.035], [0.34, 0.05], [0, 0.022]].map(([x, y]) => [x * s, y] as [number, number]), 0, 0.012), T(0.36 * s, hy - 0.02, hz, -0.35, 0, 0));
   }
 
-  // ---- sides: intakes ahead of the rear wheels, skirts, mirrors
+  // ---- sides: intakes ahead of the rear wheels, skirts
   for (const s of [-1, 1]) {
     const x = hw(0.5) + 0.003;
     const intake = finYZ([[0.2, 0.42], [0.82, 0.46], [0.86, 0.7], [0.45, 0.62]], 0, 0.01);
     P.add('Body_GlossBlack', M.black, intake, T(x * s, 0, 0));
     P.add('Body_GlossBlack', M.black, finYZ([[-1.0, 0.15], [0.86, 0.17], [0.86, 0.24], [-1.0, 0.22]], 0, 0.03), T((hw(-0.1) - 0.005) * s, 0, 0));
-    // mirror: stalk + pearl housing + blue glass facing back
-    P.add('Body_GlossBlack', M.black, new THREE.BoxGeometry(0.18, 0.02, 0.04), T(0.87 * s, 0.9, -0.66, 0, 0, 0.3 * s));
-    P.add('Mirror_Housing', M.black, new THREE.SphereGeometry(1, 20, 12), T(0.99 * s, 0.93, -0.64, 0, 0, 0, [0.105, 0.05, 0.08]));
-    P.add('Mirror_Glow', M.mirrorGlow, new THREE.BoxGeometry(0.09, 0.014, 0.01), T(0.97 * s, 0.915, -0.56));
+    // (v4.1.2: no side mirrors — mirrorless body, as in the Step 03.1 reference)
   }
 
   // ---- interior (seen through the glass): dark tub, two seats with red trim, dash
@@ -557,8 +553,58 @@ function buildSpoiler() {
   return pivot;
 }
 
+// ------------------------------------------------------------------ body length (v4.1.2)
+/**
+ * Visual length cut as a fraction of the 4.60 m design length. Only the front half is shortened:
+ * 60 % from the nose overhang, 40 % between the front arch and the cabin (shorter hood / wheelbase).
+ * The front wheel-arch zone keeps scale 1 so the arches stay round, and everything behind
+ * WARP_FIX (the cabin, buttresses, rear end, bumper, spoiler, sockets) is untouched.
+ */
+export const LENGTH_CUT = 0.08;
+const DESIGN_LEN = 4.6;
+const WARP_NOSE = -2.4;
+const WARP_FIX = 0.0;
+const ARCH_A = AX_F.z - 0.45;
+const ARCH_B = AX_F.z + 0.45;
+function warpFn(cut: number) {
+  const c = cut * DESIGN_LEN;
+  const lenA = ARCH_A - WARP_NOSE;
+  const lenC = WARP_FIX - ARCH_B;
+  const kA = (lenA - 0.6 * c) / lenA;
+  const kC = (lenC - 0.4 * c) / lenC;
+  const bC = WARP_FIX - lenC * kC; // world z of ARCH_B
+  const shiftB = bC - ARCH_B; // the arch zone just moves
+  const aA = ARCH_A + shiftB; // world z of ARCH_A
+  /** world z of a design z, and the local z scale there */
+  return (z: number): [number, number] => {
+    if (z >= WARP_FIX) return [z, 1];
+    if (z >= ARCH_B) return [WARP_FIX - (WARP_FIX - z) * kC, kC];
+    if (z >= ARCH_A) return [z + shiftB, 1];
+    return [aA - (ARCH_A - z) * kA, kA];
+  };
+}
+/** apply the length warp to a geometry (positions; normals follow the local z scale) */
+function warpGeometry(g: THREE.BufferGeometry, W: (z: number) => [number, number]) {
+  const p = g.getAttribute('position');
+  const n = g.getAttribute('normal');
+  const v = new THREE.Vector3();
+  for (let i = 0; i < p.count; i++) {
+    const [z, k] = W(p.getZ(i));
+    p.setZ(i, z);
+    if (n && k !== 1) {
+      v.set(n.getX(i), n.getY(i), n.getZ(i) / k).normalize();
+      n.setXYZ(i, v.x, v.y, v.z);
+    }
+  }
+  p.needsUpdate = true;
+  if (n) n.needsUpdate = true;
+  g.computeBoundingBox();
+  g.computeBoundingSphere();
+}
+
 // ------------------------------------------------------------------ assemble + export
-export function buildX1(): THREE.Group {
+export function buildX1(opts: { cut?: number } = {}): THREE.Group {
+  const W = warpFn(opts.cut ?? LENGTH_CUT);
   const root = new THREE.Group();
   root.name = 'X1';
   const body = new THREE.Group();
@@ -566,8 +612,12 @@ export function buildX1(): THREE.Group {
   root.add(body);
   const P = new Parts();
   buildBody(P);
-  for (const m of P.meshes()) body.add(m);
-  root.add(wheel('FL', AX_F, -1, true), wheel('FR', AX_F, 1, true), wheel('RL', AX_R, -1, false), wheel('RR', AX_R, 1, false));
+  for (const m of P.meshes()) {
+    warpGeometry(m.geometry, W);
+    body.add(m);
+  }
+  const front = { ...AX_F, z: W(AX_F.z)[0] };
+  root.add(wheel('FL', front, -1, true), wheel('FR', front, 1, true), wheel('RL', AX_R, -1, false), wheel('RR', AX_R, 1, false));
   body.add(buildSpoiler());
   for (const s of [-1, 1] as const) {
     const n = new THREE.Object3D();
@@ -578,8 +628,8 @@ export function buildX1(): THREE.Group {
   return root;
 }
 
-export async function exportX1(): Promise<ArrayBuffer> {
-  const root = buildX1();
+export async function exportX1(opts: { cut?: number } = {}): Promise<ArrayBuffer> {
+  const root = buildX1(opts);
   const ex = new GLTFExporter();
   const glb = await ex.parseAsync(root, { binary: true, onlyVisible: false, includeCustomExtensions: false });
   return glb as ArrayBuffer;

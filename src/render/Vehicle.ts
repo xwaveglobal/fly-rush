@@ -1299,7 +1299,20 @@ export class Vehicle {
   showcase: { kind: 'ghost' | 'wall' | 'rail' | 'tunnel'; e: number } | null = null;
   private ghostHid = false;
 
+  /**
+   * Crash presentation (visual only): the 3D nose reaches ahead of the gameplay hitbox, so at the
+   * moment of a hit the obstacle would sit inside the hood. Set the body back by that overhang so the
+   * nose meets the obstacle face. Collision timing is untouched; cleared by resetPose().
+   */
+  crashRecoil() {
+    if (!this.mesh || !this.meshOn) return;
+    this.recoilZ = this.mesh.noseOverhang;
+    this.mesh.root.position.z = this.recoilZ;
+  }
+  private recoilZ = 0;
+
   resetPose() {
+    this.recoilZ = 0;
     this.mesh?.resetPose();
     this.roll.snap(0);
     this.yaw.snap(0);
@@ -1593,11 +1606,11 @@ export class Vehicle {
     // ---- v4 3D car: wheels, sprung body, nitro flames from the rear sockets
     if (this.mesh && this.meshOn) {
       const ground = vy < 0.51 ? -vy : -0.51;
-      this.mesh.root.position.set(0, ground, 0);
+      this.mesh.root.position.set(0, ground, this.recoilZ);
       this.mesh.nitro = Math.max(clamp01(this.boostK), turbo);
       // Bonus Phase Ghost: the 3D car turns translucent (the rear image used to fade)
       this.mesh.setFade(this.showcase?.kind === 'ghost' ? 1 - (1 - RENDER.ghostOpacity) * this.showcase.e : 1);
-      this.mesh.update(dt, speed, lat, p.air, this.locked);
+      this.mesh.update(dt, speed, lat, p.air, this.locked, p.vmode === 'up');
       // flight jets hang under the rear of the car; the contact shadow stays on the road
       this.jetG.position.set(0, ground + 0.3, 0.75);
       this.contactShadow.position.y = -vy + 0.025;

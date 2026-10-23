@@ -3,7 +3,8 @@ import { RENDER } from '../../config.ts';
 import { Spring, clamp, clamp01 } from '../../core/math.ts';
 import { glowTexture } from '../textures.ts';
 import { assetBytes, parseGlb } from './glbParse.ts';
-import { ease, spoilerStep, wheelStep } from './carMotion.ts';
+import { ease, spoilerUpdate, wheelStep, type SpoilerState } from './carMotion.ts';
+import { CAR_HALF } from '../../config.ts';
 import { x1BadgeCanvas, x1CarbonCanvas, x1TreadCanvas } from './x1Textures.ts';
 import x1Url from '../../assets/models/xwave-x1.glb';
 
@@ -51,7 +52,12 @@ export class MeshCar {
   private yaw = new Spring(0, 140, 16);
   /** active spoiler: pivot (hinge at the front edge) and 0..1 deployment */
   private spoiler: THREE.Object3D | null = null;
-  spoilerK = 0;
+  private spoilerState: SpoilerState = { k: 0, hold: 0 };
+  get spoilerK() {
+    return this.spoilerState.k;
+  }
+  /** how far the 3D nose reaches ahead of the gameplay hitbox (m, in game) */
+  noseOverhang = 0;
   /** previews / tests: force the spoiler target (null = follow nitro) */
   spoilerForce: number | null = null;
   /** Phase Ghost: materials' own transparency, restored when the effect ends */
@@ -175,6 +181,9 @@ export class MeshCar {
       }
     }
     this.root.add(model);
+    model.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(model);
+    this.noseOverhang = Math.max(0, -box.min.z - CAR_HALF.z);
     this.ready = true;
     this.onReady?.();
   }
@@ -210,7 +219,7 @@ export class MeshCar {
    * @param lat lateral speed in lane-speeds (−1.4 … 1.4, + = moving right)
    * @param air 0 on the road … 1 airborne
    */
-  update(dt: number, speed: number, lat: number, air: number, locked: boolean) {
+  update(dt: number, speed: number, lat: number, air: number, locked: boolean, jumping = false) {
     if (!this.ready) return;
     this.t += dt;
     // ---- wheels: spin with the road (free-wheel and slow down in the air), capped against strobing
@@ -241,8 +250,10 @@ export class MeshCar {
     const buzz = (Math.sin(this.t * 41) * 0.5 + Math.sin(this.t * 67) * 0.3) * 0.004 * clamp01(speed / 30) * (1 - air);
     this.bodyPivot.rotation.set(clamp(this.pitch.value, -0.08, 0.08), clamp(this.yaw.value, -0.04, 0.04), clamp(this.roll.value, -0.06, 0.06));
     // ---- active spoiler: rises with nitro, retracts smoothly after (hinged at its front edge)
-    this.spoilerK = this.spoilerForce ?? spoilerStep(this.spoilerK, locked ? 0 : this.nitro, dt, RENDER.spoilerUp, RENDER.spoilerDown);
-    if (this.spoiler) this.spoiler.rotation.x = -RENDER.spoilerAngle * ease(this.spoilerK);
+    // active spoiler: open while jumping (gameplay jump state) or nitro runs, retracts after both end
+    if (this.spoilerForce !== null) this.spoilerState.k = this.spoilerForce;
+    else spoilerUpdate(this.spoilerState, !locked && jumping, locked ? 0 : this.nitro, dt, RENDER.spoilerUp, RENDER.spoilerDown, RENDER.spoilerHold);
+    if (this.spoiler) this.spoiler.rotation.x = -RENDER.spoilerAngle * ease(this.spoilerState.k);
     this.bodyPivot.position.y = 0.5 + clamp(this.dip.value, -0.08, 0.04) + buzz;
     // ---- nitro flames from the sockets
     const k = locked ? 0 : clamp01(this.nitro);
@@ -277,7 +288,8 @@ export class MeshCar {
   /** settle the sprung body instantly (respawn / menu) */
   resetPose() {
     this.yaw.snap(0);
-    this.spoilerK = 0;
+    this.spoilerState.k = 0;
+    this.spoilerState.hold = 0;
     this.roll.snap(0);
     this.pitch.snap(0);
     this.dip.snap(0);

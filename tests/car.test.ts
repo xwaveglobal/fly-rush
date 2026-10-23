@@ -33,7 +33,7 @@ scene.updateMatrixWorld(true);
 const box = new THREE.Box3().setFromObject(scene);
 const size = box.getSize(new THREE.Vector3());
 check(Math.abs(box.min.y) < 0.01, `stands on the ground (min y ${box.min.y.toFixed(3)})`);
-check(size.z > 4 && size.z < 5.2 && size.x > 1.9 && size.x < 2.4 && size.y > 1.0 && size.y < 1.3, `real-car size ${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)} m`);
+check(size.z > 4 && size.z < 5.2 && size.x > 1.9 && size.x < 2.2 && size.y > 1.0 && size.y < 1.3, `real-car size ${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)} m`);
 const led = scene.getObjectByName('Rear_LED')!;
 const ledZ = new THREE.Box3().setFromObject(led).getCenter(new THREE.Vector3()).z;
 check(ledZ > 2, `rear lights face +Z (front toward −Z) — LED at z ${ledZ.toFixed(2)}`);
@@ -99,9 +99,28 @@ check(!scene.getObjectByName('Diffuser_Rail') && !scene.getObjectByName('NitroSo
   check(sp.children.length === 0 && pivot.children.length === 1, 'spoiler is a single mesh on its pivot (nothing hangs off it)');
 }
 
+// ---- v4.1.2 proportions: shorter front, mirrorless, rear untouched
+{
+  const mirrors: string[] = [];
+  scene.traverse((o) => {
+    const m = (o as THREE.Mesh).material as THREE.Material | undefined;
+    if (/mirror/i.test(o.name) || (m && /mirror/i.test(m.name))) mirrors.push(o.name || (m as THREE.Material).name);
+  });
+  check(mirrors.length === 0, `no side-mirror meshes or materials${mirrors.length ? ' — found ' + mirrors.join(', ') : ''}`);
+  const len = box.max.z - box.min.z;
+  check(len > 4.1 && len < 4.4, `body length ${len.toFixed(3)} m (design 4.60 m → −${((1 - len / 4.6) * 100).toFixed(1)} %)`);
+  const wb = scene.getObjectByName('Wheel_RL')!.position.z - scene.getObjectByName('Wheel_FL')!.position.z;
+  check(wb > 2.4 && wb < 2.62, `wheelbase ${wb.toFixed(3)} m (believable for the length: ${(wb / len).toFixed(2)} of it)`);
+  check(Math.abs(size.x - 2.09) < 0.03, `overall width kept (${size.x.toFixed(3)} m = rear tyres, no mirror bulge)`);
+  check(Math.abs(box.max.z - 2.242) < 0.002 && Math.abs(ledZ - 2.21) < 0.01, 'rear end unchanged (tail 2.242 m, LED plane 2.21 m)');
+  const fl = scene.getObjectByName('Tyre_FL')!;
+  const tb = new THREE.Box3().setFromObject(fl);
+  check(Math.abs(tb.max.y - tb.min.y - (tb.max.z - tb.min.z)) < 0.01, 'front tyre still round after the length change');
+}
+
 // in game: the visual width stays close to the hitbox (fair dodges)
 const gameW = size.x * RENDER.carScale;
-check(gameW < CAR_HALF.x * 2 * 1.35, `in-game width ${gameW.toFixed(2)} m vs hitbox ${(CAR_HALF.x * 2).toFixed(2)} m (≤ +35 %, mirrors included)`);
+check(gameW < CAR_HALF.x * 2 * 1.35, `in-game width ${gameW.toFixed(2)} m vs hitbox ${(CAR_HALF.x * 2).toFixed(2)} m (≤ +35 %)`);
 
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED');
 if (fails) process.exit(1);
