@@ -383,8 +383,11 @@ if (want('pause')) {
   const rt = await ev(() => { const G = window.__g; window.__clear(90); G.resume(); G.advance(0.1); window.__clear(90); G.pause(); return G.state; });
   await page.evaluate(() => [...document.querySelectorAll('[data-a="retry"]')].find((e) => e.offsetParent)?.click());
   await page.waitForTimeout(800);
-  const afterRetry = await ev(() => ({ state: window.__g.state, pick: document.querySelector('#specialpick')?.classList.contains('show') }));
-  check(rt === 'paused' && afterRetry.state !== 'paused', 'Pause → Retry: a new run starts only on the explicit tap (special pick → GO)', afterRetry);
+  const afterRetry = await ev(() => ({ state: window.__g.state, pick: document.querySelector('#specialpick')?.classList.contains('show'), pauseMenu: document.querySelector('#pause')?.classList.contains('show') }));
+  await page.evaluate(() => [...document.querySelectorAll('#specialpick button')].filter((e) => e.offsetParent && /\bGO\b/.test(e.textContent)).at(-1)?.click());
+  await page.waitForTimeout(800);
+  const afterGo = await ev(() => window.__g.state);
+  check(rt === 'paused' && afterRetry.pick && !afterRetry.pauseMenu && (afterGo === 'countdown' || afterGo === 'run'), 'Pause → Retry → pre-race pick → GO: a new run starts only on the explicit taps', { ...afterRetry, afterGo });
   save();
 }
 
@@ -452,7 +455,7 @@ if (want('garage')) {
     const r = await setRank(cls);
     matrix[cls] = r.unlocked;
     if (file) {
-      await ev((cls) => { const G = window.__g; G.setState?.('menu'); G.openGarage(); const id = cls === 'S' ? 'vega' : 'inferno'; G.ui.garageIndex = cls === 'S' ? 2 : 1; G.ui.garageSync(G.save, id); G.previewSkin?.(id); }, cls);
+      await ev((cls) => { const G = window.__g; G.setState?.('menu'); G.openGarage(); const id = cls === 'S' ? 'volt' : 'inferno'; G.ui.garageIndex = cls === 'S' ? 3 : 1; G.ui.garageSync(G.save, id); G.previewSkin?.(id); }, cls);
       await shot(file);
     }
   }
@@ -536,7 +539,7 @@ if (want('buttons')) {
   await shot('34_home_buttons_unchanged');
   R.homeButtonsSample = home;
   const views = [
-    ['29_garage_flat_buttons', () => window.__g.openGarage()],
+    ['29_garage_flat_buttons', () => { const G = window.__g; G.goHome?.(); G.openGarage(); G.ui.garageSync(G.save, 'inferno'); }],
     ['30_settings_flat_buttons', () => { window.__g.goHome?.(); window.__g.openSettings(); }],
     ['31_pause_flat_buttons', () => { const G = window.__g; G.ui.hideOverlay('settings'); G.manual = true; G.startRun(); for (let i = 0; i < 300 && G.state !== 'run'; i++) G.advance(1 / 60); window.__steps(0.5); G.pause(); }],
     ['32_game_over_flat_buttons', () => { const G = window.__g; G.resume(); G.gameOver(); }],
