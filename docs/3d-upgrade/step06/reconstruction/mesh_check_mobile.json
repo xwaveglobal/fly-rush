@@ -2,8 +2,8 @@
  "file": "src/assets/models/xwave-x1.glb",
  "total": {
   "meshes": 40,
-  "verts": 26869,
-  "tris": 35545,
+  "verts": 29153,
+  "tris": 39157,
   "degenerate": 0,
   "zeroNormals": 0,
   "nonUnit": 0,
@@ -15,13 +15,13 @@
   {
    "mesh": "Body_Paint",
    "material": "X1_Paint",
-   "verts": 10938,
-   "tris": 16588,
+   "verts": 12706,
+   "tris": 19852,
    "degenerate": 0,
    "zeroNormals": 0,
    "nonUnitNormals": 0,
    "normalsAgainstFace": 18,
-   "normalsChecked": 49764,
+   "normalsChecked": 59556,
    "uv": true,
    "uvNaN": 0,
    "uvExtent": [
@@ -63,9 +63,9 @@
    "uv": true,
    "uvNaN": 0,
    "uvExtent": [
-    -0.94,
+    -0.95,
     0.57,
-    0.94,
+    0.95,
     1
    ]
   },
@@ -110,13 +110,13 @@
   {
    "mesh": "Diffuser",
    "material": "X1_Carbon",
-   "verts": 132,
-   "tris": 66,
+   "verts": 312,
+   "tris": 106,
    "degenerate": 0,
    "zeroNormals": 0,
    "nonUnitNormals": 0,
    "normalsAgainstFace": 0,
-   "normalsChecked": 198,
+   "normalsChecked": 318,
    "uv": true,
    "uvNaN": 0,
    "uvExtent": [
@@ -205,20 +205,20 @@
   {
    "mesh": "Body_PanelGaps",
    "material": "X1_PanelGap",
-   "verts": 784,
-   "tris": 744,
+   "verts": 880,
+   "tris": 840,
    "degenerate": 0,
    "zeroNormals": 0,
    "nonUnitNormals": 0,
    "normalsAgainstFace": 0,
-   "normalsChecked": 2232,
+   "normalsChecked": 2520,
    "uv": true,
    "uvNaN": 0,
    "uvExtent": [
     -2.23,
     -2.23,
     0.88,
-    0.72
+    0.74
    ]
   },
   {
@@ -262,20 +262,20 @@
   {
    "mesh": "Trim_GlossBlack",
    "material": "X1_GlossBlack",
-   "verts": 252,
-   "tris": 92,
+   "verts": 492,
+   "tris": 304,
    "degenerate": 0,
    "zeroNormals": 0,
    "nonUnitNormals": 0,
    "normalsAgainstFace": 0,
-   "normalsChecked": 276,
+   "normalsChecked": 912,
    "uv": true,
    "uvNaN": 0,
    "uvExtent": [
     -0.87,
-    0,
+    -0.01,
     1,
-    1
+    1.84
    ]
   },
   {
@@ -291,9 +291,9 @@
    "uv": true,
    "uvNaN": 0,
    "uvExtent": [
-    -0.95,
-    0.57,
-    0.95,
+    -0.96,
+    0.56,
+    0.96,
     1
    ]
   },
@@ -310,9 +310,9 @@
    "uv": true,
    "uvNaN": 0,
    "uvExtent": [
-    -0.85,
-    0.61,
-    0.85,
+    -0.86,
+    0.62,
+    0.86,
     1
    ]
   },

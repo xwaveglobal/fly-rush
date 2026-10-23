@@ -169,11 +169,27 @@ function chaikin(p: [number, number][], it = 2): [number, number][] {
  * width jumps at the shelf instead of rising on a straight diagonal. Same point count on every section
  * (where the weight is 0 the point sits on the straight line).
  */
-function cabinBulge(z: number, W: number, sh: number): [number, number] {
+function cabinBulge(z: number, W: number, sh: number): [number, number][] {
   const [xt, yt] = sideTop(z);
   const c = ramp(-0.45, 0.2, z) * (1 - ramp(1.6, 1.95, z));
   const x1 = W - 0.13;
-  return [mix(mix(xt, x1, 0.5), mix(xt, x1, 0.3), c), mix(mix(yt, sh, 0.5), mix(yt, sh, 0.75), c)];
+  const lerp = (t: number, u: number): [number, number] => [mix(xt, x1, t), mix(yt, sh, u)];
+  // straight line (weight 0) → concave under the side glass (cabin) → buttress behind the side glass:
+  // v4.3 (Step 06 rev. 2) the C-pillar swells out convexly from the roof edge (master: the white
+  // buttresses are the widest part of the cabin, rounded — before, their tops were thin points that
+  // read as "horns" between the dark glass areas), then drops onto the haunch shelf
+  const b = ramp(DLO_A, DLO_B, z) * c;
+  const a0 = lerp(1 / 3, 1 / 3);
+  const b0 = lerp(2 / 3, 2 / 3);
+  const a1 = lerp(0.2, 0.55);
+  const b1 = lerp(0.4, 0.85);
+  const a2: [number, number] = [xt + Math.min(0.13, (x1 - xt) * 0.45), yt - Math.min(0.08, (yt - sh) * 0.3)];
+  const b2: [number, number] = [xt + Math.min(0.2, (x1 - xt) * 0.65), Math.max(sh + 0.07, yt - 0.18)];
+  const pick = (p0: [number, number], p1: [number, number], p2: [number, number]): [number, number] => {
+    const q: [number, number] = [mix(p0[0], p1[0], c), mix(p0[1], p1[1], c)];
+    return [mix(q[0], p2[0], b), mix(q[1], p2[1], b)];
+  };
+  return [pick(a0, a1, a2), pick(b0, b1, b2)];
 }
 
 /** side of the body at z, from the top-of-side point down to the bottom centre (x ≥ 0) */
@@ -186,14 +202,14 @@ function sideHalf(z: number): [number, number][] {
   const sh = shY(z);
   const ym = yMaxW(z);
   if (!arch || arch.y <= sill(z) + 1e-6) {
-    const side: [number, number][] = [sideTop(z), cabinBulge(z, W, sh), [W - 0.13, sh], [W - 0.035, (sh + ym) / 2 + 0.03], [W, ym], [W - 0.01, bot + 0.07], [W - 0.05, bot]];
+    const side: [number, number][] = [sideTop(z), ...cabinBulge(z, W, sh), [W - 0.13, sh], [W - 0.035, (sh + ym) / 2 + 0.03], [W, ym], [W - 0.01, bot + 0.07], [W - 0.05, bot]];
     return [...chaikin(side, Q.chaikin), [xin, bot], [xin, ub], [0, ub]];
   }
   // v4.1.3 wheel arch: the side is drawn as if there were no arch (down to the sill), then cut where
   // it crosses the arch line on its way down from the shoulder. Before, the profile ran down to the
   // widest point (below the arch top) and folded back up to it — white flaps around the front tyre.
   const sb = sill(z);
-  const full = chaikin([sideTop(z), cabinBulge(z, W, sh), [W - 0.13, sh], [W - 0.035, (sh + ym) / 2 + 0.03], [W, ym], [W - 0.01, sb + 0.07], [W - 0.05, sb]], Q.chaikin);
+  const full = chaikin([sideTop(z), ...cabinBulge(z, W, sh), [W - 0.13, sh], [W - 0.035, (sh + ym) / 2 + 0.03], [W, ym], [W - 0.01, sb + 0.07], [W - 0.05, sb]], Q.chaikin);
   let top = 0;
   for (let i = 1; i < full.length; i++) if (full[i][1] > full[top][1]) top = i;
   const y = Math.min(arch.y, full[top][1] - 0.03); // keep a fender lip above the opening
@@ -494,7 +510,7 @@ const M = {
   satin: new THREE.MeshPhysicalMaterial({ name: 'X1_SatinBlack', color: 0x0c0d10, metalness: 0.15, roughness: 0.5, clearcoat: 0.35, clearcoatRoughness: 0.35 }),
   carbon: new THREE.MeshStandardMaterial({ name: 'X1_Carbon', color: 0x3a3a3a, map: tex(x1CarbonCanvas()), metalness: 0.35, roughness: 0.42, side: THREE.DoubleSide }),
   chrome: new THREE.MeshStandardMaterial({ name: 'X1_Chrome', color: 0xc8ccd2, metalness: 1, roughness: 0.22 }),
-  glass: new THREE.MeshPhysicalMaterial({ name: 'X1_Glass', color: 0x010203, metalness: 0.0, roughness: 0.14, transparent: true, opacity: 0.9, envMapIntensity: 0.12 }),
+  glass: new THREE.MeshPhysicalMaterial({ name: 'X1_Glass', color: 0x010203, metalness: 0.0, roughness: 0.1, transparent: true, opacity: 0.9, envMapIntensity: 0.07 }), // v4.3: darker tint, less grey sheen (master)
   liner: new THREE.MeshStandardMaterial({ name: 'X1_WheelLiner', color: 0x08090b, metalness: 0.05, roughness: 0.85, side: THREE.DoubleSide }),
   gap: new THREE.MeshStandardMaterial({ name: 'X1_PanelGap', color: 0x2a2d33, metalness: 0.1, roughness: 0.6 }),
   lightHousing: new THREE.MeshPhysicalMaterial({ name: 'X1_LightHousing', color: 0x050608, metalness: 0.4, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.03 }),
@@ -722,9 +738,10 @@ function buildBody(P: Parts) {
   // in it; when the spoiler rises the well shows black, never body paint
   P.add('Body_GlossBlack', M.black, new THREE.BoxGeometry(0.94, 0.012, 0.36), T(0, 0.742, 2.03));
   // LED housing: smoked long hexagon around the light blade
-  P.add('Rear_LEDHousing', M.ledHousing, slab([[-0.88, 0.632], [0.88, 0.632], [0.945, 0.596], [0.92, 0.566], [-0.92, 0.566], [-0.945, 0.596]], zf - 0.02, 0.025, 0.003));
+  // v4.3 (Step 06 rev. 2): taller, deeper smoked housing and a thicker blade (master: a bold light bar)
+  P.add('Rear_LEDHousing', M.ledHousing, slab([[-0.885, 0.648], [0.885, 0.648], [0.955, 0.6], [0.925, 0.562], [-0.925, 0.562], [-0.955, 0.6]], zf - 0.045, 0.05, 0.004));
   // continuous LED blade: top line with chevron ends + thin lower return line
-  const blade: [number, number][] = [[0.0, 0.621], [0.866, 0.621], [0.938, 0.588], [0.925, 0.573], [0.856, 0.599], [0.0, 0.599]];
+  const blade: [number, number][] = [[0.0, 0.634], [0.87, 0.634], [0.946, 0.594], [0.93, 0.574], [0.858, 0.604], [0.0, 0.604]];
   const bl = (pts: [number, number][]) => {
     const right = pts;
     const left = right.map(([x, y]) => [-x, y] as [number, number]);
@@ -733,11 +750,11 @@ function buildBody(P: Parts) {
   };
   P.add('Rear_LED', M.led, slab(bl(blade), zf + 0.006, 0.006));
   // hot inner line along the blade (the master's near-white core)
-  P.add('Rear_LEDCore', M.ledCore, slab([[-0.85, 0.6085], [0.85, 0.6085], [0.85, 0.6125], [-0.85, 0.6125]], zf + 0.0125, 0.002));
-  P.add('Rear_LED', M.led, slab([[-0.83, 0.5735], [0.83, 0.5735], [0.83, 0.5795], [-0.83, 0.5795]], zf + 0.006, 0.004));
+  P.add('Rear_LEDCore', M.ledCore, slab([[-0.855, 0.615], [0.855, 0.615], [0.855, 0.622], [-0.855, 0.622]], zf + 0.0125, 0.002));
+  P.add('Rear_LED', M.led, slab([[-0.83, 0.577], [0.83, 0.577], [0.83, 0.585], [-0.83, 0.585]], zf + 0.006, 0.004));
   // black badge panel (trapezoid under the light), XWAVE badge centred on it
   // v4.3: black tail panel as wide as the light (master: ±0.85 m under the LED, tapering to ±0.5 m)
-  P.add('Rear_BadgePanel', M.black, slab([[-0.86, 0.566], [0.86, 0.566], [0.8, 0.54], [0.52, 0.485], [-0.52, 0.485], [-0.8, 0.54]], zf, 0.012, 0.004));
+  P.add('Rear_BadgePanel', M.black, slab([[-0.86, 0.562], [0.86, 0.562], [0.8, 0.538], [0.52, 0.485], [-0.52, 0.485], [-0.8, 0.538]], zf, 0.012, 0.004));
   const badge = new THREE.PlaneGeometry(0.29, 0.0725);
   P.add('Badge_XWAVE', M.badge, badge, T(0, 0.528, zf + 0.022));
   // ---- lower rear bumper (v3, Tesla-Roadster-inspired integration, XWAVE layout):
@@ -770,10 +787,12 @@ function buildBody(P: Parts) {
     shape.holes.push(hole);
     // white bumper band between the haunches (0.42–0.545 m, ±0.745 m): the tyres stay visible outside it
     {
-      const band: [number, number][] = [[0.745, 0.545], [0.745, 0.44], [0.735, 0.42]];
+      // v4.3 (Step 06 rev. 2): rounded all round (wraps into the haunches like the master's band), narrower
+      // core + a 3.5 cm round-over (outer edge still ±0.755 m)
+      const band: [number, number][] = [[0.72, 0.51], [0.715, 0.455], [0.7, 0.44]];
       const pts = [...band, ...band.slice().reverse().map(([x, y]) => [-x, y] as [number, number])];
-      const g = new THREE.ExtrudeGeometry(new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y))), { depth: Z_TAIL - 0.03 - BUMPER_FRONT, bevelEnabled: true, bevelSize: 0.015, bevelThickness: 0.015, bevelSegments: 3, curveSegments: 4 });
-      g.translate(0, 0, BUMPER_FRONT + 0.015);
+      const g = new THREE.ExtrudeGeometry(new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y))), { depth: Z_TAIL - 0.07 - BUMPER_FRONT, bevelEnabled: true, bevelSize: 0.035, bevelThickness: 0.035, bevelSegments: 5, curveSegments: 4 });
+      g.translate(0, 0, BUMPER_FRONT + 0.035);
       P.add('Body_Paint', M.paint, g);
     }
     const depth = BUMPER_FACE - BUMPER_FRONT;
@@ -786,11 +805,55 @@ function buildBody(P: Parts) {
     // matte floor and roof inside the opening (the satin hole walls caught the top light and read as gaps)
     P.add('Diffuser', M.liner, new THREE.PlaneGeometry(hx * 2 - 0.01, BUMPER_FACE - back), T(0, y0 + 0.002, (back + BUMPER_FACE) / 2, -Math.PI / 2));
     P.add('Diffuser', M.liner, new THREE.PlaneGeometry(hx * 2 - 0.01, BUMPER_FACE - back), T(0, y1 - 0.002, (back + BUMPER_FACE) / 2, Math.PI / 2));
-    // five fins like the master (inner pair taller-looking, all inside the opening: nothing hangs below)
-    for (const x of [-0.34, -0.17, 0, 0.17, 0.34]) P.add('Diffuser', M.satin, new THREE.BoxGeometry(0.014, y1 - y0, 0.095), T(x, (y0 + y1) / 2, back + 0.047));
+    // v4.3 (Step 06 rev. 2): five blade fins as in the master — they run from the top of the opening down
+    // below the bumper to 8 cm off the road, swept back at the bottom; the outer pair splays outward.
+    // Attached to the bumper all along their top edge (no rods, nothing loose).
+    const fin: [number, number][] = [[back, y1], [BUMPER_FACE - 0.004, y1], [BUMPER_FACE - 0.004, 0.14], [BUMPER_FACE - 0.035, 0.08], [back + 0.06, 0.08], [back, 0.11]];
+    for (const x of [-0.34, -0.17, 0, 0.17, 0.34]) {
+      const g = finYZ(fin, x, 0.016);
+      if (Math.abs(x) > 0.3) {
+        const p = g.getAttribute('position');
+        for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) + Math.sign(x) * (y1 - p.getY(i)) * 0.25);
+        g.computeVertexNormals();
+      }
+      P.add('Diffuser', M.satin, g);
+    }
     // red markers and the centre brake light on the bumper face
     for (const s of [-1, 1]) P.add('Rear_Markers', M.ledSoft, slab([[0.5 * s, 0.355], [0.69 * s, 0.352], [0.68 * s, 0.37], [0.505 * s, 0.374]], BUMPER_FACE + 0.001, 0.004));
-    P.add('Rear_Markers', M.ledSoft, new THREE.BoxGeometry(0.22, 0.014, 0.006), T(0, 0.33, BUMPER_FACE + 0.004));
+    P.add('Rear_Markers', M.ledSoft, new THREE.BoxGeometry(0.22, 0.014, 0.006), T(0, 0.365, BUMPER_FACE + 0.004));
+  }
+
+  // ---- v4.3 (Step 06 rev. 2): black rear-window frame — a gloss-black band down the inner edge of each
+  // buttress, where it meets the glass (master: the rear window is framed in black; without it the white
+  // buttress tips read as thin points against the dark glass)
+  for (const sx of [-1, 1]) {
+    const pos: number[] = [];
+    const idx: number[] = [];
+    let k = 0;
+    for (let z = DLO_A + 0.05; z <= G_Z1 - 0.02 + 1e-6; z += 0.04) {
+      const [xt, yt] = sideTop(z);
+      const W = hw(z);
+      const [ax, ay] = cabinBulge(z, W, shY(z))[0];
+      let dx = ax - xt;
+      let dy = ay - yt;
+      const l = Math.hypot(dx, dy) || 1;
+      dx /= l;
+      dy /= l;
+      const wdt = 0.07 * ramp(DLO_A, DLO_B, z) * (1 - ramp(G_Z1 - 0.2, G_Z1, z) * 0.6);
+      const nx = -dy; // outward normal of the profile (x, y)
+      const ny = dx;
+      const o = 0.004;
+      pos.push(sx * (xt + Math.abs(nx) * o), yt + Math.abs(ny) * o, z, sx * (xt + dx * wdt + Math.abs(nx) * o), yt + dy * wdt + Math.abs(ny) * o, z);
+      if (k > 0) {
+        const q = (k - 1) * 2;
+        idx.push(q, q + 2, q + 1, q + 1, q + 2, q + 3);
+      }
+      k++;
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setIndex(idx);
+    P.add('Body_GlossBlack', M.black, twoSided(g));
   }
 
   // ---- roof stop light (top of the rear glass)
@@ -799,8 +862,11 @@ function buildBody(P: Parts) {
     const z = 1.0;
     const y = gTop(z) + 0.008;
     const slope = Math.atan2(gTop(z + 0.05) - gTop(z - 0.05), 0.1);
-    P.add('Body_GlossBlack', M.black, new THREE.BoxGeometry(0.32, 0.016, 0.07), T(0, y, z, -slope));
-    P.add('Light_RoofStop', M.led, new THREE.BoxGeometry(0.2, 0.006, 0.035), T(0, y + 0.009, z + 0.005, -slope));
+    // v4.3 (Step 06 rev. 2): a gloss-black roof spoiler across the top of the rear glass, the stop light
+    // in its trailing edge (master)
+    const lip: [number, number][] = [[-0.06, -0.004], [0.05, 0.012], [0.085, 0.02], [0.085, 0.004], [-0.06, -0.012]];
+    P.add('Body_GlossBlack', M.black, finYZ(lip, 0, 0.84), T(0, y, z, -slope));
+    P.add('Light_RoofStop', M.led, new THREE.BoxGeometry(0.3, 0.01, 0.004), T(0, y + 0.012, z + 0.088, -slope));
   }
 
   // ---- front (v4.1.3): integrated lower aero, slim intakes, LED signature, panel seams

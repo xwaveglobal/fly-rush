@@ -2,8 +2,8 @@
  "file": "assets-src/x1/xwave-x1-master.glb",
  "total": {
   "meshes": 41,
-  "verts": 69524,
-  "tris": 106497,
+  "verts": 77080,
+  "tris": 120525,
   "degenerate": 0,
   "zeroNormals": 0,
   "nonUnit": 0,
@@ -15,13 +15,13 @@
   {
    "mesh": "Body_Paint",
    "material": "X1_Paint",
-   "verts": 40773,
-   "tris": 64104,
+   "verts": 47717,
+   "tris": 77688,
    "degenerate": 0,
    "zeroNormals": 0,
    "nonUnitNormals": 0,
    "normalsAgainstFace": 39,
-   "normalsChecked": 192312,
+   "normalsChecked": 233064,
    "uv": true,
    "uvNaN": 0,
    "uvExtent": [
@@ -72,20 +72,20 @@
   {
    "mesh": "Body_GlossBlack",
    "material": "X1_GlossBlack",
-   "verts": 48,
-   "tris": 24,
+   "verts": 288,
+   "tris": 236,
    "degenerate": 0,
    "zeroNormals": 0,
    "nonUnitNormals": 0,
    "normalsAgainstFace": 0,
-   "normalsChecked": 72,
+   "normalsChecked": 708,
    "uv": true,
    "uvNaN": 0,
    "uvExtent": [
-    0,
-    0,
+    -0.7,
+    -0.01,
     1,
-    1
+    1.84
    ]
   },
   {
@@ -101,9 +101,9 @@
    "uv": true,
    "uvNaN": 0,
    "uvExtent": [
-    -0.95,
-    0.57,
-    0.95,
+    -0.96,
+    0.56,
+    0.96,
     1
    ]
   },
@@ -120,9 +120,9 @@
    "uv": true,
    "uvNaN": 0,
    "uvExtent": [
-    -0.94,
+    -0.95,
     0.57,
-    0.94,
+    0.95,
     1
    ]
   },
@@ -139,9 +139,9 @@
    "uv": true,
    "uvNaN": 0,
    "uvExtent": [
-    -0.85,
-    0.61,
-    0.85,
+    -0.86,
+    0.62,
+    0.86,
     1
    ]
   },
@@ -205,13 +205,13 @@
   {
    "mesh": "Diffuser",
    "material": "X1_Carbon",
-   "verts": 132,
-   "tris": 66,
+   "verts": 312,
+   "tris": 106,
    "degenerate": 0,
    "zeroNormals": 0,
    "nonUnitNormals": 0,
    "normalsAgainstFace": 0,
-   "normalsChecked": 198,
+   "normalsChecked": 318,
    "uv": true,
    "uvNaN": 0,
    "uvExtent": [
@@ -376,19 +376,19 @@
   {
    "mesh": "Body_PanelGaps",
    "material": "X1_PanelGap",
-   "verts": 1296,
-   "tris": 1256,
+   "verts": 1488,
+   "tris": 1448,
    "degenerate": 0,
    "zeroNormals": 0,
    "nonUnitNormals": 0,
    "normalsAgainstFace": 0,
-   "normalsChecked": 3768,
+   "normalsChecked": 4344,
    "uv": true,
    "uvNaN": 0,
    "uvExtent": [
     -2.23,
     -2.23,
-    0.88,
+    0.87,
     0.74
    ]
   },

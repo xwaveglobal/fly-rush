@@ -73,10 +73,11 @@ check(!scene.getObjectByName('Diffuser_Rail') && !scene.getObjectByName('NitroSo
       }
     }
   });
-  check(lowest >= 0.1, `nothing hangs below the body: lowest body point ${lowest.toFixed(3)} m (${who})`);
+  // v4.3 (Step 06): the master's diffuser fins reach down below the bumper — 8 cm off the road, rest ≥ 10 cm
+  check(lowest >= 0.075, `nothing hangs below 7.5 cm: lowest body point ${lowest.toFixed(3)} m (${who})`);
   const bumper = new THREE.Box3().setFromObject(scene.getObjectByName('Rear_LowerBumper')!);
   const diff = new THREE.Box3().setFromObject(scene.getObjectByName('Diffuser')!);
-  check(diff.min.y >= bumper.min.y - 0.001 && diff.max.z <= bumper.max.z + 0.001 && diff.min.x >= bumper.min.x, 'diffuser sits inside the lower bumper (recessed, fins attached)');
+  check(diff.max.z <= bumper.max.z + 0.001 && diff.min.x >= bumper.min.x && diff.max.x <= bumper.max.x && diff.min.y >= 0.075, 'diffuser inside the bumper outline; its fins end flush with the bumper face and ≥ 7.5 cm off the road');
   for (const id of ['NitroSocket_L', 'NitroSocket_R']) {
     const so = scene.getObjectByName(id)!.getWorldPosition(new THREE.Vector3());
     check(Math.abs(so.x) < 0.52 && so.y > 0.155 && so.y < 0.3 && so.z > bumper.max.z - 0.12 && so.z <= bumper.max.z + 0.01, `${id} hidden in the diffuser recess (${so.toArray().map((n) => n.toFixed(2)).join(', ')})`);

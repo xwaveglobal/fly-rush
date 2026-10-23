@@ -1,0 +1,951 @@
+{
+ "note": "headless Chromium + SwiftShader (software WebGL on a desktop CPU) — not phone FPS",
+ "viewport": "360x640 @2",
+ "presets": {
+  "low": {
+   "loadMs": 16159,
+   "home": {
+    "frames": 20,
+    "cpuFrameMs": {
+     "avg": 5,
+     "p50": 4.4,
+     "p95": 9.8,
+     "max": 11.2
+    },
+    "js": {
+     "avg": 0.7,
+     "p95": 2
+    },
+    "render": {
+     "avg": 4.3,
+     "p95": 7.8
+    },
+    "calls": {
+     "avg": 99,
+     "max": 104
+    },
+    "trisK": {
+     "avg": 57.1,
+     "max": 57.2
+    },
+    "obstacles": {
+     "avg": 0,
+     "max": 0
+    },
+    "spikeFirst10Ms": 6.8,
+    "endedIn": "menu"
+   },
+   "start": {
+    "geometries": 124,
+    "textures": 34,
+    "programs": 109,
+    "heapMB": 33,
+    "dpr": 1.25,
+    "canvas": [
+     450,
+     800
+    ]
+   },
+   "end": {
+    "geometries": 173,
+    "textures": 41,
+    "programs": 113,
+    "heapMB": 35,
+    "dpr": 1.25,
+    "canvas": [
+     450,
+     800
+    ]
+   },
+   "scenarios": {
+    "normal": {
+     "frames": 30,
+     "cpuFrameMs": {
+      "avg": 141.4,
+      "p50": 17.8,
+      "p95": 31.3,
+      "max": 3727.1
+     },
+     "js": {
+      "avg": 3.7,
+      "p95": 8.6
+     },
+     "render": {
+      "avg": 137.8,
+      "p95": 21.3
+     },
+     "calls": {
+      "avg": 139,
+      "max": 139
+     },
+     "trisK": {
+      "avg": 65.3,
+      "max": 65.4
+     },
+     "obstacles": {
+      "avg": 5,
+      "max": 5
+     },
+     "spikeFirst10Ms": 3727.1,
+     "endedIn": "run"
+    },
+    "nitro": {
+     "frames": 30,
+     "cpuFrameMs": {
+      "avg": 143.6,
+      "p50": 13.8,
+      "p95": 26.3,
+      "max": 3879.8
+     },
+     "js": {
+      "avg": 2.7,
+      "p95": 6.5
+     },
+     "render": {
+      "avg": 140.9,
+      "p95": 24.1
+     },
+     "calls": {
+      "avg": 151,
+      "max": 152
+     },
+     "trisK": {
+      "avg": 67.3,
+      "max": 67.5
+     },
+     "obstacles": {
+      "avg": 5.6,
+      "max": 6
+     },
+     "spikeFirst10Ms": 3879.8,
+     "endedIn": "run"
+    },
+    "shield": {
+     "frames": 30,
+     "cpuFrameMs": {
+      "avg": 134.7,
+      "p50": 10.3,
+      "p95": 31.2,
+      "max": 2911.1
+     },
+     "js": {
+      "avg": 2.7,
+      "p95": 5.2
+     },
+     "render": {
+      "avg": 132,
+      "p95": 26.8
+     },
+     "calls": {
+      "avg": 151,
+      "max": 153
+     },
+     "trisK": {
+      "avg": 69.1,
+      "max": 69.2
+     },
+     "obstacles": {
+      "avg": 5.1,
+      "max": 6
+     },
+     "spikeFirst10Ms": 27.6,
+     "endedIn": "run"
+    },
+    "nitro+shield": {
+     "frames": 30,
+     "cpuFrameMs": {
+      "avg": 167.1,
+      "p50": 11.1,
+      "p95": 486.2,
+      "max": 3048.4
+     },
+     "js": {
+      "avg": 1.7,
+      "p95": 4.8
+     },
+     "render": {
+      "avg": 165.4,
+      "p95": 485.8
+     },
+     "calls": {
+      "avg": 151,
+      "max": 153
+     },
+     "trisK": {
+      "avg": 68.9,
+      "max": 69.2
+     },
+     "obstacles": {
+      "avg": 5.4,
+      "max": 6
+     },
+     "spikeFirst10Ms": 486.2,
+     "endedIn": "run"
+    },
+    "jump": {
+     "frames": 72,
+     "cpuFrameMs": {
+      "avg": 650.7,
+      "p50": 8.2,
+      "p95": 18.5,
+      "max": 42346.2
+     },
+     "js": {
+      "avg": 1.6,
+      "p95": 5.2
+     },
+     "render": {
+      "avg": 649,
+      "p95": 16.9
+     },
+     "calls": {
+      "avg": 148,
+      "max": 152
+     },
+     "trisK": {
+      "avg": 68.7,
+      "max": 69.4
+     },
+     "obstacles": {
+      "avg": 5,
+      "max": 5
+     },
+     "spikeFirst10Ms": 17.4,
+     "endedIn": "run"
+    },
+    "extended": {
+     "frames": 120,
+     "cpuFrameMs": {
+      "avg": 363.9,
+      "p50": 8.3,
+      "p95": 24.6,
+      "max": 42562.5
+     },
+     "js": {
+      "avg": 0.5,
+      "p95": 1.7
+     },
+     "render": {
+      "avg": 363.4,
+      "p95": 20.9
+     },
+     "calls": {
+      "avg": 138,
+      "max": 154
+     },
+     "trisK": {
+      "avg": 64.1,
+      "max": 70.4
+     },
+     "obstacles": {
+      "avg": 5,
+      "max": 9
+     },
+     "spikeFirst10Ms": 42562.5,
+     "endedIn": "run",
+     "playedSeconds": 60
+    },
+    "heavy": {
+     "frames": 18,
+     "cpuFrameMs": {
+      "avg": 11.6,
+      "p50": 8.8,
+      "p95": 18.9,
+      "max": 31
+     },
+     "js": {
+      "avg": 0.2,
+      "p95": 0.3
+     },
+     "render": {
+      "avg": 11.4,
+      "p95": 18.6
+     },
+     "calls": {
+      "avg": 143,
+      "max": 152
+     },
+     "trisK": {
+      "avg": 65.8,
+      "max": 70.4
+     },
+     "obstacles": {
+      "avg": 7.2,
+      "max": 9
+     },
+     "spikeFirst10Ms": 18.4,
+     "endedIn": "run"
+    }
+   },
+   "presetSwitch": [
+    [
+     "low",
+     173,
+     41,
+     113
+    ],
+    [
+     "medium",
+     174,
+     53,
+     118
+    ],
+    [
+     "high",
+     174,
+     65,
+     119
+    ],
+    [
+     "low",
+     173,
+     63,
+     119
+    ],
+    [
+     "medium",
+     174,
+     75,
+     119
+    ],
+    [
+     "high",
+     174,
+     87,
+     119
+    ]
+   ],
+   "pageErrors": []
+  },
+  "medium": {
+   "loadMs": 9534,
+   "home": {
+    "frames": 20,
+    "cpuFrameMs": {
+     "avg": 9.7,
+     "p50": 6.3,
+     "p95": 26.2,
+     "max": 37.7
+    },
+    "js": {
+     "avg": 0.7,
+     "p95": 2.3
+    },
+    "render": {
+     "avg": 9,
+     "p95": 25.7
+    },
+    "calls": {
+     "avg": 118,
+     "max": 124
+    },
+    "trisK": {
+     "avg": 58.5,
+     "max": 58.6
+    },
+    "obstacles": {
+     "avg": 0,
+     "max": 0
+    },
+    "spikeFirst10Ms": 10.5,
+    "endedIn": "menu"
+   },
+   "start": {
+    "geometries": 119,
+    "textures": 36,
+    "programs": 109,
+    "heapMB": 32,
+    "dpr": 1.5,
+    "canvas": [
+     540,
+     960
+    ]
+   },
+   "end": {
+    "geometries": 207,
+    "textures": 45,
+    "programs": 118,
+    "heapMB": 33,
+    "dpr": 1.5,
+    "canvas": [
+     540,
+     960
+    ]
+   },
+   "scenarios": {
+    "normal": {
+     "frames": 30,
+     "cpuFrameMs": {
+      "avg": 276.5,
+      "p50": 15.4,
+      "p95": 43.6,
+      "max": 7759.2
+     },
+     "js": {
+      "avg": 5,
+      "p95": 11.5
+     },
+     "render": {
+      "avg": 271.5,
+      "p95": 29.1
+     },
+     "calls": {
+      "avg": 163,
+      "max": 166
+     },
+     "trisK": {
+      "avg": 63.2,
+      "max": 63.4
+     },
+     "obstacles": {
+      "avg": 5.4,
+      "max": 6
+     },
+     "spikeFirst10Ms": 7759.2,
+     "endedIn": "run"
+    },
+    "nitro": {
+     "frames": 30,
+     "cpuFrameMs": {
+      "avg": 1111.5,
+      "p50": 7.8,
+      "p95": 58.3,
+      "max": 32809.9
+     },
+     "js": {
+      "avg": 2.1,
+      "p95": 5.9
+     },
+     "render": {
+      "avg": 1109.4,
+      "p95": 55.9
+     },
+     "calls": {
+      "avg": 178,
+      "max": 179
+     },
+     "trisK": {
+      "avg": 65.2,
+      "max": 65.4
+     },
+     "obstacles": {
+      "avg": 6,
+      "max": 6
+     },
+     "spikeFirst10Ms": 32809.9,
+     "endedIn": "run"
+    },
+    "shield": {
+     "frames": 30,
+     "cpuFrameMs": {
+      "avg": 2953.1,
+      "p50": 2142,
+      "p95": 6258.9,
+      "max": 14091.8
+     },
+     "js": {
+      "avg": 2,
+      "p95": 4.3
+     },
+     "render": {
+      "avg": 2951.1,
+      "p95": 6257.9
+     },
+     "calls": {
+      "avg": 172,
+      "max": 177
+     },
+     "trisK": {
+      "avg": 66.6,
+      "max": 67
+     },
+     "obstacles": {
+      "avg": 6,
+      "max": 6
+     },
+     "spikeFirst10Ms": 14091.8,
+     "endedIn": "run"
+    },
+    "nitro+shield": {
+     "frames": 30,
+     "cpuFrameMs": {
+      "avg": 3080.3,
+      "p50": 914.4,
+      "p95": 7939.6,
+      "max": 38380.5
+     },
+     "js": {
+      "avg": 3.1,
+      "p95": 12
+     },
+     "render": {
+      "avg": 3077.1,
+      "p95": 7927.6
+     },
+     "calls": {
+      "avg": 171,
+      "max": 173
+     },
+     "trisK": {
+      "avg": 66.7,
+      "max": 66.9
+     },
+     "obstacles": {
+      "avg": 6.2,
+      "max": 7
+     },
+     "spikeFirst10Ms": 38380.5,
+     "endedIn": "run"
+    },
+    "jump": {
+     "frames": 72,
+     "cpuFrameMs": {
+      "avg": 1543.2,
+      "p50": 1546.9,
+      "p95": 2977.5,
+      "max": 8637.1
+     },
+     "js": {
+      "avg": 3,
+      "p95": 7.3
+     },
+     "render": {
+      "avg": 1540.1,
+      "p95": 2973.2
+     },
+     "calls": {
+      "avg": 176,
+      "max": 179
+     },
+     "trisK": {
+      "avg": 66.8,
+      "max": 67.5
+     },
+     "obstacles": {
+      "avg": 5.5,
+      "max": 6
+     },
+     "spikeFirst10Ms": 1878.7,
+     "endedIn": "run"
+    },
+    "extended": {
+     "frames": 120,
+     "cpuFrameMs": {
+      "avg": 2314.1,
+      "p50": 1636.6,
+      "p95": 7067.2,
+      "max": 38972.7
+     },
+     "js": {
+      "avg": 0.7,
+      "p95": 2.4
+     },
+     "render": {
+      "avg": 2313.4,
+      "p95": 7066.9
+     },
+     "calls": {
+      "avg": 166,
+      "max": 191
+     },
+     "trisK": {
+      "avg": 66.2,
+      "max": 72.7
+     },
+     "obstacles": {
+      "avg": 5,
+      "max": 8
+     },
+     "spikeFirst10Ms": 38972.7,
+     "endedIn": "run",
+     "playedSeconds": 60
+    },
+    "heavy": {
+     "frames": 18,
+     "cpuFrameMs": {
+      "avg": 5470.9,
+      "p50": 2773.3,
+      "p95": 22702.9,
+      "max": 25769.1
+     },
+     "js": {
+      "avg": 0.4,
+      "p95": 0.9
+     },
+     "render": {
+      "avg": 5470.5,
+      "p95": 22702.8
+     },
+     "calls": {
+      "avg": 167,
+      "max": 176
+     },
+     "trisK": {
+      "avg": 66.8,
+      "max": 69.7
+     },
+     "obstacles": {
+      "avg": 6.4,
+      "max": 8
+     },
+     "spikeFirst10Ms": 25769.1,
+     "endedIn": "run"
+    }
+   },
+   "presetSwitch": [
+    [
+     "low",
+     206,
+     43,
+     120
+    ],
+    [
+     "medium",
+     207,
+     55,
+     120
+    ],
+    [
+     "high",
+     207,
+     67,
+     121
+    ],
+    [
+     "low",
+     206,
+     65,
+     121
+    ],
+    [
+     "medium",
+     207,
+     77,
+     121
+    ],
+    [
+     "high",
+     207,
+     89,
+     121
+    ]
+   ],
+   "pageErrors": []
+  },
+  "high": {
+   "loadMs": 19969,
+   "home": {
+    "frames": 20,
+    "cpuFrameMs": {
+     "avg": 8.4,
+     "p50": 7.6,
+     "p95": 14.3,
+     "max": 15.6
+    },
+    "js": {
+     "avg": 0.6,
+     "p95": 0.8
+    },
+    "render": {
+     "avg": 7.8,
+     "p95": 13.3
+    },
+    "calls": {
+     "avg": 114,
+     "max": 117
+    },
+    "trisK": {
+     "avg": 59,
+     "max": 59.2
+    },
+    "obstacles": {
+     "avg": 0,
+     "max": 0
+    },
+    "spikeFirst10Ms": 14.3,
+    "endedIn": "menu"
+   },
+   "start": {
+    "geometries": 119,
+    "textures": 47,
+    "programs": 110,
+    "heapMB": 32,
+    "dpr": 2,
+    "canvas": [
+     720,
+     1280
+    ]
+   },
+   "end": {
+    "geometries": 200,
+    "textures": 57,
+    "programs": 119,
+    "heapMB": 33,
+    "dpr": 2,
+    "canvas": [
+     720,
+     1280
+    ]
+   },
+   "scenarios": {
+    "normal": {
+     "frames": 30,
+     "cpuFrameMs": {
+      "avg": 1667.2,
+      "p50": 21.2,
+      "p95": 49.8,
+      "max": 49228.2
+     },
+     "js": {
+      "avg": 3.7,
+      "p95": 7.6
+     },
+     "render": {
+      "avg": 1663.4,
+      "p95": 44.9
+     },
+     "calls": {
+      "avg": 162,
+      "max": 167
+     },
+     "trisK": {
+      "avg": 63.7,
+      "max": 64.1
+     },
+     "obstacles": {
+      "avg": 4.1,
+      "max": 5
+     },
+     "spikeFirst10Ms": 49228.2,
+     "endedIn": "run"
+    },
+    "nitro": {
+     "frames": 30,
+     "cpuFrameMs": {
+      "avg": 4293,
+      "p50": 9.3,
+      "p95": 45.6,
+      "max": 76549.5
+     },
+     "js": {
+      "avg": 3.4,
+      "p95": 9.1
+     },
+     "render": {
+      "avg": 4289.6,
+      "p95": 22.8
+     },
+     "calls": {
+      "avg": 172,
+      "max": 172
+     },
+     "trisK": {
+      "avg": 66,
+      "max": 66.2
+     },
+     "obstacles": {
+      "avg": 5,
+      "max": 5
+     },
+     "spikeFirst10Ms": 76549.5,
+     "endedIn": "run"
+    },
+    "shield": {
+     "frames": 30,
+     "cpuFrameMs": {
+      "avg": 7092.8,
+      "p50": 5268.7,
+      "p95": 11699.3,
+      "max": 44593.5
+     },
+     "js": {
+      "avg": 3,
+      "p95": 7.3
+     },
+     "render": {
+      "avg": 7089.8,
+      "p95": 11695.2
+     },
+     "calls": {
+      "avg": 171,
+      "max": 174
+     },
+     "trisK": {
+      "avg": 67.7,
+      "max": 71.4
+     },
+     "obstacles": {
+      "avg": 5.1,
+      "max": 6
+     },
+     "spikeFirst10Ms": 11699.3,
+     "endedIn": "run"
+    },
+    "nitro+shield": {
+     "frames": 30,
+     "cpuFrameMs": {
+      "avg": 6235.9,
+      "p50": 387.9,
+      "p95": 27749.5,
+      "max": 68298.7
+     },
+     "js": {
+      "avg": 3.9,
+      "p95": 9.4
+     },
+     "render": {
+      "avg": 6232,
+      "p95": 27747.9
+     },
+     "calls": {
+      "avg": 174,
+      "max": 176
+     },
+     "trisK": {
+      "avg": 71.3,
+      "max": 71.4
+     },
+     "obstacles": {
+      "avg": 6,
+      "max": 6
+     },
+     "spikeFirst10Ms": 68298.7,
+     "endedIn": "run"
+    },
+    "jump": {
+     "frames": 72,
+     "cpuFrameMs": {
+      "avg": 7222.4,
+      "p50": 6695.6,
+      "p95": 12606.5,
+      "max": 18232.6
+     },
+     "js": {
+      "avg": 5.8,
+      "p95": 20.7
+     },
+     "render": {
+      "avg": 7216.6,
+      "p95": 12605.1
+     },
+     "calls": {
+      "avg": 176,
+      "max": 180
+     },
+     "trisK": {
+      "avg": 71.4,
+      "max": 72
+     },
+     "obstacles": {
+      "avg": 5.9,
+      "max": 6
+     },
+     "spikeFirst10Ms": 18232.6,
+     "endedIn": "run"
+    },
+    "extended": {
+     "frames": 120,
+     "cpuFrameMs": {
+      "avg": 5749.2,
+      "p50": 4122.9,
+      "p95": 10236.8,
+      "max": 100998
+     },
+     "js": {
+      "avg": 0.8,
+      "p95": 5
+     },
+     "render": {
+      "avg": 5748.4,
+      "p95": 10236.4
+     },
+     "calls": {
+      "avg": 167,
+      "max": 183
+     },
+     "trisK": {
+      "avg": 67.5,
+      "max": 73.3
+     },
+     "obstacles": {
+      "avg": 5.7,
+      "max": 8
+     },
+     "spikeFirst10Ms": 92052.8,
+     "endedIn": "run",
+     "playedSeconds": 60
+    },
+    "heavy": {
+     "frames": 18,
+     "cpuFrameMs": {
+      "avg": 5584.7,
+      "p50": 4737.1,
+      "p95": 9736.1,
+      "max": 10236.8
+     },
+     "js": {
+      "avg": 1.4,
+      "p95": 5.1
+     },
+     "render": {
+      "avg": 5583.4,
+      "p95": 9735.8
+     },
+     "calls": {
+      "avg": 169,
+      "max": 178
+     },
+     "trisK": {
+      "avg": 69.3,
+      "max": 73.3
+     },
+     "obstacles": {
+      "avg": 7.3,
+      "max": 8
+     },
+     "spikeFirst10Ms": 10236.8,
+     "endedIn": "run"
+    }
+   },
+   "presetSwitch": [
+    [
+     "low",
+     199,
+     55,
+     121
+    ],
+    [
+     "medium",
+     200,
+     67,
+     121
+    ],
+    [
+     "high",
+     200,
+     79,
+     121
+    ],
+    [
+     "low",
+     199,
+     77,
+     121
+    ],
+    [
+     "medium",
+     200,
+     89,
+     121
+    ],
+    [
+     "high",
+     200,
+     101,
+     121
+    ]
+   ],
+   "pageErrors": []
+  }
+ }
+}
