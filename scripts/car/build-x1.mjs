@@ -13,10 +13,13 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
-// options: --cut=0.06 (length cut, default = LENGTH_CUT in the builder), --out=path
+// options: --cut=0.06 (length cut, default = LENGTH_CUT in the builder), --out=path,
+//          --detail=mobile (default: the game model) | master (high-detail master, same silhouette →
+//          assets-src/x1/xwave-x1-master.glb unless --out is given)
 const arg = (k) => process.argv.find((a) => a.startsWith(`--${k}=`))?.split('=')[1];
 const cutArg = arg('cut');
-const out = arg('out') ?? join(root, 'src/assets/models/xwave-x1.glb');
+const detail = arg('detail') ?? 'mobile';
+const out = arg('out') ?? join(root, detail === 'master' ? 'assets-src/x1/xwave-x1-master.glb' : 'src/assets/models/xwave-x1.glb');
 
 const res = await build({
   entryPoints: [join(root, 'scripts/car/x1-builder.ts')],
@@ -41,9 +44,9 @@ page.on('console', (m) => console.log('[page]', m.text()));
 page.on('pageerror', (e) => console.log('[page error]', e.message));
 await page.setContent('<!doctype html><html><body></body></html>');
 await page.addScriptTag({ content: js });
-const info = await page.evaluate(async (cut) => {
+const info = await page.evaluate(async ([cut, detail]) => {
   const x = window.__x1;
-  const opts = cut === undefined ? {} : { cut: +cut };
+  const opts = cut === undefined ? { detail } : { cut: +cut, detail };
   const buf = new Uint8Array(await x.exportX1(opts));
   let s = '';
   for (let i = 0; i < buf.length; i += 0x8000) s += String.fromCharCode(...buf.subarray(i, i + 0x8000));
@@ -60,7 +63,7 @@ const info = await page.evaluate(async (cut) => {
   });
   const box = new x.THREE.Box3().setFromObject(r);
   return { b64: btoa(s), tris, meshes, min: box.min.toArray(), max: box.max.toArray() };
-}, cutArg);
+}, [cutArg, detail]);
 await browser.close();
 mkdirSync(dirname(out), { recursive: true });
 const bytes = Buffer.from(info.b64, 'base64');

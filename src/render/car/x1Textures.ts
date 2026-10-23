@@ -77,3 +77,28 @@ export function x1TreadCanvas(): Canvas {
   }
   return c;
 }
+
+/**
+ * v4.3 (Step 06 PBR): metallic-flake normal map for the paint's base coat (the clearcoat above stays
+ * smooth). Tangent-space normals: flat background (128, 128, 255) with ~1,400 tiny flakes, each tilted
+ * a little in a random direction — sparkle up close, averages out to flat in the mip chain (no
+ * shimmer at distance). Deterministic; plain fillRect calls only (works with the native canvas).
+ */
+export function x1FlakeCanvas(): Canvas {
+  const [c, g] = canvas(128, 128);
+  g.fillStyle = 'rgb(128,128,255)';
+  g.fillRect(0, 0, 128, 128);
+  let s = 1234567;
+  const rnd = () => ((s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  for (let i = 0; i < 1400; i++) {
+    const a = rnd() * Math.PI * 2;
+    const t = 0.25 + rnd() * 0.45; // tilt
+    const nx = Math.cos(a) * t;
+    const ny = Math.sin(a) * t;
+    const nz = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny));
+    g.fillStyle = `rgb(${Math.round((nx * 0.5 + 0.5) * 255)},${Math.round((ny * 0.5 + 0.5) * 255)},${Math.round((nz * 0.5 + 0.5) * 255)})`;
+    const sz = rnd() < 0.7 ? 1 : 2;
+    g.fillRect(Math.floor(rnd() * 128), Math.floor(rnd() * 128), sz, sz);
+  }
+  return c;
+}

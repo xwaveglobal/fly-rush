@@ -283,6 +283,9 @@ export const RENDER = {
   /** model (real-size metres) → game size. 0.76 ≈ 1.66 m wide: close to the 1.4 m hitbox, and the rear
    *  reads about the same size on screen as the old rear image did from the unchanged chase camera */
   carScale: 0.76,
+  /** v4.3 (Step 06 PBR): paint metallic-flake normal map strength and tiles per metre (MeshCar) */
+  paintFlake: 0.12,
+  paintFlakeRepeat: 7,
   /** wheels: max visible spin per frame (rad) — more would strobe (10 spokes); speed above it reads via the blur disc */
   wheelMaxStep: 0.3,
   /** speed (m/s) where the wheel blur disc starts / is full */

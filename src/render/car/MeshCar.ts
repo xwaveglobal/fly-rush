@@ -6,7 +6,7 @@ import { assetBytes, parseGlb } from './glbParse.ts';
 import { ease, spoilerUpdate, wheelStep, type SpoilerState } from './carMotion.ts';
 import { ShieldAura, installCarFx, makeCarFxUniforms } from './CarFx.ts';
 import { CAR_HALF } from '../../config.ts';
-import { x1BadgeCanvas, x1CarbonCanvas, x1TreadCanvas } from './x1Textures.ts';
+import { x1BadgeCanvas, x1CarbonCanvas, x1FlakeCanvas, x1TreadCanvas } from './x1Textures.ts';
 import x1Url from '../../assets/models/xwave-x1.glb';
 
 /** what the 3D car needs from a colourway (subset of VehicleSkin) */
@@ -173,6 +173,14 @@ export class MeshCar {
     if (carbon) carbon.map = tex(x1CarbonCanvas());
     const tyre = this.mats.get('X1_Tyre');
     if (tyre) tyre.map = tex(x1TreadCanvas());
+    // v4.3 (Step 06 PBR): metallic flake in the base coat under the smooth clearcoat (UVs in metres)
+    const paint = this.mats.get('X1_Paint');
+    if (paint) {
+      const ft = tex(x1FlakeCanvas(), false);
+      ft.repeat.set(RENDER.paintFlakeRepeat, RENDER.paintFlakeRepeat);
+      paint.normalMap = ft;
+      paint.normalScale.set(RENDER.paintFlake, RENDER.paintFlake);
+    }
     // lights: exact colours (no tone-map hue shift to orange) and strong enough to bloom
     for (const [name, k] of [['X1_RearLED', RENDER.ledGlow], ['X1_RearLEDCore', RENDER.ledGlow], ['X1_RedMarker', RENDER.markerGlow], ['X1_Headlight', 0], ['X1_SeatTrim', 0], ['X1_Badge', 0]] as const) {
       const m = this.mats.get(name);

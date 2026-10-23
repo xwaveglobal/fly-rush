@@ -1,0 +1,131 @@
+{
+ "_note": "Step 06 reference set. rect = GrabCut box around the car (pixels of the original file). anchor = how the render is aligned to the reference: 'bbox' (uniform scale on the bbox height, centred) or 'left' (side view cropped at the right edge: scale on height, align the nose and the ground). AI concept images (01\u201305) are not orthographic and not consistent with each other; the master is authoritative.",
+ "_ground_note": "ground = tyre contact row; everything below it (shadow, wet-road reflection) is removed from the reference silhouette",
+ "rear0": {
+  "file": "assets-src/x1/XWAVE_REAR_0_MASTER_DO_NOT_OVERRIDE.png",
+  "rect": [
+   8,
+   240,
+   1306,
+   990
+  ],
+  "anchor": "bbox",
+  "authority": 1,
+  "label": "Rear 0\u00b0 \u2014 ORIGINAL MASTER (authoritative)",
+  "erase": [
+   [
+    [
+     0,
+     360
+    ],
+    [
+     281,
+     360
+    ],
+    [
+     200,
+     460
+    ],
+    [
+     0,
+     460
+    ]
+   ],
+   [
+    [
+     1032,
+     360
+    ],
+    [
+     1312,
+     360
+    ],
+    [
+     1312,
+     460
+    ],
+    [
+     1112,
+     460
+    ]
+   ]
+  ],
+  "erase_note": "side mirrors removed from the reference silhouette: the approved X1 is mirrorless (owner decision, Step 03.1); the master predates it",
+  "ground": 956
+ },
+ "rl45": {
+  "file": "assets-src/step06-pbr-references/01_rear_three_quarter.png",
+  "rect": [
+   18,
+   60,
+   394,
+   230
+  ],
+  "anchor": "bbox",
+  "authority": 3,
+  "label": "Rear-left 45\u00b0 \u2014 concept 01"
+ },
+ "rr45": {
+  "file": "assets-src/step06-pbr-references/01_rear_three_quarter.png",
+  "mirror": true,
+  "rect": [
+   13,
+   60,
+   389,
+   230
+  ],
+  "anchor": "bbox",
+  "authority": 3,
+  "label": "Rear-right 30\u201345\u00b0 \u2014 concept 01 mirrored (the car is symmetric; no rear-right reference exists)"
+ },
+ "side90": {
+  "file": "assets-src/step06-pbr-references/04_side_profile.png",
+  "rect": [
+   12,
+   100,
+   377,
+   224
+  ],
+  "anchor": "left",
+  "authority": 3,
+  "label": "Side 90\u00b0 \u2014 concept 04 (cropped at the tail)",
+  "ground": 219
+ },
+ "front0": {
+  "file": "assets-src/step06-pbr-references/03_front_straight.png",
+  "rect": [
+   22,
+   78,
+   256,
+   214
+  ],
+  "anchor": "bbox",
+  "authority": 3,
+  "label": "Front 0\u00b0 \u2014 concept 03",
+  "ground": 200
+ },
+ "fl45": {
+  "file": "assets-src/step06-pbr-references/02_front_three_quarter.png",
+  "rect": [
+   22,
+   60,
+   372,
+   217
+  ],
+  "anchor": "bbox",
+  "authority": 3,
+  "label": "Front 45\u00b0 \u2014 concept 02"
+ },
+ "top": {
+  "file": "assets-src/step06-pbr-references/05_top_view.png",
+  "rect": [
+   95,
+   16,
+   209,
+   234
+  ],
+  "anchor": "bbox",
+  "authority": 3,
+  "label": "Top \u2014 concept 05"
+ }
+}

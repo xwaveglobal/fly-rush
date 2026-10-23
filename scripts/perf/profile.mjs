@@ -134,8 +134,8 @@ for (const q of ['low', 'medium', 'high']) {
   await run('shield', () => { const r = window.__game.run; r.shield = true; r.shieldHits = 9; r.shieldT = 0; }, () => { window.__game.run.shield = false; });
   await run('nitro+shield', () => { const r = window.__game.run; r.turboT = 30; r.shield = true; r.shieldHits = 9; r.shieldT = 0; }, () => { const r = window.__game.run; r.turboT = 0; r.shield = false; });
   await run('jump', () => { window.__game.world.player.input('up'); }, null, 72);
-  // extended: 60 s of play, every 6th frame rendered; heavy = the 15 % of those frames with the most obstacles
-  const ext = await sample(page, 3600, 6);
+  // extended: 60 s of play, every 30th frame rendered (--every); heavy = the 15 % of those frames with the most obstacles
+  const ext = await sample(page, 3600, +arg('every', 30));
   scen.extended = { ...stats(ext), playedSeconds: 60 };
   const byObs = [...ext].sort((a, b) => b.obs - a.obs).slice(0, Math.max(5, Math.round(ext.length * 0.15)));
   scen.heavy = stats(byObs);

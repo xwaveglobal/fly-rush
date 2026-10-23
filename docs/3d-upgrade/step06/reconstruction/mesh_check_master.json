@@ -1,0 +1,795 @@
+{
+ "file": "assets-src/x1/xwave-x1-master.glb",
+ "total": {
+  "meshes": 41,
+  "verts": 69524,
+  "tris": 106497,
+  "degenerate": 0,
+  "zeroNormals": 0,
+  "nonUnit": 0,
+  "flipped": 464,
+  "noUv": 0,
+  "uvNaN": 0
+ },
+ "meshes": [
+  {
+   "mesh": "Body_Paint",
+   "material": "X1_Paint",
+   "verts": 40773,
+   "tris": 64104,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 39,
+   "normalsChecked": 192312,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -2.29,
+    -2.3,
+    2.2,
+    2.2
+   ]
+  },
+  {
+   "mesh": "Interior",
+   "material": "X1_Interior",
+   "verts": 4590,
+   "tris": 8608,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 25824,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -0.72,
+    -0.99,
+    0.72,
+    1.93
+   ]
+  },
+  {
+   "mesh": "Glass_Canopy",
+   "material": "X1_Glass",
+   "verts": 8645,
+   "tris": 16685,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 425,
+   "normalsChecked": 50055,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -1.05,
+    -1.05,
+    1.88,
+    1.88
+   ]
+  },
+  {
+   "mesh": "Body_GlossBlack",
+   "material": "X1_GlossBlack",
+   "verts": 48,
+   "tris": 24,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 72,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "mesh": "Rear_LEDHousing",
+   "material": "X1_LEDHousing",
+   "verts": 204,
+   "tris": 68,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 204,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -0.95,
+    0.57,
+    0.95,
+    1
+   ]
+  },
+  {
+   "mesh": "Rear_LED",
+   "material": "X1_RearLED",
+   "verts": 120,
+   "tris": 40,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 120,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -0.94,
+    0.57,
+    0.94,
+    1
+   ]
+  },
+  {
+   "mesh": "Rear_LEDCore",
+   "material": "X1_RearLEDCore",
+   "verts": 36,
+   "tris": 12,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 36,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -0.85,
+    0.61,
+    0.85,
+    1
+   ]
+  },
+  {
+   "mesh": "Rear_BadgePanel",
+   "material": "X1_GlossBlack",
+   "verts": 204,
+   "tris": 68,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 204,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -0.87,
+    0.49,
+    0.87,
+    1
+   ]
+  },
+  {
+   "mesh": "Badge_XWAVE",
+   "material": "X1_Badge",
+   "verts": 4,
+   "tris": 2,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 6,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "mesh": "Rear_LowerBumper",
+   "material": "X1_SatinBlack",
+   "verts": 2112,
+   "tris": 704,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 2112,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -0.75,
+    0.12,
+    0.75,
+    1.01
+   ]
+  },
+  {
+   "mesh": "Diffuser",
+   "material": "X1_Carbon",
+   "verts": 132,
+   "tris": 66,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 198,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -2.5,
+    -0.47,
+    2.5,
+    1
+   ]
+  },
+  {
+   "mesh": "Rear_Markers",
+   "material": "X1_RedMarker",
+   "verts": 96,
+   "tris": 36,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 108,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -0.69,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "mesh": "Light_RoofStop",
+   "material": "X1_RearLED",
+   "verts": 24,
+   "tris": 12,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 36,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "mesh": "Front_Splitter",
+   "material": "X1_SatinBlack",
+   "verts": 348,
+   "tris": 112,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 336,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -2.27,
+    -0.18,
+    0.15,
+    1
+   ]
+  },
+  {
+   "mesh": "Front_Intake",
+   "material": "X1_GlossBlack",
+   "verts": 252,
+   "tris": 92,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 276,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -0.68,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "mesh": "Front_IntakeRecess",
+   "material": "X1_WheelLiner",
+   "verts": 36,
+   "tris": 12,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 36,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -0.55,
+    0.18,
+    0.55,
+    1
+   ]
+  },
+  {
+   "mesh": "Light_HeadHousing",
+   "material": "X1_LightHousing",
+   "verts": 88,
+   "tris": 80,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 240,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -0.58,
+    -2.21,
+    0.58,
+    -1.96
+   ]
+  },
+  {
+   "mesh": "Light_Head",
+   "material": "X1_Headlight",
+   "verts": 96,
+   "tris": 80,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 240,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -0.56,
+    -2.18,
+    0.56,
+    -1.95
+   ]
+  },
+  {
+   "mesh": "Light_HeadCore",
+   "material": "X1_HeadlightCore",
+   "verts": 56,
+   "tris": 48,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 144,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -0.49,
+    -2.16,
+    0.49,
+    -2.03
+   ]
+  },
+  {
+   "mesh": "Body_PanelGaps",
+   "material": "X1_PanelGap",
+   "verts": 1296,
+   "tris": 1256,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 3768,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -2.23,
+    -2.23,
+    0.88,
+    0.74
+   ]
+  },
+  {
+   "mesh": "Body_SideSkirt",
+   "material": "X1_SatinBlack",
+   "verts": 144,
+   "tris": 140,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 420,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -0.92,
+    0.16,
+    0.83,
+    0.31
+   ]
+  },
+  {
+   "mesh": "Wheel_Liners",
+   "material": "X1_WheelLiner",
+   "verts": 352,
+   "tris": 336,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 1008,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -1.01,
+    -1.65,
+    1.01,
+    1.57
+   ]
+  },
+  {
+   "mesh": "Spoiler",
+   "material": "X1_GlossBlack",
+   "verts": 72,
+   "tris": 24,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 72,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    -0.01,
+    0.34,
+    1
+   ]
+  },
+  {
+   "mesh": "Spoiler_Skirt",
+   "material": "X1_WheelLiner",
+   "verts": 96,
+   "tris": 36,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 108,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -0.2,
+    -0.2,
+    1,
+    1
+   ]
+  },
+  {
+   "mesh": "Spoiler_Lip",
+   "material": "X1_Chrome",
+   "verts": 24,
+   "tris": 12,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 36,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "mesh": "Tyre_FL",
+   "material": "X1_Tyre",
+   "verts": 1130,
+   "tris": 2016,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 6048,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    28,
+    1
+   ]
+  },
+  {
+   "mesh": "Rim_FL",
+   "material": "X1_Rim",
+   "verts": 1069,
+   "tris": 1304,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 3912,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "mesh": "Disc_FL",
+   "material": "X1_Disc",
+   "verts": 196,
+   "tris": 128,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 384,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "mesh": "Caliper_FL",
+   "material": "X1_Brake",
+   "verts": 24,
+   "tris": 12,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 36,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "mesh": "Tyre_FR",
+   "material": "X1_Tyre",
+   "verts": 1130,
+   "tris": 2016,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 6048,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    28,
+    1
+   ]
+  },
+  {
+   "mesh": "Rim_FR",
+   "material": "X1_Rim",
+   "verts": 1069,
+   "tris": 1304,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 3912,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "mesh": "Disc_FR",
+   "material": "X1_Disc",
+   "verts": 196,
+   "tris": 128,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 384,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "mesh": "Caliper_FR",
+   "material": "X1_Brake",
+   "verts": 24,
+   "tris": 12,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 36,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "mesh": "Tyre_RL",
+   "material": "X1_Tyre",
+   "verts": 1130,
+   "tris": 2016,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 6048,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    28,
+    1
+   ]
+  },
+  {
+   "mesh": "Rim_RL",
+   "material": "X1_Rim",
+   "verts": 1069,
+   "tris": 1304,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 3912,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "mesh": "Disc_RL",
+   "material": "X1_Disc",
+   "verts": 196,
+   "tris": 128,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 384,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "mesh": "Caliper_RL",
+   "material": "X1_Brake",
+   "verts": 24,
+   "tris": 12,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 36,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "mesh": "Tyre_RR",
+   "material": "X1_Tyre",
+   "verts": 1130,
+   "tris": 2016,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 6048,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    28,
+    1
+   ]
+  },
+  {
+   "mesh": "Rim_RR",
+   "material": "X1_Rim",
+   "verts": 1069,
+   "tris": 1304,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 3912,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "mesh": "Disc_RR",
+   "material": "X1_Disc",
+   "verts": 196,
+   "tris": 128,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 384,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "mesh": "Caliper_RR",
+   "material": "X1_Brake",
+   "verts": 24,
+   "tris": 12,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 36,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    0,
+    0,
+    1,
+    1
+   ]
+  }
+ ]
+}

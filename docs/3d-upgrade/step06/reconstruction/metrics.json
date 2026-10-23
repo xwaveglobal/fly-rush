@@ -1,0 +1,300 @@
+{
+ "before": {
+  "rear0": {
+   "view": "rear0",
+   "label": "Rear 0\u00b0 \u2014 ORIGINAL MASTER (authoritative)",
+   "iou": 0.921,
+   "edge_mean_pct_h": 2.49,
+   "edge_p95_pct_h": 7.45,
+   "aspect_ref": 1.807,
+   "aspect_render": 1.779,
+   "band_width_diff_pct": [
+    -8.8,
+    -7.2,
+    3.1,
+    1.3,
+    0.9,
+    -0.3,
+    -1.4,
+    -1.6,
+    -1.6,
+    -0.9
+   ]
+  },
+  "rl45": {
+   "view": "rl45",
+   "label": "Rear-left 45\u00b0 \u2014 concept 01",
+   "iou": 0.789,
+   "edge_mean_pct_h": 6.47,
+   "edge_p95_pct_h": 16.44,
+   "aspect_ref": 2.286,
+   "aspect_render": 2.255,
+   "band_width_diff_pct": [
+    13.9,
+    -17.7,
+    -12.5,
+    -2.2,
+    -1.4,
+    -2.2,
+    -3.8,
+    -19.8,
+    -23.4,
+    -11.7
+   ]
+  },
+  "rr45": {
+   "view": "rr45",
+   "label": "Rear-right 30\u201345\u00b0 \u2014 concept 01 mirrored (the car is symmetric; no rear-right reference exists)",
+   "iou": 0.789,
+   "edge_mean_pct_h": 6.48,
+   "edge_p95_pct_h": 16.21,
+   "aspect_ref": 2.286,
+   "aspect_render": 2.255,
+   "band_width_diff_pct": [
+    13.9,
+    -17.9,
+    -12.8,
+    -1.9,
+    -1.4,
+    -1.9,
+    -3.5,
+    -20.1,
+    -23.4,
+    -12.0
+   ]
+  },
+  "side90": {
+   "view": "side90",
+   "label": "Side 90\u00b0 \u2014 concept 04 (cropped at the tail)",
+   "iou": 0.823,
+   "edge_mean_pct_h": 6.35,
+   "edge_p95_pct_h": 11.08,
+   "aspect_ref": null,
+   "aspect_render": null,
+   "band_width_diff_pct": [
+    -4.7,
+    -10.1,
+    -5.9,
+    0.8,
+    1.4,
+    -0.3,
+    -0.3,
+    1.1,
+    0.8,
+    -62.0
+   ]
+  },
+  "front0": {
+   "view": "front0",
+   "label": "Front 0\u00b0 \u2014 concept 03",
+   "iou": 0.824,
+   "edge_mean_pct_h": 5.3,
+   "edge_p95_pct_h": 12.38,
+   "aspect_ref": 1.896,
+   "aspect_render": 1.678,
+   "band_width_diff_pct": [
+    -14.7,
+    -12.4,
+    -17.9,
+    -20.2,
+    -12.4,
+    -11.0,
+    -11.0,
+    -11.5,
+    -11.0,
+    -11.0
+   ]
+  },
+  "fl45": {
+   "view": "fl45",
+   "label": "Front 45\u00b0 \u2014 concept 02",
+   "iou": 0.797,
+   "edge_mean_pct_h": 6.54,
+   "edge_p95_pct_h": 22.26,
+   "aspect_ref": 2.376,
+   "aspect_render": 2.383,
+   "band_width_diff_pct": [
+    -9.9,
+    8.1,
+    -15.2,
+    -1.8,
+    5.7,
+    8.4,
+    10.4,
+    6.0,
+    -4.8,
+    -20.9
+   ]
+  },
+  "top": {
+   "view": "top",
+   "label": "Top \u2014 concept 05",
+   "iou": 0.905,
+   "edge_mean_pct_h": 1.47,
+   "edge_p95_pct_h": 3.23,
+   "aspect_ref": 0.505,
+   "aspect_render": 0.495,
+   "band_width_diff_pct": [
+    6.7,
+    7.7,
+    7.7,
+    7.7,
+    0.0,
+    -5.8,
+    -10.6,
+    -10.6,
+    -10.6,
+    -3.8
+   ]
+  }
+ },
+ "after": {
+  "rear0": {
+   "view": "rear0",
+   "label": "Rear 0\u00b0 \u2014 ORIGINAL MASTER (authoritative)",
+   "iou": 0.935,
+   "edge_mean_pct_h": 2.06,
+   "edge_p95_pct_h": 7.45,
+   "aspect_ref": 1.807,
+   "aspect_render": 1.818,
+   "band_width_diff_pct": [
+    -0.1,
+    -0.6,
+    1.8,
+    3.8,
+    3.2,
+    1.9,
+    0.8,
+    0.6,
+    0.5,
+    1.3
+   ]
+  },
+  "rl45": {
+   "view": "rl45",
+   "label": "Rear-left 45\u00b0 \u2014 concept 01",
+   "iou": 0.778,
+   "edge_mean_pct_h": 6.94,
+   "edge_p95_pct_h": 15.42,
+   "aspect_ref": 2.286,
+   "aspect_render": 2.311,
+   "band_width_diff_pct": [
+    17.9,
+    -10.6,
+    -12.8,
+    0.5,
+    1.1,
+    0.5,
+    -5.2,
+    -18.8,
+    -22.3,
+    -9.5
+   ]
+  },
+  "rr45": {
+   "view": "rr45",
+   "label": "Rear-right 30\u201345\u00b0 \u2014 concept 01 mirrored (the car is symmetric; no rear-right reference exists)",
+   "iou": 0.779,
+   "edge_mean_pct_h": 6.94,
+   "edge_p95_pct_h": 15.34,
+   "aspect_ref": 2.286,
+   "aspect_render": 2.311,
+   "band_width_diff_pct": [
+    17.9,
+    -10.6,
+    -13.0,
+    0.5,
+    1.1,
+    0.8,
+    -4.9,
+    -18.5,
+    -22.3,
+    -9.2
+   ]
+  },
+  "side90": {
+   "view": "side90",
+   "label": "Side 90\u00b0 \u2014 concept 04 (cropped at the tail)",
+   "iou": 0.861,
+   "edge_mean_pct_h": 4.97,
+   "edge_p95_pct_h": 10.23,
+   "aspect_ref": null,
+   "aspect_render": null,
+   "band_width_diff_pct": [
+    -1.4,
+    -4.2,
+    -3.6,
+    0.8,
+    0.6,
+    -1.4,
+    -0.8,
+    0.8,
+    1.1,
+    -62.3
+   ]
+  },
+  "front0": {
+   "view": "front0",
+   "label": "Front 0\u00b0 \u2014 concept 03",
+   "iou": 0.856,
+   "edge_mean_pct_h": 4.3,
+   "edge_p95_pct_h": 10.16,
+   "aspect_ref": 1.896,
+   "aspect_render": 1.713,
+   "band_width_diff_pct": [
+    -10.1,
+    -8.7,
+    -17.0,
+    -13.8,
+    -11.0,
+    -9.6,
+    -9.2,
+    -9.6,
+    -9.2,
+    -9.2
+   ]
+  },
+  "fl45": {
+   "view": "fl45",
+   "label": "Front 45\u00b0 \u2014 concept 02",
+   "iou": 0.809,
+   "edge_mean_pct_h": 6.35,
+   "edge_p95_pct_h": 24.38,
+   "aspect_ref": 2.376,
+   "aspect_render": 2.376,
+   "band_width_diff_pct": [
+    -9.0,
+    5.7,
+    -1.8,
+    -1.8,
+    3.9,
+    8.4,
+    10.1,
+    7.5,
+    -3.0,
+    -15.2
+   ]
+  },
+  "top": {
+   "view": "top",
+   "label": "Top \u2014 concept 05",
+   "iou": 0.905,
+   "edge_mean_pct_h": 1.47,
+   "edge_p95_pct_h": 3.25,
+   "aspect_ref": 0.505,
+   "aspect_render": 0.505,
+   "band_width_diff_pct": [
+    8.7,
+    9.6,
+    9.6,
+    9.6,
+    1.9,
+    -4.8,
+    -10.6,
+    -7.7,
+    -7.7,
+    -1.0
+   ]
+  }
+ }
+}

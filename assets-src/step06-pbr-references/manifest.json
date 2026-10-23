@@ -1,0 +1,28 @@
+{
+  "project": "Sky Roadster",
+  "step": "06",
+  "reference_type": "AI visual concepts only",
+  "panels": [
+    "01_rear_three_quarter.png",
+    "02_front_three_quarter.png",
+    "03_front_straight.png",
+    "04_side_profile.png",
+    "05_top_view.png",
+    "06_color_variants.png",
+    "07_material_swatches.png",
+    "08_front_bumper_detail.png",
+    "09_headlight_detail.png",
+    "10_rear_led_detail.png",
+    "11_wheel_brake.png",
+    "12_rear_diffuser.png",
+    "13_spoiler_open.png",
+    "14_spoiler_closed.png",
+    "15_underbody.png",
+    "16_roof_glass.png",
+    "17_panel_lines.png",
+    "18_night_lighting.png",
+    "19_motion_reflections.png",
+    "20_quality_presets.png",
+    "21_road_reflections.png"
+  ]
+}
