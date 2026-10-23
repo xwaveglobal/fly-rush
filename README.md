@@ -187,6 +187,13 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v4.1.0 — 3D XWAVE X1 (3D upgrade Step 02)
+
+- The player car is now a real 3D model (`src/assets/models/xwave-x1.glb`) instead of the studio rear image: spinning wheel assemblies, front-wheel steer, a sprung body that rolls on lane changes and dips on landing, emissive red LED blade / markers / XWAVE badge, nitro flames from the two rear sockets during Turbo and launch.
+- Model built by `npm run build:car` (scripts/car/), refined from the XWAVE_Car_3D_v1 blockout against the master rear image; v1 and the master are kept in `assets-src/x1/`.
+- Gameplay, hitboxes, camera, road and UI unchanged. `?car=sprite` shows the old rear image for comparison.
+- New test `npm run test:car`; preview shots with `npm run preview:car`. Details: `docs/3d-upgrade/05-step02-vehicle.md`.
+
 ## v4.0.1 — start of v4 (3D upgrade)
 
 v4 is developed on branch `v4.0.1`, starting from the H5 web game v2.3.0 (same gameplay, UI, accounts and cloud save). Goal: much better 3D graphics. No gameplay changes in this version.

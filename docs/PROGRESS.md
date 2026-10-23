@@ -4,6 +4,16 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-23 — v4.1.0: 3D upgrade Step 02 — 3D XWAVE X1
+
+**Done**: refined X1 model (scripted builder `scripts/car/x1-builder.ts` → `src/assets/models/xwave-x1.glb`, 31.9k tris), own GLB reader `src/render/car/glbParse.ts` (no GLTFLoader / fetch / TextDecoder for bundled data), `src/render/car/MeshCar.ts` wired into `Vehicle.ts` (rear image = fallback until loaded, `?car=sprite` to compare), `RENDER` block in `config.ts`, `tests/car.test.ts`. Typecheck, 8 test suites, esbuild builds pass; Vite build and TikTok native not run here. Report + screenshots: `docs/3d-upgrade/05-step02-vehicle.md`, `docs/3d-upgrade/step02/`.
+
+**Half-done / known**: glass too light + seats barely visible, rear tyres partly hidden, diffuser too light, no Phase Ghost / aura / crash shatter for the 3D car, nose extends ~0.8 m past the hitbox (visual only), GLB 949 KB unoptimised. Tag `v4.0.1` still needs pushing from the PC.
+
+**Next**: owner reviews Step 02 → Step 03 (rear chase camera). Do not start before approval.
+
+---
+
 ## 2026-10-23 — 3D upgrade Step 01: audit (no game code changed)
 
 **Done**: branch `feature/sky-roadster-3d-v4.1` (from `v4.0.1`), audit docs in `docs/3d-upgrade/` (01 source audit, 02 architecture, 03 roadmap, 04 baseline tests). Key finding: the car on screen is a 2D studio image (billboard in an overlay pass, `render/Vehicle.ts`), not a 3D model; a hidden procedural car and a GLB hook exist. `npm test` passes; typecheck/build could not run here (npm registry blocked in the cloud session).

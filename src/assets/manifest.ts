@@ -29,7 +29,7 @@ export interface AssetEntry {
 
 export const MANIFEST: AssetEntry[] = [
   // vehicles
-  { id: 'vehicle.xwave', category: 'vehicles', kind: 'model', procedural: 'render/Vehicle.ts#Vehicle', notes: 'Player car: XWAVE sports coupe (white body, dark rear fascia, red light blade). ~1.7w × 0.8h × 2.7l. Thruster pods are animated procedurally; a GLB replaces the shell only.' },
+  { id: 'vehicle.xwave', category: 'vehicles', kind: 'model', procedural: 'render/Vehicle.ts#Vehicle', notes: 'Player car. v4: the 3D XWAVE X1 is bundled at src/assets/models/xwave-x1.glb (built by scripts/car/build-x1.mjs, read by render/car/glbParse.ts, driven by render/car/MeshCar.ts). A `file` here still replaces only the old procedural shell.' },
   { id: 'vehicle.skins', category: 'vehicles', kind: 'texture', procedural: 'render/Vehicle.ts#SKINS', notes: 'Pearl, Midnight Volt, Aurora Bloom, Solar Flare colourways.' },
   // obstacles (hitboxes live in gameplay/ObstacleRules.ts)
   { id: 'obstacle.crate', category: 'obstacles', kind: 'model', procedural: 'render/ObstacleViews.ts#crate', notes: 'Hitbox 1.7 cube. Fly over or change lane.' },

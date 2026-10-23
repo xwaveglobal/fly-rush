@@ -1,0 +1,10 @@
+{
+  "model": "XWAVE_Car_3D_v1.glb",
+  "format": "glb",
+  "status": "procedural 3D blockout",
+  "reference_priority": "original rear image",
+  "orientation": "+Y up; -Z forward",
+  "mesh_count": 44,
+  "production_uv": false,
+  "native_tested": false
+}

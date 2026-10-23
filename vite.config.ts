@@ -10,6 +10,8 @@ export default defineConfig(async ({ mode }) => {
   }
   return {
     base: './',
+    // the 3D car model is fetched as a URL (inlined as a data URL in the single-file build)
+    assetsInclude: ['**/*.glb'],
     plugins,
     server: { host: true, port: 5173 },
     build: {

@@ -12,12 +12,15 @@
     "typecheck": "tsc --noEmit",
     "test:fairness": "node --experimental-transform-types --no-warnings tests/fairness.test.ts",
     "test:difficulty": "node --experimental-transform-types --no-warnings tests/difficulty.test.ts",
-    "test": "npm run test:fairness && npm run test:difficulty && npm run test:air && npm run test:exp && npm run test:phases && npm run test:bonus && npm run test:server",
+    "test": "npm run test:fairness && npm run test:difficulty && npm run test:air && npm run test:exp && npm run test:phases && npm run test:bonus && npm run test:server && npm run test:car",
     "test:air": "node --experimental-transform-types --no-warnings tests/airlane.test.ts",
     "test:exp": "node --experimental-transform-types --no-warnings tests/exp.test.ts",
     "test:phases": "node --experimental-transform-types --no-warnings tests/phases.test.ts",
     "test:bonus": "node --experimental-transform-types --no-warnings tests/bonus.test.ts",
-    "test:server": "node --experimental-transform-types --no-warnings tests/server.test.ts"
+    "test:server": "node --experimental-transform-types --no-warnings tests/server.test.ts",
+    "test:car": "node --experimental-transform-types --no-warnings tests/car.test.ts",
+    "build:car": "node scripts/car/build-x1.mjs",
+    "preview:car": "node scripts/car/preview-x1.mjs"
   },
   "dependencies": {
     "three": "0.169.0"

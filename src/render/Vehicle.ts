@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { Spring, clamp, clamp01, lerp } from '../core/math.ts';
-import { HEIGHT, TYRE } from '../config.ts';
+import { HEIGHT, RENDER, TYRE } from '../config.ts';
+import { MeshCar } from './car/MeshCar.ts';
 import { OVERLAY_LAYER } from './Renderer.ts';
 import { glowTexture, logoTexture, rearBadgeTexture, treadTexture, wheelBlurTexture, wheelFaceTexture } from './textures.ts';
 import { mergeByMaterial } from './merge.ts';
@@ -264,6 +265,11 @@ export class Vehicle {
   private customRear: THREE.Texture | null = null;
   private customAspect = 2;
   private static rearCache = new Map<string, { tex: THREE.Texture; aspect: number }>();
+  /** v4: the 3D X1 (null in sprite mode); meshOn = it is the car on screen */
+  private mesh: MeshCar | null = null;
+  private meshOn = false;
+  /** called once the 3D model has loaded and replaced the rear image (the game re-checks its cameras) */
+  onModelReady: (() => void) | null = null;
   /** camera the X1 sprite turns to face (set by the game) */
   camera: THREE.Camera | null = null;
   /** always show the high-res rear render (cameras stay behind the car) */
@@ -298,6 +304,7 @@ export class Vehicle {
     this.sprite.material.uniforms.fade.value = 1;
     this.boostSprite.material.uniforms.fade.value = 0;
     this.suspY = this.suspV = 0;
+    if (this.mesh) this.mesh.nitro = 0;
   }
   /** flash the dome when it absorbs a hit */
   shieldHit() {
@@ -635,6 +642,15 @@ export class Vehicle {
         o.receiveShadow = false;
       }
     });
+    // v4: the 3D XWAVE X1 (loads in the background; the rear image is shown until it is ready)
+    if (RENDER.car === 'mesh') {
+      this.mesh = new MeshCar();
+      this.squashG.add(this.mesh.root);
+      this.mesh.onReady = () => {
+        this.setSkin(this.skin, this.locked);
+        this.onModelReady?.();
+      };
+    }
     // remember every material's look so a locked (dark) preview can be undone
     this.root.traverse((o) => {
       const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
@@ -931,6 +947,7 @@ export class Vehicle {
 
   /** world position of jet i's nozzle (for energy particles) */
   jetWorld(i: number, out: THREE.Vector3) {
+    if (this.mesh && this.meshOn) return this.mesh.socketWorld(i, out);
     const j = this.jets[i % this.jets.length];
     out.set(0, -0.05, 0);
     return j.localToWorld(out);
@@ -1039,10 +1056,19 @@ export class Vehicle {
     // the original coupe shell is retired: the XWAVE X1 body ('gt') is built in buildShape()
     for (const p of this.shellParts) p.visible = false;
     for (const [k2, sg] of Object.entries(this.shapes)) sg!.visible = k2 === skin.shape;
+    // v4: the 3D X1 replaces the studio renders once it has loaded
+    this.meshOn = !!this.mesh?.ready && skin.shape === 'gt';
+    if (this.mesh) {
+      this.mesh.root.visible = this.meshOn;
+      if (this.meshOn) {
+        this.shapes.gt!.visible = false;
+        this.mesh.applySkin(skin, locked);
+      }
+    }
     // the GT colourways are drawn from the X1 studio renders (pearl = original paint)
-    this.spriteOn = skin.shape === 'gt';
+    this.spriteOn = skin.shape === 'gt' && !this.meshOn;
     this.sprite.visible = this.spriteOn;
-    this.contactShadow.visible = this.spriteOn;
+    this.contactShadow.visible = this.spriteOn || this.meshOn;
     if (this.spriteOn) {
       this.shapes.gt!.visible = false;
       const u = this.sprite.material.uniforms;
@@ -1069,9 +1095,9 @@ export class Vehicle {
       this.customAspect = c.aspect;
     }
     this.spriteView = -1; // re-pick the texture for this car
-    for (const pod of this.pods) pod.pivot.visible = !this.spriteOn;
-    for (const w of this.wings) w.visible = !this.spriteOn;
-    this.underglow.visible = !this.spriteOn;
+    for (const pod of this.pods) pod.pivot.visible = !this.spriteOn && !this.meshOn;
+    for (const w of this.wings) w.visible = !this.spriteOn && !this.meshOn;
+    this.underglow.visible = !this.spriteOn && !this.meshOn;
   }
 
   /** Procedural alternative bodies (same footprint, pods at the four corners). */
@@ -1274,6 +1300,7 @@ export class Vehicle {
   private ghostHid = false;
 
   resetPose() {
+    this.mesh?.resetPose();
     this.roll.snap(0);
     this.yaw.snap(0);
     this.pitchS.snap(0);
@@ -1326,7 +1353,8 @@ export class Vehicle {
     const lat = clamp(p.vx / laneSpeed, -1.4, 1.4);
     // on the road: a car-like lean and steer; in the air: the full 15° bank
     // the car stays upright and points straight down the road; only a light bank on lane changes
-    this.roll.target = lat * lerp(0.07, 0.11, p.air) + Math.sin(t * 1.7) * 0.008 * p.air;
+    // (3D car: almost no whole-car bank on the road — its sprung body rolls instead, wheels stay planted)
+    this.roll.target = lat * lerp(this.meshOn ? 0.015 : 0.07, 0.11, p.air) + Math.sin(t * 1.7) * 0.008 * p.air;
     this.yaw.target = -lat * 0.035;
     const vVel = dt > 0 ? (p.y - this.lastY) / dt : 0;
     this.lastY = p.y;
@@ -1424,7 +1452,7 @@ export class Vehicle {
     ug.color.copy(this.flameColor);
 
     // energy jets: only in the air (take-off → landing), stronger on rocket flights; steady, no flicker
-    const jetK = this.spriteOn ? Math.max(clamp01((p.air - 0.08) / 0.5), turbo > 0 ? clamp01(turbo * 2) : 0) : 0;
+    const jetK = this.spriteOn || this.meshOn ? Math.max(clamp01((p.air - 0.08) / 0.5), turbo > 0 ? clamp01(turbo * 2) : 0) : 0;
     this.jetG.visible = jetK > 0.01 && !this.locked;
     if (this.jetG.visible) {
       const len = (1.15 + p.engine * 0.6 + (p.isSuper ? 0.9 : 0) + (turbo > 0 && p.air < 0.4 ? 0.5 : 0)) * jetK;
@@ -1561,6 +1589,19 @@ export class Vehicle {
       this.suspY += this.suspV * dt;
       this.suspY = Math.max(-S.max, Math.min(S.max, this.suspY));
       this.sprite.position.y += this.suspY;
+    }
+    // ---- v4 3D car: wheels, sprung body, nitro flames from the rear sockets
+    if (this.mesh && this.meshOn) {
+      const ground = vy < 0.51 ? -vy : -0.51;
+      this.mesh.root.position.set(0, ground, 0);
+      this.mesh.nitro = Math.max(clamp01(this.boostK), turbo);
+      this.mesh.update(dt, speed, lat, p.air, this.locked);
+      // flight jets hang under the rear of the car; the contact shadow stays on the road
+      this.jetG.position.set(0, ground + 0.3, 0.75);
+      this.contactShadow.position.y = -vy + 0.025;
+      const sm = this.contactShadow.material as THREE.MeshBasicMaterial;
+      sm.opacity = clamp(0.6 - Math.max(0, vy - 0.51) * 0.18, 0.12, 0.6);
+      this.contactShadow.scale.set(0.85, 1, 1.05);
     }
     this.root.visible = this.visibleBlink;
   }

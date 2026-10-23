@@ -270,3 +270,32 @@ export const CLOUD = {
   /** ms after the last change before the save is pushed */
   syncDelay: 4000,
 };
+
+/**
+ * v4 render-only settings (no gameplay effect: hitboxes, lanes and timings above are unchanged).
+ * `car`: 'mesh' = the 3D XWAVE X1 (src/assets/models/xwave-x1.glb), 'sprite' = the v2 studio image.
+ * `?car=sprite` / `?car=mesh` in the page URL override it for comparison.
+ */
+export const RENDER = {
+  car: (typeof location !== 'undefined' && /[?&]car=sprite/.test(location.search) ? 'sprite' : 'mesh') as 'mesh' | 'sprite',
+  /** model (real-size metres) → game size. 0.76 ≈ 1.66 m wide: close to the 1.4 m hitbox, and the rear
+   *  reads about the same size on screen as the old rear image did from the unchanged chase camera */
+  carScale: 0.76,
+  /** wheels: max visible spin per frame (rad) — more would strobe (10 spokes); speed above it reads via the blur disc */
+  wheelMaxStep: 0.3,
+  /** speed (m/s) where the wheel blur disc starts / is full */
+  wheelBlurFrom: 8,
+  wheelBlurFull: 30,
+  /** front wheel steer (rad) per unit of lateral speed */
+  steer: 0.2,
+  /** sprung body: roll per unit of lateral speed, landing dip (m), landing pitch kick (rad) */
+  bodyRoll: 0.045,
+  landDip: 0.05,
+  landPitch: 0.05,
+  /** emissive strength of the rear LED / markers / badge in game (bloom picks up values above 1) */
+  ledGlow: 3.6,
+  markerGlow: 2.6,
+  badgeGlow: 1.4,
+  /** nitro flame length (m) at full boost */
+  nitroLen: 1.1,
+};

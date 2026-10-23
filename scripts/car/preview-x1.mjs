@@ -1,0 +1,63 @@
+// Renders validation shots of the in-game 3D car with the real game code (scripts/car/x1-preview.ts).
+//
+//   node scripts/car/preview-x1.mjs <outDir> "<query>=<name>" ...
+//   e.g. node scripts/car/preview-x1.mjs docs/3d-upgrade/shots "view=rear0=rear_0" "view=chase&pose=lane=lane"
+//
+// Needs esbuild and Playwright + Chromium (see build-x1.mjs). Software WebGL (SwiftShader) is fine.
+import { build } from 'esbuild';
+import { createRequire } from 'node:module';
+import { createServer } from 'node:http';
+import { mkdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
+const [outDir, ...jobs] = process.argv.slice(2);
+mkdirSync(outDir, { recursive: true });
+const js = (
+  await build({
+    entryPoints: [join(root, 'scripts/car/x1-preview.ts')],
+    bundle: true,
+    format: 'esm',
+    target: 'es2020',
+    write: false,
+    loader: { '.webp': 'dataurl', '.png': 'dataurl', '.jpg': 'dataurl', '.glb': 'dataurl', '.css': 'empty' },
+    logLevel: 'warning',
+  })
+).outputFiles[0].text;
+const html = '<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0}canvas{display:block}</style></head><body><script type="module" src="/p.js"></script></body></html>';
+const srv = createServer((req, res) => {
+  if (req.url.startsWith('/p.js')) {
+    res.writeHead(200, { 'content-type': 'text/javascript' });
+    res.end(js);
+  } else {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(html);
+  }
+}).listen(0);
+const port = srv.address().port;
+let chromium;
+try {
+  ({ chromium } = createRequire(join(root, 'package.json'))('playwright'));
+} catch {
+  ({ chromium } = createRequire('/opt/npm-tools/node_modules/')('playwright'));
+}
+const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+for (const job of jobs) {
+  const i = job.lastIndexOf('=');
+  const query = job.slice(0, i);
+  const name = job.slice(i + 1);
+  const studio = !/view=chase/.test(query) && /view=/.test(query);
+  const page = await browser.newPage({ viewport: studio ? { width: 1024, height: 936 } : { width: 780, height: 1688 } });
+  page.on('pageerror', (e) => console.log('[pageerror]', e.message));
+  page.on('console', (m) => m.type() === 'error' && console.log('[console]', m.text().slice(0, 200)));
+  await page.goto(`http://127.0.0.1:${port}/?${query}`);
+  await page.waitForFunction(() => window.__go, null, { timeout: 60000 });
+  const st = await page.evaluate(() => window.__go());
+  const file = join(outDir, `${name}.png`);
+  await page.locator('canvas').screenshot({ path: file, timeout: 120000 });
+  console.log(file, JSON.stringify(st));
+  await page.close();
+}
+await browser.close();
+srv.close();
