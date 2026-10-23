@@ -60,7 +60,7 @@ import { drawShareCard, shareImage, copyText } from './ui/ShareCard.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v4.5.0';
+const VERSION = 'v4.6.0';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -1305,12 +1305,15 @@ export class Game {
 
   private doContinue() {
     this.continuesUsed++;
-    this.run.lives = 1;
+    // owner (v4.5.1): an ad revive is NOT a Life item — no heart is added to the HUD and no heart /
+    // life notice, only "REVIVED!". The run goes on on its last chance exactly as before: the next hit
+    // ends it (lives 0 → the hit is final), a Life picked up later still adds a heart.
+    this.run.lives = 0;
     this.rig.mode = 'run';
     this.ui.show('hud');
-    this.respawn();
+    this.respawn(true);
     this.run.invulnT = Math.max(this.run.invulnT, 3);
-    this.ui.toast(`${ICON.heart} REVIVED · ${ADS.maxContinues - this.continuesUsed} revive${ADS.maxContinues - this.continuesUsed === 1 ? "" : "s"} left`, 'var(--gold)');
+    this.ui.toastNow(`${ICON.check} <b>REVIVED!</b>`, 'var(--gold)');
   }
 
   private async adDouble() {
@@ -2998,7 +3001,8 @@ export class Game {
     this.audio.intensity = 0;
   }
 
-  private respawn() {
+  /** @param revived back from a rewarded-ad revive: no heart / life notice (it is not a Life item) */
+  private respawn(revived = false) {
     this.shatter.clear();
     const w = this.world;
     const p = w.player;
@@ -3017,7 +3021,7 @@ export class Game {
     this.audio.play('respawn');
     this.vibrate(20);
     this.vehicle.boostKick(0.8);
-    this.ui.toast(`${ICON.heart} RESPAWN · ${this.run.lives} ${this.run.lives === 1 ? 'life' : 'lives'} left`, 'var(--red)');
+    if (!revived) this.ui.toast(`${ICON.heart} RESPAWN · ${this.run.lives} ${this.run.lives === 1 ? 'life' : 'lives'} left`, 'var(--red)');
   }
 
   /** unused Roadster / HYPER / SOS charges at the finish line → bonus points (shown on the result) */

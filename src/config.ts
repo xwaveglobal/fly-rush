@@ -309,6 +309,12 @@ export const RENDER = {
    *  reads about the same size on screen as the old rear image did from the unchanged chase camera */
   carScale: 0.76,
   /**
+   * v4.6 (owner): the 3D car is drawn 15 % taller (height only, at runtime — the approved GLB file is
+   * unchanged) so the DOWN dive (height × (1 − duck.squash)) reads more clearly. Visual only: hitboxes,
+   * pass heights and timings are unchanged; at NORMAL the roof stays below the hitbox top.
+   */
+  carHeightScale: 1.15,
+  /**
    * Step 07 FINAL: automotive PBR pass over the approved X1's materials (material factors only — the
    * GLB and its geometry are never touched). `env` = per-material environment reflection strength
    * (the scene environment is bound to each car material so this works; scene default is 0.6).
@@ -449,7 +455,9 @@ export const CAMERA = {
    * yaw in radians (0 = straight behind), height / distance in metres, lookY / lookZ = aim point,
    * fovScale × the base FOV.
    */
-  home: { yaw: 0.5, yawSwing: 0.26, speed: 0.22, height: 2.3, dist: 8.3, lookY: 0.98, lookZ: 0.5, fovScale: 0.82 },
+  // v4.5.1 (owner): the orbit stays INSIDE the road (camera x ≤ dist·sin(yaw+swing) ≈ 3.1 m, the guard rails
+  // are at ±4.3 m) — it used to swing out past the right rail, so the barrier crossed the whole view
+  home: { yaw: 0.24, yawSwing: 0.14, speed: 0.22, height: 2.45, dist: 8.3, lookY: 0.98, lookZ: 0.2, fovScale: 0.82 },
 };
 
 /**

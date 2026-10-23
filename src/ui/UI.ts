@@ -26,12 +26,20 @@ import carPhantom from '../assets/images/cars/phantom.webp';
 import carInferno from '../assets/images/cars/inferno.webp';
 import carNexus from '../assets/images/cars/nexus.webp';
 import carVega from '../assets/images/cars/vega.webp';
-import carShadow from '../assets/images/car/x1-back.webp';
-import vegaRear from '../assets/images/car/vega-back.webp';
+import rearZenith from '../assets/images/cars/rear-zenith.webp';
+import rearVega from '../assets/images/cars/rear-vega.webp';
+import rearVolt from '../assets/images/cars/rear-volt.webp';
+import rearPhantom from '../assets/images/cars/rear-phantom.webp';
+import rearInferno from '../assets/images/cars/rear-inferno.webp';
+import rearNexus from '../assets/images/cars/rear-nexus.webp';
+// v4.5.1 (owner): every car picture in the panels is a render of the in-game 3D X1 in that car's colourway
+// (scripts/car/thumbs-x1.mjs + thumbs-pack.py); locked cars use the same render, blacked out by CSS
+const carShadow = carZenith;
 const CAR_IMG: Record<string, string> = { zenith: carZenith, vega: carVega, volt: carVolt, phantom: carPhantom, inferno: carInferno, nexus: carNexus };
+const CAR_REAR: Record<string, string> = { zenith: rearZenith, vega: rearVega, volt: rearVolt, phantom: rearPhantom, inferno: rearInferno, nexus: rearNexus };
 export const carImage = (id: string) => CAR_IMG[id] ?? carZenith;
 /** transparent in-race rear render (share card); cars without one use their thumbnail */
-export const carRear = (id: string) => (id === 'vega' ? vegaRear : carShadow);
+export const carRear = (id: string) => CAR_REAR[id] ?? rearZenith;
 export const logoImg = logoUrl;
 const RARITY_COLOR: Record<string, string> = { Common: '#4fb3ff', Rare: '#a77bff', Epic: '#ffc24a', Legendary: '#ff4a3c', Mythic: '#d04dff' };
 import { LEVELS } from '../config.ts';

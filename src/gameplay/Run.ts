@@ -203,7 +203,7 @@ export class Run {
             return null;
           }
           this.combo = 0;
-          this.lives--;
+          this.lives = Math.max(0, this.lives - 1);
           const final = this.lives <= 0;
           this.feedback.push({ t: 'crash', final, x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2, z: e.o.z, type: e.o.spec.type });
           result = final ? 'gameover' : 'crash';

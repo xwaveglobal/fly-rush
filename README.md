@@ -187,6 +187,15 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v4.6.0 — taller 3D car, home camera inside the road, 3D car pictures, ad revive (owner requests)
+
+- Branch `feature/sky-roadster-v4.6-big-update` (owner: big update → own branch), built on v4.5.0.
+- The 3D car is drawn **15 % taller** (body only, at runtime — the approved GLB file is unchanged, wheels stay round and on the road) so the DOWN dive reads more clearly. Visual only: hitboxes / timings unchanged (`RENDER.carHeightScale`).
+- **Home camera**: the slow orbit stays inside the road (it used to swing out past the right guard rail, so the barrier crossed the whole view).
+- **Car pictures** in every panel (Garage cards, celebration, share card, result screen, profile tips) are renders of the in-game 3D X1 in each car's colours (`scripts/car/thumbs-x1.mjs` + `thumbs-pack.py`); locked cars stay black silhouettes.
+- **Rewarded-ad revive** no longer adds a heart and shows no heart / life notice — only "REVIVED!" (the next hit still ends the run, as before).
+- Details: `docs/gameplay-upgrade/v4.6/`.
+
 ## v4.5.0 — Step 06.5: Air Dash, airborne-only spoiler, audio + pause fixes, auto special, class unlocks
 
 - **Audio**: sound starts from the first real tap (Play / any button / the road) — Settings is no longer needed; the context is resumed on every tap until it runs (also from the iOS "interrupted" state) and suspended while the app is hidden. The crash sound fires at the collision itself (before any crash visuals; the explosion layer on the audio clock, no timer).

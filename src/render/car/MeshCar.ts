@@ -142,7 +142,7 @@ export class MeshCar {
   private build(scene: THREE.Group) {
     const s = RENDER.carScale;
     const model = scene.getObjectByName('X1') ?? scene;
-    model.scale.setScalar(s);
+    model.scale.set(s, s * RENDER.carHeightScale, s);
     this.model = model;
     this.baseScale = s;
     // materials by name: procedural textures + in-game glow levels (the GLB's images are not decoded)
@@ -258,6 +258,10 @@ export class MeshCar {
       const spin = model.getObjectByName(`Spin_${id}`);
       const tyreM = model.getObjectByName(`Tyre_${id}`) as THREE.Mesh | undefined;
       if (!hub || !spin || !tyreM) continue;
+      // v4.6 taller body: the wheels keep their real shape and stay on the road (undo the height scale
+      // on the wheel; its hub stays at the same height above the road)
+      hub.scale.y = 1 / RENDER.carHeightScale;
+      hub.position.y /= RENDER.carHeightScale;
       tyreM.geometry.computeBoundingBox();
       const bb = tyreM.geometry.boundingBox!;
       const r = (bb.max.y - bb.min.y) / 2;
@@ -350,7 +354,7 @@ export class MeshCar {
     this.duckS.target = locked ? 0 : clamp01(duck);
     this.duckS.update(dt);
     const e = Math.max(0, this.duckS.value);
-    if (this.model) this.model.scale.set(this.baseScale * (1 + D.widen * e), this.baseScale * (1 - D.squash * e), this.baseScale * (1 + D.stretch * e));
+    if (this.model) this.model.scale.set(this.baseScale * (1 + D.widen * e), this.baseScale * RENDER.carHeightScale * (1 - D.squash * e), this.baseScale * (1 + D.stretch * e));
     this.padMat.opacity = 0.8 * clamp01(e);
     this.hover.visible = e > 0.02;
     // ---- wheels: spin with the road (free-wheel and slow down in the air), capped against strobing
@@ -566,7 +570,7 @@ export class MeshCar {
     this.prevAir = 0;
     this.duckS.snap(0);
     this.duckS.velocity = 0;
-    if (this.model) this.model.scale.setScalar(this.baseScale);
+    if (this.model) this.model.scale.set(this.baseScale, this.baseScale * RENDER.carHeightScale, this.baseScale);
     this.aura.reset();
     this.turboAura.reset();
     this.sweepT = 99;

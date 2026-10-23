@@ -2597,3 +2597,5 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 #ui .screen:not(#start) :is(button, .btn, [data-a]).disabled { opacity: .45 !important; filter: grayscale(.6) !important; }
 #ui .screen:not(#start) :is(.ccard, .tcard, .boost, .bgt, .sptile, .bagit, .avpick).on,
 #ui .screen:not(#start) .tcard.sel { border-width: 2px !important; }
+/* locked cars stay pure black silhouettes (concealment is content, not button lighting) */
+#ui .screen:not(#start) .ccard.dark .cimg.shadow { filter: brightness(0) !important; }
