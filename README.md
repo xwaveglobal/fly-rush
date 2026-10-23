@@ -187,6 +187,20 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v4.1.3 — front end, pop-up spoiler, premium effects, dive pose (3D upgrade Step 03.2)
+
+- Front of the 3D X1 reworked: rounded nose, splitter tucked under the bumper (no plate sticking out), slim lower intake and corner air curtains, slim LED headlights in smoked housings, hood / bumper / door seams, pearl-white paint, darker glass.
+- Front wheels fixed: the body side used to fold back around the tyre (white flaps); the arch is now cut cleanly, with black wheel-well liners and a little more clearance.
+- Active spoiler is now a pop-up: it rises and tilts 22° on take-off, stays up in the air and during nitro, and closes smoothly after landing; clearly visible from the chase camera.
+- Shield: the grey cloud is gone; the 3D car gets a thin, glowing cyan shell that follows lane changes and jumps and fades out when the shield ends.
+- Nitro is a clean twin thrust; Phase Ghost is a translucent car with a cyan edge; power-up pickups send a short light sweep over the car.
+- Crashes: impact flash, body jolt and a few shards (white body, black aero, glass); the car stays visible; nothing left over after restart.
+- DOWN (dive): the 3D car presses down low and wide, with a glow and sparks underneath, so the dodge reads clearly.
+- The car no longer shakes during the start countdown.
+- Visual-only alignment: in the air the 3D car's underside never hangs below the hitbox, so jumped crates and barriers no longer cut through it; oncoming-traffic hover pods tucked inside their collision width.
+- Developer overlay `?debug=collision`: car and obstacle visual bounds vs collision boxes.
+- Gameplay, hitboxes, timings and UI unchanged. Details and screenshots: `docs/3d-upgrade/step03-2/`.
+
 ## v4.1.2 — shorter, mirrorless X1; spoiler opens on jumps (3D upgrade Step 03.1)
 
 - Body 8 % shorter (4.60 → 4.25 m), taken from the front overhang and hood only; the rear design is unchanged.

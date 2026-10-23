@@ -1,8 +1,10 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { Spring, clamp, clamp01, lerp } from '../core/math.ts';
-import { HEIGHT, RENDER, TYRE } from '../config.ts';
+import { CAR_HALF, HEIGHT, RENDER, TYRE } from '../config.ts';
 import { MeshCar } from './car/MeshCar.ts';
+import { carHeight } from './car/carMotion.ts';
+import { CrashFx } from './car/CarFx.ts';
 import { OVERLAY_LAYER } from './Renderer.ts';
 import { glowTexture, logoTexture, rearBadgeTexture, treadTexture, wheelBlurTexture, wheelFaceTexture } from './textures.ts';
 import { mergeByMaterial } from './merge.ts';
@@ -304,16 +306,29 @@ export class Vehicle {
     this.sprite.material.uniforms.fade.value = 1;
     this.boostSprite.material.uniforms.fade.value = 0;
     this.suspY = this.suspV = 0;
-    if (this.mesh) this.mesh.nitro = 0;
+    if (this.mesh) {
+      this.mesh.nitro = 0;
+      this.mesh.shield = 0;
+      this.mesh.aura.reset();
+      this.mesh.setGhost(0);
+    }
   }
   /** flash the dome when it absorbs a hit */
   shieldHit() {
     this.shieldHitK = 1;
+    this.mesh?.aura.flash();
   }
   /** a short burst of rear light (speed-up moments) */
   boostKick(k = 1) {
     this.boostHold = Math.max(this.boostHold, 0.55 * k); // hold the boost look briefly, then release smoothly
+    if (this.meshOn) this.mesh!.sweep(0x8fe8ff);
   }
+  /** v4.1.3: a power-up was picked up — a short light sweep over the 3D car in the item's colour */
+  pickupSweep(color: number) {
+    if (this.meshOn) this.mesh!.sweep(color);
+  }
+  /** v4.1.3 3D crash pieces + impact flash (world space: Game adds `crash.group` to the scene) */
+  crash = new CrashFx();
   private boostHold = 0;
   private treadPhase = 0;
   private wheelV = 0;
@@ -941,6 +956,12 @@ export class Vehicle {
     return { tex: u.map.value as THREE.Texture, tint: u.tint.value as THREE.Color, tintAmt: u.tintAmt.value as number, matrix: this.sprite.matrixWorld.clone() };
   }
 
+  /** what the player sees as the car (3D model or rear image) — debug overlay */
+  get visualObject(): THREE.Object3D | null {
+    if (this.mesh && this.meshOn) return this.mesh.root;
+    return this.spriteOn ? this.sprite : null;
+  }
+
   get usesSprite() {
     return this.spriteOn;
   }
@@ -1311,8 +1332,36 @@ export class Vehicle {
   }
   private recoilZ = 0;
 
+  /**
+   * v4.1.3 3D crash presentation (visual only): body jolt on its springs, impact flash at the nose,
+   * a few pooled shards. The car stays whole and visible.
+   */
+  crashBreak() {
+    if (!this.mesh || !this.meshOn) return;
+    this.mesh.crashJolt();
+    this.mesh.root.updateWorldMatrix(true, false);
+    const at = this.tmpV3.set(0, 0.42, -CAR_HALF.z).applyMatrix4(this.mesh.root.matrixWorld);
+    this.crash.burst(at, this.skin.tintAmt ? this.skin.body : 0xf3f2ee);
+  }
+  /** while dying / on the game-over screen: the 3D body settles, debris flies (Game calls this) */
+  crashUpdate(dt: number) {
+    if (this.mesh && this.meshOn) this.mesh.settle(dt);
+    this.crash.update(dt);
+  }
+  /** compile the 3D car's effect variants once the model is ready (no shader compile mid-race) */
+  prewarm(renderer: THREE.WebGLRenderer, scene: THREE.Object3D, camera: THREE.Camera) {
+    if (!this.mesh || !this.meshOn) return;
+    for (const p of this.crashPieces) p.visible = true;
+    this.mesh.prewarm(renderer, scene, camera);
+    this.crash.clear();
+  }
+  private get crashPieces() {
+    return this.crash.group.children;
+  }
+
   resetPose() {
     this.recoilZ = 0;
+    this.crash.clear();
     this.mesh?.resetPose();
     this.roll.snap(0);
     this.yaw.snap(0);
@@ -1332,12 +1381,8 @@ export class Vehicle {
     const t = this.time;
     // gameplay height -> visual height: on the road the wheels touch the asphalt,
     // tucked (LOW) the belly skims it, airborne it rises with the hitbox
-    const vy =
-      p.y <= HEIGHT.NORMAL
-        ? lerp(0.3, 0.51, clamp01((p.y - HEIGHT.LOW) / (HEIGHT.NORMAL - HEIGHT.LOW)))
-        : p.y <= HEIGHT.HIGH
-          ? lerp(0.51, 3.35, clamp01((p.y - HEIGHT.NORMAL) / (HEIGHT.HIGH - HEIGHT.NORMAL)))
-          : 3.35 + (p.y - HEIGHT.HIGH);
+    // (3D car, v4.1.3: once airborne the underside never hangs below the hitbox — carMotion.carHeight)
+    const vy = carHeight(p.y, HEIGHT.LOW, HEIGHT.NORMAL, HEIGHT.HIGH, CAR_HALF.y, this.meshOn, RENDER.airAlignRamp);
     this.root.position.set(p.x, vy, 0);
     // v2 Bonus showcase specials (wall run / sky rail / tunnel roof / phase ghost)
     const sc = this.showcase;
@@ -1391,7 +1436,8 @@ export class Vehicle {
     this.pitch.position.y = road + Math.sin(t * 3.2) * 0.04 * p.air;
 
     // ---- squash & stretch
-    const sq = p.squash;
+    // (3D car: the dive is drawn by MeshCar — wheels fold, body drops — so only the launch stretch here)
+    const sq = this.meshOn ? Math.min(0, p.squash) : p.squash;
     const sy = 1 - sq * 0.55;
     const sxz = 1 + sq * 0.18;
     this.squashG.scale.set(sxz, sy, sxz * (1 + turbo * 0.06));
@@ -1608,9 +1654,12 @@ export class Vehicle {
       const ground = vy < 0.51 ? -vy : -0.51;
       this.mesh.root.position.set(0, ground, this.recoilZ);
       this.mesh.nitro = Math.max(clamp01(this.boostK), turbo);
-      // Bonus Phase Ghost: the 3D car turns translucent (the rear image used to fade)
-      this.mesh.setFade(this.showcase?.kind === 'ghost' ? 1 - (1 - RENDER.ghostOpacity) * this.showcase.e : 1);
-      this.mesh.update(dt, speed, lat, p.air, this.locked, p.vmode === 'up');
+      // Bonus Phase Ghost: the 3D car turns translucent with a cyan edge (materials restored after)
+      this.mesh.setGhost(this.showcase?.kind === 'ghost' ? this.showcase.e : 0);
+      this.mesh.shield = this.shieldTarget;
+      // DOWN: how deep the dive is (gameplay squash while diving) → wheels fold, body drops
+      const duck = p.vmode === 'down' ? clamp01(p.squash / 0.32) : 0;
+      this.mesh.update(dt, speed, lat, p.air, this.locked, p.vmode === 'up', duck);
       // flight jets hang under the rear of the car; the contact shadow stays on the road
       this.jetG.position.set(0, ground + 0.3, 0.75);
       this.contactShadow.position.y = -vy + 0.025;

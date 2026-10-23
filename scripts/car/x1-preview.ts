@@ -17,6 +17,12 @@ import { Vehicle, SKINS } from '../../src/render/Vehicle.ts';
 import { CameraRig } from '../../src/render/CameraRig.ts';
 import { Player } from '../../src/gameplay/Player.ts';
 import { CAMERA, LANES } from '../../src/config.ts';
+import { ObstacleViews } from '../../src/render/ObstacleViews.ts';
+import { DebugCollision, solidBounds } from '../../src/render/DebugCollision.ts';
+import { makeShield } from '../../src/render/Effects.ts';
+import { hitboxes, rowMasks } from '../../src/gameplay/ObstacleRules.ts';
+import type { LiveObstacle } from '../../src/gameplay/World.ts';
+import type { ObstacleSpec, ObstacleType } from '../../src/gameplay/types.ts';
 
 const q = new URLSearchParams(location.search);
 const W = +(q.get('w') ?? 720);
@@ -84,7 +90,7 @@ if (q.get('blocks')) {
 }
 
 const v = new Vehicle();
-scene.add(v.root);
+scene.add(v.root, v.crash.group);
 const rig = new CameraRig();
 rig.resize(W / H);
 v.camera = rig.camera;
@@ -93,6 +99,37 @@ const camQ = q.get('cam') as 'low' | 'balanced' | 'high' | null;
 if (camQ) rig.presetOverride = CAMERA.presets[camQ];
 const p = new Player();
 p.reset(1);
+
+// real obstacle views at fixed z (obs=type:lane:z,…), with their real collision boxes
+const views = new ObstacleViews(scene);
+const live: LiveObstacle[] = [];
+let oid = 1;
+function addObstacle(spec: ObstacleSpec, z: number) {
+  const o: LiveObstacle = { id: oid++, spec, row: { dist: 0, dt: 1, masks: rowMasks([spec]), obstacles: [spec], tier: 0 }, z, sx: LANES[spec.lane], boxes: [], hit: false, smashed: false, passed: false, minGap: 0, vz: 0 };
+  hitboxes(o.spec, o.sx, o.boxes);
+  for (const b of o.boxes) {
+    b.minZ += z;
+    b.maxZ += z;
+  }
+  views.spawn(o);
+  views.update([o], 0, 0);
+  live.push(o);
+  return o;
+}
+const specOf = (type: string, lane: number): ObstacleSpec => ({
+  type: type as ObstacleType,
+  lane,
+  lane2: lane,
+  laser: type === 'laser' ? ['low', 'high', 'block'] : undefined,
+  door: 1,
+  variant: 0,
+});
+for (const t of (q.get('obs') ?? '').split(',').filter(Boolean)) {
+  const [type, lane, z] = t.split(':');
+  addObstacle(specOf(type, +lane), +z);
+}
+const debugOverlay = q.get('debug') === 'collision' ? new DebugCollision() : null;
+if (debugOverlay) scene.add(debugOverlay.group);
 
 function meshLoaded() {
   let found = false;
@@ -119,6 +156,8 @@ function meshLoaded() {
       rig.update(dt, p, 0.4, turbo);
     }
   };
+  if (q.get('shield')) v.shieldTarget = 1;
+  if (q.get('ghost')) v.showcase = { kind: 'ghost', e: 1 };
   step(60);
   rig.snap();
   if (pose === 'lane') {
@@ -149,11 +188,37 @@ function meshLoaded() {
     step(30);
     p.input('up');
     step(30);
+  } else if (pose === 'down') {
+    p.input('down');
+    for (let i = 0; i < 120 && p.vphase !== 'hold'; i++) step(1);
+    step(6); // holding low: wheels folded, body down
+  } else if (pose === 'takeoff') {
+    p.input('up');
+    step(+(q.get('f') ?? 5));
+  } else if (pose === 'descend') {
+    p.input('up');
+    for (let i = 0; i < 300 && p.vphase !== 'recover'; i++) step(1);
+    step(+(q.get('f') ?? 4)); // coming down, still airborne
   } else if (pose === 'landing') {
     p.input('up');
     for (let i = 0; i < 300 && p.vmode !== 'up'; i++) step(1);
     for (let i = 0; i < 300 && p.vmode === 'up'; i++) step(1);
     step(Math.round(+(q.get('after') ?? 0.45) * 60)); // after touch-down: spoiler retracting
+  }
+  if (q.get('sweep')) {
+    v.boostKick(1);
+    step(+(q.get('sweep') ?? 12));
+  }
+  // crash presentation: impact=<seconds after the hit> (the game stops updating the car and settles it)
+  if (q.get('impact') !== null) {
+    v.crashRecoil();
+    v.crashBreak();
+    rig.shake(0.45);
+    const n = Math.round(+q.get('impact')! * 60);
+    for (let i = 0; i < n; i++) {
+      v.crashUpdate(dt);
+      rig.update(dt, p, 0, 0);
+    }
   }
   // collision check: a crate whose front face touches the hitbox front (the moment a hit registers)
   if (q.get('crate')) {
@@ -195,6 +260,19 @@ function meshLoaded() {
     }
     return [x0, x1, y0, y1].map((n) => +n.toFixed(3));
   };
+  if (q.get('oldshield')) {
+    // the pre-v4.1.3 3D shield (mote cloud from Effects.makeShield), placed exactly as Game did
+    const sh = makeShield();
+    sh.mesh.visible = true;
+    sh.mesh.position.copy(v.root.position);
+    sh.mesh.quaternion.copy(v.root.quaternion);
+    sh.mat.uniforms.time.value = 3.2;
+    scene.add(sh.mesh);
+  }
+  if (debugOverlay) {
+    const hb = p.hitbox({ minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 });
+    debugOverlay.update(hb, v.visualObject, live.map((o) => ({ boxes: o.boxes, view: views.viewOf(o.id) })));
+  }
   if (view === 'follow') {
     // close rear-left camera that follows the car (shows the deck and the spoiler)
     const cam = followCam(v.root.position);
@@ -212,13 +290,21 @@ function meshLoaded() {
       deck: [-62, 4.6, 1.0, 0.62, 24],
       fl45: [-140, 22, 2.2, 0.42, 16],
       sidec: [-90, 11, 0.9, 0.55, 22],
+      front45: [-140, 8.5, 1.0, 0.36, 22],
+      wheelf: [-115, 5.2, 1.2, 0.4, 24],
+      wheelfl: [-60, 5.2, 0.9, 0.4, 24],
+      front0: [180, 9.5, 0.75, 0.42, 20],
+      top: [0.01, 0.01, 30, 0, 22],
+      sideg: [-90, 26, 1.0, 0.8, 22],
+      reargame: [0, 14, 2.4, 0.9, 30],
     };
     const [yd, dist, ch, ly, fov] = shots[view] ?? shots.rear0;
     const yaw = THREE.MathUtils.degToRad(yd);
     const cam = new THREE.PerspectiveCamera(fov, W / H, 0.1, 300);
     // studio shots look at the rear half of the car (the subject of Step 03)
-    const zc = view === 'side90' || view === 'rl45' || view === 'rr45' || view === 'fl45' ? 0 : view === 'sidec' ? -1.2 : view === 'deck' ? 1.45 : 0.9;
+    const zc = +(q.get('zc') ?? (view === 'side90' || view === 'rl45' || view === 'rr45' || view === 'fl45' || view === 'top' || view === 'sideg' ? 0 : view === 'sidec' || view === 'front45' || view === 'front0' || view === 'wheelf' || view === 'wheelfl' ? -1.2 : view === 'deck' ? 1.45 : 0.9));
     cam.position.set(p.x + Math.sin(yaw) * dist, ch, zc + Math.cos(yaw) * dist);
+    if (view === 'top') cam.up.set(0, 0, -1);
     cam.lookAt(p.x, ly, zc);
     v.camera = cam;
     v.update(p, 0, speed, turbo);
@@ -290,4 +376,147 @@ function meshLoaded() {
     }
   }
   return frames;
+};
+
+/** Phase 1 measurements: car visual bounds vs hitbox, each obstacle's visual bounds vs collision boxes. */
+(window as unknown as { __measure: () => Promise<unknown> }).__measure = async () => {
+  for (let i = 0; i < 200 && !meshLoaded(); i++) await new Promise((res) => setTimeout(res, 50));
+  v.setSkin(SKINS.find((s) => s.id === 'zenith')!);
+  for (let i = 0; i < 60; i++) {
+    p.update(1 / 60);
+    v.update(p, 1 / 60, 30, 0);
+  }
+  const r3 = (b: THREE.Box3) => ({ min: b.min.toArray().map((n) => +n.toFixed(3)), max: b.max.toArray().map((n) => +n.toFixed(3)) });
+  const hb = p.hitbox({ minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 });
+  const car = solidBounds(v.visualObject!, new THREE.Box3());
+  const root = v.root.position.toArray().map((n) => +n.toFixed(3));
+  const obstacles: Record<string, unknown> = {};
+  for (const type of ['crate', 'barrier', 'beam', 'drone', 'platform', 'traffic', 'asteroid', 'ring', 'laser', 'gate']) {
+    const o = addObstacle(specOf(type, 1), 0);
+    const parts: { name: string; box: THREE.Box3 }[] = [];
+    const vis = solidBounds(views.viewOf(o.id)!, new THREE.Box3(), parts);
+    const col = new THREE.Box3();
+    for (const b of o.boxes) col.union(new THREE.Box3(new THREE.Vector3(b.minX, b.minY, b.minZ), new THREE.Vector3(b.maxX, b.maxY, b.maxZ)));
+    // parts that reach outside the collision volume (x / y / z), biggest first
+    const out = parts
+      .map((pt) => ({ name: pt.name, over: Math.max(col.min.x - pt.box.min.x, pt.box.max.x - col.max.x, col.min.y - pt.box.min.y, pt.box.max.y - col.max.y, col.min.z - pt.box.min.z, pt.box.max.z - col.max.z), ...r3(pt.box) }))
+      .filter((pt) => pt.over > 0.02)
+      .sort((a, b) => b.over - a.over)
+      .slice(0, 4);
+    obstacles[type] = { visual: r3(vis), collision: r3(col), boxes: o.boxes.length, outside: out };
+    views.despawn(o);
+    live.pop();
+  }
+  return { player: { x: p.x, y: p.y }, root, hitbox: hb, carVisual: r3(car), obstacles };
+};
+
+/**
+ * v4.1.3 VFX regression checks on the REAL Vehicle / MeshCar / CarFx code in a browser (WebGL).
+ * Run: node scripts/car/preview-x1.mjs <dir> "selftest=1=vfx_selftest" → <dir>/vfx_selftest.json
+ */
+(window as unknown as { __selftest: () => Promise<unknown> }).__selftest = async () => {
+  for (let i = 0; i < 200 && !meshLoaded(); i++) await new Promise((res) => setTimeout(res, 50));
+  v.setSkin(SKINS.find((s) => s.id === 'zenith')!);
+  const mesh = (v as unknown as { mesh: import('../../src/render/car/MeshCar.ts').MeshCar }).mesh;
+  const dt = 1 / 60;
+  const results: { name: string; ok: boolean; info: string }[] = [];
+  const check = (name: string, ok: boolean, info = '') => results.push({ name, ok, info });
+  // hitbox size and z span (x follows the lane)
+  const hb = () => {
+    const b = p.hitbox({ minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 });
+    return JSON.stringify([+(b.maxX - b.minX).toFixed(4), +(b.maxY - b.minY).toFixed(4), b.minZ, b.maxZ]);
+  };
+  let turbo = 0;
+  const step = (n: number) => {
+    for (let i = 0; i < n; i++) {
+      p.update(dt);
+      v.update(p, dt, 30, turbo);
+      rig.update(dt, p, 0.4, turbo);
+    }
+  };
+  const finite = () => {
+    let ok = true;
+    v.root.updateMatrixWorld(true);
+    v.root.traverse((o) => {
+      for (const e of o.matrixWorld.elements) if (!Number.isFinite(e)) ok = false;
+    });
+    return ok;
+  };
+  const aura = mesh.aura;
+  step(30);
+  const hbBefore = hb();
+  // shield on → visible around the car; off → fades out and hides (nothing left behind)
+  v.shieldTarget = 1;
+  step(30);
+  check('shield activates: aura visible', aura.mesh.visible && aura.k > 0.95, `k ${aura.k.toFixed(3)}`);
+  check('aura is attached to the car pose (follows lane changes / jumps)', aura.mesh.parent === mesh.root, '');
+  p.input('right');
+  step(20);
+  const ax = aura.mesh.getWorldPosition(new THREE.Vector3()).x;
+  check('aura followed the lane change', Math.abs(ax - p.x) < 0.05, `aura x ${ax.toFixed(2)}, car x ${p.x.toFixed(2)}`);
+  // shield + jump
+  p.input('up');
+  step(30);
+  const ay = aura.mesh.getWorldPosition(new THREE.Vector3()).y;
+  const groundY = mesh.root.getWorldPosition(new THREE.Vector3()).y;
+  check('shield + jump: aura rises with the car', aura.mesh.visible && Math.abs(ay - groundY) < 0.05 && ay > 1.5, `aura y ${ay.toFixed(2)}, car underside ${groundY.toFixed(2)}`);
+  for (let i = 0; i < 300 && p.vmode === 'up'; i++) step(1);
+  // shield + nitro
+  turbo = 1;
+  v.boostTarget = 1;
+  step(40);
+  check('shield + nitro: both visible, spoiler open', aura.mesh.visible && mesh.spoilerK > 0.95, `aura ${aura.k.toFixed(2)}, spoiler ${mesh.spoilerK.toFixed(2)}`);
+  turbo = 0;
+  v.boostTarget = 0;
+  step(240); // the boost light envelope fades first, then hold 0.25 s, then the slower close
+  check('nitro end (no jump): spoiler retracted', mesh.spoilerK < 0.03, `spoiler ${mesh.spoilerK.toFixed(3)}`);
+  v.shieldTarget = 0;
+  step(90);
+  check('shield expires: aura faded out and hidden', !aura.mesh.visible && aura.k === 0, `k ${aura.k}`);
+  // phase ghost → materials restored exactly
+  v.showcase = { kind: 'ghost', e: 1 };
+  step(10);
+  check('ghost on: car translucent with edge light', !mesh.materialsRestored && mesh.fx.uFxGhost.value > 0, `rim ${mesh.fx.uFxGhost.value}`);
+  turbo = 1;
+  v.boostTarget = 1;
+  step(20);
+  check('ghost + nitro: thrust visible while translucent', mesh.spoilerK > 0.5, `spoiler ${mesh.spoilerK.toFixed(2)}`);
+  turbo = 0;
+  v.boostTarget = 0;
+  v.showcase = null;
+  step(5);
+  check('ghost off: every material restored exactly', mesh.materialsRestored, '');
+  // dive
+  p.input('down');
+  for (let i = 0; i < 120 && p.vphase !== 'hold'; i++) step(1);
+  step(10);
+  const sq = v.root.getObjectByName('X1')!.scale;
+  check('DOWN: car pressed toward the road', sq.y < 0.6 && sq.x > 0.76, `scale ${sq.x.toFixed(3)} / ${sq.y.toFixed(3)}`);
+  for (let i = 0; i < 300 && p.vmode === 'down'; i++) step(1);
+  step(40);
+  check('DOWN released: back to normal shape', Math.abs(sq.y - 0.76) < 0.005, `scale y ${sq.y.toFixed(4)}`);
+  // crash → debris → cleanup; restart restores the intact car
+  v.crashRecoil();
+  v.crashBreak();
+  check('crash: flash + shards spawned', v.crash.visibleCount >= 10, `${v.crash.visibleCount} pieces`);
+  check('crash: car stays visible', v.root.visible && mesh.root.visible, '');
+  for (let i = 0; i < 30; i++) v.crashUpdate(dt);
+  check('crash: no missing / invalid transforms mid-crash', finite(), '');
+  for (let i = 0; i < 120; i++) v.crashUpdate(dt);
+  check('crash: debris cleaned up by itself', v.crash.visibleCount === 0, `${v.crash.visibleCount} left`);
+  check('game over: spoiler settled closed (stable pose)', mesh.spoilerK < 0.03, `spoiler ${mesh.spoilerK.toFixed(3)}`);
+  v.crashBreak();
+  for (let i = 0; i < 10; i++) v.crashUpdate(dt);
+  v.resetPose();
+  v.resetFx();
+  check('restart mid-crash: no debris left', v.crash.visibleCount === 0, '');
+  const mroot = v.root.getObjectByName('X1')!;
+  const k0 = mesh.spoilerK;
+  p.reset(1);
+  step(1);
+  check('restart: intact car (scale, recoil, spoiler)', Math.abs(mroot.scale.y - 0.76) < 1e-6 && mesh.root.position.z === 0 && k0 === 0, `scale ${mroot.scale.y}, z ${mesh.root.position.z}, spoiler ${k0}`);
+  step(30);
+  check('restart: car updates normally, transforms finite', finite(), '');
+  check('gameplay hitbox unchanged by every effect', hb() === hbBefore, `${hbBefore} → ${hb()}`);
+  return { passed: results.filter((r) => r.ok).length, failed: results.filter((r) => !r.ok).length, results };
 };

@@ -33,7 +33,8 @@ src/config.ts        ALL tuning numbers (lanes, heights, timings, speed, scoring
 src/Game.ts          state machine & orchestration (menu → countdown → run → crash → game over)
 src/gameplay/        PURE LOGIC, no Three.js, runs in Node (tests import it directly)
 src/render/          Three.js views — read-only consumers of gameplay state
-src/render/car/      v4 3D car: glbParse.ts (own GLB reader), MeshCar.ts (wheels, sprung body, spoiler, nitro), carMotion.ts (pure, tested), x1Textures.ts
+src/render/car/      v4 3D car: glbParse.ts (own GLB reader), MeshCar.ts (wheels, sprung body, pop-up spoiler, nitro, dive pose), CarFx.ts (shield aura, ghost / pickup edge light, crash shards), carMotion.ts (pure, tested), x1Textures.ts
+src/render/DebugCollision.ts  ?debug=collision overlay (visual bounds vs hitboxes; dev only)
                      cameras: CAMERA presets (low / balanced / high) + CAMERA.home in config.ts, used by render/CameraRig.ts
 scripts/car/         X1 model builder (build-x1.mjs → src/assets/models/xwave-x1.glb) + preview shots (preview-x1.mjs)
 src/ui/              DOM overlay UI, ui.css, i18n.ts (EN/FR/JA/PT-BR/DE/ES), icons, avatars

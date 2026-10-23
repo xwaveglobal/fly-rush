@@ -23,7 +23,8 @@ import { type PropTheme, PROP_THEMES, ObstacleViews } from './render/ObstacleVie
 import { PickupViews, POWER_COLORS } from './render/PickupViews.ts';
 import { READABILITY, COMFORT } from './render/Readability.ts';
 import { setObstacleContrast, OBSTACLE_FX } from './render/ObstacleViews.ts';
-import { Particles, SpeedLines, RingPulses, Debris, makeShield, makePortal } from './render/Effects.ts';
+import { Particles, SpeedLines, RingPulses, Debris, makePortal } from './render/Effects.ts';
+import { COLLISION_DEBUG, DebugCollision } from './render/DebugCollision.ts';
 import { Audio } from './audio/Audio.ts';
 import { AssetLoader } from './assets/AssetLoader.ts';
 import { UI, UPGRADE_MAX, upgradeCost, carRear, logoImg, type UpgradeKey } from './ui/UI.ts';
@@ -57,7 +58,7 @@ import { drawShareCard, shareImage, copyText } from './ui/ShareCard.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v4.1.2';
+const VERSION = 'v4.1.3';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -170,7 +171,9 @@ export class Game {
   private speedBlurS = 0;
   /** game-over: the car render breaks into shards */
   shatter = new CarShatter();
-  shield = makeShield();
+  /** ?debug=collision: visual vs collision bounds overlay (development only, never built otherwise) */
+  private debugCol: DebugCollision | null = COLLISION_DEBUG ? new DebugCollision() : null;
+  private debugHit = { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 };
   portal = makePortal();
   private autopilot = AUTOPILOT ? new Autopilot() : null;
   /** current track (null = endless) */
@@ -270,7 +273,11 @@ export class Game {
     this.renderer = new Renderer(container, this.save.settings.quality, this.rig.camera);
     this.vehicle.camera = this.rig.camera;
     // v4: once the 3D car replaces the rear image, home and race use the 3D camera setups
-    this.vehicle.onModelReady = () => (this.rig.car3d = !this.vehicle.usesSprite);
+    this.vehicle.onModelReady = () => {
+      this.rig.car3d = !this.vehicle.usesSprite;
+      // compile the 3D car's effect variants now (ghost, shield, thrust, crash) — never mid-race
+      this.vehicle.prewarm(this.renderer.renderer, this.renderer.scene, this.rig.camera);
+    };
     const scene = this.renderer.scene;
     this.scenery = new Scenery(scene);
     scene.add(this.scenery.group, this.track.group, this.vehicle.root);
@@ -282,7 +289,7 @@ export class Game {
     this.smoke = new Particles(this.renderer.pixelRatio, false);
     this.renderer.scene.add(this.smoke.points);
     scene.add(this.bonusTunnels.group);
-    scene.add(this.particles.points, this.speedLines.lines, this.rings.group, this.debris.group, this.shatter.group, this.shield.mesh, this.portal.group, this.startArch, this.finishArch);
+    scene.add(this.particles.points, this.speedLines.lines, this.rings.group, this.debris.group, this.shatter.group, this.vehicle.crash.group, this.portal.group, this.startArch, this.finishArch);
 
     this.world.hooks = {
       spawnObstacle: (o) => this.obstacleViews.spawn(o),
@@ -1919,7 +1926,7 @@ export class Game {
     this.particles.clear();
     this.smoke.clear();
     this.debris.clear();
-    this.shield.mesh.visible = false;
+    this.vehicle.crash.clear();
     this.portal.group.visible = false;
     this.startArch.visible = this.finishArch.visible = false;
   }
@@ -1947,6 +1954,23 @@ export class Game {
   /** grit kicked back from the rear tyres while driving fast on the road (sells the speed) */
   private sprayAcc = 0;
   private sprayPos = new THREE.Vector3();
+  /** v4.1.3 DOWN on the 3D car: a few short sparks under the rear corners while it skims the road */
+  private diveAcc = 0;
+  private diveSparks(dt: number) {
+    const p = this.world.player;
+    if (this.state !== 'run' || this.vehicle.usesSprite || p.vmode !== 'down' || p.vphase === 'recover' || p.vphase === 'antic') {
+      this.diveAcc = 0;
+      return;
+    }
+    this.diveAcc += dt * 26;
+    while (this.diveAcc >= 1) {
+      this.diveAcc -= 1;
+      const side = Math.random() < 0.5 ? -1 : 1;
+      const c = this.vehicle.root.position;
+      this.particles.emit(c.x + side * (0.45 + Math.random() * 0.2), 0.06, 1.2 + Math.random() * 0.3, side * (0.4 + Math.random()), 0.6 + Math.random() * 1.2, 2 + Math.random() * 3, Math.random() < 0.6 ? 0xffb347 : 0xfff1c9, 0.07 + Math.random() * 0.05, 0.22 + Math.random() * 0.15, { locked: true, drag: 2, grav: 10 });
+    }
+  }
+
   private tyreSpray(dt: number, speed: number) {
     const p = this.world.player;
     if (this.state !== 'run' || p.air > 0.08 || speed < TYRE.sprayFrom) {
@@ -2316,8 +2340,8 @@ export class Game {
       this.ui.countdown(label);
       this.audio.play(step === 3 ? 'go' : 'beep');
       if (step === 3) {
-        // (no ground roll — the car only flips in the air)
-        this.rig.shake(0.15);
+        // (no ground roll — the car only flips in the air; v4.1.3: no camera shake at GO either —
+        // the car and the view stay perfectly still until the race starts)
         this.vehicle.boostKick(1); // launch: light bursts out of the rear
         this.vibrate(25);
       } else this.vibrate(8);
@@ -2660,6 +2684,7 @@ export class Game {
           this.ui.bigPickup(POWER_LABEL[k], '#' + POWER_COLORS[k].toString(16).padStart(6, '0'), POWER_ICON[k], k === 'shield' ? `blocks ${SHIELD_HITS} hits` : POWER_SUB[k]);
           if (k !== 'turbo') this.vibrate(14);
           this.autoSpecial(k);
+          this.vehicle.pickupSweep(POWER_COLORS[k]); // 3D car: short light sweep in the item's colour
           if (k === 'turbo') {
             this.vibrate([40, 30, 40]);
             this.vehicle.boostKick(1);
@@ -2759,15 +2784,22 @@ export class Game {
     this.vehicle.crashRecoil(); // 3D car: nose meets the obstacle face instead of sinking into it (visual only)
     const pos = this.vehicle.root.position.clone();
     const skin = SKINS.find((s) => s.id === this.save.vehicle) ?? SKINS[0];
-    if (!final) this.debris.explode(pos, skin.body, skin.glow);
-    this.particles.burst(pos.x, pos.y, pos.z, 36, 0xd8742a, 10, 0.55, 0.8, { grav: 4 });
-    this.particles.burst(pos.x, pos.y, pos.z, 30, 0x555a66, 4, 1.2, 1.3, { drag: 1.5, up: 2 });
+    if (this.vehicle.usesSprite) {
+      if (!final) this.debris.explode(pos, skin.body, skin.glow);
+      this.particles.burst(pos.x, pos.y, pos.z, 36, 0xd8742a, 10, 0.55, 0.8, { grav: 4 });
+      this.particles.burst(pos.x, pos.y, pos.z, 30, 0x555a66, 4, 1.2, 1.3, { drag: 1.5, up: 2 });
+    } else {
+      // 3D car (v4.1.3): impact flash + jolt + pooled shards from the nose, a short spark burst —
+      // no grey smoke cloud, the car stays whole and visible
+      this.vehicle.crashBreak();
+      this.particles.burst(pos.x, pos.y - 0.1, pos.z - 1.1, 22, 0xffa040, 9, 0.18, 0.55, { grav: 6 });
+    }
     this.audio.play('crash');
     window.setTimeout(() => this.audio.play('explode'), 60);
     this.rig.shake(final ? 0.7 : 0.45);
     // heavy, ragged rumble on the final crash; one solid hit otherwise
     this.vibrate(final ? [90, 40, 140, 50, 60] : [70]);
-    if (final) this.shatter.burst(this.vehicle); // a few pieces fly off; the car stays on the road
+    if (final && this.vehicle.usesSprite) this.shatter.burst(this.vehicle); // a few pieces fly off; the car stays on the road
     this.ui.tutorial(false);
     if (final) this.rig.mode = 'crash';
     this.audio.intensity = 0;
@@ -3007,8 +3039,12 @@ export class Game {
       const e = this.showcaseK ? Math.min(1, el / 0.45, this.showcaseT / 0.45) : 0;
       this.vehicle.showcase = this.showcaseK ? { kind: this.showcaseK, e: e * e * (3 - 2 * e) } : null;
     }
-    if (this.state !== 'dying' && this.state !== 'gameover') this.vehicle.update(p, dt, w.speed, turbo);
+    // (countdown: updateCountdown already stepped the car at rest — a second step here with road speed
+    // made speed jump 0 ↔ v every frame and the suspension shook the car before the start, v4.1.3 fix)
+    if (this.state === 'dying' || this.state === 'gameover') this.vehicle.crashUpdate(dt);
+    else if (this.state !== 'countdown') this.vehicle.update(p, dt, w.speed, turbo); // 3D body settles to a stable crash pose, shards fly and fade
     this.tyreSpray(dt, w.speed);
+    this.diveSparks(dt);
     this.obstacleViews.update(w.obstacles, this.time, dt);
     this.pickupViews.update(w.pickups, this.time, this.rig.camera.quaternion);
     const scroll = this.state === 'countdown' ? 0 : w.speed;
@@ -3031,26 +3067,21 @@ export class Game {
     this.speedLines.intensity += (wantLines - this.speedLines.intensity) * damp(3, dt);
     this.speedLines.update(dt, w.speed, this.scenery.accent);
 
-    // shield bubble
-    const sh = this.shield;
-    // the X1 render shows protection as its own calm aura; the mote cloud is only for 3D bodies
-    sh.mesh.visible = !!run && run.shield && this.state !== 'dying' && !this.vehicle.usesSprite;
-    // the shield is the hexagon dome; the soft aura is for the other power-ups
-    // (Turbo and rockets use the flames + smoke render instead of the aura — no double glow)
+    // shield: the 3D car draws its own luminous aura (MeshCar / CarFx.ShieldAura); the rear image
+    // keeps its hexagon dome. (v4.1.3: the old grey mote cloud around the 3D car is gone.)
     // power-up visuals only while actually racing (never on the game-over / menu screens: the
     // last run's shield or turbo used to stay glowing around the car on the next run)
     const racing = !!run && (this.state === 'run' || this.state === 'respawn' || this.state === 'countdown');
     // v2.2: no outline for Magnet / ×2 (the HUD chip shows them) — only Phase Ghost glows
     this.vehicle.auraTarget = racing && this.showcaseK === 'ghost' ? 1 : 0;
-    this.vehicle.shieldTarget = racing && run.shield ? 1 : 0;
+    // steady while it lasts; a timed shield fades down over its last 2 s instead of flickering
+    this.vehicle.shieldTarget = racing && run.shield ? (run.shieldT > 0 && run.shieldT < 2 ? 0.35 + 0.325 * run.shieldT : 1) : 0;
     // boost look while Turbo runs or a Roadster / HYPER / SOS rocket is climbing
     this.vehicle.boostTarget = run && this.state === 'run' && (run.turboT > 0 || (this.world.player.isSuper && this.world.player.vphase !== 'recover')) ? 1 : 0;
-    if (sh.mesh.visible) {
-      sh.mesh.position.copy(this.vehicle.root.position);
-      sh.mesh.quaternion.copy(this.vehicle.root.quaternion);
-      sh.mat.uniforms.time.value = this.time;
-      // steady; fades smoothly in the last 2 s instead of flickering
-      sh.mat.uniforms.strength.value = run.shieldT > 0 && run.shieldT < 2 ? 0.35 + 0.325 * run.shieldT : 1;
+    if (this.debugCol) {
+      if (!this.debugCol.group.parent) this.renderer.scene.add(this.debugCol.group);
+      p.hitbox(this.debugHit);
+      this.debugCol.update(this.debugHit, this.vehicle.visualObject, w.obstacles.map((o) => ({ boxes: o.boxes, view: this.obstacleViews.viewOf(o.id) })));
     }
 
     // magnet field pulse
@@ -3063,7 +3094,7 @@ export class Game {
     this.renderer.setBloom(rp.bloom * COMFORT.bloomMul); // constant: boosts never brighten the screen
 
     if (this.state !== 'dying' && this.state !== 'gameover') this.updateTrails(dt, w.speed, turbo);
-    this.rig.update(dt, p, speedFactor, turbo);
+    if (this.state !== 'countdown') this.rig.update(dt, p, speedFactor, turbo); // countdown steps the rig itself
   }
 
   /** Thruster exhaust trails + fly-up plasma column. */

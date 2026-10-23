@@ -296,18 +296,41 @@ export const RENDER = {
   ledGlow: 3.6,
   markerGlow: 2.6,
   badgeGlow: 1.4,
+  /** headlight LED emissive strength (slim signature, no blooming blob) */
+  headGlow: 1.4,
   /** nitro flame length (m) at full boost */
-  nitroLen: 1.1,
+  nitroLen: 2.0,
   /** sprung body yaw per unit of lateral speed (subtle nose-in on lane changes) */
   bodyYaw: 0.02,
-  /** active rear spoiler: max angle (rad, trailing edge up), raise / retract rates (1/s) */
-  spoilerAngle: 0.28,
-  spoilerUp: 5,
-  spoilerDown: 2.2,
+  /** active rear spoiler (v4.1.3 pop-up): max angle (rad, trailing edge up, 0.38 ≈ 22°), how far the
+   *  flap rises off the deck at full deployment (model metres), raise / retract rates (1/s) */
+  spoilerAngle: 0.38,
+  spoilerRise: 0.06,
+  spoilerUp: 7,
+  spoilerDown: 2.0,
   /** seconds the spoiler stays up after jump + nitro end (no flicker on landing) */
   spoilerHold: 0.25,
-  /** Bonus "Phase Ghost": opacity of the 3D car at full effect */
+  /** Bonus "Phase Ghost": opacity of the 3D car at full effect, cyan edge strength */
   ghostOpacity: 0.35,
+  ghostRim: 1.6,
+  /**
+   * v4.1.3 DOWN (dive under a beam): the 3D car presses down toward the road — height × (1 − squash),
+   * width × (1 + widen), length × (1 + stretch) at full dive, with a small spring overshoot — plus a
+   * light pool under it and a few sparks. Visual only: the LOW hitbox and timings are unchanged.
+   */
+  duck: { squash: 0.28, widen: 0.06, stretch: 0.03 },
+  /**
+   * v4.1.3 airborne alignment: once the car leaves the road its visual underside is lifted to at least
+   * the hitbox underside within `ramp` metres of height (jumped obstacles no longer cut through the
+   * body while the hitbox already clears them). On the road nothing changes (wheels on the asphalt).
+   */
+  airAlignRamp: 0.45,
+  /** shield aura: colour, rim strength, pulse (Hz), fade in / out rates (1/s) */
+  shield: { color: 0x7fe6ff, rim: 1.25, pulse: 0.6, fadeIn: 9, fadeOut: 4 },
+  /** pickup light sweep (turbo / rockets / power-ups): seconds front → back */
+  sweepTime: 0.5,
+  /** crash: debris fragments (pooled), their life (s), impact flash life (s) */
+  crash: { fragments: 12, life: 1.4, flash: 0.2 },
 };
 
 /** one chase-camera setup (metres relative to the car; damping rates 1/s) */

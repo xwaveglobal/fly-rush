@@ -19,7 +19,7 @@ const buf = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLe
 const scene = parseGlb(buf);
 const car = scene.getObjectByName('X1');
 check(!!car, 'GLB parses; root node X1');
-const need = ['Body', 'Wheel_FL', 'Wheel_FR', 'Wheel_RL', 'Wheel_RR', 'Spin_FL', 'Spin_FR', 'Spin_RL', 'Spin_RR', 'Tyre_RL', 'Rim_RL', 'Caliper_RL', 'NitroSocket_L', 'NitroSocket_R', 'Rear_LED', 'Badge_XWAVE', 'Glass_Canopy', 'Diffuser', 'Rear_LowerBumper', 'Spoiler_Pivot', 'Spoiler'];
+const need = ['Body', 'Wheel_FL', 'Wheel_FR', 'Wheel_RL', 'Wheel_RR', 'Spin_FL', 'Spin_FR', 'Spin_RL', 'Spin_RR', 'Tyre_RL', 'Rim_RL', 'Caliper_RL', 'NitroSocket_L', 'NitroSocket_R', 'Rear_LED', 'Badge_XWAVE', 'Glass_Canopy', 'Diffuser', 'Rear_LowerBumper', 'Spoiler_Pivot', 'Spoiler', 'Spoiler_Skirt', 'Front_Splitter', 'Front_Intake', 'Light_Head', 'Light_HeadHousing', 'Body_PanelGaps', 'Wheel_Liners'];
 const missing = need.filter((n) => !scene.getObjectByName(n));
 check(missing.length === 0, `named nodes present (${need.length})${missing.length ? ' — missing ' + missing.join(', ') : ''}`);
 
@@ -88,15 +88,25 @@ check(!scene.getObjectByName('Diffuser_Rail') && !scene.getObjectByName('NitroSo
   const sp = scene.getObjectByName('Spoiler')!;
   const closed = new THREE.Box3().setFromObject(sp);
   check(closed.max.y < 0.79 && closed.min.y > 0.73, `closed spoiler flush with the deck (y ${closed.min.y.toFixed(3)}–${closed.max.y.toFixed(3)})`);
+  const skirt = scene.getObjectByName('Spoiler_Skirt')!;
+  const deckY = 0.745;
+  check(new THREE.Box3().setFromObject(skirt).max.y < closed.max.y && new THREE.Box3().setFromObject(skirt).max.z < 2.2, 'closed: the pop-up skirt is hidden inside the deck well');
+  const y0 = pivot.position.y;
   pivot.rotation.x = -RENDER.spoilerAngle;
+  pivot.position.y = y0 + RENDER.spoilerRise;
   scene.updateMatrixWorld(true);
   const raised = new THREE.Box3().setFromObject(sp);
   const lift = raised.max.y - closed.max.y;
-  check(lift > 0.04 && lift < 0.12, `raised spoiler: trailing edge up ${(lift * 100).toFixed(1)} cm, no struts (hinge only)`);
+  check(RENDER.spoilerAngle >= 0.26 && RENDER.spoilerAngle <= 0.39, `deployed angle ${((RENDER.spoilerAngle * 180) / Math.PI).toFixed(1)}° (15–22°)`);
+  check(lift > 0.12 && lift < 0.25, `raised spoiler: trailing edge up ${(lift * 100).toFixed(1)} cm (v4.1.2: 9.2 cm) — clearly visible from the chase camera`);
   check(raised.max.z <= closed.max.z + 0.01, 'raised spoiler does not swing past the tail');
+  // the skirt fills the gap under the raised flap all the way down below the deck (no open slot, no rods)
+  const sb = new THREE.Box3().setFromObject(skirt);
+  check(sb.min.y < deckY - 0.005, `raised: skirt reaches below the deck (${sb.min.y.toFixed(3)} < ${deckY}) — no visible gap`);
   pivot.rotation.x = 0;
+  pivot.position.y = y0;
   scene.updateMatrixWorld(true);
-  check(sp.children.length === 0 && pivot.children.length === 1, 'spoiler is a single mesh on its pivot (nothing hangs off it)');
+  check(sp.children.length === 0 && pivot.children.every((c) => /^Spoiler/.test(c.name)) && pivot.children.length === 3, 'pivot holds only the flap, its skirt and its edge accent (nothing else hangs off it)');
 }
 
 // ---- v4.1.2 proportions: shorter front, mirrorless, rear untouched
@@ -113,9 +123,34 @@ check(!scene.getObjectByName('Diffuser_Rail') && !scene.getObjectByName('NitroSo
   check(wb > 2.4 && wb < 2.62, `wheelbase ${wb.toFixed(3)} m (believable for the length: ${(wb / len).toFixed(2)} of it)`);
   check(Math.abs(size.x - 2.09) < 0.03, `overall width kept (${size.x.toFixed(3)} m = rear tyres, no mirror bulge)`);
   check(Math.abs(box.max.z - 2.242) < 0.002 && Math.abs(ledZ - 2.21) < 0.01, 'rear end unchanged (tail 2.242 m, LED plane 2.21 m)');
+  check(box.min.y > -0.001, `nothing below the road (min y ${box.min.y.toFixed(3)})`);
   const fl = scene.getObjectByName('Tyre_FL')!;
   const tb = new THREE.Box3().setFromObject(fl);
   check(Math.abs(tb.max.y - tb.min.y - (tb.max.z - tb.min.z)) < 0.01, 'front tyre still round after the length change');
+}
+
+// ---- v4.1.3 front: splitter tucked under the nose, wheel arches with clearance and black liners
+{
+  const bb = (n: string) => new THREE.Box3().setFromObject(scene.getObjectByName(n)!);
+  const paint = bb('Body_Paint');
+  const split = bb('Front_Splitter');
+  check(split.min.z > paint.min.z + 0.02, `splitter front edge ${((split.min.z - paint.min.z) * 100).toFixed(1)} cm behind the nose (v4.1.2: 6 cm ahead of it)`);
+  check(split.max.y <= 0.215 && split.min.y >= 0.1, `splitter integrated under the bumper (y ${split.min.y.toFixed(3)}–${split.max.y.toFixed(3)})`);
+  const tyre = bb('Tyre_FL');
+  // the arch edge right above the front tyre (body side section at the axle) must clear the tyre top
+  const fl = scene.getObjectByName('Wheel_FL')!.getWorldPosition(new THREE.Vector3());
+  let archY = Infinity;
+  const v = new THREE.Vector3();
+  const bp = scene.getObjectByName('Body_Paint') as THREE.Mesh;
+  const pos = bp.geometry.getAttribute('position');
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i).applyMatrix4(bp.matrixWorld);
+    if (Math.abs(v.z - fl.z) < 0.02 && v.x < -0.7 && v.y > tyre.max.y - 0.2 && v.y < archY) archY = v.y;
+  }
+  check(archY - tyre.max.y > 0.012, `front arch clears the tyre: ${((archY - tyre.max.y) * 100).toFixed(1)} cm above it`);
+  const liner = bb('Wheel_Liners');
+  check(liner.max.x < size.x / 2 && liner.min.x > -size.x / 2, 'wheel-arch liners stay inside the body sides');
+  check(mats.has('X1_WheelLiner') && mats.has('X1_PanelGap') && mats.has('X1_HeadlightCore'), 'materials: wheel liner, panel gaps, headlight core');
 }
 
 // in game: the visual width stays close to the hitbox (fair dodges)

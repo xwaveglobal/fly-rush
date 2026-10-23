@@ -22,7 +22,8 @@
     "build:car": "node scripts/car/build-x1.mjs",
     "preview:car": "node scripts/car/preview-x1.mjs",
     "test:camera": "node --experimental-transform-types --no-warnings tests/camera.test.ts",
-    "test:motion": "node --experimental-transform-types --no-warnings tests/carMotion.test.ts"
+    "test:motion": "node --experimental-transform-types --no-warnings tests/carMotion.test.ts",
+    "test:vfx": "node scripts/car/preview-x1.mjs docs/3d-upgrade/step03-2 \"selftest=1=vfx_selftest\""
   },
   "dependencies": {
     "three": "0.169.0"

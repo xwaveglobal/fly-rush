@@ -10,7 +10,7 @@ import * as THREE from 'three';
  *
  * Supported: triangle primitives (POSITION, NORMAL, TEXCOORD_0, indices), node TRS / matrix,
  * pbrMetallicRoughness factors, emissive, alphaMode, doubleSided, KHR_materials_clearcoat,
- * KHR_materials_emissive_strength. Anything else is skipped.
+ * KHR_materials_iridescence (factors only), KHR_materials_emissive_strength. Anything else is skipped.
  */
 
 interface GltfJson {
@@ -84,7 +84,8 @@ export function parseGlb(data: ArrayBuffer): THREE.Group {
     const pbr = m.pbrMetallicRoughness ?? {};
     const cc = m.extensions?.KHR_materials_clearcoat;
     const es = m.extensions?.KHR_materials_emissive_strength;
-    const mat = cc ? new THREE.MeshPhysicalMaterial() : new THREE.MeshStandardMaterial();
+    const ir = m.extensions?.KHR_materials_iridescence;
+    const mat = cc || ir ? new THREE.MeshPhysicalMaterial() : new THREE.MeshStandardMaterial();
     mat.name = m.name ?? '';
     const bc = pbr.baseColorFactor ?? [1, 1, 1, 1];
     mat.color.setRGB(bc[0], bc[1], bc[2], THREE.LinearSRGBColorSpace);
@@ -95,6 +96,11 @@ export function parseGlb(data: ArrayBuffer): THREE.Group {
     if (cc && mat instanceof THREE.MeshPhysicalMaterial) {
       mat.clearcoat = cc.clearcoatFactor ?? 0;
       mat.clearcoatRoughness = cc.clearcoatRoughnessFactor ?? 0;
+    }
+    if (ir && mat instanceof THREE.MeshPhysicalMaterial) {
+      mat.iridescence = ir.iridescenceFactor ?? 0;
+      mat.iridescenceIOR = ir.iridescenceIor ?? 1.3;
+      mat.iridescenceThicknessRange = [ir.iridescenceThicknessMinimum ?? 100, ir.iridescenceThicknessMaximum ?? 400];
     }
     if (m.alphaMode === 'BLEND') {
       mat.transparent = true;

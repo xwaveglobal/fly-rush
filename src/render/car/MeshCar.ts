@@ -4,6 +4,7 @@ import { Spring, clamp, clamp01 } from '../../core/math.ts';
 import { glowTexture } from '../textures.ts';
 import { assetBytes, parseGlb } from './glbParse.ts';
 import { ease, spoilerUpdate, wheelStep, type SpoilerState } from './carMotion.ts';
+import { ShieldAura, installCarFx, makeCarFxUniforms } from './CarFx.ts';
 import { CAR_HALF } from '../../config.ts';
 import { x1BadgeCanvas, x1CarbonCanvas, x1TreadCanvas } from './x1Textures.ts';
 import x1Url from '../../assets/models/xwave-x1.glb';
@@ -42,8 +43,23 @@ export class MeshCar {
   private wheels: WheelRig[] = [];
   private sockets: THREE.Object3D[] = [];
   private flames: THREE.Mesh[] = [];
-  private flameMat: THREE.MeshBasicMaterial;
-  private coreMat: THREE.MeshBasicMaterial;
+  private flameMats: THREE.ShaderMaterial[] = [];
+  private nozzles: THREE.Sprite[] = [];
+  private nozzleMat: THREE.SpriteMaterial;
+  /** the X1 node (its origin is on the road, so scaling it squashes the car toward the asphalt) */
+  private model: THREE.Object3D | null = null;
+  private baseScale = 1;
+  /** DOWN: 0 = normal … 1 = pressed down (spring: a little overshoot in and out) */
+  private duckS = new Spring(0, 320, 20);
+  private hover: THREE.Mesh;
+  private padMat: THREE.MeshBasicMaterial;
+  /** edge light uniforms shared by all car materials (ghost rim, pickup sweep) */
+  fx = makeCarFxUniforms();
+  /** shield aura (follows the car pose) */
+  aura = new ShieldAura();
+  /** shield level 0..1 — set by Vehicle from the gameplay shield state (fades over a timed shield's end) */
+  shield = 0;
+  private sweepT = 99;
   private mats = new Map<string, THREE.MeshStandardMaterial>();
   private orig = new Map<THREE.MeshStandardMaterial, { color: number; emissive: number; ei: number }>();
   private roll = new Spring(0, 140, 16);
@@ -53,6 +69,7 @@ export class MeshCar {
   /** active spoiler: pivot (hinge at the front edge) and 0..1 deployment */
   private spoiler: THREE.Object3D | null = null;
   private spoilerState: SpoilerState = { k: 0, hold: 0 };
+  private spoilerBaseY = 0;
   get spoilerK() {
     return this.spoilerState.k;
   }
@@ -73,9 +90,40 @@ export class MeshCar {
 
   constructor() {
     this.root.visible = false;
-    // nitro flame: an additive cone along +z (backwards), soft blue like the boost art, white core
-    this.flameMat = new THREE.MeshBasicMaterial({ color: 0x3aa8ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
-    this.coreMat = new THREE.MeshBasicMaterial({ color: 0xdff4ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+    // nitro thrust (v4.1.3): three nested additive cones per socket — white-blue core, cyan body,
+    // violet-tinted outer veil — each fading along its length and toward its edges (tapered, soft,
+    // no hard cone outline, nothing opaque over the rear LED)
+    const layer = (inner: number, outer: number, len: number, edge: number) =>
+      new THREE.ShaderMaterial({
+        uniforms: { k: { value: 0 }, inner: { value: new THREE.Color(inner) }, outer: { value: new THREE.Color(outer) }, len: { value: len }, edge: { value: edge }, t: { value: 0 } },
+        vertexShader: `varying float vA; varying vec3 vN; varying vec3 vV;
+          void main(){ vA = position.z; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
+        fragmentShader: `uniform float k; uniform vec3 inner; uniform vec3 outer; uniform float len; uniform float edge; uniform float t; varying float vA; varying vec3 vN; varying vec3 vV;
+          void main(){
+            float a = clamp(vA, 0.0, 1.0);
+            float along = pow(1.0 - a, 1.6) * smoothstep(0.0, 0.06, a);
+            float face = pow(abs(dot(normalize(vN), normalize(vV))), edge);
+            float flick = 0.9 + 0.1 * sin(t * 47.0 + a * 20.0);
+            gl_FragColor = vec4(mix(inner, outer, a) * along * face * k * flick, 1.0);
+          }`,
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide,
+        toneMapped: false,
+      });
+    this.flameMats = [layer(0x9fe8ff, 0x8a5cff, 1, 1.2), layer(0x6fd6ff, 0x2f7dff, 0.8, 1.0), layer(0xffffff, 0x9fe8ff, 0.5, 0.6)];
+    this.nozzleMat = new THREE.SpriteMaterial({ map: glowTexture(), color: 0x7fdcff, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false });
+    // DOWN: soft light pool on the road under the car
+    this.padMat = new THREE.MeshBasicMaterial({ map: glowTexture(), color: 0x39b6ff, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false });
+    this.hover = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.padMat);
+    this.hover.rotation.x = -Math.PI / 2;
+    this.hover.scale.set(2.4, 4.4, 1);
+    this.hover.position.set(0, 0.02, 0.05);
+    this.hover.visible = false;
+    this.hover.renderOrder = 2;
+    this.root.add(this.hover);
+    this.root.add(this.aura.mesh);
     void this.load();
   }
 
@@ -91,6 +139,8 @@ export class MeshCar {
     const s = RENDER.carScale;
     const model = scene.getObjectByName('X1') ?? scene;
     model.scale.setScalar(s);
+    this.model = model;
+    this.baseScale = s;
     // materials by name: procedural textures + in-game glow levels (the GLB's images are not decoded)
     model.traverse((o) => {
       const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
@@ -120,7 +170,7 @@ export class MeshCar {
     const tyre = this.mats.get('X1_Tyre');
     if (tyre) tyre.map = tex(x1TreadCanvas());
     // lights: exact colours (no tone-map hue shift to orange) and strong enough to bloom
-    for (const [name, k] of [['X1_RearLED', RENDER.ledGlow], ['X1_RearLEDCore', RENDER.ledGlow], ['X1_RedMarker', RENDER.markerGlow], ['X1_Headlight', 0], ['X1_MirrorGlow', 0], ['X1_SeatTrim', 0], ['X1_Badge', 0]] as const) {
+    for (const [name, k] of [['X1_RearLED', RENDER.ledGlow], ['X1_RearLEDCore', RENDER.ledGlow], ['X1_RedMarker', RENDER.markerGlow], ['X1_Headlight', 0], ['X1_SeatTrim', 0], ['X1_Badge', 0]] as const) {
       const m = this.mats.get(name);
       if (!m) continue;
       m.toneMapped = false;
@@ -128,7 +178,17 @@ export class MeshCar {
     }
     const glass = this.mats.get('X1_Glass');
     if (glass) glass.envMapIntensity = 0.18; // dark tint, soft highlight (no glare blob from the sun)
+    for (const [name, k] of [['X1_Headlight', RENDER.headGlow], ['X1_HeadlightCore', RENDER.headGlow]] as const) {
+      const m = this.mats.get(name);
+      if (m) {
+        m.toneMapped = false;
+        m.emissiveIntensity = k;
+      }
+    }
+    // edge light (Phase Ghost rim, pickup sweep) compiled into every car material up front
+    for (const m of this.mats.values()) installCarFx(m, this.fx);
     this.spoiler = model.getObjectByName('Spoiler_Pivot') ?? null;
+    if (this.spoiler) this.spoilerBaseY = this.spoiler.position.y;
     for (const m of this.mats.values()) {
       this.orig.set(m, { color: m.color.getHex(), emissive: m.emissive.getHex(), ei: m.emissiveIntensity });
       this.fadeState.push({ m, transparent: m.transparent, opacity: m.opacity, depthWrite: m.depthWrite });
@@ -169,21 +229,32 @@ export class MeshCar {
       const so = model.getObjectByName(id);
       if (!so) continue;
       this.sockets.push(so);
-      for (const [mat, rad] of [[this.flameMat, 0.075], [this.coreMat, 0.035]] as const) {
-        const geo = new THREE.ConeGeometry(rad, 1, 14, 1, true);
-        geo.translate(0, -0.5, 0);
-        geo.rotateX(-Math.PI / 2); // tip toward +z (out of the back)
-        const f = new THREE.Mesh(geo, mat);
+      for (const [i, rad] of [0.16, 0.1, 0.05].entries()) {
+        // cone from the socket (z 0, wide end) to the tip (z 1)
+        const geo = new THREE.CylinderGeometry(rad * 0.25, rad, 1, 16, 4, true);
+        geo.translate(0, 0.5, 0);
+        geo.rotateX(Math.PI / 2);
+        const f = new THREE.Mesh(geo, this.flameMats[i]);
         f.visible = false;
-        f.renderOrder = 5;
+        f.renderOrder = 5 + i;
+        f.frustumCulled = false;
         so.add(f);
         this.flames.push(f);
       }
+      const nz = new THREE.Sprite(this.nozzleMat);
+      nz.scale.setScalar(0.42);
+      nz.position.z = 0.02;
+      nz.visible = false;
+      nz.renderOrder = 8;
+      so.add(nz);
+      this.nozzles.push(nz);
     }
     this.root.add(model);
     model.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(model);
     this.noseOverhang = Math.max(0, -box.min.z - CAR_HALF.z);
+    this.zFront = box.min.z;
+    this.zBack = box.max.z;
     this.ready = true;
     this.onReady?.();
   }
@@ -198,7 +269,7 @@ export class MeshCar {
     }
     const paint = this.mats.get('X1_Paint');
     if (paint && (skin.tintAmt ?? 0) > 0) paint.color.setHex(skin.body);
-    for (const n of ['X1_MirrorGlow', 'X1_Headlight']) {
+    for (const n of ['X1_Headlight']) {
       const m = this.mats.get(n);
       if (m) {
         m.color.setHex(skin.glow);
@@ -211,17 +282,29 @@ export class MeshCar {
         m.emissiveIntensity = 0;
       }
     }
-    this.flameMat.color.setHex(skin.glow === 0x39b6ff ? 0x3aa8ff : skin.glow);
+    this.padMat.color.setHex(skin.glow);
   }
 
   /**
    * @param speed road speed (m/s)
    * @param lat lateral speed in lane-speeds (−1.4 … 1.4, + = moving right)
    * @param air 0 on the road … 1 airborne
+   * @param jumping gameplay jump state (Player.vmode === 'up': take-off → airborne → touch-down)
+   * @param duck gameplay DOWN depth 0..1 (from Player.squash while vmode === 'down')
    */
-  update(dt: number, speed: number, lat: number, air: number, locked: boolean, jumping = false) {
+  update(dt: number, speed: number, lat: number, air: number, locked: boolean, jumping = false, duck = 0) {
     if (!this.ready) return;
     this.t += dt;
+    // ---- DOWN (dive under a beam): the whole car presses down toward the road — squashes low and a
+    // little wider/longer, with a small spring overshoot on entry and on release (arcade squash).
+    // Wheels stay on the asphalt; a soft light pool under the car reads as "skimming the road".
+    const D = RENDER.duck;
+    this.duckS.target = locked ? 0 : clamp01(duck);
+    this.duckS.update(dt);
+    const e = Math.max(0, this.duckS.value);
+    if (this.model) this.model.scale.set(this.baseScale * (1 + D.widen * e), this.baseScale * (1 - D.squash * e), this.baseScale * (1 + D.stretch * e));
+    this.padMat.opacity = 0.8 * clamp01(e);
+    this.hover.visible = e > 0.02;
     // ---- wheels: spin with the road (free-wheel and slow down in the air), capped against strobing
     const onRoad = air < 0.05;
     this.wheelV = onRoad ? speed : this.wheelV * Math.exp(-0.45 * dt);
@@ -249,32 +332,66 @@ export class MeshCar {
     // light road buzz at speed (sub-centimetre) so the body feels planted, not glued
     const buzz = (Math.sin(this.t * 41) * 0.5 + Math.sin(this.t * 67) * 0.3) * 0.004 * clamp01(speed / 30) * (1 - air);
     this.bodyPivot.rotation.set(clamp(this.pitch.value, -0.08, 0.08), clamp(this.yaw.value, -0.04, 0.04), clamp(this.roll.value, -0.06, 0.06));
-    // ---- active spoiler: rises with nitro, retracts smoothly after (hinged at its front edge)
-    // active spoiler: open while jumping (gameplay jump state) or nitro runs, retracts after both end
+    this.bodyPivot.position.y = 0.5 + clamp(this.dip.value, -0.08, 0.04) + buzz;
+    // ---- active spoiler (pop-up): open while jumping (gameplay jump state) or nitro runs; rises off
+    // the deck and tilts on its hinge; retracts after both end (hold, then a slower close)
     if (this.spoilerForce !== null) this.spoilerState.k = this.spoilerForce;
     else spoilerUpdate(this.spoilerState, !locked && jumping, locked ? 0 : this.nitro, dt, RENDER.spoilerUp, RENDER.spoilerDown, RENDER.spoilerHold);
-    if (this.spoiler) this.spoiler.rotation.x = -RENDER.spoilerAngle * ease(this.spoilerState.k);
-    this.bodyPivot.position.y = 0.5 + clamp(this.dip.value, -0.08, 0.04) + buzz;
-    // ---- nitro flames from the sockets
+    if (this.spoiler) {
+      const sk = ease(this.spoilerState.k);
+      this.spoiler.rotation.x = -RENDER.spoilerAngle * sk;
+      this.spoiler.position.y = this.spoilerBaseY + RENDER.spoilerRise * sk;
+    }
+    // ---- nitro thrust from the sockets: length follows the boost and (a little) the speed
     const k = locked ? 0 : clamp01(this.nitro);
     const show = k > 0.02;
-    const fl = (0.25 + 0.75 * k) * RENDER.nitroLen / RENDER.carScale;
-    const flick = 1 + Math.sin(this.t * 53) * 0.08 + Math.sin(this.t * 31) * 0.06;
+    const fl = (0.35 + 0.65 * k) * (0.85 + 0.3 * clamp01(speed / 60)) * RENDER.nitroLen / RENDER.carScale;
+    const lens = [1, 0.78, 0.48];
+    const amps = [0.6, 0.9, 1.2];
     for (let i = 0; i < this.flames.length; i++) {
       const f = this.flames[i];
       f.visible = show;
-      const core = i % 2 === 1;
-      f.scale.set(1, 1, fl * (core ? 0.6 : 1) * flick);
+      f.scale.set(1, 1, fl * lens[i % 3]);
     }
-    this.flameMat.opacity = 0.75 * k;
-    this.coreMat.opacity = 0.9 * k;
+    for (let i = 0; i < 3; i++) {
+      this.flameMats[i].uniforms.k.value = k * amps[i];
+      this.flameMats[i].uniforms.t.value = this.t;
+    }
+    for (const n of this.nozzles) n.visible = show;
+    this.nozzleMat.opacity = 0.6 * k;
+    // ---- shield aura + pickup light sweep
+    this.aura.update(dt, locked ? 0 : this.shield);
+    if (this.sweepT < RENDER.sweepTime) {
+      this.sweepT += dt;
+      const u = Math.min(1, this.sweepT / RENDER.sweepTime);
+      this.root.getWorldPosition(this.tmpV);
+      this.fx.uFxSweepZ.value = this.tmpV.z + this.zFront - 0.2 + (this.zBack - this.zFront + 0.4) * u;
+      this.fx.uFxSweep.value = Math.sin(Math.PI * u) * 1.1;
+    } else this.fx.uFxSweep.value = 0;
+  }
+  private tmpV = new THREE.Vector3();
+  /** front / back of the car (game metres, relative to the root) — for the light sweep */
+  private zFront = -1.5;
+  private zBack = 1.7;
+
+  /** a short light sweep over the body, front to back (booster / power-up pickup) */
+  sweep(color: number) {
+    this.fx.uFxSweepColor.value.setHex(color);
+    this.sweepT = 0;
+  }
+
+  /** Phase Ghost: 0 = normal … 1 = translucent car with a cyan edge (materials restored exactly at 0) */
+  setGhost(e: number) {
+    this.fx.uFxGhost.value = RENDER.ghostRim * e;
+    this.setFade(1 - (1 - RENDER.ghostOpacity) * e);
   }
 
   /** Phase Ghost: 1 = solid, lower = translucent (materials restored exactly at 1) */
   setFade(k: number) {
-    if (Math.abs(k - this.fade) < 0.005) return;
+    if (Math.abs(k - this.fade) < 0.005 && !(k === 1 && this.fade !== 1)) return;
     this.fade = k;
     const solid = k >= 0.995;
+    if (solid) this.fade = 1;
     const flip = solid !== this.fadeSolid;
     this.fadeSolid = solid;
     for (const f of this.fadeState) {
@@ -283,6 +400,43 @@ export class MeshCar {
       f.m.depthWrite = solid ? f.depthWrite : false;
       if (flip) f.m.needsUpdate = true; // only when switching between solid and translucent
     }
+  }
+
+  /** materials are exactly as loaded (no ghost / fade state left) — tests */
+  get materialsRestored() {
+    return this.fadeState.every((f) => f.m.transparent === f.transparent && f.m.opacity === f.opacity && f.m.depthWrite === f.depthWrite) && this.fx.uFxGhost.value === 0;
+  }
+
+  /** crash: the body jolts on its springs (nose dips, a little roll), wheels stop */
+  crashJolt() {
+    this.pitch.velocity += 2.2;
+    this.dip.velocity -= 0.8;
+    this.roll.velocity += (Math.sin(this.t * 7.3) > 0 ? 1 : -1) * 0.9;
+  }
+
+  /**
+   * after a crash (dying / game over): the springs settle, nitro and shield fade, the spoiler retracts
+   * to its flush rest — a defined, stable final pose.
+   */
+  settle(dt: number) {
+    this.nitro = 0;
+    this.shield = 0;
+    this.update(dt, 0, 0, 0, false, false, 0);
+  }
+
+  /** compile every effect variant once (ghost transparency, aura, thrust) so none compiles mid-race */
+  prewarm(renderer: THREE.WebGLRenderer, scene: THREE.Object3D, camera: THREE.Camera) {
+    if (!this.ready) return;
+    const was = this.root.visible;
+    this.root.visible = true;
+    const show = [...this.flames, ...this.nozzles, this.aura.mesh, this.hover];
+    for (const o of show) o.visible = true;
+    this.setFade(0.5);
+    renderer.compile(scene, camera);
+    this.setFade(1);
+    renderer.compile(scene, camera);
+    for (const o of show) o.visible = false;
+    this.root.visible = was;
   }
 
   /** settle the sprung body instantly (respawn / menu) */
@@ -294,6 +448,12 @@ export class MeshCar {
     this.pitch.snap(0);
     this.dip.snap(0);
     this.prevAir = 0;
+    this.duckS.snap(0);
+    this.duckS.velocity = 0;
+    if (this.model) this.model.scale.setScalar(this.baseScale);
+    this.aura.reset();
+    this.sweepT = 99;
+    this.fx.uFxSweep.value = 0;
   }
 
   /** world position of nitro socket i (for trail particles) */

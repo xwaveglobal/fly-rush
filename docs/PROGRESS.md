@@ -4,6 +4,16 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-23 — v4.1.3: 3D upgrade Step 03.2 — front end, pop-up spoiler, premium VFX, dive pose
+
+**Done**: generator front rework (rounded nose, tucked splitter, intake + air curtains, LED headlights draped on the paint by ray cast, seams, pearl paint, darker glass) and the front-wheel fix (side profile cut at the arch line — it used to fold around the tyre; 0.34 m front tyre, elliptical arch, black liners). Pop-up spoiler (rise 6 cm + 22°, wedge skirt). `CarFx.ts`: shield aura shell (old grey mote cloud removed for the 3D car), ghost / pickup edge light compiled into the car materials, pooled crash shards + flash; `MeshCar`: soft 3-layer nitro, DOWN press-down pose, settle on game over, prewarm. `carMotion.carHeight`: in the air the 3D underside never hangs below the hitbox (visual only). Traffic hover pods tucked inside their collision width. Countdown shake fixed (car + camera were stepped twice per frame with two speeds). `?debug=collision` overlay. Tests: 10 suites / 190 checks; `npm run test:vfx` 21/21 in real WebGL. Report: `docs/3d-upgrade/step03-2/README.md`.
+
+**Known**: car still longer / wider than the hitbox (inherent, documented); thin seams can shimmer at distance on low-DPI screens; front nose fillet shows a faint shading crease (hidden under the bumper seam); FPS not measured on a phone; Vite + TikTok native not run here.
+
+**Next**: owner reviews Step 03.2 → Step 04. Do not start before approval.
+
+---
+
 ## 2026-10-23 — v4.1.2: 3D upgrade Step 03.1 — shorter, mirrorless, jump spoiler
 
 **Done**: builder `LENGTH_CUT` 0.08 (front-half z-warp, arches kept round; `build-x1.mjs --cut=`), mirrors deleted, `spoilerUpdate()` (jumping = `Player.vmode === 'up'` ‖ nitro, 0.25 s hold), `Vehicle.crashRecoil()` (visual nose setback at crash). Tests: spoiler transitions with the real Player, mirror / length / wheelbase / rear-unchanged checks. 10 suites / 175 checks pass; esbuild builds pass. Report: `docs/3d-upgrade/step03-1/README.md`.

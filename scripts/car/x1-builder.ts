@@ -28,8 +28,10 @@ import { x1BadgeCanvas, x1CarbonCanvas, x1TreadCanvas } from '../../src/render/c
 // ------------------------------------------------------------------ dimensions
 const Z_NOSE = -2.3;
 const Z_TAIL = 2.2;
-const AX_F = { z: -1.36, r: 0.355, w: 0.27, x: 0.825, arch: 0.4, xin: 0.64 };
-const AX_R = { z: 1.3, r: 0.37, w: 0.38, x: 0.855, arch: 0.42, xin: 0.62 };
+// v4.1.3: front tyre 0.34 m and a slightly elliptical arch (vf) — the arch used to cut through the
+// fender top (paper-thin white edge over the tyre), now the fender keeps ~4 cm above the opening
+const AX_F = { z: -1.36, r: 0.34, w: 0.27, x: 0.825, arch: 0.42, xin: 0.64, vf: 0.86 };
+const AX_R = { z: 1.3, r: 0.37, w: 0.38, x: 0.855, arch: 0.42, xin: 0.62, vf: 0.98 };
 
 // ------------------------------------------------------------------ curve helpers
 /** monotone cubic interpolation through [x, y] keys (no overshoot, C1) */
@@ -96,7 +98,7 @@ const REAR_OPEN = 0.44;
 function archTop(z: number): { y: number; xin: number } | null {
   for (const a of [AX_F, AX_R]) {
     const dz = Math.abs(z - a.z);
-    const y = dz < a.arch ? a.r + Math.sqrt(a.arch * a.arch - dz * dz) * 0.98 : 0;
+    const y = dz < a.arch ? a.r + Math.sqrt(a.arch * a.arch - dz * dz) * a.vf : 0;
     if (a === AX_R && z > a.z) return { y: Math.max(y, REAR_OPEN), xin: a.xin };
     if (dz < a.arch) return { y, xin: a.xin };
   }
@@ -143,8 +145,34 @@ function sideHalf(z: number): [number, number][] {
   const ub = under(z);
   const sh = shY(z);
   const ym = yMaxW(z);
-  const side: [number, number][] = [sideTop(z), [W - 0.13, sh], [W - 0.035, (sh + ym) / 2 + 0.03], [W, ym], [W - 0.01, bot + 0.07], [W - 0.05, bot]];
-  return [...chaikin(side, 2), [xin, bot], [xin, ub], [0, ub]];
+  if (!arch || arch.y <= sill(z) + 1e-6) {
+    const side: [number, number][] = [sideTop(z), [W - 0.13, sh], [W - 0.035, (sh + ym) / 2 + 0.03], [W, ym], [W - 0.01, bot + 0.07], [W - 0.05, bot]];
+    return [...chaikin(side, 2), [xin, bot], [xin, ub], [0, ub]];
+  }
+  // v4.1.3 wheel arch: the side is drawn as if there were no arch (down to the sill), then cut where
+  // it crosses the arch line on its way down from the shoulder. Before, the profile ran down to the
+  // widest point (below the arch top) and folded back up to it — white flaps around the front tyre.
+  const sb = sill(z);
+  const full = chaikin([sideTop(z), [W - 0.13, sh], [W - 0.035, (sh + ym) / 2 + 0.03], [W, ym], [W - 0.01, sb + 0.07], [W - 0.05, sb]], 2);
+  let top = 0;
+  for (let i = 1; i < full.length; i++) if (full[i][1] > full[top][1]) top = i;
+  const y = Math.min(arch.y, full[top][1] - 0.03); // keep a fender lip above the opening
+  const out: [number, number][] = [];
+  let cut: [number, number] | null = null;
+  for (let i = 0; i < full.length; i++) {
+    if (cut) {
+      out.push(cut); // same point count on every section (the loft needs it): collapse onto the cut
+      continue;
+    }
+    const pt = full[i];
+    if (i > top && pt[1] < y) {
+      const [x0, y0] = full[i - 1];
+      const t = (y0 - y) / (y0 - pt[1] || 1);
+      cut = [x0 + (pt[0] - x0) * t, y];
+      out.push(cut);
+    } else out.push(pt);
+  }
+  return [...out, [xin, y], [xin, ub], [0, ub]];
 }
 /** top strip between the two top-of-side points (hood / deck, or the inner faces under the glass) */
 function topRow(z: number): [number, number][] {
@@ -218,6 +246,181 @@ function bodyCap(z: number, front: boolean) {
   return g;
 }
 
+// ------------------------------------------------------------------ v4.1.3 front helpers
+/** fillet length of the rounded nose (the straight loft ends this far behind the nose tip) */
+const NOSE_R = 0.065;
+/**
+ * Rounded nose: the last section is pulled in toward its centre over NOSE_R while moving forward
+ * (a quarter-round fillet), strong on the top edge, gentle at the chin, then closed by a flat face.
+ * Replaces the old flat cap, which read as a cut-off box from the front three-quarter view.
+ */
+function noseFillet() {
+  const z0 = Z_NOSE + NOSE_R;
+  const loop = [...topRow(z0), ...sideRow(z0).slice(1, -1).reverse()];
+  let cx = 0;
+  let cy = 0;
+  let ymin = Infinity;
+  for (const [x, y] of loop) {
+    cx += x;
+    cy += y;
+    ymin = Math.min(ymin, y);
+  }
+  cx /= loop.length;
+  cy /= loop.length;
+  const N = 6;
+  const pos: number[] = [];
+  const idx: number[] = [];
+  const n = loop.length;
+  const nTop = topRow(z0).length;
+  for (let k = 0; k <= N; k++) {
+    const t = (k / N) * (Math.PI / 2);
+    const dz = NOSE_R * Math.sin(t);
+    const inset = NOSE_R * (1 - Math.cos(t));
+    for (const [j, [x, y]] of loop.entries()) {
+      const dx = cx - x;
+      const dy = cy - y;
+      const d = Math.hypot(dx, dy) || 1;
+      // hood edge (top row): one even radius; down the sides it eases to a small radius at the chin
+      const w = j < nTop ? 1 : 0.3 + 0.7 * ramp(ymin, cy + 0.03, y);
+      const a = Math.min(inset * w, d * 0.45);
+      pos.push(x + (dx / d) * a, y + (dy / d) * a, z0 - dz);
+    }
+  }
+  for (let k = 0; k < N; k++)
+    for (let i = 0; i < n; i++) {
+      const a = k * n + i;
+      const b = k * n + ((i + 1) % n);
+      idx.push(a, a + n, b, b, a + n, b + n);
+    }
+  // flat face
+  const c0 = pos.length / 3;
+  let fx = 0;
+  let fy = 0;
+  for (let i = 0; i < n; i++) {
+    fx += pos[(N * n + i) * 3];
+    fy += pos[(N * n + i) * 3 + 1];
+  }
+  pos.push(fx / n, fy / n, Z_NOSE);
+  for (let i = 0; i < n; i++) idx.push(c0, N * n + ((i + 1) % n), N * n + i);
+  // orient outward: the face must look toward −z
+  const fa = new THREE.Vector3(...pos.slice(c0 * 3, c0 * 3 + 3));
+  const fb = new THREE.Vector3(...pos.slice((N * n + 1) * 3, (N * n + 1) * 3 + 3));
+  const fc = new THREE.Vector3(...pos.slice((N * n) * 3, (N * n) * 3 + 3));
+  if (fb.sub(fa).cross(fc.sub(fa)).z > 0) for (let i = 0; i < idx.length; i += 3) [idx[i + 1], idx[i + 2]] = [idx[i + 2], idx[i + 1]];
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+
+/** x of the outer body side at height y on the section z (inside the arch: the edge of the cut-out) */
+function sideXAt(z: number, y: number) {
+  const side = sideHalf(z).slice(0, -3);
+  if (y >= side[0][1]) return side[0][0];
+  for (let i = 0; i < side.length - 1; i++) {
+    const [x0, y0] = side[i];
+    const [x1, y1] = side[i + 1];
+    if ((y <= y0 && y >= y1) || (y >= y0 && y <= y1)) return x0 + ((x1 - x0) * (y - y0)) / (y1 - y0 || 1);
+  }
+  return side[side.length - 1][0];
+}
+
+/** height of the upper body surface (hood / fender top) at (x, z) — for parts that sit on it */
+function topY(x: number, z: number) {
+  const [xs, ys] = sideTop(z);
+  const c = deck(z);
+  const ax = Math.abs(x);
+  if (ax <= xs) return c + (ys - c) * Math.pow(ax / xs, 1.6);
+  const t = Math.min(1, (ax - xs) / Math.max(0.01, hw(z) - 0.13 - xs));
+  return ys + (shY(z) - ys) * t;
+}
+
+/** a thin strip through 3D points; `across` = unit direction of the strip width at each point */
+function ribbon(pts: THREE.Vector3[], across: THREE.Vector3[], width: number) {
+  const pos: number[] = [];
+  const idx: number[] = [];
+  pts.forEach((p, i) => {
+    const a = across[i];
+    pos.push(p.x - a.x * width / 2, p.y - a.y * width / 2, p.z - a.z * width / 2, p.x + a.x * width / 2, p.y + a.y * width / 2, p.z + a.z * width / 2);
+    if (i > 0) {
+      const k = (i - 1) * 2;
+      idx.push(k, k + 2, k + 1, k + 1, k + 2, k + 3);
+    }
+  });
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setIndex(idx);
+  // both faces: the strip is seen from whichever side the surface faces
+  const n = idx.length;
+  for (let i = 0; i < n; i += 3) idx.push(idx[i], idx[i + 2], idx[i + 1]);
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+/** the real upper body surface (ray cast straight down onto the built paint), set by buildBody */
+let surface: ((x: number, z: number) => number) | null = null;
+/** a strip lying on the hood / fender top along a path of (x, z) points */
+function topRibbon(path: [number, number][], width: number, lift = 0.0025) {
+  // both edges of the strip sit on the surface (it drapes over curvature instead of cutting into it)
+  const H = surface ?? topY;
+  const pos: number[] = [];
+  const idx: number[] = [];
+  path.forEach(([x, z], i) => {
+    const [xa, za] = path[Math.max(0, i - 1)];
+    const [xb, zb] = path[Math.min(path.length - 1, i + 1)];
+    let ax = -(zb - za);
+    let az = xb - xa;
+    const l = Math.hypot(ax, az) || 1;
+    ax /= l;
+    az /= l;
+    for (const sgn of [-1, 1]) {
+      const px = x + (sgn * ax * width) / 2;
+      const pz = z + (sgn * az * width) / 2;
+      pos.push(px, H(px, pz) + lift, pz);
+    }
+    if (i > 0) {
+      const k = (i - 1) * 2;
+      idx.push(k, k + 2, k + 1, k + 1, k + 2, k + 3, k, k + 1, k + 2, k + 1, k + 3, k + 2);
+    }
+  });
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+/** a seam following the body section at z: the top strip, then down the side(s) to the sill */
+function sectionSeam(z: number, width: number, parts: { top: boolean; sides: boolean }, lift = 0.0025) {
+  const side = sideHalf(z).slice(0, -3); // sideTop → … → bottom of the side (no inner well / floor)
+  const geos: THREE.BufferGeometry[] = [];
+  const along = (poly: [number, number][]) => {
+    const pts: THREE.Vector3[] = [];
+    for (let i = 0; i < poly.length; i++) {
+      const a = poly[Math.max(0, i - 1)];
+      const b = poly[Math.min(poly.length - 1, i + 1)];
+      // outward normal of the (x, y) polyline
+      let nx = b[1] - a[1];
+      let ny = -(b[0] - a[0]);
+      const l = Math.hypot(nx, ny) || 1;
+      nx /= l;
+      ny /= l;
+      if (nx * poly[i][0] + ny * (poly[i][1] - 0.45) < 0) {
+        nx = -nx;
+        ny = -ny;
+      }
+      pts.push(new THREE.Vector3(poly[i][0] + nx * lift, poly[i][1] + ny * lift, z));
+    }
+    geos.push(ribbon(pts, pts.map(() => new THREE.Vector3(0, 0, 1)), width));
+  };
+  if (parts.top) along(topRow(z));
+  if (parts.sides) {
+    along(side);
+    along(side.map(([x, y]) => [-x, y] as [number, number]));
+  }
+  return geos;
+}
+
 function stations(z0: number, z1: number, step: number, extra: number[] = []) {
   const s = new Set<number>();
   for (let z = z0; z < z1 - 1e-6; z += step) s.add(+z.toFixed(4));
@@ -236,18 +439,23 @@ const tex = (c: HTMLCanvasElement, srgb = true) => {
 const badgeTex = tex(x1BadgeCanvas());
 badgeTex.wrapS = badgeTex.wrapT = THREE.ClampToEdgeWrapping;
 const M = {
-  paint: new THREE.MeshPhysicalMaterial({ name: 'X1_Paint', color: 0xf2f4f8, metalness: 0.2, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.05 }),
+  // pearl white: warm white base, clearcoat, a faint pearl (thin-film) shift at grazing angles
+  paint: new THREE.MeshPhysicalMaterial({ name: 'X1_Paint', color: 0xf3f2ee, metalness: 0.22, roughness: 0.27, clearcoat: 1, clearcoatRoughness: 0.04, iridescence: 0.22, iridescenceIOR: 1.35, iridescenceThicknessRange: [180, 420] }),
   black: new THREE.MeshPhysicalMaterial({ name: 'X1_GlossBlack', color: 0x0b0c0f, metalness: 0.3, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.08 }),
   satin: new THREE.MeshPhysicalMaterial({ name: 'X1_SatinBlack', color: 0x0c0d10, metalness: 0.15, roughness: 0.5, clearcoat: 0.35, clearcoatRoughness: 0.35 }),
   carbon: new THREE.MeshStandardMaterial({ name: 'X1_Carbon', color: 0x3a3a3a, map: tex(x1CarbonCanvas()), metalness: 0.35, roughness: 0.42, side: THREE.DoubleSide }),
   chrome: new THREE.MeshStandardMaterial({ name: 'X1_Chrome', color: 0xc8ccd2, metalness: 1, roughness: 0.22 }),
-  glass: new THREE.MeshPhysicalMaterial({ name: 'X1_Glass', color: 0x010204, metalness: 0.0, roughness: 0.32, transparent: true, opacity: 0.84, envMapIntensity: 0.12 }),
+  glass: new THREE.MeshPhysicalMaterial({ name: 'X1_Glass', color: 0x010203, metalness: 0.0, roughness: 0.14, transparent: true, opacity: 0.9, envMapIntensity: 0.12 }),
+  liner: new THREE.MeshStandardMaterial({ name: 'X1_WheelLiner', color: 0x08090b, metalness: 0.05, roughness: 0.85, side: THREE.DoubleSide }),
+  gap: new THREE.MeshStandardMaterial({ name: 'X1_PanelGap', color: 0x2a2d33, metalness: 0.1, roughness: 0.6 }),
+  lightHousing: new THREE.MeshPhysicalMaterial({ name: 'X1_LightHousing', color: 0x050608, metalness: 0.4, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.03 }),
   led: new THREE.MeshStandardMaterial({ name: 'X1_RearLED', color: 0xff0010, emissive: 0xff0010, emissiveIntensity: 1.5, roughness: 0.3 }),
   ledCore: new THREE.MeshStandardMaterial({ name: 'X1_RearLEDCore', color: 0xffc0c0, emissive: 0xff5050, emissiveIntensity: 1.8, roughness: 0.3 }),
   ledSoft: new THREE.MeshStandardMaterial({ name: 'X1_RedMarker', color: 0xff0018, emissive: 0xff0018, emissiveIntensity: 1.3, roughness: 0.3 }),
   ledHousing: new THREE.MeshPhysicalMaterial({ name: 'X1_LEDHousing', color: 0x1a0507, metalness: 0.2, roughness: 0.15, clearcoat: 1, clearcoatRoughness: 0.05 }),
   badge: new THREE.MeshStandardMaterial({ name: 'X1_Badge', color: 0xffffff, map: badgeTex, emissive: 0xffffff, emissiveMap: badgeTex, emissiveIntensity: 1.6, transparent: true, alphaTest: 0.05 }),
-  head: new THREE.MeshStandardMaterial({ name: 'X1_Headlight', color: 0x9fd8ff, emissive: 0x6cc4ff, emissiveIntensity: 2.4, roughness: 0.2 }),
+  head: new THREE.MeshStandardMaterial({ name: 'X1_Headlight', color: 0x9fd8ff, emissive: 0x6cc4ff, emissiveIntensity: 1.6, roughness: 0.2 }),
+  headCore: new THREE.MeshStandardMaterial({ name: 'X1_HeadlightCore', color: 0xf2fbff, emissive: 0xe6f6ff, emissiveIntensity: 1.2, roughness: 0.2 }),
   interior: new THREE.MeshStandardMaterial({ name: 'X1_Interior', color: 0x07080a, metalness: 0.1, roughness: 0.75, envMapIntensity: 0.3 }),
   seatTrim: new THREE.MeshStandardMaterial({ name: 'X1_SeatTrim', color: 0xff3a2a, emissive: 0xff2a1a, emissiveIntensity: 1.2, roughness: 0.5 }),
   tyre: new THREE.MeshStandardMaterial({ name: 'X1_Tyre', color: 0xffffff, map: tex(x1TreadCanvas()), metalness: 0, roughness: 0.88 }),
@@ -320,13 +528,13 @@ class Parts {
 function buildBody(P: Parts) {
   const extra: number[] = [];
   for (const a of [AX_F, AX_R]) for (let k = -1; k <= 1; k += 0.1) extra.push(a.z + a.arch * k, a.z + a.arch * (k > 0 ? 0.999 : -0.999));
-  const zs = stations(Z_NOSE, Z_TAIL, 0.03, extra);
+  const zs = stations(Z_NOSE + NOSE_R, Z_TAIL, 0.03, extra);
   P.add('Body_Paint', M.paint, loftRows(zs, sideRow, true));
   // top strip: painted on the hood and the rear deck, dark interior under the glass
   P.add('Body_Paint', M.paint, loftRows(zs.filter((z) => z <= -0.98), topRow, false));
   P.add('Interior', M.interior, loftRows(zs.filter((z) => z >= -0.99 && z <= 1.93), topRow, false));
   P.add('Body_Paint', M.paint, loftRows(zs.filter((z) => z >= 1.92), topRow, false));
-  P.add('Body_Paint', M.paint, bodyCap(Z_NOSE, true));
+  P.add('Body_Paint', M.paint, noseFillet());
   P.add('Body_Paint', M.paint, bodyCap(Z_TAIL, false));
 
   // greenhouse: glass canopy (windscreen, side windows, roof, fastback glass)
@@ -442,36 +650,101 @@ function buildBody(P: Parts) {
     P.add('Light_RoofStop', M.led, new THREE.BoxGeometry(0.2, 0.006, 0.035), T(0, y + 0.009, z + 0.005, -slope));
   }
 
-  // ---- front: splitter, intake, headlights
-  P.add('Body_GlossBlack', M.black, slab([[-0.78, 0.11], [0.78, 0.11], [0.8, 0.14], [-0.8, 0.14]], -2.36, 0.5));
-  P.add('Body_GlossBlack', M.black, slab([[-0.5, 0.2], [0.5, 0.2], [0.42, 0.29], [-0.42, 0.29]], Z_NOSE - 0.004, 0.01));
-  for (const s of [-1, 1]) {
-    const hz = -2.1;
-    const hy = deck(hz) + 0.015;
-    P.add('Light_Head', M.head, slab([[0, 0], [0.34, 0.035], [0.34, 0.05], [0, 0.022]].map(([x, y]) => [x * s, y] as [number, number]), 0, 0.012), T(0.36 * s, hy - 0.02, hz, -0.35, 0, 0));
+  // ---- front (v4.1.3): integrated lower aero, slim intakes, LED signature, panel seams
+  {
+    // parts lying on the hood follow the actual paint surface (ray cast), not an approximation
+    const paintMesh = new THREE.Mesh(mergeGeometries(P.map.get('Body_Paint')!.geos, false)!, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
+    paintMesh.updateMatrixWorld(true);
+    const ray = new THREE.Raycaster();
+    const hits: THREE.Intersection[] = [];
+    surface = (x, z) => {
+      ray.set(new THREE.Vector3(x, 3, z), new THREE.Vector3(0, -1, 0));
+      hits.length = 0;
+      paintMesh.raycast(ray, hits);
+      return hits.length ? Math.max(...hits.map((h) => h.point.y)) : topY(x, z);
+    };
+    const FACE = Z_NOSE; // flat centre of the rounded nose
+    // splitter: a short satin-black lip tucked under the chin (front edge 3 cm behind the nose),
+    // following the underside back to the front wheels — no plate sticking out ahead of the car
+    const sp: [number, number][] = [];
+    for (let z = -2.265; z <= -1.9 + 1e-6; z += 0.025) sp.push([z, Math.max(0.118, under(z) - 0.028)]);
+    for (let z = -1.9; z >= -2.265 - 1e-6; z -= 0.025) sp.push([z, under(z) + 0.012]);
+    P.add('Front_Splitter', M.satin, finYZ(sp, 0, 1.18));
+    // lower intake: wide, slim, gloss frame around a matte recess, one centre vane
+    const rr = (x0: number, y0: number, x1: number, y1: number, r: number): [number, number][] => {
+      const o: [number, number][] = [];
+      const c: [number, number, number][] = [[x1 - r, y0 + r, -Math.PI / 2], [x1 - r, y1 - r, 0], [x0 + r, y1 - r, Math.PI / 2], [x0 + r, y0 + r, Math.PI]];
+      for (const [cx, cy, a0] of c) for (let k = 0; k <= 3; k++) o.push([cx + Math.cos(a0 + (k / 3) * (Math.PI / 2)) * r, cy + Math.sin(a0 + (k / 3) * (Math.PI / 2)) * r]);
+      return o;
+    };
+    P.add('Front_Intake', M.black, slab(rr(-0.45, 0.222, 0.45, 0.3, 0.024), FACE - 0.006, 0.008));
+    P.add('Front_IntakeRecess', M.liner, slab(rr(-0.43, 0.23, 0.43, 0.292, 0.018), FACE - 0.0075, 0.002));
+    P.add('Front_Intake', M.satin, new THREE.BoxGeometry(0.8, 0.006, 0.004), T(0, 0.26, FACE - 0.0085));
+    // air curtains: two slim vertical inlets at the bumper corners (subtle, inside the face outline)
+    for (const sx of [-1, 1]) {
+      const pts: [number, number][] = [[0.585, 0.25], [0.63, 0.252], [0.645, 0.33], [0.605, 0.33]].map(([x, y]) => [x * sx, y] as [number, number]);
+      P.add('Front_Intake', M.black, slab(sx < 0 ? pts.slice().reverse() : pts, FACE - 0.006, 0.008));
+    }
+    // headlights: a slim smoked housing on each front corner of the hood with a thin LED blade and a
+    // short down-turned hook at the outer end (XWAVE signature) — light lines, not lamps
+    for (const sx of [-1, 1]) {
+      const path: [number, number][] = [];
+      for (let i = 0; i <= 10; i++) {
+        const t = i / 10;
+        path.push([sx * (0.17 + 0.36 * t), -2.215 + 0.17 * t + 0.07 * t * t]);
+      }
+      P.add('Light_HeadHousing', M.lightHousing, topRibbon(path, 0.072, 0.003));
+      P.add('Light_Head', M.head, topRibbon(path.slice(1, 10), 0.02, 0.0055));
+      P.add('Light_HeadCore', M.headCore, topRibbon(path.slice(2, 9), 0.007, 0.0065));
+      const hook: [number, number][] = [[sx * 0.5, -2.02], [sx * 0.535, -1.99], [sx * 0.555, -1.95]];
+      P.add('Light_Head', M.head, topRibbon(hook, 0.016, 0.0058));
+    }
+    // panel seams: front bumper cover (across the hood and down both sides), hood edges, doors
+    // bumper cover seam right where the rounded nose meets the hood / fenders
+    for (const g of sectionSeam(Z_NOSE + NOSE_R + 0.004, 0.0045, { top: true, sides: true })) P.add('Body_PanelGaps', M.gap, g);
+    for (const sx of [-1, 1]) {
+      const path: [number, number][] = [];
+      for (let z = Z_NOSE + NOSE_R + 0.004; z <= -1.13 + 1e-6; z += 0.05) path.push([sx * 0.8 * sideTop(z)[0], z]);
+      P.add('Body_PanelGaps', M.gap, topRibbon(path, 0.0045));
+    }
+    {
+      const path: [number, number][] = [];
+      const xs = 0.8 * sideTop(-1.13)[0];
+      for (let i = 0; i <= 8; i++) path.push([-xs + (2 * xs * i) / 8, -1.13]);
+      P.add('Body_PanelGaps', M.gap, topRibbon(path, 0.0045));
+    }
+    for (const z of [-0.88, 0.16]) for (const g of sectionSeam(z, 0.0045, { top: false, sides: true })) P.add('Body_PanelGaps', M.gap, g);
+    surface = null;
   }
-
-  // ---- sides: intakes ahead of the rear wheels, skirts
-  for (const s of [-1, 1]) {
-    const x = hw(0.5) + 0.003;
-    const intake = finYZ([[0.2, 0.42], [0.82, 0.46], [0.86, 0.7], [0.45, 0.62]], 0, 0.01);
-    P.add('Body_GlossBlack', M.black, intake, T(x * s, 0, 0));
-    P.add('Body_GlossBlack', M.black, finYZ([[-1.0, 0.15], [0.86, 0.17], [0.86, 0.24], [-1.0, 0.22]], 0, 0.03), T((hw(-0.1) - 0.005) * s, 0, 0));
-    // (v4.1.2: no side mirrors — mirrorless body, as in the Step 03.1 reference)
-  }
-
-  // ---- interior (seen through the glass): dark tub, two seats with red trim, dash
-  P.add('Interior', M.interior, new THREE.BoxGeometry(1.24, 0.12, 2.5), T(0, 0.66, 0.45));
-  P.add('Interior', M.interior, new THREE.BoxGeometry(1.1, 0.08, 0.26), T(0, 0.76, -0.62));
-  for (const s of [-1, 1]) {
-    const back = new THREE.BoxGeometry(0.4, 0.42, 0.09, 1, 1, 1);
-    P.add('Interior', M.interior, back, T(0.29 * s, 0.87, 0.2, -0.3));
-    P.add('Interior', M.interior, new THREE.BoxGeometry(0.42, 0.08, 0.45), T(0.29 * s, 0.72, -0.05));
-    // red trim outline on the seat back (follows its edges)
-    const e = 0.012;
-    for (const [w, h, x, y] of [[e, 0.38, -0.19, 0], [e, 0.38, 0.19, 0], [0.38, e, 0, 0.195]] as [number, number, number, number][]) {
-      const m = T(0.29 * s, 0.87, 0.2, -0.3).multiply(T(x, y, 0.05));
-      P.add('Interior_Trim', M.seatTrim, new THREE.BoxGeometry(w, h, 0.012), m);
+  // ---- wheel-arch liners: matte black wells (the white inner panels used to show around the tyres).
+  // The liner follows the arch line and ends just inside the body side at every point (never pokes out)
+  for (const a of [AX_F, AX_R]) {
+    const R = a.arch - 0.006;
+    const below = Math.asin(Math.min(0.95, (a.r - sill(a.z) + 0.01) / (R * a.vf)));
+    const N = 28;
+    for (const sx of [-1, 1]) {
+      const pos: number[] = [];
+      const idx: number[] = [];
+      for (let i = 0; i <= N; i++) {
+        const th = -below + ((Math.PI + 2 * below) * i) / N;
+        const y = a.r + R * a.vf * Math.sin(th);
+        const z = a.z + R * Math.cos(th);
+        const xo = Math.max(a.xin + 0.02, sideXAt(z, y) - 0.014);
+        pos.push(sx * a.xin, y, z, sx * xo, y, z);
+        if (i > 0) {
+          const k = (i - 1) * 2;
+          idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2);
+        }
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      g.setIndex(idx);
+      g.computeVertexNormals();
+      P.add('Wheel_Liners', M.liner, g);
+      const back = new THREE.CircleGeometry(R + 0.002, N, -below, Math.PI + 2 * below);
+      back.scale(1, a.vf, 1);
+      back.rotateY(Math.PI / 2); // (x, y) plane → (z, y) plane, arc above the sill
+      P.add('Wheel_Liners', M.liner, back, T(sx * (a.xin + 0.004), a.r, a.z));
     }
   }
 }
@@ -550,6 +823,23 @@ function buildSpoiler() {
   const m = new THREE.Mesh(norm(g), M.black);
   m.name = 'Spoiler';
   pivot.add(m);
+  // v4.1.3 pop-up: the flap rises on the deck and tilts. A satin skirt under its front and sides
+  // closes the gap (no visible rods or open slot); closed, it sits inside the deck well
+  // wedge side plates: exactly the gap between the raised, tilted flap and the deck (+1.5 cm under
+  // the deck), so from any angle the raised flap reads as one solid pop-up piece, not a box
+  const th = 0.38; // = RENDER.spoilerAngle
+  const rise = 0.06; // = RENDER.spoilerRise
+  const under = (z: number) => -(rise + z * Math.sin(th)) / Math.cos(th) - 0.015;
+  const skirt: THREE.BufferGeometry[] = [];
+  skirt.push(norm(new THREE.BoxGeometry(0.9, -under(0), 0.01), T(0, under(0) / 2, 0.012)));
+  for (const sx of [-1, 1]) skirt.push(norm(finYZ([[0.006, under(0.006)], [0.29, under(0.29)], [0.29, 0.01], [0.006, -0.002]], sx * 0.452, 0.01)));
+  const sk = new THREE.Mesh(mergeGeometries(skirt)!, M.liner);
+  sk.name = 'Spoiler_Skirt';
+  pivot.add(sk);
+  // thin satin-metal accent along the trailing edge: catches the light when the flap is up
+  const lip = new THREE.Mesh(norm(new THREE.BoxGeometry(0.9, 0.006, 0.008), T(0, 0.024, 0.329)), M.chrome);
+  lip.name = 'Spoiler_Lip';
+  pivot.add(lip);
   return pivot;
 }
 

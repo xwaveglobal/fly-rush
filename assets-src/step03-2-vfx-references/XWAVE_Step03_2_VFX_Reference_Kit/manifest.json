@@ -1,0 +1,253 @@
+{
+  "source": "AI-generated concept board, not a real XWAVE render",
+  "reference_priority": "Original XWAVE rear master and actual repository GLB outrank every image here",
+  "images": [
+    {
+      "file": "01_vehicle/01_rear_normal_spoiler_closed.png",
+      "crop_xyxy": [
+        0,
+        0,
+        410,
+        257
+      ],
+      "dimensions": [
+        410,
+        257
+      ]
+    },
+    {
+      "file": "01_vehicle/02_rear_airborne_spoiler_open.png",
+      "crop_xyxy": [
+        411,
+        0,
+        819,
+        257
+      ],
+      "dimensions": [
+        408,
+        257
+      ]
+    },
+    {
+      "file": "02_nitro/03_rear_nitro_spoiler_open.png",
+      "crop_xyxy": [
+        820,
+        0,
+        1229,
+        257
+      ],
+      "dimensions": [
+        409,
+        257
+      ]
+    },
+    {
+      "file": "01_vehicle/04_rear_three_quarter_mirrorless.png",
+      "crop_xyxy": [
+        1230,
+        0,
+        1672,
+        257
+      ],
+      "dimensions": [
+        442,
+        257
+      ]
+    },
+    {
+      "file": "01_vehicle/05_front_three_quarter.png",
+      "crop_xyxy": [
+        0,
+        259,
+        473,
+        514
+      ],
+      "dimensions": [
+        473,
+        255
+      ]
+    },
+    {
+      "file": "01_vehicle/06_front_straight.png",
+      "crop_xyxy": [
+        475,
+        259,
+        867,
+        514
+      ],
+      "dimensions": [
+        392,
+        255
+      ]
+    },
+    {
+      "file": "01_vehicle/07_side_shorter_proportions.png",
+      "crop_xyxy": [
+        869,
+        259,
+        1410,
+        514
+      ],
+      "dimensions": [
+        541,
+        255
+      ]
+    },
+    {
+      "file": "01_vehicle/08_top_proportions.png",
+      "crop_xyxy": [
+        1412,
+        259,
+        1672,
+        514
+      ],
+      "dimensions": [
+        260,
+        255
+      ]
+    },
+    {
+      "file": "03_camera/09_gameplay_balanced_camera.png",
+      "crop_xyxy": [
+        0,
+        516,
+        318,
+        731
+      ],
+      "dimensions": [
+        318,
+        215
+      ]
+    },
+    {
+      "file": "04_spoiler/10_jump_spoiler_open.png",
+      "crop_xyxy": [
+        320,
+        516,
+        575,
+        731
+      ],
+      "dimensions": [
+        255,
+        215
+      ]
+    },
+    {
+      "file": "04_spoiler/11_landing_spoiler_closing.png",
+      "crop_xyxy": [
+        577,
+        516,
+        868,
+        731
+      ],
+      "dimensions": [
+        291,
+        215
+      ]
+    },
+    {
+      "file": "05_shield/12_shield_clean_luminous_aura.png",
+      "crop_xyxy": [
+        870,
+        516,
+        1134,
+        731
+      ],
+      "dimensions": [
+        264,
+        215
+      ]
+    },
+    {
+      "file": "06_ghost/13_phase_ghost_transparent.png",
+      "crop_xyxy": [
+        1136,
+        516,
+        1390,
+        731
+      ],
+      "dimensions": [
+        254,
+        215
+      ]
+    },
+    {
+      "file": "02_nitro/14_nitro_clean_thrust.png",
+      "crop_xyxy": [
+        1392,
+        516,
+        1672,
+        731
+      ],
+      "dimensions": [
+        280,
+        215
+      ]
+    },
+    {
+      "file": "07_collision/15_collision_impact.png",
+      "crop_xyxy": [
+        0,
+        733,
+        323,
+        940
+      ],
+      "dimensions": [
+        323,
+        207
+      ]
+    },
+    {
+      "file": "07_collision/16_debris_fragments.png",
+      "crop_xyxy": [
+        325,
+        733,
+        583,
+        940
+      ],
+      "dimensions": [
+        258,
+        207
+      ]
+    },
+    {
+      "file": "07_collision/17_game_over_visible_vehicle.png",
+      "crop_xyxy": [
+        585,
+        733,
+        884,
+        940
+      ],
+      "dimensions": [
+        299,
+        207
+      ]
+    },
+    {
+      "file": "08_debug/18_length_comparison.png",
+      "crop_xyxy": [
+        886,
+        733,
+        1251,
+        940
+      ],
+      "dimensions": [
+        365,
+        207
+      ]
+    },
+    {
+      "file": "08_debug/19_collision_bounds_debug.png",
+      "crop_xyxy": [
+        1253,
+        733,
+        1672,
+        940
+      ],
+      "dimensions": [
+        419,
+        207
+      ]
+    }
+  ]
+}

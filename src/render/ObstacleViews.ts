@@ -324,11 +324,13 @@ function build(type: ObstacleType): ObstacleView {
         carG.add(glow);
         for (const z of [-1.1, 1.1]) {
           const pod = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.3, 0.18, 16), M.darkMetal);
-          pod.position.set(0.95 * s, 0.55, z);
+          // v4.1.3: pods tucked under the body — at x 0.95 they reached 0.4 m past the 0.85 m collision
+          // half-width, so a car changing lanes beside a truck visibly clipped a pod without crashing
+          pod.position.set(0.58 * s, 0.55, z);
           carG.add(pod);
           const pg = new THREE.Sprite(M.glow(0xff8a1f, 0.7));
           pg.scale.setScalar(0.9);
-          pg.position.set(0.95 * s, 0.38, z);
+          pg.position.set(0.58 * s, 0.38, z);
           carG.add(pg);
         }
       }
@@ -837,6 +839,11 @@ export class ObstacleViews {
     this.parent.remove(v.group);
     this.active.delete(o.id);
     this.poolOf(v).release(v);
+  }
+
+  /** the view object of a live obstacle (debug overlay) */
+  viewOf(id: number): THREE.Object3D | undefined {
+    return this.active.get(id)?.group;
   }
 
   hide(o: LiveObstacle) {

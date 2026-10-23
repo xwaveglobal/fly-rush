@@ -45,3 +45,23 @@ export function spoilerUpdate(s: SpoilerState, jumping: boolean, nitro: number, 
   s.k = approach(s.k, open || s.hold > 0 ? 1 : 0, up, down, dt);
   return s.k;
 }
+
+/**
+ * Height of the car's visual pose origin (Vehicle.root.y) for a gameplay height y. The visual body
+ * underside is `y_root − road` (road = 0.51: wheels on the asphalt at NORMAL).
+ *   legacy: LOW → NORMAL the wheels stay on the road (0.3 … 0.51); NORMAL → HIGH a linear climb
+ *           to 3.35 (the pre-v4.1.3 mapping, still used by the rear image).
+ *   aligned (3D car, v4.1.3): additionally, within `ramp` m of leaving the road the underside is
+ *           lifted to at least the hitbox underside (y − halfY), so an obstacle the hitbox has just
+ *           cleared is visibly below the car. Continuous, and identical on the road.
+ */
+export function carHeight(y: number, low: number, normal: number, high: number, halfY: number, aligned: boolean, ramp = 0.45, road = 0.51) {
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * (t < 0 ? 0 : t > 1 ? 1 : t);
+  let vy = y <= normal ? lerp(0.3, road, (y - low) / (normal - low)) : y <= high ? lerp(road, 3.35, (y - normal) / (high - normal)) : 3.35 + (y - high);
+  if (aligned && y > normal) {
+    const s = ease((y - normal) / ramp);
+    const want = y - halfY + road; // root height that puts the visual underside on the hitbox underside
+    if (want > vy) vy += (want - vy) * s;
+  }
+  return vy;
+}

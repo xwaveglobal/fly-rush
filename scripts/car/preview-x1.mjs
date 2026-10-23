@@ -53,6 +53,13 @@ for (const job of jobs) {
   page.on('console', (m) => m.type() === 'error' && console.log('[console]', m.text().slice(0, 200)));
   await page.goto(`http://127.0.0.1:${port}/?${query}`);
   await page.waitForFunction(() => window.__go, null, { timeout: 60000 });
+  if (qs.get('measure') || qs.get('selftest')) {
+    const m = await page.evaluate(() => (new URLSearchParams(location.search).get('selftest') ? window.__selftest() : window.__measure()));
+    writeFileSync(join(outDir, `${name}.json`), JSON.stringify(m, null, 1));
+    console.log(join(outDir, `${name}.json`));
+    await page.close();
+    continue;
+  }
   if (qs.get('seq')) {
     // frame sequence → <outDir>/<name>/0000.png … + frames.json
     const frames = await page.evaluate(() => window.__seq());
