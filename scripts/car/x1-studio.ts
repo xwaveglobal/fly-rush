@@ -64,10 +64,10 @@ const MAT = {
   wire: new THREE.MeshBasicMaterial({ color: 0x1d2433, wireframe: true }),
 };
 
-function load(src: 'builder' | 'glb', b64?: string, opts: { flake?: boolean; detail?: 'mobile' | 'master' } = {}) {
+function load(src: 'builder' | 'glb', b64?: string, opts: { flake?: boolean; detail?: 'mobile' | 'master'; rear?: number } = {}) {
   if (car) scene.remove(car);
   original.clear();
-  if (src === 'builder') car = buildX1({ detail: opts.detail ?? 'mobile' });
+  if (src === 'builder') car = buildX1({ detail: opts.detail ?? 'mobile', rear: opts.rear });
   else {
     const bin = atob(b64!);
     const u = new Uint8Array(bin.length);
@@ -147,8 +147,10 @@ const VIEWS: Record<string, { az: number; elev: number; ortho: boolean; fov: num
   rear0: { az: 0, elev: 4, ortho: false, fov: 9 },
   // the concept 3/4 views are nearer 30° than 45°: azimuth / elevation estimated by matching the
   // reference silhouette's aspect ratio (scripts/car/compare, Step 06 report) — names kept
-  rl45: { az: 30, elev: 8, ortho: false, fov: 26 },
-  rr45: { az: -30, elev: 8, ortho: false, fov: 26 },
+  // v4.4 (Step 07): re-calibrated by grid search (scripts/car/compare/calibrate.py: azimuth × elevation ×
+  // lens) on the FIXED Step 06 model against concept 01, then frozen — a low, fairly wide-angle shot
+  rl45: { az: 34, elev: 3, ortho: false, fov: 38 },
+  rr45: { az: -34, elev: 3, ortho: false, fov: 38 },
   side90: { az: 90, elev: 2, ortho: true, fov: 0 },
   front0: { az: 180, elev: 4, ortho: false, fov: 12 },
   fl45: { az: 212, elev: 7, ortho: false, fov: 26 },
@@ -214,7 +216,7 @@ function render(o: any) {
   (cam as any).updateProjectionMatrix?.();
   // fit: the car's projected bounds fill `fill` of the frame (centred), two passes
   const fillK = o.fill ?? 0.8;
-  for (let it = 0; it < 3; it++) {
+  for (let it = 0; it < (o.fit === false ? 0 : 3); it++) {
     const [bx0, by0, bx1, by1] = projBounds(cam);
     const k = Math.max((bx1 - bx0) / 2, (by1 - by0) / 2) / fillK; // NDC half-extent / fill
     const cx = (bx0 + bx1) / 2;

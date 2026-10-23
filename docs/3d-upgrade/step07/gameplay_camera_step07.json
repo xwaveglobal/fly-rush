@@ -1,0 +1,530 @@
+{
+ "preset": "balanced",
+ "presetValues": {
+  "height": 2.25,
+  "back": 5.9,
+  "speedBack": 0.5,
+  "lookY": 1,
+  "lookZ": -13,
+  "followX": 0.76,
+  "lookX": 0.58,
+  "lift": 1.7,
+  "lookLift": 0.1,
+  "hDamp": 6.5,
+  "vDamp": 8,
+  "lookDamp": 7,
+  "fov": -1
+ },
+ "carScale": 0.76,
+ "projection": "perspective",
+ "states": {
+  "9:16 720×1280": {
+   "drive_start": {
+    "position": [
+     0.15,
+     2.25,
+     7.62
+    ],
+    "lookDirection": [
+     -0.007,
+     -0.061,
+     -0.998
+    ],
+    "pitchDeg": 3.5,
+    "yawDeg": -0.4,
+    "fovVerticalDeg": 78.8,
+    "aspect": 0.563,
+    "distanceToCarCentre": 7.77,
+    "carScreenBox": {
+     "left": 0.34,
+     "right": 0.63,
+     "top": 0.55,
+     "bottom": 0.69
+    },
+    "carPx": {
+     "w": 208,
+     "h": 172,
+     "of": "720×1280"
+    }
+   },
+   "drive_mid": {
+    "position": [
+     0.15,
+     2.25,
+     7.42
+    ],
+    "lookDirection": [
+     -0.007,
+     -0.061,
+     -0.998
+    ],
+    "pitchDeg": 3.5,
+    "yawDeg": -0.4,
+    "fovVerticalDeg": 81.6,
+    "aspect": 0.563,
+    "distanceToCarCentre": 7.57,
+    "carScreenBox": {
+     "left": 0.34,
+     "right": 0.62,
+     "top": 0.55,
+     "bottom": 0.69
+    },
+    "carPx": {
+     "w": 204,
+     "h": 170,
+     "of": "720×1280"
+    }
+   },
+   "drive_top_speed": {
+    "position": [
+     0.15,
+     2.25,
+     7.12
+    ],
+    "lookDirection": [
+     -0.008,
+     -0.062,
+     -0.998
+    ],
+    "pitchDeg": 3.6,
+    "yawDeg": -0.4,
+    "fovVerticalDeg": 85.8,
+    "aspect": 0.563,
+    "distanceToCarCentre": 7.28,
+    "carScreenBox": {
+     "left": 0.34,
+     "right": 0.62,
+     "top": 0.55,
+     "bottom": 0.68
+    },
+    "carPx": {
+     "w": 200,
+     "h": 169,
+     "of": "720×1280"
+    }
+   },
+   "turbo": {
+    "position": [
+     0.15,
+     2.25,
+     7.12
+    ],
+    "lookDirection": [
+     -0.008,
+     -0.062,
+     -0.998
+    ],
+    "pitchDeg": 3.6,
+    "yawDeg": -0.4,
+    "fovVerticalDeg": 94.9,
+    "aspect": 0.563,
+    "distanceToCarCentre": 7.28,
+    "carScreenBox": {
+     "left": 0.37,
+     "right": 0.6,
+     "top": 0.54,
+     "bottom": 0.66
+    },
+    "carPx": {
+     "w": 171,
+     "h": 144,
+     "of": "720×1280"
+    }
+   },
+   "lane_change_mid": {
+    "position": [
+     0.41,
+     2.25,
+     7.42
+    ],
+    "lookDirection": [
+     -0.01,
+     -0.061,
+     -0.998
+    ],
+    "pitchDeg": 3.5,
+    "yawDeg": -0.6,
+    "fovVerticalDeg": 81.6,
+    "aspect": 0.563,
+    "distanceToCarCentre": 7.65,
+    "carScreenBox": {
+     "left": 0.55,
+     "right": 0.85,
+     "top": 0.55,
+     "bottom": 0.68
+    },
+    "carPx": {
+     "w": 220,
+     "h": 173,
+     "of": "720×1280"
+    }
+   },
+   "lane_change_done": {
+    "position": [
+     2.1,
+     2.25,
+     7.42
+    ],
+    "lookDirection": [
+     -0.03,
+     -0.061,
+     -0.998
+    ],
+    "pitchDeg": 3.5,
+    "yawDeg": -1.7,
+    "fovVerticalDeg": 81.6,
+    "aspect": 0.563,
+    "distanceToCarCentre": 7.59,
+    "carScreenBox": {
+     "left": 0.48,
+     "right": 0.76,
+     "top": 0.55,
+     "bottom": 0.69
+    },
+    "carPx": {
+     "w": 206,
+     "h": 172,
+     "of": "720×1280"
+    }
+   },
+   "jump_rise": {
+    "position": [
+     0.16,
+     3.97,
+     7.42
+    ],
+    "lookDirection": [
+     -0.008,
+     -0.139,
+     -0.99
+    ],
+    "pitchDeg": 8,
+    "yawDeg": -0.5,
+    "fovVerticalDeg": 81.6,
+    "aspect": 0.563,
+    "distanceToCarCentre": 7.4,
+    "carScreenBox": {
+     "left": 0.34,
+     "right": 0.62,
+     "top": 0.44,
+     "bottom": 0.54
+    },
+    "carPx": {
+     "w": 207,
+     "h": 128,
+     "of": "720×1280"
+    }
+   },
+   "jump_apex": {
+    "position": [
+     0.17,
+     5.6,
+     7.42
+    ],
+    "lookDirection": [
+     -0.008,
+     -0.21,
+     -0.978
+    ],
+    "pitchDeg": 12.1,
+    "yawDeg": -0.5,
+    "fovVerticalDeg": 81.6,
+    "aspect": 0.563,
+    "distanceToCarCentre": 7.7,
+    "carScreenBox": {
+     "left": 0.34,
+     "right": 0.62,
+     "top": 0.49,
+     "bottom": 0.63
+    },
+    "carPx": {
+     "w": 198,
+     "h": 179,
+     "of": "720×1280"
+    }
+   },
+   "landing": {
+    "position": [
+     0.18,
+     4.32,
+     7.42
+    ],
+    "lookDirection": [
+     -0.009,
+     -0.154,
+     -0.988
+    ],
+    "pitchDeg": 8.9,
+    "yawDeg": -0.5,
+    "fovVerticalDeg": 81.6,
+    "aspect": 0.563,
+    "distanceToCarCentre": 7.91,
+    "carScreenBox": {
+     "left": 0.34,
+     "right": 0.61,
+     "top": 0.57,
+     "bottom": 0.72
+    },
+    "carPx": {
+     "w": 196,
+     "h": 203,
+     "of": "720×1280"
+    }
+   }
+  },
+  "390×844": {
+   "drive_start": {
+    "position": [
+     0.15,
+     2.25,
+     8.36
+    ],
+    "lookDirection": [
+     -0.007,
+     -0.058,
+     -0.998
+    ],
+    "pitchDeg": 3.3,
+    "yawDeg": -0.4,
+    "fovVerticalDeg": 78.8,
+    "aspect": 0.462,
+    "distanceToCarCentre": 8.49,
+    "carScreenBox": {
+     "left": 0.32,
+     "right": 0.64,
+     "top": 0.55,
+     "bottom": 0.66
+    },
+    "carPx": {
+     "w": 122,
+     "h": 99,
+     "of": "390×844"
+    }
+   },
+   "drive_mid": {
+    "position": [
+     0.15,
+     2.25,
+     8.16
+    ],
+    "lookDirection": [
+     -0.007,
+     -0.059,
+     -0.998
+    ],
+    "pitchDeg": 3.4,
+    "yawDeg": -0.4,
+    "fovVerticalDeg": 81.6,
+    "aspect": 0.462,
+    "distanceToCarCentre": 8.29,
+    "carScreenBox": {
+     "left": 0.33,
+     "right": 0.63,
+     "top": 0.55,
+     "bottom": 0.66
+    },
+    "carPx": {
+     "w": 120,
+     "h": 97,
+     "of": "390×844"
+    }
+   },
+   "drive_top_speed": {
+    "position": [
+     0.15,
+     2.25,
+     7.86
+    ],
+    "lookDirection": [
+     -0.007,
+     -0.06,
+     -0.998
+    ],
+    "pitchDeg": 3.4,
+    "yawDeg": -0.4,
+    "fovVerticalDeg": 85.8,
+    "aspect": 0.462,
+    "distanceToCarCentre": 8,
+    "carScreenBox": {
+     "left": 0.33,
+     "right": 0.63,
+     "top": 0.55,
+     "bottom": 0.66
+    },
+    "carPx": {
+     "w": 116,
+     "h": 96,
+     "of": "390×844"
+    }
+   },
+   "turbo": {
+    "position": [
+     0.15,
+     2.25,
+     7.86
+    ],
+    "lookDirection": [
+     -0.007,
+     -0.06,
+     -0.998
+    ],
+    "pitchDeg": 3.4,
+    "yawDeg": -0.4,
+    "fovVerticalDeg": 94.9,
+    "aspect": 0.462,
+    "distanceToCarCentre": 8,
+    "carScreenBox": {
+     "left": 0.36,
+     "right": 0.61,
+     "top": 0.54,
+     "bottom": 0.64
+    },
+    "carPx": {
+     "w": 100,
+     "h": 82,
+     "of": "390×844"
+    }
+   },
+   "lane_change_mid": {
+    "position": [
+     0.41,
+     2.25,
+     8.16
+    ],
+    "lookDirection": [
+     -0.01,
+     -0.059,
+     -0.998
+    ],
+    "pitchDeg": 3.4,
+    "yawDeg": -0.6,
+    "fovVerticalDeg": 81.6,
+    "aspect": 0.462,
+    "distanceToCarCentre": 8.37,
+    "carScreenBox": {
+     "left": 0.55,
+     "right": 0.88,
+     "top": 0.54,
+     "bottom": 0.66
+    },
+    "carPx": {
+     "w": 128,
+     "h": 99,
+     "of": "390×844"
+    }
+   },
+   "lane_change_done": {
+    "position": [
+     2.1,
+     2.25,
+     8.16
+    ],
+    "lookDirection": [
+     -0.029,
+     -0.059,
+     -0.998
+    ],
+    "pitchDeg": 3.4,
+    "yawDeg": -1.7,
+    "fovVerticalDeg": 81.6,
+    "aspect": 0.462,
+    "distanceToCarCentre": 8.31,
+    "carScreenBox": {
+     "left": 0.48,
+     "right": 0.79,
+     "top": 0.55,
+     "bottom": 0.66
+    },
+    "carPx": {
+     "w": 120,
+     "h": 98,
+     "of": "390×844"
+    }
+   },
+   "jump_rise": {
+    "position": [
+     0.16,
+     3.97,
+     8.16
+    ],
+    "lookDirection": [
+     -0.008,
+     -0.134,
+     -0.991
+    ],
+    "pitchDeg": 7.7,
+    "yawDeg": -0.4,
+    "fovVerticalDeg": 81.6,
+    "aspect": 0.462,
+    "distanceToCarCentre": 8.14,
+    "carScreenBox": {
+     "left": 0.32,
+     "right": 0.63,
+     "top": 0.44,
+     "bottom": 0.53
+    },
+    "carPx": {
+     "w": 121,
+     "h": 74,
+     "of": "390×844"
+    }
+   },
+   "jump_apex": {
+    "position": [
+     0.17,
+     5.6,
+     8.16
+    ],
+    "lookDirection": [
+     -0.008,
+     -0.203,
+     -0.979
+    ],
+    "pitchDeg": 11.7,
+    "yawDeg": -0.5,
+    "fovVerticalDeg": 81.6,
+    "aspect": 0.462,
+    "distanceToCarCentre": 8.41,
+    "carScreenBox": {
+     "left": 0.33,
+     "right": 0.63,
+     "top": 0.49,
+     "bottom": 0.61
+    },
+    "carPx": {
+     "w": 117,
+     "h": 103,
+     "of": "390×844"
+    }
+   },
+   "landing": {
+    "position": [
+     0.18,
+     4.32,
+     8.16
+    ],
+    "lookDirection": [
+     -0.008,
+     -0.149,
+     -0.989
+    ],
+    "pitchDeg": 8.6,
+    "yawDeg": -0.5,
+    "fovVerticalDeg": 81.6,
+    "aspect": 0.462,
+    "distanceToCarCentre": 8.6,
+    "carScreenBox": {
+     "left": 0.33,
+     "right": 0.63,
+     "top": 0.56,
+     "bottom": 0.7
+    },
+    "carPx": {
+     "w": 116,
+     "h": 116,
+     "of": "390×844"
+    }
+   }
+  }
+ }
+}

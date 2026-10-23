@@ -1,0 +1,126 @@
+{
+ "passed": 24,
+ "failed": 0,
+ "results": [
+  {
+   "name": "shield activates: aura visible",
+   "ok": true,
+   "info": "k 0.989"
+  },
+  {
+   "name": "aura is attached to the car pose (follows lane changes / jumps)",
+   "ok": true,
+   "info": ""
+  },
+  {
+   "name": "aura followed the lane change",
+   "ok": true,
+   "info": "aura x 2.60, car x 2.60"
+  },
+  {
+   "name": "shield + jump: aura rises with the car",
+   "ok": true,
+   "info": "aura y 2.86, car underside 2.86"
+  },
+  {
+   "name": "shield + nitro: both visible, spoiler open",
+   "ok": true,
+   "info": "aura 1.00, spoiler 1.00"
+  },
+  {
+   "name": "nitro end (no jump): spoiler retracted",
+   "ok": true,
+   "info": "spoiler 0.004"
+  },
+  {
+   "name": "turbo: lime aura visible, follows the car",
+   "ok": true,
+   "info": "k 1.00"
+  },
+  {
+   "name": "turbo + shield: both shells, turbo outside",
+   "ok": true,
+   "info": "1.20 > 1.12"
+  },
+  {
+   "name": "turbo ends: its aura fades out and hides",
+   "ok": true,
+   "info": "k 0"
+  },
+  {
+   "name": "shield expires: aura faded out and hidden",
+   "ok": true,
+   "info": "k 0"
+  },
+  {
+   "name": "ghost on: car translucent with edge light",
+   "ok": true,
+   "info": "rim 1.6"
+  },
+  {
+   "name": "ghost + nitro: thrust visible while translucent",
+   "ok": true,
+   "info": "spoiler 0.90"
+  },
+  {
+   "name": "ghost off: every material restored exactly",
+   "ok": true,
+   "info": ""
+  },
+  {
+   "name": "DOWN: car pressed toward the road",
+   "ok": true,
+   "info": "scale 0.809 / 0.533"
+  },
+  {
+   "name": "DOWN released: back to normal shape",
+   "ok": true,
+   "info": "scale y 0.7600"
+  },
+  {
+   "name": "crash: flash + shards spawned",
+   "ok": true,
+   "info": "14 pieces"
+  },
+  {
+   "name": "crash: car stays visible",
+   "ok": true,
+   "info": ""
+  },
+  {
+   "name": "crash: no missing / invalid transforms mid-crash",
+   "ok": true,
+   "info": ""
+  },
+  {
+   "name": "crash: debris cleaned up by itself",
+   "ok": true,
+   "info": "0 left"
+  },
+  {
+   "name": "game over: spoiler settled closed (stable pose)",
+   "ok": true,
+   "info": "spoiler 0.002"
+  },
+  {
+   "name": "restart mid-crash: no debris left",
+   "ok": true,
+   "info": ""
+  },
+  {
+   "name": "restart: intact car (scale, recoil, spoiler)",
+   "ok": true,
+   "info": "scale 0.76, z 0, spoiler 0"
+  },
+  {
+   "name": "restart: car updates normally, transforms finite",
+   "ok": true,
+   "info": ""
+  },
+  {
+   "name": "gameplay hitbox unchanged by every effect",
+   "ok": true,
+   "info": "[1.4,0.72,-1,1] → [1.4,0.72,-1,1]"
+  }
+ ]
+}

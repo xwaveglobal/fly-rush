@@ -4,11 +4,12 @@
 //   e.g. node scripts/car/preview-x1.mjs docs/3d-upgrade/shots "view=rear0=rear_0" "view=chase&pose=lane=lane"
 //
 // Needs esbuild and Playwright + Chromium (see build-x1.mjs). Software WebGL (SwiftShader) is fine.
+// X1_GLB=<path> renders another X1 model (e.g. assets-src/x1/rollback/…) instead of src/assets/models/xwave-x1.glb.
 import { build } from 'esbuild';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -23,6 +24,10 @@ const js = (
     write: false,
     loader: { '.webp': 'dataurl', '.png': 'dataurl', '.jpg': 'dataurl', '.glb': 'dataurl', '.css': 'empty' },
     logLevel: 'warning',
+    // X1_GLB=path/to/other.glb: render another car model (e.g. the rollback) through the same game code
+    plugins: process.env.X1_GLB
+      ? [{ name: 'x1-glb', setup: (b) => b.onResolve({ filter: /xwave-x1\.glb$/ }, () => ({ path: isAbsolute(process.env.X1_GLB) ? process.env.X1_GLB : join(root, process.env.X1_GLB) })) }]
+      : [],
   })
 ).outputFiles[0].text;
 const html = '<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0}canvas{display:block}</style></head><body><script type="module" src="/p.js"></script></body></html>';

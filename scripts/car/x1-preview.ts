@@ -147,13 +147,15 @@ function meshLoaded() {
   if (mesh && q.get('spoiler') !== null) mesh.spoilerForce = +q.get('spoiler')!;
   const pose = q.get('pose') ?? 'drive';
   const dt = 1 / 60;
-  const speed = 30;
+  // sf = speed factor 0..1 (camera pull-back / FOV with speed, wheel spin); default a mid-run 0.4
+  const sf = +(q.get('sf') ?? 0.4);
+  const speed = 21 + 25 * sf;
   let turbo = 0;
   const step = (n: number) => {
     for (let i = 0; i < n; i++) {
       p.update(dt);
       v.update(p, dt, speed, turbo);
-      rig.update(dt, p, 0.4, turbo);
+      rig.update(dt, p, sf, turbo);
     }
   };
   if (q.get('shield')) v.shieldTarget = 1;
@@ -162,7 +164,7 @@ function meshLoaded() {
   step(60);
   rig.snap();
   if (pose === 'lane') {
-    p.input('right');
+    p.input(q.get('dir') === 'left' ? 'left' : 'right');
     step(7); // mid lane change: body rolls and yaws, front wheels steer
   } else if (pose === 'jump') {
     p.input('up');

@@ -105,7 +105,7 @@ const under = curve([[-2.3, 0.14], [-2.0, 0.13], [1.55, 0.13], [1.95, 0.27], [2.
 // wheelbase, fuller fastback (0.87 of the roof height over the rear axle) — side reference 04
 const gTop = curve([[-1.05, 0.745], [-0.92, 0.86], [-0.64, 0.975], [-0.35, 1.06], [-0.15, 1.11], [0.02, 1.145], [0.2, 1.163], [0.5, 1.165], [0.68, 1.148], [0.83, 1.125], [1.0, 1.095], [1.15, 1.06], [1.3, 1.02], [1.53, 0.955], [1.75, 0.85], [1.88, 0.785]]);
 // v4.3: the roof widens a little toward the rear (master: ±0.455 m just under the roof line)
-const gHalfTop = curve([[-1.05, 0.66], [-0.75, 0.5], [-0.45, 0.405], [-0.15, 0.41], [0.5, 0.45], [1.3, 0.465], [1.88, 0.475]]);
+const gHalfTop = curve([[-1.05, 0.66], [-0.75, 0.5], [-0.45, 0.405], [-0.15, 0.43], [0.5, 0.48], [1.3, 0.49], [1.88, 0.49]]);
 // v4.3 (Step 06 pass 2): the side glass runs back to ~0.88 of the wheelbase (it ended at the B-pillar
 // and a tall white C-pillar filled the rest — the van-like side), the belt line kicks up toward it
 const gHalfBase = curve([[-1.05, 0.68], [-0.6, 0.73], [-0.15, 0.73], [0.5, 0.745], [0.9, 0.705], [1.2, 0.56], [1.88, 0.5]]);
@@ -505,12 +505,12 @@ badgeTex.wrapS = badgeTex.wrapT = THREE.ClampToEdgeWrapping;
 const M = {
   // pearl white: warm white base, clearcoat, a faint pearl (thin-film) shift at grazing angles
   // v4.3 (Step 06 PBR): pearl-metallic base (flake normal map added at run time) under a glossy clearcoat
-  paint: new THREE.MeshPhysicalMaterial({ name: 'X1_Paint', color: 0xf3f2ee, metalness: 0.3, roughness: 0.32, clearcoat: 1, clearcoatRoughness: 0.04, iridescence: 0.22, iridescenceIOR: 1.35, iridescenceThicknessRange: [180, 420] }),
+  paint: new THREE.MeshPhysicalMaterial({ name: 'X1_Paint', color: 0xf3f2ee, metalness: 0.3, roughness: 0.32, clearcoat: 1, clearcoatRoughness: 0.04, iridescence: 0.1, iridescenceIOR: 1.35, iridescenceThicknessRange: [180, 420] }),
   black: new THREE.MeshPhysicalMaterial({ name: 'X1_GlossBlack', color: 0x0b0c0f, metalness: 0.3, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.08 }),
   satin: new THREE.MeshPhysicalMaterial({ name: 'X1_SatinBlack', color: 0x0c0d10, metalness: 0.15, roughness: 0.5, clearcoat: 0.35, clearcoatRoughness: 0.35 }),
   carbon: new THREE.MeshStandardMaterial({ name: 'X1_Carbon', color: 0x3a3a3a, map: tex(x1CarbonCanvas()), metalness: 0.35, roughness: 0.42, side: THREE.DoubleSide }),
   chrome: new THREE.MeshStandardMaterial({ name: 'X1_Chrome', color: 0xc8ccd2, metalness: 1, roughness: 0.22 }),
-  glass: new THREE.MeshPhysicalMaterial({ name: 'X1_Glass', color: 0x010203, metalness: 0.0, roughness: 0.1, transparent: true, opacity: 0.9, envMapIntensity: 0.07 }), // v4.3: darker tint, less grey sheen (master)
+  glass: new THREE.MeshPhysicalMaterial({ name: 'X1_Glass', color: 0x010203, metalness: 0.0, roughness: 0.1, transparent: true, opacity: 0.8, envMapIntensity: 0.07 }), // v4.3: darker tint, less grey sheen (master)
   liner: new THREE.MeshStandardMaterial({ name: 'X1_WheelLiner', color: 0x08090b, metalness: 0.05, roughness: 0.85, side: THREE.DoubleSide }),
   gap: new THREE.MeshStandardMaterial({ name: 'X1_PanelGap', color: 0x2a2d33, metalness: 0.1, roughness: 0.6 }),
   lightHousing: new THREE.MeshPhysicalMaterial({ name: 'X1_LightHousing', color: 0x050608, metalness: 0.4, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.03 }),
@@ -693,11 +693,84 @@ function buildBody(P: Parts) {
     // v4.3 (Step 06): tumblehome — the glass side bows out (convex) instead of a straight chamfer down
     // to the belt line; master rear: ±0.57 m at 1.04 m, ±0.67 m at 0.94 m
     const p2: [number, number] = [ht + 0.06, top - 0.05];
-    const p3: [number, number] = [mix(p2[0], base[0], 0.55), mix(p2[1], base[1], 0.35)];
-    const p4: [number, number] = [mix(p2[0], base[0], 0.86), mix(p2[1], base[1], 0.66)];
+    const p3: [number, number] = [mix(p2[0], base[0], 0.5), mix(p2[1], base[1], 0.35)];
+    const p4: [number, number] = [mix(p2[0], base[0], 0.82), mix(p2[1], base[1], 0.66)];
     const pts: [number, number][] = [[0, top + 0.012], [ht - 0.05, top - 0.004], p2, p3, p4, base];
     return chaikin(pts, 2);
   };
+  // ---- v4.4 (Step 07): body-colour roof frame. From the elevated gameplay camera the whole roof read as
+  // one big black block; white A-pillars / roof rails along both glass edges (into the white
+  // buttresses) and a windscreen header turn it into a framed glass roof (concepts 01 / 05 / 16).
+  {
+    const arcPts = (z: number, xa: number, xb: number, n: number) => {
+      // n points on the glass section between x = xa and x = xb (along its polyline), lifted 4 mm outward
+      const h = gHalf(z);
+      const out: [number, number][] = [];
+      const at = (x: number): [number, number, number, number] => {
+        for (let i = 0; i < h.length - 1; i++) {
+          const [x0, y0] = h[i];
+          const [x1, y1] = h[i + 1];
+          if ((x >= x0 && x <= x1) || (x >= x1 && x <= x0)) {
+            const t = (x - x0) / (x1 - x0 || 1);
+            const dx = x1 - x0;
+            const dy = y1 - y0;
+            const l = Math.hypot(dx, dy) || 1;
+            return [x, y0 + (y1 - y0) * t, dy / l, -dx / l];
+          }
+        }
+        const [lx, ly] = h[h.length - 1];
+        return [lx, ly, 1, 0];
+      };
+      for (let k = 0; k < n; k++) {
+        const [x, y, nx, ny] = at(xa + ((xb - xa) * k) / (n - 1));
+        const sgn = nx * x + ny * (y - 0.6) < 0 ? -1 : 1;
+        out.push([x + sgn * nx * 0.004, y + sgn * ny * 0.004]);
+      }
+      return out;
+    };
+    const grid = (rows: [number, number, number][][], flipX: boolean) => {
+      const pos: number[] = [];
+      const idx: number[] = [];
+      const n = rows[0].length;
+      for (const r of rows) for (const [x, y, z] of r) pos.push(flipX ? -x : x, y, z);
+      for (let a = 0; a < rows.length - 1; a++)
+        for (let i = 0; i < n - 1; i++) {
+          const q = a * n + i;
+          if (flipX) idx.push(q, q + 1, q + n, q + 1, q + n + 1, q + n);
+          else idx.push(q, q + n, q + 1, q + 1, q + n, q + n + 1);
+        }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      g.setIndex(idx);
+      g.computeVertexNormals();
+      return g;
+    };
+    const railRows: [number, number, number][][] = [];
+    for (const z of stations(G_Z0 + 0.06, DLO_B, Q.glassStep * 2)) {
+      const ht = gHalfTop(z);
+      // the rail tapers in at the windscreen foot (A-pillar) and blends into the buttress at the back
+      const w = 0.05 + 0.03 * ramp(G_Z0 + 0.06, -0.5, z);
+      railRows.push(arcPts(z, ht - w, ht + 0.07, 5).map(([x, y]) => [x, y, z]));
+    }
+    for (const flip of [false, true]) P.add('Body_Paint', M.paint, grid(railRows, flip));
+    const header: [number, number, number][][] = [];
+    for (const z of [-0.36, -0.32, -0.28]) {
+      const ht = gHalfTop(z);
+      header.push(arcPts(z, 0, ht + 0.02, 7).map(([x, y]) => [x, y + 0.001, z]));
+    }
+    for (const flip of [false, true]) P.add('Body_Paint', M.paint, grid(header, flip));
+  }
+  // ---- v4.4 (Step 07): two seats with red edge light behind the glass (the master shows them through
+  // the rear window; an all-black cabin read as an opaque block from the gameplay camera)
+  for (const sx of [-1, 1]) {
+    const seat = T(sx * 0.27, 0.6, 0.64, 0.3); // backrest leans back toward the rear (+z)
+    const back = new THREE.BoxGeometry(0.36, 0.42, 0.09);
+    back.translate(0, 0.21, 0);
+    P.add('Interior', M.interior, back, seat);
+    P.add('Interior', M.interior, new THREE.BoxGeometry(0.36, 0.08, 0.4), T(sx * 0.27, 0.62, 0.42));
+    for (const ex of [-0.17, 0.17]) P.add('Interior_SeatTrim', M.ledSoft, new THREE.BoxGeometry(0.014, 0.38, 0.014), seat.clone().multiply(T(ex, 0.2, 0.05)));
+    P.add('Interior_SeatTrim', M.ledSoft, new THREE.BoxGeometry(0.35, 0.014, 0.014), seat.clone().multiply(T(0, 0.405, 0.05)));
+  }
   const gz = stations(G_Z0, G_Z1, Q.glassStep);
   const glassGeo = (() => {
     const pos: number[] = [];
@@ -761,7 +834,8 @@ function buildBody(P: Parts) {
   // one solid satin-black body from the white bumper band down, wrapping between the rear tyres,
   // with a recessed diffuser opening. No rods, rails, tubes or fins hanging below it.
   {
-    const BUMPER_FACE = Z_TAIL + 0.035;
+    // v4.4 (Step 07): the lower bumper no longer juts 3.5 cm past the tail (read as a black ledge from above)
+    const BUMPER_FACE = Z_TAIL + 0.005;
     const BUMPER_FRONT = 1.8;
     // v4.3 (Step 06 pass 2): narrower (±0.74 m, was ±0.86 m) so the rear tyres show in full below the
     // white bumper band, as in the master; tapers in toward the ground between the tyres
@@ -798,6 +872,19 @@ function buildBody(P: Parts) {
     const depth = BUMPER_FACE - BUMPER_FRONT;
     const bumper = new THREE.ExtrudeGeometry(shape, { depth: depth - 0.024, bevelEnabled: true, bevelSize: 0.012, bevelThickness: 0.012, bevelSegments: 3, curveSegments: 6 });
     bumper.translate(0, 0, BUMPER_FRONT + 0.012);
+    // v4.4 (Step 07): the underside ramps up toward the front (a diffuser ramp) instead of a square block
+    // hanging behind the rear wheels — reads lighter in the side / 3/4 / gameplay views
+    {
+      const bp = bumper.getAttribute('position');
+      const zr = BUMPER_FACE - 0.16;
+      for (let i = 0; i < bp.count; i++) {
+        const z = bp.getZ(i);
+        const y = bp.getY(i);
+        if (z < zr && y < 0.34) bp.setY(i, Math.max(y, Math.min(0.34, 0.118 + (zr - z) * 0.85)));
+      }
+      bp.needsUpdate = true;
+      bumper.computeVertexNormals();
+    }
     P.add('Rear_LowerBumper', M.satin, bumper);
     // recess back wall + three restrained fins joined to the wall, floor and ceiling of the recess
     const back = BUMPER_FACE - 0.1;
@@ -898,11 +985,13 @@ function buildBody(P: Parts) {
     };
     // v4.3 (Step 06 pass 3): large trapezoid lower intake (references 02 / 03 / 08): gloss frame, matte
     // recess, two vertical vanes; tall slanted air curtains at the bumper corners
-    const trap: [number, number][] = [[-0.47, 0.315], [0.47, 0.315], [0.575, 0.165], [-0.575, 0.165]];
-    const inset: [number, number][] = [[-0.45, 0.302], [0.45, 0.302], [0.548, 0.178], [-0.548, 0.178]];
+    // v4.4 (Step 07): smaller opening (it read too large and plain) with a fine horizontal grille
+    const trap: [number, number][] = [[-0.4, 0.3], [0.4, 0.3], [0.5, 0.185], [-0.5, 0.185]];
+    const inset: [number, number][] = [[-0.383, 0.289], [0.383, 0.289], [0.476, 0.196], [-0.476, 0.196]];
+    for (const y of [0.222, 0.255]) P.add('Front_Intake', M.satin, new THREE.BoxGeometry(0.86 - (y - 0.2) * 0.9, 0.005, 0.004), T(0, y, FACE - 0.0095));
     P.add('Front_Intake', M.black, slab(trap.slice().reverse(), FACE - 0.006, 0.008, 0.002));
     P.add('Front_IntakeRecess', M.liner, slab(inset.slice().reverse(), FACE - 0.0085, 0.002));
-    for (const x of [-0.19, 0.19]) P.add('Front_Intake', M.satin, new THREE.BoxGeometry(0.012, 0.13, 0.006), T(x, 0.24, FACE - 0.01, 0, 0, x * 0.35));
+    for (const x of [-0.17, 0.17]) P.add('Front_Intake', M.satin, new THREE.BoxGeometry(0.012, 0.1, 0.006), T(x, 0.243, FACE - 0.01, 0, 0, x * 0.35));
     for (const sx of [-1, 1]) {
       const pts: [number, number][] = [[0.595, 0.21], [0.648, 0.215], [0.675, 0.425], [0.632, 0.418]].map(([x, y]) => [x * sx, y] as [number, number]);
       P.add('Front_Intake', M.black, slab(sx < 0 ? pts.slice().reverse() : pts, FACE - 0.006, 0.008));
@@ -1076,7 +1165,10 @@ function buildSpoiler() {
   // aerofoil section in the (z, y) side plane, relative to the hinge
   const sec: [number, number][] = [[0, -0.003], [0.15, 0.011], [0.3, 0.02], [0.335, 0.027], [0.335, 0.013], [0.2, 0.0], [0.02, -0.009]];
   const g = finYZ(sec, 0, 0.92);
-  const m = new THREE.Mesh(norm(g), M.black);
+  // v4.4 (Step 07): body colour when closed (concept 14: flush with the body) — from the elevated gameplay
+  // camera the black flap merged with the black rear glass into one long dark mass; raised, its black
+  // skirt and the black deck well under it still show the pop-up clearly
+  const m = new THREE.Mesh(norm(g), M.paint);
   m.name = 'Spoiler';
   pivot.add(m);
   // v4.1.3 pop-up: the flap rises on the deck and tilts. A satin skirt under its front and sides
@@ -1129,6 +1221,19 @@ function warpFn(cut: number) {
     return [aA - (ARCH_A - z) * kA, kA];
   };
 }
+/**
+ * v4.4 (Step 07): shorter rear. Everything behind the rear wheel arch (z > REAR_Z0 = rear axle + arch
+ * radius) is compressed along z by REAR_K — tail, deck, LED, bumper, diffuser, spoiler, nitro sockets.
+ * The wheelbase, the rear arch, the cabin and the front are untouched (local deformation, not a scale
+ * of the car). Rear overhang 0.94 → 0.84 m (0.375 → 0.335 of the wheelbase; concept 05 top view
+ * suggests ≈ 0.34, a visual estimate).
+ */
+const REAR_Z0 = AX_R.z + AX_R.arch;
+export const REAR_K = 0.805;
+function rearWarp(k: number) {
+  return (z: number): [number, number] => (z > REAR_Z0 ? [REAR_Z0 + (z - REAR_Z0) * k, k] : [z, 1]);
+}
+
 /** apply the length warp to a geometry (positions; normals follow the local z scale) */
 function warpGeometry(g: THREE.BufferGeometry, W: (z: number) => [number, number]) {
   const p = g.getAttribute('position');
@@ -1173,9 +1278,11 @@ function rakeNose(g: THREE.BufferGeometry) {
 }
 
 // ------------------------------------------------------------------ assemble + export
-export function buildX1(opts: { cut?: number; detail?: 'mobile' | 'master' } = {}): THREE.Group {
+export function buildX1(opts: { cut?: number; detail?: 'mobile' | 'master'; rear?: number } = {}): THREE.Group {
   setDetail(opts.detail ?? 'mobile');
-  const W = warpFn(opts.cut ?? LENGTH_CUT);
+  const WF = warpFn(opts.cut ?? LENGTH_CUT);
+  const R = rearWarp(opts.rear ?? REAR_K);
+  const W = (z: number): [number, number] => (z > REAR_Z0 ? R(z) : WF(z));
   const root = new THREE.Group();
   root.name = 'X1';
   const body = new THREE.Group();
@@ -1190,17 +1297,28 @@ export function buildX1(opts: { cut?: number; detail?: 'mobile' | 'master' } = {
   }
   const front = { ...AX_F, z: W(AX_F.z)[0] };
   root.add(wheel('FL', front, -1, true), wheel('FR', front, 1, true), wheel('RL', AX_R, -1, false), wheel('RR', AX_R, 1, false));
-  body.add(buildSpoiler());
+  const spoiler = buildSpoiler();
+  // the pop-up spoiler lives behind the rear arch: same rear compression (hinge position + flap length)
+  const hingeZ = spoiler.position.z;
+  spoiler.position.z = W(hingeZ)[0];
+  const kz = R(hingeZ + 0.1)[1];
+  spoiler.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (!m.isMesh) return;
+    m.geometry.applyMatrix4(new THREE.Matrix4().makeScale(1, 1, kz)); // positions; normals via the inverse transpose
+    m.position.z *= kz;
+  });
+  body.add(spoiler);
   for (const s of [-1, 1] as const) {
     const n = new THREE.Object3D();
     n.name = s < 0 ? 'NitroSocket_L' : 'NitroSocket_R';
-    n.position.set(0.38 * s, 0.2, Z_TAIL + 0.03);
+    n.position.set(0.38 * s, 0.2, W(Z_TAIL)[0]);
     root.add(n);
   }
   return root;
 }
 
-export async function exportX1(opts: { cut?: number; detail?: 'mobile' | 'master' } = {}): Promise<ArrayBuffer> {
+export async function exportX1(opts: { cut?: number; detail?: 'mobile' | 'master'; rear?: number } = {}): Promise<ArrayBuffer> {
   const root = buildX1(opts);
   // v4.3 (Step 06): the game never decodes the GLB's images (MeshCar puts the same procedural textures
   // back by material name), so the mobile model ships without them (−53 KB); the master keeps them

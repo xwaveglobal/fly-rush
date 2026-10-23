@@ -50,6 +50,11 @@ def segment(view, cfg, out_dir):
     x0, y0, x1, y1 = [v * scale for v in cfg['rect']]
     mask = np.full(img_s.shape[:2], cv2.GC_BGD, np.uint8)
     mask[y0:y1, x0:x1] = cv2.GC_PR_FGD
+    # v4.4 (Step 07): documented seed polygons (original-image pixels) where GrabCut alone fails on the
+    # night concepts — dark glass roofs against a dark sky (sure car) and wet-road reflections (sure road)
+    for key, val in (('fg', cv2.GC_FGD), ('bg', cv2.GC_BGD)):
+        for poly in cfg.get(key, []):
+            cv2.fillPoly(mask, [np.array(poly, np.int32) * scale], val)
     if view == 'rear0':
         # white studio background: near-white pixels connected to the border are background
         white = (img_s.min(axis=2) > 238).astype(np.uint8)

@@ -81,10 +81,7 @@ export class Renderer {
     });
     cv.addEventListener?.('webglcontextrestored', () => {
       this.lost = false;
-      this.composer?.dispose();
-      this.composer = null;
-      this.bloom = null;
-      this.speedBlur = null;
+      this.disposeComposer();
       this.setQuality(this.quality);
     });
   }
@@ -102,6 +99,20 @@ export class Renderer {
     return r;
   }
 
+  /**
+   * v4.2.1: free the post-processing chain. EffectComposer.dispose() only frees its own two targets —
+   * the passes keep theirs (UnrealBloomPass: 11 render targets + materials), so every preset switch
+   * that rebuilt the chain leaked ~12 GPU textures (measured by scripts/perf/profile.mjs).
+   */
+  private disposeComposer() {
+    if (!this.composer) return;
+    for (const p of this.composer.passes) (p as { dispose?: () => void }).dispose?.();
+    this.composer.dispose();
+    this.composer = null;
+    this.bloom = null;
+    this.speedBlur = null;
+  }
+
   setQuality(q: Quality) {
     this.quality = q;
     const pr = GRAPHICS[q];
@@ -112,12 +123,7 @@ export class Renderer {
     const wantBlur = pr.speedBlur;
     const post = wantBloom || wantBlur;
     // rebuild the composer when the set of passes changes (presets are switched rarely, in menus)
-    if (this.composer && (!post || !!this.bloom !== wantBloom || !!this.speedBlur !== wantBlur)) {
-      this.composer.dispose();
-      this.composer = null;
-      this.bloom = null;
-      this.speedBlur = null;
-    }
+    if (this.composer && (!post || !!this.bloom !== wantBloom || !!this.speedBlur !== wantBlur)) this.disposeComposer();
     if (post && !this.composer) {
       // the composer renders into its own target: give it MSAA, otherwise the canvas
       // antialias flag is silently ignored and every edge looks soft/jagged
