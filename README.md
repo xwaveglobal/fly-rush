@@ -6,7 +6,28 @@ Sky Roadster (formerly "XWAVE Flying Run") is a high-speed 3D endless runner. Pi
 
 ---
 
-## Quick start
+## v3 — native TikTok mini game (main)
+
+From v3.0 the game ships as a **native TikTok mini game** (TikTok Minis). The v2 web game is kept on the GitHub branch `v2` (v1 on `v1`).
+
+```bash
+npm run build:tiktok    # src/native/main.ts → tiktok/game.js + tiktok/assets/ (the folder you upload)
+npm run check:tiktok    # HS SDK check (must say 0 FAIL)
+npm run preview:tiktok  # the native game in a phone frame on your desktop (http://127.0.0.1:8090)
+npm run pack:tiktok     # tiktok-tiktok.zip to upload (App ID in tiktok/project.config.json)
+```
+
+- `tiktok/` = the game folder TikTok receives: `game.js`, `game.json`, `project.config.json`, `hs-game.js`, `hs-sdk.min.js`, `assets/`. Never put keys, keystores, `.env` files or the HS kit in it.
+- `hs-sdk/` = the HS SDK kit (kept OUTSIDE the game folder). `tiktok.hs-dashboard.json` (next to the folder) = what to paste into the HS dashboard: ad places, rewards, items, products (TikTok Beans).
+- How it works: `src/native/adapter.ts` gives Three.js a `window` / `document` over the `tt` runtime; the 3D game (`src/Game.ts`, unchanged logic) draws on the runtime's screen canvas; the UI is redrawn on a 2D canvas (`src/native/ui/*`, same API as the DOM UI, swapped in by the build) and shown on top of the 3D view; the game's inline SVG icons are drawn by a small SVG→canvas renderer.
+- Progress lives in ONE `HSGame.profile` (device save): `coins`, `super`, `hyper`, `escape`, `no_ads` are profile fields (rewards and purchases land in them directly), the rest of the save is the `game` field.
+- Ads — rewarded places (`rw_`): `rw_revive` (revive after a crash), `rw_end_bonus` (+20% coins on the result screen), `rw_free_coins` (free coins popup / + on the wallet), `rw_head_start` (start boost); interstitial place (`int_`): `int_race_end` (when leaving the result screen). Ad buttons are drawn only while `HSGame.canShowAd(place)` is true; with nothing in the dashboard the game simply has no ads.
+- Entry Reward / Launch Reward / Share (TikTok review) are on the home screen's right rail, only where `HSGame.has(...)` says so.
+- Credentials: `GAME_ID` / `SDK_KEY` in `src/native/hs.ts` (empty = the game plays offline). Never write the TikTok Client Secret anywhere.
+
+`npm run dev` still runs the web build (DOM UI) for quick gameplay work.
+
+## Quick start (web build)
 
 ```bash
 npm install
@@ -277,6 +298,82 @@ Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder M
 
 v4 is developed on branch `v4.0.1`, starting from the H5 web game v2.3.0 (same gameplay, UI, accounts and cloud save). Goal: much better 3D graphics. No gameplay changes in this version.
 
+## v3.0.11 changes — reward buttons · revive ad · launch hotfix · in-game log
+
+- **Reward buttons (Entry · Launch · Share)** show only while their reward can still be earned — decided from HSGame's reward config and claim state (`$limit`), never "claimed once = gone": Entry / Launch while the TikTok mission is not done, Share while `available('share')` (back the next day; a Share without a reward stays as the TikTok review button). Nothing shows until HSGame has settled (no flash of an exhausted reward). The visible ones stay centred on the right rail (3 · 2 · 1 · none) and glide to their new place in 200 ms. Pure logic + the 8 layout combinations in `src/meta/Perks.ts` / `tests/perks.test.ts`. Web rail: same rules, CSS centring + FLIP glide.
+- **Reward Claimed!** notice after an Entry / Launch / Share reward (from HSGame's `given` event), shown even when its button disappears. Rapid taps can't start a mission or a share twice.
+- **Revive ad on real TikTok**: the revive countdown is frozen while the ad loads / plays (it used to run out under a loading video and end the race — the button looked dead); the button shows only while a revive ad is ready ("Ad loading…" otherwise); "No ad available" toast when the platform has none. Ad waits are capped (90 s rewarded / 45 s interstitial) so a lost ad callback can never block later ads or the game-over buttons.
+- **Android launch hotfix**: WebGL context retried with safer settings (no MSAA, default / low-power GPU) instead of failing; lighter MSAA (2×) for the Android post-processing target.
+- **In-game log** (`src/native/log.ts`) for phones where TikTok's vConsole won't open: last 150 console lines + uncaught errors. Open it with **5 quick taps in the top-left corner** (any screen) or Settings → tap the version 5× → Logs. The boot-error screen also prints the last warnings / errors.
+- Offline: the game boots and plays with no network (HSGame offline, ads / share / shop hidden, progress saved locally).
+
+## v3.0.10 changes — training button
+
+- First **Play** still opens the training card (Start training / Skip). After that, training is a **Training** button next to the "SELECT TRACK" title (both UIs).
+- Track list aligned: every card has its text on the same left edge and its number in the same top-right circle; upcoming tracks show a soft "?" instead of a left column.
+- No flag on the home profile chip (flags stay on leaderboards and the profile).
+
+## v3.0.9 changes — Android smoothness · flags · rank table
+
+- **Smoother on Android** (home + race start): pooled obstacle / pickup meshes are now compiled at load (their shaders used to build on the first race frames); Android renders the 3D view at ≤ 1.5× pixel ratio; the home screen's canvas UI redraws/uploads at ~11 fps (it only pulses) instead of 25; baked audio is rendered in tiny slices (one music step per tick at 22 kHz, envelopes/filters every 16 samples, SFX one per tick after 1.5 s) and the next music intensity is prepared in the background, never at race start.
+- **Country flags** drawn as SVG (`src/meta/Flags.ts`, all 62 countries) — emoji flags were blank / letters on Android. Leaderboards, podium, pilot card, profile, country + language pickers, and a flag on the home profile chip.
+- **Rank table**: AAA's three unlocks wrap inside the row instead of running off the card.
+
+## v3.0.8 changes — shop · top row beside the TikTok capsule
+
+- **Top row on the capsule line**: home (profile · coins · settings), page headers and the race HUD (pause · score box) now sit on the same line as TikTok's "… ×" capsule, left of it; the race coin card + distance sit just under the capsule. "How to play" lives in Settings when space is short. Profile chip fits its content with a clear gap to the coin chip.
+- **Shop**: Remove Ads card on top, free coins (rewarded ad), then coin packs as tiles. New packs (`tiktok.hs-dashboard.json`, paste into the HS dashboard): **5,000 coins = 99 Beans (≈ $0.99)**, 16,000 = 299, 28,000 = 499 (POPULAR), 60,000 = 999, 130,000 = 1,999 (BEST VALUE); Remove Ads 299 (one-time). Web `PRODUCTS` match. The coin chip's **+** always opens the shop.
+- **Shield**: breaks after **2 hits** (was 3) and lasts **30 % shorter** (14 s instead of 20 s) — `SHIELD` in `config.ts`.
+- **Special item prices up**: Roadster Jump 3,000 (was 1,800), HYPER Jump 7,000 (was 4,000), SOS Escape 2,000 (was 1,200).
+
+## v3.0.7 changes — top inset
+
+- **Android**: some TikTok builds report the "… ×" capsule / status bar in physical pixels → the whole UI sat ~200 units too low. Values are now detected and converted (÷ pixel ratio) and clamped; the top bar sits right under the capsule.
+- **iPhone/all**: tighter gap under the capsule on home, pages and the race HUD.
+
+## v3.0.6 changes — Android start · clean sound · hourly Bonus
+
+- **Android**: the game failed to load (`SyntaxError: Invalid regular expression … \p{L}` — Unicode property escapes are missing on the Android engine). The name filter no longer uses them; the TikTok build now refuses any regex feature newer than ES2017 (`\p{}`, lookbehind, named groups, `s`/`d`/`v` flags), and `game.js` parses as plain ES2017.
+- **Sound (iPhone crackle)**: in the native build every sound effect and the music loop are **pre-rendered** once into PCM buffers (same recipes; envelopes, glides and filters computed per sample, band-limited oscillators, seamless 4-bar loops per intensity, switched on the bar line) and played with plain buffer sources — no AudioParam automation, so no stepping clicks. The web build keeps the real-time synth.
+- **Bonus**: opens **every hour for 30 minutes**, a **random place** each time (the same for every player, never twice in a row), and can be **replayed** as often as you like while open (Retry restarts the Bonus road).
+
+## v3.0.5 changes
+- Race HUD: coin card shows this race's coins (+37) and the wallet total; score box reorganised (EXP · level / big race EXP / RACE rank on the right, footer YOU · BEST and NEXT, progress bar to the next rank with the best EXP marked).
+- Sound & music on TikTok: Web Audio compatibility layer (missing compressor / filter / delay nodes and AudioParam automation fall back instead of silencing everything), the context is resumed on touches and after the app returns.
+- Settings → Colour removed (iPhone OK): calibration stays automatic; test info behind 5 taps on the version.
+- Smaller package: the native build no longer pulls in the DOM UI's art (`src/ui/shared.ts`) — guide pictures, unused track pictures and the app icon are gone (2.86 → 2.75 MB).
+
+## v3.0.4 changes — colour calibration · Android start
+- Colour calibration at start (`src/native/color.ts`): two tiny off-screen draws measure whether the screen re-encodes sRGB (fix: output linear) and whether sRGB textures are decoded (fix: decode in the shader). Only what is measured is compensated. Settings → Colour: Auto / Normal / Screen fix / Texture fix, and a line with the measured values + GPU for testing.
+- The UI layer is copied to the screen raw (no sRGB round trip a runtime could get wrong).
+- Android: the game folder no longer contains a `package.json`; the bundle is downlevelled to ES2017 (older mini-game JS engines); globals the runtime keeps read-only are no longer written with plain assignments; a readable error screen if the 3D view cannot start.
+- `npm run check:tiktok` / `pack:tiktok` run the HS tools on a temporary copy (`scripts/tiktok-tools.mjs`).
+
+## v3.0.3 changes — native looks like the H5 game
+- Washed-out picture on TikTok fixed: the frame's alpha channel is forced to 1 after the UI pass (the UI quad no longer lowers the canvas alpha, and bloom / post passes can't leave it below 1), so the app never shows its page through the game.
+- Race HUD rebuilt to the H5 layout: EXP + level tag, big race EXP with RACE shield, YOU / BEST row, NEXT row; coin / distance pills; "SPEED … KM/H" with the rainbow bar; bigger hearts; H5 pause button; shield-shaped class badges; dark ROADSTER button.
+- Pause menu typography bigger (title, SFX / MUSIC / quality, Resume, Retry / Home); result-screen nav buttons too.
+- Top bar always below TikTok's "… ×" capsule (re-measured after start, safe fallback when the app reports no rect).
+
+## v3.0.2 changes — buttons on real TikTok devices
+- Sound engine is fail-safe: a runtime with a partial Web Audio (no compressor, `connect()` not chainable) used to throw at the first tap, leaving the audio half-built so every button's click sound threw and the button did nothing. Now audio switches off cleanly instead.
+- Images: the native image wrapper always feeds its own load listeners (the car sprite never appeared when the runtime's own `addEventListener` didn't fire).
+- Canvas UI: each screen draws inside a guard — one failing screen can no longer wipe every button; errors show once as a red notice.
+- Touch points reported in device pixels are scaled back to screen points.
+- Tested in a no-DOM runtime simulator (Web Worker + OffscreenCanvas + strict tt shim): home → settings → garage → play → tracks → special → race.
+
+## v3.0.1 changes
+- Pause no longer ends the race after 7 s (the paused state shared the revive countdown) — web and native.
+- Ad places renamed by type: rewarded `rw_revive` · `rw_end_bonus` · `rw_free_coins` · `rw_head_start`, interstitial `int_race_end`.
+- Home always shows 6 side buttons (Share · Entry · Launch on the right; outside the TikTok app a tap explains they work there).
+- Browser preview: the arrow keys / WASD work (the page takes keyboard focus on tap).
+
+## v3.0.0 changes — native TikTok mini game
+- New: native TikTok mini game build (`tiktok/`) — no HTML/DOM: Three.js on the TikTok canvas, the whole UI redrawn on a canvas (home, tracks, garage, missions, ranks, daily, shop, Magic Bag, results, pause, revive, tutorial, settings, profile, popups, race HUD, toasts, pops).
+- HS SDK 1.1.2 (kit 3.2.3): device save in one profile, rewarded ads at revive / end bonus / free coins / head start + race-end ad, coin packs + Remove Ads for TikTok Beans, share, Entry / Launch Reward (TikTok review).
+- Cloud accounts of v2.3 are off in the native build (the HS profile is the save); the web build keeps them.
+- v2 web game kept on branch `v2`.
+
 ## v2.3.0 changes — accounts & cloud save
 
 - **Settings → Account**: sign in with **Google**, **Apple** or an **email code**. Progress (rank, EXP, coins, specials, cars, missions…) is saved to the account and comes back after a reinstall or on a new phone.
@@ -375,12 +472,12 @@ v4 is developed on branch `v4.0.1`, starting from the H5 web game v2.3.0 (same g
 
 - **Daily + Missions merged**: one daily list (4 missions a day, chests at 30 / 70 / 100 pts) that pays coins; the home "Missions" button opens it. The in-race strip shows the next unfinished daily mission with live progress. The old per-run mission system no longer pays (waiting rewards were moved to the wallet).
 - 7-day check-in pays coins 100 → 400, day 7 = 600 coins + 1 Roadster Jump. New missions: "Earn 1,500 EXP in one race", "Use a special" (SOS counts), "Drive 5,000 m"…
-- Coin balance (`COIN_LINES` in config): Endless ≈ 25–40 coins / min before the speed-level coin bonus (a special costs 2,000–6,000), Bonus roads ≈ 2× denser.
+- Coin balance (`COIN_LINES` in config): Endless ≈ 25–40 coins / min before the speed-level coin bonus (a special costs 2,000–7,000), Bonus roads ≈ 2× denser.
 - XWAVE Pass row hidden; new UI text translated (FR / JA / PT / DE / ES).
 
 ## v2.0.7 changes (v2 step 7 — Bonus events replace cups)
 
-- **Bonus** opens every 2 hours (local 00:00, 02:00, …) for 60 minutes, in a new everyday place each time: **Desert Highway · Pine Forest · Country Road · Ocean Causeway** (new daylight scenery: scrolling sand / grass / fields / sea ground, cacti, mesas, pines, barns, windmills, palm islets, boats, a lighthouse). `meta/Bonus.ts`, `BONUS_WORLDS`.
+- **Bonus** opens every hour (local 00:00, 01:00, …) for 30 minutes (v3.0.6; was every 2 h for 60 min), in a random everyday place each time, replayable while open: **Desert Highway · Pine Forest · Country Road · Ocean Causeway** (new daylight scenery: scrolling sand / grass / fields / sea ground, cacti, mesas, pines, barns, windmills, palm islets, boats, a lighthouse). `meta/Bonus.ts`, `BONUS_WORLDS`.
 - A Bonus road is a 30-minute course with a FINISH line (length computed from the speed level), coins only (no EXP, no ranking), finish bonus 800 × coin multiplier. HUD shows "BONUS COINS".
 - Specials lie on the road and **fire by themselves**: Roadster, HYPER, and the AAA teasers — **Wall Run** (car rides the side wall), **Tunnel Rider** (upside-down on the roof), **Sky Rail** (glides above the road), **Phase Ghost** (flickers through obstacles).
 - Home: the cup strip and rail button became **Bonus** (open now / next opening); the Bonus card explains the rules. Old cup results are no longer shown.

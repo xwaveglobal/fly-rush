@@ -20,19 +20,8 @@ import guide3 from '../assets/images/guide/guide-3.jpg';
 import { CHAINS, activeChains, pilotLevel } from '../meta/Career.ts';
 import type { SaveData } from '../core/Save.ts';
 import { SKINS, carVisibility } from '../render/Vehicle.ts';
-import carZenith from '../assets/images/cars/zenith.webp';
-import carVolt from '../assets/images/cars/volt.webp';
-import carPhantom from '../assets/images/cars/phantom.webp';
-import carInferno from '../assets/images/cars/inferno.webp';
-import carNexus from '../assets/images/cars/nexus.webp';
-import carVega from '../assets/images/cars/vega.webp';
-import carShadow from '../assets/images/car/x1-back.webp';
-import vegaRear from '../assets/images/car/vega-back.webp';
-const CAR_IMG: Record<string, string> = { zenith: carZenith, vega: carVega, volt: carVolt, phantom: carPhantom, inferno: carInferno, nexus: carNexus };
-export const carImage = (id: string) => CAR_IMG[id] ?? carZenith;
-/** transparent in-race rear render (share card); cars without one use their thumbnail */
-export const carRear = (id: string) => (id === 'vega' ? vegaRear : carShadow);
-export const logoImg = logoUrl;
+import { CAR_IMG, carImage, carRear, carShadow, logoImg } from './shared.ts';
+export { carImage, carRear, logoImg };
 const RARITY_COLOR: Record<string, string> = { Common: '#4fb3ff', Rare: '#a77bff', Epic: '#ffc24a', Legendary: '#ff4a3c', Mythic: '#d04dff' };
 import { LEVELS } from '../config.ts';
 import type { Run } from '../gameplay/Run.ts';
@@ -55,12 +44,12 @@ const THUMBS: Record<string, string> = {
   'mega-city': thMega,
 };
 
-export type UpgradeKey = 'engine' | 'shield' | 'magnet';
-export const UPGRADE_MAX = 5;
-export const upgradeCost = (lvl: number) => Math.round(150 * Math.pow(lvl + 1, 1.6) / 10) * 10;
+import { UPGRADE_MAX, upgradeCost, type UpgradeKey } from './shared.ts';
+export { UPGRADE_MAX, upgradeCost, type UpgradeKey };
 
 /** Show a small "demo rivals" note under sample leaderboards (set false once boards are online). */
-export const SAMPLE_BOARD_NOTE = true;
+import { SAMPLE_BOARD_NOTE } from './shared.ts';
+export { SAMPLE_BOARD_NOTE };
 
 export interface UIHandlers {
   /** Step 06.5: the class promotion celebration was acknowledged (Continue) */
@@ -156,7 +145,8 @@ const BAG_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradi
 
 /** tutorial (book + ?) and launch (megaphone) icons */
 const TUT_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M10.2 8.3a2 2 0 1 1 2.6 1.9c-.5.2-.8.6-.8 1.1v.6"/><path d="M12 14.4h.01"/></g></svg>`;
-export const MEGA_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.6" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M12 6.2c1.7 1.2 2.4 3 2.2 5.4l-.9.9h-2.6l-.9-.9c-.2-2.4.5-4.2 2.2-5.4z" fill="#fff"/><circle cx="12" cy="9.3" r=".9" fill="#2a7bff"/><path d="M10.6 13.2 12 16.4l1.4-3.2z" fill="#ffc21a"/><path d="M10.4 18.6h3.2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+import { MEGA_ICON } from './shared.ts';
+export { MEGA_ICON };
 
 /** what a finished / crashed run paid out (result screens) */
 export interface RunRewards {
@@ -353,7 +343,7 @@ export class UI {
     </section>
 
     <section id="tracks" class="screen">
-      ${this.head('SELECT TRACK')}
+      ${this.head('SELECT TRACK', `<button class="btn sm blue" data-a="help">${ICON.hand}<span>Training</span></button>`)}
       <div class="track-list" data-k="tracklist"></div>
       <div class="boost-row" data-k="boosts" hidden></div>
       <button class="btn gold adbtn" data-a="adboost" data-k="adboost" hidden>${ICON.play}</button>
@@ -1742,10 +1732,10 @@ export class UI {
       <div class="bn-hero" style="--cc:${BONUS_COLOR[o.theme] ?? '#ffc21a'}" data-theme="${o.theme}"><span class="bn-ic">${BONUS_EMOJI[o.theme] ?? '🏁'}</span><b>${o.name}</b>
         <small>${o.live ? `<em class="live">OPEN</em> ${o.left} left` : `<em class="soon">NEXT</em> ${o.opens}`}</small></div>
       <div class="bn-rules">
-        <span>${ICON.clock}<b>${o.minutes} min</b> to the finish · <b>1 play</b></span>
+        <span>${ICON.clock}<b>${o.minutes} min</b> to the finish · <b>Replay freely</b></span>
         <span>${ICON.coin}<b>Coins only</b> · finish +${fmt(o.finish)}</span>
         <span>${ICON.rocket}<b>Rare specials</b> fire by themselves</span>
-        <span>${ICON.gift}<b>Every 2 h</b> · open 60 min · new place</span>
+        <span>${ICON.gift}<b>Every hour</b> · open 30 min · random place</span>
       </div>
       ${o.live && !o.played ? `<button class="btn big gold" data-a="bonusgo">${ICON.play} Race</button>` : o.live ? `<button class="btn" disabled>${ICON.check} Played · next ${o.opensAt}</button>` : `<button class="btn" disabled>${ICON.lock} Opens ${o.opensAt}</button>`}
       ${o.next ? `<div class="label bn-next">Next: ${o.next}</div>` : ''}`;
@@ -2240,7 +2230,7 @@ export class UI {
           `<div class="pzsteps">
             ${step(1, 'Open your pilot profile', st[0], `<div class="pzrow"><span class="pztile plus">${ICON.plus}</span><span class="pztile chat">${ICON.user}<em>99+</em></span><span class="pztile ava on">${avatarSvg(av)}${tapMarks()}</span></div>`, 'profile')}
             ${step(2, 'Set your pilot name', st[1], `<div class="pzbanner"><img src="${logoUrl}" alt="" /><span class="pzname">${name}</span><span class="pzmenu">≡</span></div>`, 'profile')}
-            ${step(3, 'Pick your racing helmet', st[2], `<div class="pzcard"><img src="${carZenith}" alt="" /><span class="pzhelm">${avatarSvg(av)}</span>${hand}${tapMarks('r')}</div>`, 'profile')}
+            ${step(3, 'Pick your racing helmet', st[2], `<div class="pzcard"><img src="${carImage('zenith')}" alt="" /><span class="pzhelm">${avatarSvg(av)}</span>${hand}${tapMarks('r')}</div>`, 'profile')}
             ${step(4, 'Claim your rewards', done, coinBanner(d.entryReward))}
           </div>` +
           (done
@@ -2305,15 +2295,29 @@ export class UI {
   }
 
   perkBadges(o: Record<'entry' | 'launch' | 'share', 'todo' | 'ready' | 'done'>) {
+    // v3.0.11: a reward button shows only while its reward can still be earned (Entry / Launch: not
+    // claimed; Share: not yet rewarded today — it comes back the next day). The rail keeps the
+    // visible ones centred and glides them to their new place (FLIP, 200 ms).
+    const rail = this.root.querySelector<HTMLElement>('.rail.right');
+    const btns = rail ? Array.from(rail.querySelectorAll<HTMLElement>('.rbtn')) : [];
+    const before = new Map(btns.map((b) => [b, b.getBoundingClientRect().top]));
     for (const [k, st] of Object.entries(o)) {
       const b = this.root.querySelector<HTMLElement>(`[data-k="pk-${k}"]`);
       if (!b) continue;
-      // Entry stays after it is claimed (its popup then links to Daily / Shop / Garage / Tutorial / Race / Cups);
-      // Launch disappears once claimed; Share is daily
-      b.hidden = st === 'done' && k === 'launch';
+      b.hidden = st === 'done';
       b.classList.toggle('done', st === 'done');
       const e = b.querySelector<HTMLElement>('.badge');
       if (e) e.hidden = st !== 'ready' || k === 'share'; // no '!' on Share
+    }
+    if (rail) {
+      rail.hidden = btns.every((b) => b.hidden);
+      for (const b of btns) {
+        const t0 = before.get(b);
+        if (b.hidden || t0 === undefined || !t0) continue;
+        const dy = t0 - b.getBoundingClientRect().top;
+        if (Math.abs(dy) < 1) continue;
+        b.animate?.([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { duration: 200, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      }
     }
   }
 

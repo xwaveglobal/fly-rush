@@ -521,7 +521,8 @@ html, body {
 #start .brand { margin-top: 2vh; }
 .rail { position: absolute; top: calc(250px + var(--safe-t)); display: flex; flex-direction: column; gap: 14px; }
 .rail.left { left: 12px; }
-.rail.right { right: 12px; }
+.rail.right { right: 12px; min-height: 250px; justify-content: center; } /* v3.0.11: visible reward buttons stay centred */
+.rail.right[hidden] { display: none; }
 @container (max-height: 680px) { .rail { top: calc(210px + var(--safe-t)); gap: 10px; } }
 .rbtn { appearance: none; border: 0; background: none; padding: 0; cursor: pointer; color: #fff; font-family: var(--font); position: relative;
   display: flex; flex-direction: column; align-items: center; gap: 3px; width: 62px; }

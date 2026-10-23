@@ -272,6 +272,9 @@ export const SCORE = {
   comboMax: 4,
 };
 
+/** v3.0.8 shield: breaks after `hits` obstacles; its timer is `timeMul` of the base (12 s + 4 s per power level) */
+export const SHIELD = { hits: 2, timeMul: 0.7 };
+
 export const POWERUP_DURATION = {
   shield: 0, // shield lasts until hit (upgrades add a timed safety bubble after break)
   magnet: 8,

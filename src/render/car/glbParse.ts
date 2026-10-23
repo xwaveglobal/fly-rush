@@ -1,3 +1,4 @@
+import { inflateRaw } from '../../core/inflate.ts';
 import * as THREE from 'three';
 
 /**
@@ -170,6 +171,8 @@ function utf8(b: Uint8Array): string {
 /** bytes of a bundled asset: a data: URL is decoded in place (no fetch / atob needed), anything else is fetched */
 export async function assetBytes(url: string): Promise<ArrayBuffer> {
   const m = /^data:[^,]*;base64,/.exec(url);
+  // native TikTok build: the GLB is deflated (4 MB package limit) — inflate after decoding
+  const deflated = !!m && m[0].includes('x-deflate');
   if (!m) return (await fetch(url)).arrayBuffer();
   const b64 = url.slice(m[0].length);
   const T = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -188,6 +191,10 @@ export async function assetBytes(url: string): Promise<ArrayBuffer> {
     if (o < out.length) out[o++] = (v >> 16) & 255;
     if (o < out.length) out[o++] = (v >> 8) & 255;
     if (o < out.length) out[o++] = v & 255;
+  }
+  if (deflated) {
+    const raw = inflateRaw(out);
+    return raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength) as ArrayBuffer;
   }
   return out.buffer;
 }

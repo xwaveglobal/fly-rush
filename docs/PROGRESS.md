@@ -1,5 +1,17 @@
 # Progress log
 
+## 2026-10-24 — feat/v4-native (v4.5.0-native.1): the 3D upgrade on TikTok native
+
+**Done**: new branch `feat/v4-native` = `feature/sky-roadster-3d-v4.1` (v4.5.0) + `main` (v3.0.11) merged. Conflicts resolved keeping both sides: `Renderer.ts` (v4 presets / context loss / composer dispose + native canvas, uiPass, WebGL fallback, Android MSAA 2×), `Audio.ts` (v4 onRunning / prime / delay + native compat layer and baked sound; every resume / suspend guarded), `Game.ts` (cleanName, Android 1.5× scale; v4's own pause handling kept), docs. Native additions: `classUp` overlay in the canvas UI, LO / MED / HI graphics switch (settings + pause), the X1 GLB shipped inside game.js deflated + base64 (`scripts/build-tiktok.mjs` glbz plugin → `src/core/inflate.ts`, tested byte-for-byte in `tests/inflate.test.ts`) — package 3.39 MB of 4 MB.
+
+**Verified**: typecheck, 14/14 test suites, build:tiktok, check:tiktok 0 FAIL, game.js parses as ES2017, no-DOM runtime simulator: home (3D X1 + night city) → training card → Skip → Endless → special pick → countdown → HUD.
+
+**Gameplay values now on this branch (from main)**: shield 2 hits / timer ×0.7, specials 3,000 / 7,000 / 2,000, Bonus every hour for 30 min (random place, replayable), new shop packs — owner to confirm for v4.
+
+**Next**: owner tests on phones (Android low/mid + iPhone): FPS per preset, the home car framing on the phone, context loss after locking the phone. Keep this branch updated by merging the 3D branch and `main` again.
+
+---
+
 Newest entry on top. Every AI session adds a short entry: what was done, what is unfinished, what's next.
 
 ---
@@ -108,6 +120,127 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 **Done**: new branch `v4.0.1`, started from the H5 web game v2.3.0 (branch `v2`), not from `main` (v3 native) — owner chose H5 as the base because it is easier to upgrade to better 3D. VERSION → v4.0.1, AGENTS.md workflow lists all four branches.
 
 **Next**: the 3D upgrade itself (render/ — lighting, shadows, models, road, city, effects), keeping gameplay/fairness unchanged.
+
+## 2026-10-23 — v3.0.11
+
+**Done**: owner's addendum (reward button visibility + auto layout + Reward Claimed!) — `src/meta/Perks.ts` (pure), `hs.perkState()/perkVisible()`, home rail in `screens.ts` (railY glide), `NativeUI.rewardClaimed`, `main.ts` given → notice, popup tap guards, web `UI.perkBadges` + CSS. Revive ad fix (`Game.continueByAd` freezes the countdown; `popups.ts continueOv` canShowAd), ad waits capped (`Ads.ts capped`). Android launch: renderer context fallback (`Renderer.makeRenderer`), MSAA 2× on Android. In-game log `src/native/log.ts` (corner 5 taps / Settings diag / boot error screen).
+
+**Note**: the addendum refers to "previous" Android-launch / notification task texts this session never received — implemented from the addendum itself. vConsole: TikTok only shows it for a debug build opened from the developer tool; on some Android versions it does not open — the in-game log covers that.
+
+**Next**: owner tests on Android + iPhone: reward buttons after claiming, Revive ad, offline start.
+
+---
+
+## 2026-10-23 — v3.0.10
+
+**Done**: Training button in the track page header (`screens.ts tracks`, `UI.ts head`), card alignment, home chip flag removed. First Play → `openTutorialIntro` while `tutorialDone` is false (unchanged, verified in the sim).
+
+---
+
+## 2026-10-22 — v3.0.9
+
+**Done**: Android jank (owner: home + race start) → compile hidden pooled meshes at load (Game.ts), `platform.android` + `scaleCap 1.5`, home UI redraw throttle (NativeUI.frame), audio baking sliced (Audio.ts). SVG flags `src/meta/Flags.ts` used by native gfx.rich (emoji → SVG) and pickers. Rank guide rows wrap (popups.ts rankguideOv).
+
+**Next**: web UI still shows emoji flags (fine on iOS/macOS, letters on Windows) — could switch to `flagSvg` too.
+
+---
+
+## 2026-10-22 — v3.0.8
+
+**Done**: `layout.ts capRow()/belowCap()` + capsule rect in `SAFE` (main.ts) → first row beside the capsule (home, pageHead, HUD). Native shop rewritten (`screens.ts shop`): Remove Ads, free coins, pack tiles. New products in `tiktok.hs-dashboard.json` (owner must paste into the HS dashboard — the game reads products from there). `ITEM_PRICE` specials raised. Shield 2 hits, timer ×0.7 (`SHIELD` in config). Owner confirmed sound OK on iPhone.
+
+**Note**: HS reports `has('shop')` off on Android → the shop shows "open soon" there; packs appear where HS enables the shop.
+
+---
+
+## 2026-10-22 — v3.0.7
+
+**Done**: Android now loads (v3.0.6 regex fix confirmed by owner screenshot). Top inset fix in `src/native/main.ts measureSafe()` (px → layout units, clamps) + smaller offsets in `screens.ts` (home, pageHead) and `hud.ts`.
+
+**Next**: owner checks the top spacing on Android + iPhone, and the sound on iPhone.
+
+---
+
+## 2026-10-22 — v3.0.6
+
+**Done**: Android load failure found from the owner's screenshot — `/[^\p{L}\p{N} _.\-]/u` in `Game.setName` is a SyntaxError on the Android engine → `cleanName()` without `\p{}`; build guard in `scripts/build-tiktok.mjs` rejects post-ES2017 regex features. Baked audio for native (`Audio.ts`: `baked`, `bakeSfx`, `bakeLoopAsync`, synth helpers at the end of the file) to stop the iPhone crackle. Bonus: every 1 h, open 30 min, random place per opening (`meta/Bonus.ts` `themeIdx`), replayable (Game.startBonus / retry); tests in `tests/bonus.test.ts`.
+
+**Next**: owner tests v3.0.6 on the two Android phones and the iPhone (sound). If Android shows another engine error, the boot error screen prints it.
+
+---
+
+## 2026-10-22 — v3.0.5
+
+**Done**: HUD coin card (race + total) and cleaner score box (`hud.ts`); Audio compat layer + resume (`src/audio/Audio.ts`, `main.ts`); Colour row removed (auto calibration kept, diag = tap version ×5); `src/ui/shared.ts` so the native bundle skips UI.ts and its images.
+
+**Android 1007 ERROR_CANNOT_OPEN_MINIS**: shown by TikTok before the game loads (FPS 0 on the debug panel), same zip works on iPhone → not the game code. TikTok's troubleshooting page: the scanning account must be a test user, in the same region; latest package uploaded. Owner to check tester list / account region on the Android phones.
+
+---
+
+## 2026-10-22 — v3.0.4: colour calibration + Android "Couldn't open TikTok Minis"
+
+**Owner report**: iPhone still washed out (menus much worse than home); 2 Android phones show "Couldn't open TikTok Minis".
+
+**Colour**: the v3.0.3 alpha theory did not fix it. Dark navy → slate grey everywhere points at an extra sRGB encode (screen surface) or sRGB textures not decoded. `src/native/color.ts` measures both at start (render target + screen readback of a 50 % grey) and fixes only what it finds; Settings → Colour lets the owner force Normal / Screen fix / Texture fix and shows `out` / `tex` readings (browser: 55 / 55). UI quad = RawShaderMaterial copying the canvas raw (decode only when the screen encodes).
+
+**Android**: removed `tiktok/package.json` (tools now run on a temp copy), ES2017 downlevel of game.js via TypeScript (build script), `put()` for read-only runtime globals, boot error screen. Also to check on the owner side: the Android TikTok accounts must be testers of the app in the TikTok developer portal, TikTok app up to date.
+
+**Next**: owner sends a Settings screenshot from the iPhone (the colour line) → confirms which fix applied.
+
+---
+
+## 2026-10-22 — v3.0.3: native fidelity (owner screenshots: H5 vs TikTok native)
+
+**Cause of the faded look**: the canvas UI quad blended its alpha into the framebuffer (and post passes can leave alpha < 1); TikTok composites the game canvas with alpha, so the page showed through everything. Fix in `src/native/main.ts`: UI material keeps destination alpha (CustomBlending, alpha Zero/One) + `opaque()` clears alpha to 1 after the UI pass.
+
+**HUD** (`src/native/ui/hud.ts`) redrawn to the H5 layout; `shieldBadge()`; pause menu sizes up (`popups.ts`). Capsule safe area re-measured at 0.8 s / 3 s with a fallback.
+
+**Not verifiable here**: the alpha fix (desktop Chrome honours `alpha:false`) — check on the phone.
+
+---
+
+## 2026-10-22 — v3.0.2: buttons dead on the TikTok device
+
+**Cause (reproduced)**: `Audio.unlock()` on the first tap built the Web Audio graph with chained `connect()` and `createDynamicsCompressor` — a mini-game Web Audio without them threw halfway, leaving `ctx` set but buses undefined → every `audio.play('click')` (first line of most button handlers) threw → nothing happened; the music timer threw 40×/s. Also: Three's ImageLoader waits on `addEventListener('load')`, which a runtime image may not fire → no car sprite.
+
+**Fix**: fail-safe Audio (no chained connect, unlock/play/schedule in try/catch, off on failure); makeImage always installs its own listeners; `Gfx.guard()` per screen; touch device-pixel guard; handler errors toast once.
+
+**Test rig** (scratch, not in repo): Chromium Web Worker = TikTok-like runtime (no window/document), OffscreenCanvas screen, strict tt (partial Web Audio, onload-only images), touches forwarded from the page. Flow home → settings → garage → play → tracks → special → countdown all respond.
+
+---
+
+## 2026-10-22 — v3.0.1 release package
+
+**Done**: HS Game ID = TikTok App ID `7698594517263403028` (in `src/native/hs.ts` and `tiktok/project.config.json`), SDK key set, real TikTok ad unit ids for the 5 places in `tiktok.hs-dashboard.json`. `npm run check:tiktok` → 0 fail, 0 warn. `npm run pack:tiktok` → `tiktok-tiktok.zip` (git-ignored).
+
+**Next**: paste `tiktok.hs-dashboard.json` (iaa_config → Ads Config raw JSON, products → Products import) in the HS dashboard; upload the zip; test on a phone (WebGL 2, ads, Beans shop).
+
+---
+
+## 2026-10-22 — v3.0.1
+
+**Done**: pause never times out (Game.tick: `paused` no longer shares the `continue` 7 s countdown → it used to end the race); ad places renamed `rw_revive` / `rw_end_bonus` / `rw_free_coins` / `rw_head_start` (rewarded) and `int_race_end` (interstitial) in `src/native/hs.ts` + `tiktok.hs-dashboard.json`; home right rail always has Share / Entry / Launch (live where `HSGame.has`, else a tap explains; claimed = ✓); web preview takes keyboard focus on tap (the HS web shim cancels pointerdown, so arrows/WASD did nothing in a frame).
+
+---
+
+## 2026-10-22 — v3.0.0: native TikTok mini game (main) · v2 kept on branch `v2`
+
+**Owner asked**: release as a native game for TikTok Minis with the HS SDK kit (hs-sdk 1.1.2); "clone thành native version 3.0, giữ bản 2.0 ở GitHub, 3.0 làm main". HS answers: SAVE local · no Game ID / SDK key yet · shop + ads at revive / end bonus / free coins / head start · no sign-in button.
+
+**Done**
+- `v2` branch = v2.3.0 (untouched). `main` = v3.
+- `src/native/`: `adapter.ts` (window/document/localStorage/Image/AudioContext over `tt`, first `tt.createCanvas()` = screen), `hs.ts` (HSGame.profile local + DEFAULTS + literal showAd / share / tiktokMission / shop / buy), `save.ts` (SaveData → profile; wallet / super / hyper / escape / noAds are accessors on profile fields; other data via `src/core/kv.ts` → profile `kv`), `main.ts` (Game on the screen canvas, canvas UI layer via `Renderer.uiPass`, tt touch → UI first, else `Input.touchBegin/Move/End`, HS pause/resume/given), `text.ts` (name entry via tt.showModal editable).
+- Canvas UI (`src/native/ui/`): `gfx.ts` (painter, hit regions, scroll areas, rich text for the game's HTML strings, rank badges, buttons), `svg.ts` (SVG → canvas for every inline icon/avatar/art), `NativeUI.ts` (same 69-member API as the DOM UI; the build aliases `src/ui/UI.ts` to it), `screens.ts`, `popups.ts`, `hud.ts`. All screens ported.
+- Hooks in shared code: `src/platform.ts`, `setAdProvider` (Ads.ts), `setSaveBackend` (Save.ts), `kv.ts`, Renderer optional canvas + `uiPass`, Input touch methods, `setLangCode` (i18n).
+- `scripts/build-tiktok.mjs` (esbuild or Bun) → `tiktok/game.js` 1.27 MB + assets (folder 2.5 MB of 4 MB). `tiktok/package.json` = `{"type":"commonjs"}` so Node's hs-check loads the kit inside this ESM repo.
+- `tiktok.hs-dashboard.json`: 5 ad places (placeholder ad ids), share / tiktok_profile / tiktok_shortcut rewards, items, 5 Beans products (coin packs + Remove Ads, prices = guesses to adjust).
+- `npm run check:tiktok`: **0 FAIL** (warns: App ID not set, placeholder ad ids). Headless preview (hs-web build + Chromium): home, tutorial, tracks, special pick, race HUD + countdown all render and respond to taps.
+
+**Not tested here / risks**
+- Real TikTok device: Three r169 needs **WebGL 2** in the TikTok runtime; audio via `tt.createWebAudioContext`. Test on a phone with the TikTok developer tool before review.
+- v2.3 cloud accounts are off in native (profile is the save). Missions / daily quests / check-in stay game-side rewards (not HS claim keys yet).
+
+**Next**: owner gets App ID + HS Game ID / SDK key → put App ID in `tiktok/project.config.json`, keys in `src/native/hs.ts`, real ad unit ids + products in the HS dashboard, then `npm run pack:tiktok`. Possible: map daily check-in / missions to `HSGame.claim` keys so the dashboard can tune them.
 
 ---
 

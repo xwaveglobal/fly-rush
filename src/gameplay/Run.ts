@@ -1,4 +1,4 @@
-import { GIFTS, POWERUP_DURATION, SCORE, SPEED } from '../config.ts';
+import { GIFTS, POWERUP_DURATION, SCORE, SHIELD, SPEED } from '../config.ts';
 import type { MissionStat } from './Missions.ts';
 import type { PickupKind } from './types.ts';
 import type { WorldEvent } from './World.ts';
@@ -28,7 +28,7 @@ export type Feedback =
  * produces Feedback for audio/VFX/UI. Pure logic — testable headless.
  */
 /** obstacles one shield absorbs before it breaks */
-export const SHIELD_HITS = 3;
+export const SHIELD_HITS = SHIELD.hits;
 
 export class Run {
   score = 0;
@@ -100,7 +100,7 @@ export class Run {
       magnet: POWERUP_DURATION.magnet + this.up.magnet * 1.5,
       turbo: POWERUP_DURATION.turbo + this.up.engine * 0.7,
       double: POWERUP_DURATION.double,
-      shield: 12 + this.up.shield * 4,
+      shield: Math.round((12 + this.up.shield * 4) * SHIELD.timeMul),
     };
   }
 

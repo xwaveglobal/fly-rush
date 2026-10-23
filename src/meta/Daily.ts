@@ -16,7 +16,7 @@ export const UNLOCK_BOOSTS: { k: ItemKey; cls: 'C' | 'B' | 'A' | 'AA'; price: nu
  * Coin price of ONE item bought singly (Magic Bag / item card). Deliberately above the
  * value inside real-money bundles, so bundles are always the better deal (see docs/ECONOMY.md).
  */
-export const ITEM_PRICE: Record<ItemKey, number> = { super: 1800, hyper: 4000, escape: 1200, shield: 300, turbo: 150, magnet: 180, double: 260, life: 400 };
+export const ITEM_PRICE: Record<ItemKey, number> = { super: 3000, hyper: 7000, escape: 2000, shield: 300, turbo: 150, magnet: 180, double: 260, life: 400 };
 /** v1 prices — only used to refund retired items when an old save moves to v2 */
 export const V1_ITEM_PRICE: Record<ItemKey, number> = { super: 400, hyper: 1200, escape: 350, shield: 300, turbo: 150, magnet: 180, double: 260, life: 400 };
 
