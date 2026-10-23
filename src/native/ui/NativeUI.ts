@@ -43,7 +43,7 @@ export interface HudState {
 
 const BASE = ['loading', 'start', 'tracks', 'garage', 'missions', 'ranks', 'daily', 'events', 'shop', 'hud', 'countdown', 'tutprompt'];
 /** overlay draw order (bottom → top) */
-export const OVERLAYS = ['finish', 'gameover', 'continue', 'pause', 'tutdone', 'tutintro', 'settings', 'guide', 'eventres', 'profile', 'bonus', 'specialpick', 'bag', 'bagbuy', 'boostinfo', 'spconfirm', 'rankguide', 'needrocket', 'account', 'cloudpick', 'sharepv', 'popup'];
+export const OVERLAYS = ['finish', 'gameover', 'continue', 'pause', 'tutdone', 'tutintro', 'settings', 'guide', 'eventres', 'profile', 'bonus', 'specialpick', 'bag', 'bagbuy', 'boostinfo', 'spconfirm', 'rankguide', 'needrocket', 'account', 'cloudpick', 'sharepv', 'popup', 'logs'];
 
 export class UI {
   /** Game uses root.getBoundingClientRect() to map 3D → screen */
@@ -118,6 +118,9 @@ export class UI {
 
   // ---------------------------------------------------------------- effects
   notices: Notice[] = [];
+  /** v3.0.11 home reward rail: per-tile glide state, and until when a glide is running */
+  railAnim: Record<string, { from: number; to: number; t0: number }> = {};
+  railMovingUntil = 0;
   notice: (Notice & { t0: number; ms: number }) | null = null;
   pops: { text: string; color: string; sub: string; t0: number } | null = null;
   big: { label: string; color: string; icon: string; sub: string; t0: number } | null = null;
@@ -164,7 +167,7 @@ export class UI {
     if (!need && this.hudDirty && since > (run ? 66 : 33)) need = true;
     // v3.0.9: the home screen only pulses — redraw (and re-upload the full-screen UI texture) at ~11 fps
     // there instead of 25 fps; the 3D city keeps its full frame rate (smoother on Android)
-    const homeIdle = this.shown.has('start') && !OVERLAYS.some((o) => this.shown.has(o)) && !this.notice && !this.notices.length && !this.pops && !this.flyers.length;
+    const homeIdle = this.shown.has('start') && !OVERLAYS.some((o) => this.shown.has(o)) && !this.notice && !this.notices.length && !this.pops && !this.flyers.length && t > this.railMovingUntil;
     if (!need && this.animating(t) && since > (run ? 33 : homeIdle ? 90 : 40)) need = true;
     if (!need) return false;
     this.dirty = false;
@@ -385,6 +388,11 @@ export class UI {
   }
   toast(html: string, color = 'var(--cyan)') {
     this.pushNotice({ kind: 'toast', html, color });
+  }
+  /** v3.0.11: "Reward Claimed!" after an Entry / Launch / Share reward (shown even if its button is gone) */
+  rewardClaimed(title: string, what: string) {
+    this.toastNow(`<b>Reward Claimed!</b><br/>${title} · ${what}`, 'var(--gold)');
+    this.dirty = true;
   }
   toastNow(html: string, color = 'var(--cyan)') {
     this.notices.length = 0;

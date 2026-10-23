@@ -12,6 +12,8 @@
  *  - never tt.login / ads / share / pay directly — only through HSGame.
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { perkVisible, type PerkKind, type PerkState } from '../meta/Perks.ts';
+
 declare const require: (p: string) => any;
 
 declare const GameGlobal: any;
@@ -65,12 +67,17 @@ export const profile = HSGame.profile(
 );
 
 let started = false;
+/** v3.0.11: start() finished either way (offline too) — reward buttons wait for this, never flash */
+let settled = false;
 export const hsReady: Promise<void> = HSGame.start({ gameId: GAME_ID, sdkKey: SDK_KEY, defaults: DEFAULTS })
   .then(() => {
     started = true;
   })
   .catch((e: unknown) => {
     console.warn('[hs] offline:', e);
+  })
+  .finally(() => {
+    settled = true;
   });
 
 export const hs = {
@@ -142,6 +149,32 @@ export const hs = {
   entryDone: () => !!HSGame.tiktokMission.done('profile'),
   launchDone: () => !!HSGame.tiktokMission.done('shortcut'),
   entryReward: (): Record<string, number> | null => HSGame.rewards('tiktok_profile'),
+  /**
+   * v3.0.11: is this reward button worth showing now? Decided by HSGame from the reward
+   * configuration ($limit once / daily / every time) and the claim state — never "claimed once =
+   * gone". Hidden until HSGame has started, so an exhausted reward never flashes while loading.
+   *  - Entry / Launch: feature on here and the TikTok mission not done (done() honours $limit).
+   *  - Share: feature on here and a share reward can still be earned (available('share')); a
+   *    Share with no reward configured stays (TikTok review button).
+   */
+  perkState(): PerkState {
+    const st: PerkState = { started: settled, hasShare: false, hasMissions: false, shareRewarded: false, shareAvailable: false, entryDone: true, launchDone: true };
+    if (!settled) return st;
+    try {
+      st.hasShare = !!HSGame.has('share');
+      st.hasMissions = !!HSGame.has('tiktok_missions');
+      st.shareRewarded = !!HSGame.rewards('share');
+      st.shareAvailable = !!HSGame.available('share');
+      st.entryDone = !!HSGame.tiktokMission.done('profile');
+      st.launchDone = !!HSGame.tiktokMission.done('shortcut');
+    } catch {
+      /* keep the safe defaults (hidden) */
+    }
+    return st;
+  },
+  perkVisible(kind: PerkKind): boolean {
+    return perkVisible(kind, this.perkState());
+  },
   launchReward: (): Record<string, number> | null => HSGame.rewards('tiktok_shortcut'),
 
   // ---- shop (TikTok Beans / Google Play) — hidden until products exist in the dashboard

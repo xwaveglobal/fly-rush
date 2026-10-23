@@ -4,6 +4,16 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-23 — v3.0.11
+
+**Done**: owner's addendum (reward button visibility + auto layout + Reward Claimed!) — `src/meta/Perks.ts` (pure), `hs.perkState()/perkVisible()`, home rail in `screens.ts` (railY glide), `NativeUI.rewardClaimed`, `main.ts` given → notice, popup tap guards, web `UI.perkBadges` + CSS. Revive ad fix (`Game.continueByAd` freezes the countdown; `popups.ts continueOv` canShowAd), ad waits capped (`Ads.ts capped`). Android launch: renderer context fallback (`Renderer.makeRenderer`), MSAA 2× on Android. In-game log `src/native/log.ts` (corner 5 taps / Settings diag / boot error screen).
+
+**Note**: the addendum refers to "previous" Android-launch / notification task texts this session never received — implemented from the addendum itself. vConsole: TikTok only shows it for a debug build opened from the developer tool; on some Android versions it does not open — the in-game log covers that.
+
+**Next**: owner tests on Android + iPhone: reward buttons after claiming, Revive ad, offline start.
+
+---
+
 ## 2026-10-23 — v3.0.10
 
 **Done**: Training button in the track page header (`screens.ts tracks`, `UI.ts head`), card alignment, home chip flag removed. First Play → `openTutorialIntro` while `tutorialDone` is false (unchanged, verified in the sim).

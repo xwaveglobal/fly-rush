@@ -136,6 +136,38 @@ class MockAdProvider implements AdProvider {
   }
 }
 
+/**
+ * v3.0.11: never wait forever on a platform ad. If the platform's promise is lost (an ad that
+ * fails to load / close event never delivered), `showing` used to stay true and every later ad
+ * button — Revive included — silently did nothing, and a lost interstitial froze the game-over
+ * buttons. A generous cap settles it instead.
+ */
+function capped<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise<T>((resolve) => {
+    let done = false;
+    const t = setTimeout(() => {
+      if (done) return;
+      done = true;
+      console.warn('[ads] no answer from the ad provider — continuing');
+      resolve(fallback);
+    }, ms);
+    p.then(
+      (v) => {
+        if (done) return;
+        done = true;
+        clearTimeout(t);
+        resolve(v);
+      },
+      () => {
+        if (done) return;
+        done = true;
+        clearTimeout(t);
+        resolve(fallback);
+      },
+    );
+  });
+}
+
 export interface AdHooks {
   /** mute + freeze the game while an ad is on screen */
   pause(): void;
@@ -168,7 +200,7 @@ export class Ads {
     this.stats.rewardedShown++;
     this.hooks.pause();
     try {
-      const ok = await this.provider.rewarded(placement);
+      const ok = await capped(this.provider.rewarded(placement), 90000, false); // called synchronously: still inside the tap
       if (ok) {
         this.stats.rewardedCompleted++;
         this.lastRewarded = performance.now();
@@ -203,7 +235,7 @@ export class Ads {
     this.showing = true;
     this.hooks.pause();
     try {
-      await this.provider.interstitial(placement);
+      await capped(this.provider.interstitial(placement), 45000, undefined);
       this.stats.interstitials++;
       this.runsSinceInterstitial = 0;
       this.lastInterstitial = performance.now();

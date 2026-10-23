@@ -1,5 +1,6 @@
 /** v3 native UI — full screens (home, tracks, garage, missions, ranks, daily, shop…) */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { PERK_ORDER, perkLayout, perkVisible } from '../../meta/Perks.ts';
 import { C, Gfx, bar, button, card, fmt, iconBtn, panel, rankBadge, toggle } from './gfx.ts';
 import type { UI } from './NativeUI.ts';
 import { BAG_ICON, BOLT, CAR_LINE, ICON, ITEM_ICON, RARITY_COLOR, ROCKET_W, SPECIAL_SHORT, TUT_ICON } from './consts.ts';
@@ -110,6 +111,23 @@ function loading(ui: UI, g: Gfx) {
 }
 
 // ------------------------------------------------------------------ home
+/** v3.0.11: animated y of a rail tile (eases to a new target in 200 ms; first sight = no animation) */
+function railY(ui: UI, key: string, target: number, t: number) {
+  const m = ui.railAnim[key];
+  if (!m) {
+    ui.railAnim[key] = { from: target, to: target, t0: t };
+    return target;
+  }
+  if (Math.abs(m.to - target) > 0.5) {
+    const k = Math.min(1, (t - m.t0) / 200);
+    const cur = m.from + (m.to - m.from) * (1 - Math.pow(1 - k, 3));
+    ui.railAnim[key] = { from: cur, to: target, t0: t };
+  }
+  const n = ui.railAnim[key];
+  const k = Math.min(1, (t - n.t0) / 200);
+  if (k < 1) ui.railMovingUntil = Math.max(ui.railMovingUntil, n.t0 + 200);
+  return n.from + (n.to - n.from) * (1 - Math.pow(1 - k, 3));
+}
 function start(ui: UI, g: Gfx) {
   const s = ui.save;
   const o = ui.home;
@@ -181,23 +199,22 @@ function start(ui: UI, g: Gfx) {
   tile(18, ry, 'daily', ICON.calendar, 'Daily', navy, () => ui.h.daily(), o && o.dailyBadge > 0 ? String(o.dailyBadge) : '');
   tile(18, ry + 60, 'events', ICON.gift, 'Bonus', ['#d9802e', '#9a4a12'], () => ui.h.events());
   tile(18, ry + 120, 'ranks', ICON.podium, 'Ranks', navy, () => ui.h.ranks());
-  // right rail: Share · Entry · Launch — always 3 tiles (6 on the two rails). They work where the
-  // platform has the feature (HSGame.has); elsewhere (web preview, Android app) the tile is dimmed
-  // and a tap explains it. A claimed reward keeps its tile with a ✓.
-  const perk = (i: number, key: string, icon: string, label: string, col: [string, string], live: boolean, done: boolean, fn: () => void) => {
-    const x = W - 68,
-      y = ry + i * 60;
-    tile(x, y, key, icon, label, col, live ? fn : () => ui.toast(`${ICON.info} ${label} works inside the TikTok app`, '#4fc3ff'), live && !done && key !== 'pk-share' ? '!' : '');
-    g.alpha(1);
-    if (done) {
-      g.circle(x + 48, y + 2, 9, C.green, '#fff', 1.5);
-      g.icon(ICON.check, x + 42, y - 4, 12, '#fff');
-    }
-  };
-  const miss = hs.hasMissions();
-  perk(0, 'pk-share', ICON.share, 'Share', ['#1aa79a', '#0b6a66'], hs.hasShare(), false, () => ui.h.perk('share'));
-  perk(1, 'pk-entry', ICON.gift, 'Entry', ['#7b3fe0', '#4a1d9e'], miss, miss && hs.entryDone(), () => ui.h.perk('entry'));
-  perk(2, 'pk-launch', ROCKET_W, 'Launch', ['#5a3fe0', '#2c1d9e'], miss, miss && hs.launchDone(), () => ui.h.perk('launch'));
+  // right rail: Share · Entry · Launch (v3.0.11) — only the rewards that can still be earned are
+  // shown (hs.perkVisible: reward config + claim state). The visible tiles stay centred in the
+  // 3-slot block (3 · 2 · 1 · none) and glide to their new place in 200 ms when one disappears.
+  const perks = [
+    { key: 'pk-share', kind: 'share' as const, icon: ICON.share, label: 'Share', col: ['#1aa79a', '#0b6a66'] as [string, string], badge: false },
+    { key: 'pk-entry', kind: 'entry' as const, icon: ICON.gift, label: 'Entry', col: ['#7b3fe0', '#4a1d9e'] as [string, string], badge: true },
+    { key: 'pk-launch', kind: 'launch' as const, icon: ROCKET_W, label: 'Launch', col: ['#5a3fe0', '#2c1d9e'] as [string, string], badge: true },
+  ];
+  const pst = hs.perkState();
+  const lay = perkLayout(PERK_ORDER.filter((k) => perkVisible(k, pst)), ry, 60, 50);
+  perks.forEach((p) => {
+    const target = lay[p.kind];
+    if (target === null) return;
+    const y = railY(ui, p.key, target, g.time);
+    tile(W - 68, y, p.key, p.icon, p.label, p.col, () => ui.h.perk(p.kind), p.badge ? '!' : '');
+  });
   // ---- bottom menu
   const col = column(g);
   const sb = safeBottom(g);

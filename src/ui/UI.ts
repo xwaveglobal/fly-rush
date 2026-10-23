@@ -2258,15 +2258,29 @@ export class UI {
   }
 
   perkBadges(o: Record<'entry' | 'launch' | 'share', 'todo' | 'ready' | 'done'>) {
+    // v3.0.11: a reward button shows only while its reward can still be earned (Entry / Launch: not
+    // claimed; Share: not yet rewarded today — it comes back the next day). The rail keeps the
+    // visible ones centred and glides them to their new place (FLIP, 200 ms).
+    const rail = this.root.querySelector<HTMLElement>('.rail.right');
+    const btns = rail ? Array.from(rail.querySelectorAll<HTMLElement>('.rbtn')) : [];
+    const before = new Map(btns.map((b) => [b, b.getBoundingClientRect().top]));
     for (const [k, st] of Object.entries(o)) {
       const b = this.root.querySelector<HTMLElement>(`[data-k="pk-${k}"]`);
       if (!b) continue;
-      // Entry stays after it is claimed (its popup then links to Daily / Shop / Garage / Tutorial / Race / Cups);
-      // Launch disappears once claimed; Share is daily
-      b.hidden = st === 'done' && k === 'launch';
+      b.hidden = st === 'done';
       b.classList.toggle('done', st === 'done');
       const e = b.querySelector<HTMLElement>('.badge');
       if (e) e.hidden = st !== 'ready' || k === 'share'; // no '!' on Share
+    }
+    if (rail) {
+      rail.hidden = btns.every((b) => b.hidden);
+      for (const b of btns) {
+        const t0 = before.get(b);
+        if (b.hidden || t0 === undefined || !t0) continue;
+        const dy = t0 - b.getBoundingClientRect().top;
+        if (Math.abs(dy) < 1) continue;
+        b.animate?.([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { duration: 200, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      }
     }
   }
 

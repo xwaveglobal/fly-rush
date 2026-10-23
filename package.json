@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test:fairness": "node --experimental-transform-types --no-warnings tests/fairness.test.ts",
     "test:difficulty": "node --experimental-transform-types --no-warnings tests/difficulty.test.ts",
-    "test": "npm run test:fairness && npm run test:difficulty && npm run test:air && npm run test:exp && npm run test:phases && npm run test:bonus && npm run test:server",
+    "test": "npm run test:fairness && npm run test:difficulty && npm run test:air && npm run test:exp && npm run test:phases && npm run test:bonus && npm run test:perks && npm run test:server",
     "test:air": "node --experimental-transform-types --no-warnings tests/airlane.test.ts",
     "test:exp": "node --experimental-transform-types --no-warnings tests/exp.test.ts",
     "test:phases": "node --experimental-transform-types --no-warnings tests/phases.test.ts",
@@ -21,7 +21,8 @@
     "build:tiktok": "node scripts/build-tiktok.mjs",
     "check:tiktok": "node scripts/tiktok-tools.mjs check",
     "preview:tiktok": "node hs-sdk/web/hs-web.mjs preview tiktok",
-    "pack:tiktok": "node scripts/tiktok-tools.mjs pack"
+    "pack:tiktok": "node scripts/tiktok-tools.mjs pack",
+    "test:perks": "node --experimental-transform-types --no-warnings tests/perks.test.ts"
   },
   "dependencies": {
     "three": "0.169.0"

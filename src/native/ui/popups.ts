@@ -1,5 +1,6 @@
 /** v3 native UI — overlays: results, pause, revive, settings, profile, Magic Bag, popups… */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { LOG, logErrors } from '../log.ts';
 import { C, Gfx, bar, button, card, fmt, iconBtn, panel, rankBadge, toggle, type BtnStyle } from './gfx.ts';
 import type { UI } from './NativeUI.ts';
 import { BAG_ICON, BOLT, BONUS_COLOR, BONUS_EMOJI, ICON, ITEM_ICON, ITEM_NAME, LOCKED_ICON, SPECIAL_COLOR, SPECIAL_HOW, SPECIAL_LINE, SPECIAL_SHORT, TUT_ICON, WIFI, BOOST_WHAT } from './consts.ts';
@@ -77,6 +78,7 @@ const OV: Record<string, (ui: UI, g: Gfx) => void> = {
   tutdone: tutdoneOv,
   tutintro: tutintroOv,
   settings: settingsOv,
+  logs: logsOv,
   guide: guideOv,
   eventres: eventresOv,
   profile: profileOv,
@@ -95,6 +97,10 @@ const OV: Record<string, (ui: UI, g: Gfx) => void> = {
 export function drawOverlay(ui: UI, g: Gfx, id: string) {
   OV[id]?.(ui, g);
 }
+
+/** v3.0.11 tap guards of the reward popups */
+const tapAt: Record<string, number> = {};
+let shareBusy = false;
 
 // ------------------------------------------------------------------ helpers
 const badge = (c: RankClass) => `<span class="clsb" style="--cc:${CLASS_COLOR[c]}">${c}</span>`;
@@ -328,7 +334,10 @@ function continueOv(ui: UI, g: Gfx) {
     y += 130;
     g.rich(`<b>${ui.cont.left} / 2</b> revives left`, x, y, w, { size: 13, align: 'center' });
     y += 26;
-    button(g, 'contad', x, y, w, 54, `${ICON.play} Watch ad · Revive`, () => ui.h.continueAd(), { style: 'gold', size: 17 });
+    // v3.0.11: the ad button only while HSGame has a revive ad ready (re-checked every frame —
+    // the countdown redraws the popup); otherwise a quiet "loading" line, never a dead button
+    if (hs.canShowAd('continue')) button(g, 'contad', x, y, w, 54, `${ICON.play} Watch ad · Revive`, () => ui.h.continueAd(), { style: 'gold', size: 17 });
+    else button(g, 'contad', x, y, w, 54, hs.hasAds() ? `${ICON.clock} Ad loading…` : `${ICON.info} No ad available`, () => {}, { style: 'ghost', disabled: true, size: 15 });
     y += 62;
     button(g, 'contno', x + 30, y, w - 60, 38, 'No thanks · end race', () => ui.h.continueNo(), { style: 'ghost', size: 13 });
     return y + 42;
@@ -480,8 +489,36 @@ function settingsOv(ui: UI, g: Gfx) {
     });
     y += 16;
     if (ui.showDiag && ui.colorCtl) y += g.para(ui.colorCtl.line(), x, y, w, { size: 8.5, font: 'b', color: C.muted, align: 'center', noTr: true });
+    if (ui.showDiag) {
+      button(g, 's-logs', x + w / 2 - 70, y + 4, 140, 32, `Logs · ${logErrors()} errors`, () => ui.showOverlay('logs'), { style: 'ghost', size: 11 });
+      y += 40;
+    }
     return y + 4;
   });
+}
+
+/** v3.0.11 in-game log viewer (src/native/log.ts) — newest first, errors red, warnings amber */
+function logsOv(ui: UI, g: Gfx) {
+  const W = g.W,
+    H = g.H;
+  g.rr(0, 0, W, H, 0, 'rgba(2,4,14,.94)');
+  g.block(0, 0, W, H);
+  const top = safeTop(g) + 6;
+  g.text(`LOG · ${LOG.length} lines · ${logErrors()} errors`, 14, top + 16, { size: 13, font: 'b', noTr: true });
+  button(g, 'lg-close', W - 84, top, 72, 32, 'Close', () => ui.hideOverlay('logs'), { style: 'blue', size: 12 });
+  button(g, 'lg-clear', W - 164, top, 72, 32, 'Clear', () => {
+    LOG.length = 0;
+    ui.dirty = true;
+  }, { style: 'ghost', size: 12 });
+  let y = top + 44;
+  const lines = LOG.slice().reverse();
+  for (const l of lines) {
+    if (y > H - safeBottom(g) - 14) break;
+    const tm = new Date(l.t);
+    const ts = `${String(tm.getHours()).padStart(2, '0')}:${String(tm.getMinutes()).padStart(2, '0')}:${String(tm.getSeconds()).padStart(2, '0')}`;
+    const col = l.lv === 'error' ? '#ff8a8a' : l.lv === 'warn' ? '#ffd27a' : '#c9d8f5';
+    y += g.para(`${ts} ${l.msg}`, 10, y, W - 20, { size: 9.5, font: 'b', color: col, noTr: true }) + 3;
+  }
 }
 
 function guideOv(ui: UI, g: Gfx) {
@@ -957,6 +994,13 @@ function popupOv(ui: UI, g: Gfx) {
     });
     return y;
   };
+  // v3.0.11: one tap = one start (rapid taps never start a mission / share twice)
+  const once = (key: string, fn: () => unknown, ms = 1500) => () => {
+    const now = Date.now();
+    if (now - (tapAt[key] ?? 0) < ms) return;
+    tapAt[key] = now;
+    fn();
+  };
   const rewardOf = (r: Record<string, number> | null, fallback: number) => (r ? r.coins ?? Object.values(r)[0] ?? 0 : fallback);
   modal(ui, g, 'popup', { close: 'none', w: 360 }, (x, y, w) => {
     switch (p.kind) {
@@ -1021,7 +1065,7 @@ function popupOv(ui: UI, g: Gfx) {
         y = steps([['Go to your TikTok profile', done], ['Open "TikTok Minis"', done], ['Open Sky Roadster from there', done], ['Come back and get the reward', done]], x, y, w);
         y = coinBig(rewardOf(hs.entryReward(), 300), x, y + 4, w, '+');
         if (done) button(g, 'pe-go', x, y, w, 50, `${ICON.check} Reward claimed`, () => {}, { style: 'ghost', disabled: true });
-        else button(g, 'pe-go', x, y, w, 54, 'GO', () => hs.entryStart(), { style: 'blue', size: 22 });
+        else button(g, 'pe-go', x, y, w, 54, 'GO', once('entry', () => hs.entryStart()), { style: 'blue', size: 22 });
         return y + 58;
       }
       case 'launch':
@@ -1031,10 +1075,11 @@ function popupOv(ui: UI, g: Gfx) {
         y = steps([['Tap "Go"', done], ['Add the game to your home screen', done], ['Open the game from the new icon', done], ['Get the reward', done]], x, y, w);
         y = coinBig(rewardOf(hs.launchReward(), 300), x, y + 4, w, '+');
         if (done) button(g, 'pl-go', x, y, w, 50, `${ICON.check} Reward claimed`, () => {}, { style: 'ghost', disabled: true });
-        else button(g, 'pl-go', x, y, w, 54, 'GO', () => hs.launchStart(), { style: 'blue', size: 22 });
+        else button(g, 'pl-go', x, y, w, 54, 'GO', once('launch', () => hs.launchStart()), { style: 'blue', size: 22 });
         return y + 58;
       }
       case 'share': {
+        const rw = hs.shareReward();
         y = head(shareNodes(46), 'SHARE REWARDS', x, y, w);
         g.text('Share the game with friends', x + w / 2, y + 4, { size: 14, align: 'center' });
         y += 20;
@@ -1043,13 +1088,22 @@ function popupOv(ui: UI, g: Gfx) {
         g.img(carImage(String(d.vehicle ?? 'zenith')), x + 10, y + 8, w - 20, 84, 'contain');
         g.icon(avatarSvg(Number(d.avatar ?? 0)), x + 12, y + 10, 40);
         g.rich(`${ICON.share} Tap to share`, x, y + 96, w, { size: 12, align: 'center', color: C.cyan });
-        const share = () =>
-          void hs.share('Sky Roadster', `Race me in Sky Roadster! Rank ${ui.myClass}.`).then((r) => {
-            if (r === 'shared') ui.toast(`${ICON.check} Shared — thanks!`, 'var(--green)');
-          });
+        const share = () => {
+          if (shareBusy) return; // the share sheet is already open
+          shareBusy = true;
+          void hs
+            .share('Sky Roadster', `Race me in Sky Roadster! Rank ${ui.myClass}.`)
+            .then((r) => {
+              // a rewarded share shows "Reward Claimed!" from HSGame's 'given' event (main.ts)
+              if (r === 'shared' && !rw) ui.toast(`${ICON.check} Shared — thanks!`, 'var(--green)');
+            })
+            .finally(() => {
+              shareBusy = false;
+              ui.dirty = true;
+            });
+        };
         g.hit(x, y, w, 120, key, share);
         y += 128;
-        const rw = hs.shareReward();
         if (rw) y = coinBig(rewardOf(rw, 0), x, y, w, '+');
         button(g, 'ps-go', x, y, w, 54, `${ICON.share} SHARE`, share, { style: 'green', size: 20 });
         y += 62;

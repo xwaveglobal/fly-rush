@@ -1,3 +1,4 @@
+import { platform } from '../platform.ts';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
@@ -74,7 +75,26 @@ export class Renderer {
   }
 
   private makeRenderer(_q: Quality) {
-    const r = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', alpha: false, stencil: false, ...(this.canvas ? { canvas: this.canvas } : {}) });
+    // v3.0.11 Android launch hotfix: some Android GPUs / mini-game runtimes refuse the first context
+    // (MSAA + high-performance). Retry with safer settings instead of failing the launch.
+    const base = { alpha: false, stencil: false, ...(this.canvas ? { canvas: this.canvas } : {}) };
+    const tries: THREE.WebGLRendererParameters[] = [
+      { ...base, antialias: true, powerPreference: 'high-performance' },
+      { ...base, antialias: false, powerPreference: 'default' },
+      { ...base, antialias: false, powerPreference: 'low-power', failIfMajorPerformanceCaveat: false },
+    ];
+    let r: THREE.WebGLRenderer | null = null;
+    let err: unknown = null;
+    for (const p of tries) {
+      try {
+        r = new THREE.WebGLRenderer(p);
+        break;
+      } catch (e) {
+        err = e;
+        console.warn('[renderer] WebGL context failed, retrying with safer settings', e);
+      }
+    }
+    if (!r) throw err ?? new Error('WebGL unavailable');
     r.outputColorSpace = THREE.SRGBColorSpace;
     r.toneMapping = THREE.ACESFilmicToneMapping;
     r.toneMappingExposure = 1.05;
@@ -94,7 +114,7 @@ export class Renderer {
       if (!this.composer) {
         // the composer renders into its own target: give it MSAA, otherwise the canvas
         // antialias flag is silently ignored and every edge looks soft/jagged
-        const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: this.renderer.capabilities.isWebGL2 ? 4 : 0 });
+        const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: this.renderer.capabilities.isWebGL2 ? (platform.android ? 2 : 4) : 0 }); // v3.0.11: lighter MSAA on Android
         this.composer = new EffectComposer(this.renderer, rt);
         this.renderPass = new RenderPass(this.scene, this.camera);
         this.composer.addPass(this.renderPass);

@@ -208,6 +208,15 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v3.0.11 changes — reward buttons · revive ad · launch hotfix · in-game log
+
+- **Reward buttons (Entry · Launch · Share)** show only while their reward can still be earned — decided from HSGame's reward config and claim state (`$limit`), never "claimed once = gone": Entry / Launch while the TikTok mission is not done, Share while `available('share')` (back the next day; a Share without a reward stays as the TikTok review button). Nothing shows until HSGame has settled (no flash of an exhausted reward). The visible ones stay centred on the right rail (3 · 2 · 1 · none) and glide to their new place in 200 ms. Pure logic + the 8 layout combinations in `src/meta/Perks.ts` / `tests/perks.test.ts`. Web rail: same rules, CSS centring + FLIP glide.
+- **Reward Claimed!** notice after an Entry / Launch / Share reward (from HSGame's `given` event), shown even when its button disappears. Rapid taps can't start a mission or a share twice.
+- **Revive ad on real TikTok**: the revive countdown is frozen while the ad loads / plays (it used to run out under a loading video and end the race — the button looked dead); the button shows only while a revive ad is ready ("Ad loading…" otherwise); "No ad available" toast when the platform has none. Ad waits are capped (90 s rewarded / 45 s interstitial) so a lost ad callback can never block later ads or the game-over buttons.
+- **Android launch hotfix**: WebGL context retried with safer settings (no MSAA, default / low-power GPU) instead of failing; lighter MSAA (2×) for the Android post-processing target.
+- **In-game log** (`src/native/log.ts`) for phones where TikTok's vConsole won't open: last 150 console lines + uncaught errors. Open it with **5 quick taps in the top-left corner** (any screen) or Settings → tap the version 5× → Logs. The boot-error screen also prints the last warnings / errors.
+- Offline: the game boots and plays with no network (HSGame offline, ads / share / shop hidden, progress saved locally).
+
 ## v3.0.10 changes — training button
 
 - First **Play** still opens the training card (Start training / Skip). After that, training is a **Training** button next to the "SELECT TRACK" title (both UIs).

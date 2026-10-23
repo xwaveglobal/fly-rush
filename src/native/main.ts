@@ -5,6 +5,8 @@
  *   canvas → the canvas UI drawn on top (Renderer.uiPass) → tt touch routed to UI or steering.
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import './log.ts'; // first: catches everything logged while the game starts
+import { LOG, logErrors } from './log.ts';
 import { DPR, NATIVE, emitWindow, makeImage, safeArea, screenCanvas, sizeScreen, viewH, viewW } from './adapter.ts';
 import { hs, profile } from './hs.ts';
 import './save.ts';
@@ -134,6 +136,17 @@ function bootError(e: unknown) {
     c.fillStyle = '#9fb3dd';
     c.fillText(String((e as Error)?.message ?? e).slice(0, 70), screenCanvas.width / 2, screenCanvas.height * 0.42 + 28 * k);
     c.fillText('Please update TikTok and try again.', screenCanvas.width / 2, screenCanvas.height * 0.42 + 50 * k);
+    // v3.0.11: the last warnings / errors, so a screenshot tells what went wrong (no vConsole needed)
+    c.textAlign = 'left';
+    c.font = `${Math.round(9 * k)}px monospace`;
+    let yy = screenCanvas.height * 0.42 + 80 * k;
+    for (const l of LOG.filter((q) => q.lv !== 'log').slice(-10)) {
+      c.fillStyle = l.lv === 'error' ? '#ff8a8a' : '#ffd27a';
+      for (const part of l.msg.split('\n').slice(0, 2)) {
+        c.fillText(part.slice(0, 64), 10 * k, yy);
+        yy += 12 * k;
+      }
+    }
   } catch {
     /* the canvas already holds a WebGL context */
   }
@@ -296,12 +309,25 @@ function onStart(e: any) {
     return;
   }
   touchId = p.id;
+  // v3.0.11: 5 quick taps in the top-left corner → in-game log (works even if a screen is stuck)
+  if (p.x < 44 && p.y < 44) {
+    const now = Date.now();
+    cornerTaps = now - cornerT < 600 ? cornerTaps + 1 : 1;
+    cornerT = now;
+    if (cornerTaps >= 5 && ui) {
+      cornerTaps = 0;
+      ui.showOverlay('logs');
+      return;
+    }
+  }
   if (ui && ui.touchStart(p.x, p.y)) owner = 'ui';
   else {
     owner = 'input';
     input()?.touchBegin(p.x, p.y);
   }
 }
+let cornerTaps = 0,
+  cornerT = 0;
 function onMove(e: any) {
   const list = e?.changedTouches ?? e?.touches ?? [];
   for (const t of list) {
@@ -342,6 +368,7 @@ hs.onPause(() => {
   if (gm.state === 'run') gm.pause();
 });
 hs.onResume(() => {
+  if (ui) ui.dirty = true; // v3.0.11: back from TikTok (mission / share): re-check reward buttons
   const a = (game as any)?.audio;
   a?.duck(false);
   try {
@@ -350,11 +377,15 @@ hs.onResume(() => {
     /* ignore */
   }
 });
-hs.onGiven((items) => {
+const REWARD_TITLE: Record<string, string> = { tiktok_profile: 'Entry Reward', tiktok_shortcut: 'Launch Reward', share: 'Share Reward' };
+hs.onGiven((items, from) => {
   const gm: any = game;
   const parts: string[] = [];
   for (const [k, n] of Object.entries(items)) if (n) parts.push(k === 'coins' ? `+${n} coins` : `${hs.itemName(k)} ×${n}`);
-  if (parts.length) ui?.toast(`🎁 <b>${parts.join(' · ')}</b>`, 'var(--gold)');
+  // v3.0.11: the three reward buttons get a clear "Reward Claimed!" (it stays even when the button hides)
+  const title = REWARD_TITLE[String(from ?? '')];
+  if (title && parts.length) ui?.rewardClaimed(title, `🎁 <b>${parts.join(' · ')}</b>`);
+  else if (parts.length) ui?.toast(`🎁 <b>${parts.join(' · ')}</b>`, 'var(--gold)');
   if (gm) {
     gm.persist?.();
     ui?.refreshProfile(gm.save);
@@ -372,3 +403,4 @@ if (game) {
   game.boot().catch((e: unknown) => console.error('[sky-roadster] boot failed', e));
 }
 void NATIVE;
+void logErrors;

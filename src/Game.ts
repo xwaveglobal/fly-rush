@@ -80,7 +80,7 @@ function cleanName(n: string) {
   return out.trim().slice(0, 14);
 }
 
-const VERSION = 'v3.0.10';
+const VERSION = 'v3.0.11';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -936,7 +936,7 @@ export class Game {
     if (a === 'entry') {
       if (k.entry || !this.perkState().entrySteps.every(Boolean)) return;
       k.entry = true;
-      this.grantCoins(PERK.entry, 'Entry reward');
+      this.grantCoins(PERK.entry, 'Reward Claimed! · Entry Reward');
       this.ui.closePopup();
       this.perkBadges();
       return;
@@ -944,7 +944,7 @@ export class Game {
     if (a === 'launch') {
       if (k.launch || !this.standalone) return;
       k.launch = true;
-      this.grantCoins(PERK.launch, 'Launch reward');
+      this.grantCoins(PERK.launch, 'Reward Claimed! · Launch Reward');
       this.ui.closePopup();
       this.perkBadges();
       return;
@@ -954,7 +954,7 @@ export class Game {
         if (!ok) return;
         if (a === 'share' && k.shareDay !== today) {
           k.shareDay = today;
-          this.grantCoins(PERK.share, 'Share reward');
+          this.grantCoins(PERK.share, 'Reward Claimed! · Share Reward');
         } else if (a === 'invite' && k.inviteDay !== today) {
           k.inviteDay = today;
           k.invites = (k.invites ?? 0) + 1;
@@ -1313,13 +1313,26 @@ export class Game {
   }
 
   private async continueByAd() {
-    if (this.state !== 'continue') return;
+    if (this.state !== 'continue' || this.ads.showing) return;
     const t = this.stateT;
-    const ok = await this.ads.rewarded('continue');
+    // v3.0.11: the revive countdown is frozen while the ad loads / plays. On real phones the video
+    // takes seconds to load: the countdown used to run out underneath it and end the race, so the
+    // button looked dead.
+    const hold = this.holdContinue;
+    this.holdContinue = true;
+    const t0 = performance.now();
+    let ok = false;
+    try {
+      ok = await this.ads.rewarded('continue');
+    } finally {
+      this.holdContinue = hold;
+    }
+    if (this.state !== 'continue') return;
     if (ok) {
       this.doContinue();
     } else {
       this.stateT = t; // the countdown resumes where it was
+      if (performance.now() - t0 < 1500) this.ui.toast(`${ICON.info} No ad available right now — try again in a moment`, '#4fc3ff');
     }
   }
 
