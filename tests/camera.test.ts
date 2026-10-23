@@ -7,7 +7,7 @@ declare const process: { exit(code: number): never };
 import * as THREE from 'three';
 import { CameraRig } from '../src/render/CameraRig.ts';
 import { Player } from '../src/gameplay/Player.ts';
-import { CAMERA, CAR_HALF, FAIRNESS, HEIGHT, LANES, LEVELS, RENDER, SPEED } from '../src/config.ts';
+import { CAMERA, CAR_HALF, FAIRNESS, HEIGHT, LANES, LEVELS, RENDER, SPEED, type ChaseName } from '../src/config.ts';
 import { carHeight } from '../src/render/car/carMotion.ts';
 
 let fails = 0;
@@ -23,7 +23,7 @@ const s = RENDER.carScale;
 const car = new THREE.Box3(new THREE.Vector3(-1.045 * s, 0, -1.976 * s), new THREE.Vector3(1.045 * s, 1.18 * s, 2.242 * s));
 const ASPECTS: [string, number][] = [['9:16', 9 / 16], ['390×844', 390 / 844]];
 
-function rigFor(aspect: number, mode: 'run' | 'menu', preset: 'low' | 'balanced' | 'high' | null) {
+function rigFor(aspect: number, mode: 'run' | 'menu', preset: ChaseName | null) {
   const rig = new CameraRig();
   rig.resize(aspect);
   rig.car3d = true;

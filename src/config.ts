@@ -283,6 +283,32 @@ export const RENDER = {
   /** model (real-size metres) → game size. 0.76 ≈ 1.66 m wide: close to the 1.4 m hitbox, and the rear
    *  reads about the same size on screen as the old rear image did from the unchanged chase camera */
   carScale: 0.76,
+  /**
+   * Step 07 FINAL: automotive PBR pass over the approved X1's materials (material factors only — the
+   * GLB and its geometry are never touched). `env` = per-material environment reflection strength
+   * (the scene environment is bound to each car material so this works; scene default is 0.6).
+   * PAUSED (owner switched to Step 06.5): opt-in with URL `?pbr=1`; default = the approved GLB's own factors.
+   */
+  pbr: typeof location !== 'undefined' && /[?&]pbr=1/.test(location.search),
+  x1Pbr: {
+    // pearl-white paint (colour unchanged): a touch less metal + smoother base under a glassy clearcoat,
+    // stronger env reflections so the curvature reads (white paint stays white, no chrome look)
+    X1_Paint: { metalness: 0.12, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.03, env: 0.95 },
+    // dark tinted glass: crisp but dim reflections, nothing seen through
+    X1_Glass: { roughness: 0.06, metalness: 0.1, env: 0.55, opacity: 0.96 },
+    X1_GlossBlack: { roughness: 0.18, clearcoatRoughness: 0.05, env: 0.8 },
+    X1_SatinBlack: { roughness: 0.5, env: 0.45 },
+    X1_LightHousing: { env: 0.8 },
+    X1_LEDHousing: { env: 0.7 },
+    // tyres: matte rubber; rims: dark satin metal; discs brushed steel; calipers glossy red
+    X1_Tyre: { roughness: 0.92, env: 0.25 },
+    X1_Rim: { metalness: 0.9, roughness: 0.28, env: 0.9 },
+    X1_Disc: { metalness: 0.9, roughness: 0.4, env: 0.7 },
+    X1_Brake: { metalness: 0.15, roughness: 0.3, env: 0.7 },
+    X1_Carbon: { roughness: 0.38, env: 0.6 },
+    X1_Interior: { env: 0.2 },
+    X1_WheelLiner: { env: 0.15 },
+  } as Record<string, Partial<Record<'metalness' | 'roughness' | 'clearcoat' | 'clearcoatRoughness' | 'env' | 'opacity', number>>>,
   /** v4.3 (Step 06 PBR): paint metallic-flake normal map strength and tiles per metre (MeshCar) */
   paintFlake: 0.12,
   paintFlakeRepeat: 7,
@@ -342,6 +368,8 @@ export const RENDER = {
 };
 
 /** one chase-camera setup (metres relative to the car; damping rates 1/s) */
+export type ChaseName = 'low' | 'balanced' | 'high' | 'premium' | 'arcade';
+
 export interface ChasePreset {
   /** camera height and distance behind the car; speedBack = extra pull-in at top speed */
   height: number;
@@ -362,6 +390,9 @@ export interface ChasePreset {
   lookDamp: number;
   /** added to the base FOV (degrees) */
   fov: number;
+  /** FOV widening (degrees) at top speed / during Turbo (default 7 / 9) */
+  fovSpeed?: number;
+  fovTurbo?: number;
 }
 
 /**
@@ -373,8 +404,13 @@ export const CAMERA = {
     low: { height: 1.6, back: 5.3, speedBack: 0.4, lookY: 1.05, lookZ: -16, followX: 0.8, lookX: 0.6, lift: 1.7, lookLift: 0.1, hDamp: 6, vDamp: 8, lookDamp: 6.5, fov: -3 },
     balanced: { height: 2.25, back: 5.9, speedBack: 0.5, lookY: 1.0, lookZ: -13, followX: 0.76, lookX: 0.58, lift: 1.7, lookLift: 0.1, hDamp: 6.5, vDamp: 8, lookDamp: 7, fov: -1 },
     high: { height: 3.25, back: 6.6, speedBack: 0.6, lookY: 1.15, lookZ: -9, followX: 0.72, lookX: 0.55, lift: 0.22, lookLift: 0.3, hDamp: 6.5, vDamp: 6, lookDamp: 7, fov: 0 },
-  } as Record<'low' | 'balanced' | 'high', ChasePreset>,
-  chase: ((typeof location !== 'undefined' && /[?&]cam=(low|balanced|high)/.exec(location.search)?.[1]) || 'balanced') as 'low' | 'balanced' | 'high',
+    // Step 07 FINAL candidates (camera only — the approved car is untouched). B = premium rear, C = elevated arcade.
+    // B: further back + narrower FOV = less perspective stretch of the rear deck; calmer speed / Turbo FOV
+    premium: { height: 2.75, back: 8.4, speedBack: 0.6, lookY: 1.05, lookZ: -18, followX: 0.8, lookX: 0.6, lift: 1.5, lookLift: 0.12, hDamp: 6, vDamp: 7, lookDamp: 6.5, fov: -13, fovSpeed: 5, fovTurbo: 5 },
+    // C: higher, steeper view = more road and lane lines between the car and the obstacles ahead
+    arcade: { height: 4.0, back: 8.4, speedBack: 0.5, lookY: 1.3, lookZ: -15, followX: 0.7, lookX: 0.5, lift: 1.0, lookLift: 0.25, hDamp: 6.5, vDamp: 7, lookDamp: 7, fov: -7, fovSpeed: 6, fovTurbo: 6 },
+  } as Record<ChaseName, ChasePreset>,
+  chase: ((typeof location !== 'undefined' && /[?&]cam=(low|balanced|high|premium|arcade)/.exec(location.search)?.[1]) || 'balanced') as ChaseName,
   /**
    * Home screen with the 3D car: a slow three-quarter orbit behind the car at a constant distance
    * (constant size), framed in the free band between the side buttons and the difficulty panel.

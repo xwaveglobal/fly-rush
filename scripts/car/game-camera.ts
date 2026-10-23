@@ -10,13 +10,18 @@ import { writeFileSync } from 'node:fs';
 import * as THREE from 'three';
 import { CameraRig } from '../../src/render/CameraRig.ts';
 import { Player } from '../../src/gameplay/Player.ts';
-import { CAMERA, CAR_HALF, HEIGHT, LANES, RENDER } from '../../src/config.ts';
+import { CAMERA, CAR_HALF, HEIGHT, LANES, RENDER, type ChaseName } from '../../src/config.ts';
 import { carHeight } from '../../src/render/car/carMotion.ts';
 
+const flag = (k: string) => process.argv.find((a) => a.startsWith(`--${k}=`))?.split('=')[1];
+const presetName = (flag('preset') ?? CAMERA.chase) as ChaseName;
+// --set='{"back":8}' tweaks the chosen preset for this run only (camera tuning sweeps)
+if (flag('set')) CAMERA.presets[presetName] = { ...CAMERA.presets[presetName], ...JSON.parse(flag('set')!) };
+process.argv = process.argv.filter((a) => !a.startsWith('--'));
 const s = RENDER.carScale;
 // current model bounds (src/assets/models/xwave-x1.glb), filled in by the caller via argv[3..] or defaults
 const B = { x: 1.065, y: 1.177, z0: -1.975, z1: +(process.argv[3] ?? 2.242) };
-const out: Record<string, unknown> = { preset: CAMERA.chase, presetValues: CAMERA.presets[CAMERA.chase], carScale: s, projection: 'perspective', states: {} };
+const out: Record<string, unknown> = { preset: presetName, presetValues: CAMERA.presets[presetName], near: 0.1, far: 1500, roll: 'camera roll = −vx × 0.006 rad (±0.06), 0 when driving straight', carScale: s, projection: 'perspective', states: {} };
 const deg = (r: number) => +THREE.MathUtils.radToDeg(r).toFixed(1);
 const r2 = (n: number) => +n.toFixed(2);
 
@@ -35,7 +40,24 @@ function measure(rig: CameraRig, p: Player, W: number, H: number) {
     ya = Math.min(ya, (1 - c.y) / 2); yb = Math.max(yb, (1 - c.y) / 2);
   }
   const centre = box.getCenter(new THREE.Vector3());
+  // perspective stretch: rear face vs front face apparent scale (1 = orthographic; higher = rear deck looks longer / bigger)
+  const pr = (z: number) => { const a = new THREE.Vector3(p.x - 1, centre.y, z).project(cam), b = new THREE.Vector3(p.x + 1, centre.y, z).project(cam); return Math.abs(b.x - a.x); };
+  const stretch = pr(B.z1 * s) / pr(B.z0 * s);
+  // top-surface share: on-screen height of the car's top (roof + decks) vs its rear face — higher = more of the roof / deck seen
+  const yOf = (y: number, z: number) => (1 - new THREE.Vector3(p.x, y, z).project(cam).y) / 2;
+  const topH = Math.abs(yOf(box.max.y, B.z1 * s) - yOf(box.max.y, B.z0 * s));
+  const rearH = Math.abs(yOf(box.max.y, B.z1 * s) - yOf(box.min.y, B.z1 * s));
+  // road readability: where the road centre 40 m / 80 m ahead lands (0 top … 1 bottom) and how wide the 3 lanes look there
+  const ahead = (z: number) => { const c = new THREE.Vector3(0, 0, z).project(cam), l = new THREE.Vector3(LANES[0] - 1.3, 0, z).project(cam), r = new THREE.Vector3(LANES[2] + 1.3, 0, z).project(cam); return { y: r2((1 - c.y) / 2), lanesWidth: r2((r.x - l.x) / 2) }; };
+  const edgeL = new THREE.Vector3(LANES[0] - 1.3, 0, 0).project(cam), edgeR = new THREE.Vector3(LANES[2] + 1.3, 0, 0).project(cam);
   return {
+    target: rig.lookTarget.toArray().map(r2),
+    rollDeg: deg(cam.rotation.z),
+    rearToFrontScale: +stretch.toFixed(3),
+    topToRearFace: +(topH / rearH).toFixed(2),
+    road40m: ahead(-40),
+    road80m: ahead(-80),
+    roadAtCarVisible: { left: r2((edgeL.x + 1) / 2), right: r2((edgeR.x + 1) / 2) },
     position: cam.position.toArray().map(r2),
     lookDirection: dir.toArray().map((n) => +n.toFixed(3)),
     pitchDeg: deg(Math.asin(-dir.y)),
@@ -54,6 +76,7 @@ for (const [label, W, H] of [['9:16 720×1280', 720, 1280], ['390×844', 390, 84
     const rig = new CameraRig();
     rig.resize(W / H);
     rig.car3d = true;
+    rig.presetOverride = CAMERA.presets[presetName];
     rig.mode = 'run';
     const p = new Player();
     p.reset(1);
@@ -81,5 +104,5 @@ for (const [label, W, H] of [['9:16 720×1280', 720, 1280], ['390×844', 390, 84
 }
 if (process.argv[2]) writeFileSync(process.argv[2], JSON.stringify(out, null, 1));
 const m = (out.states as Record<string, Record<string, ReturnType<typeof measure>>>)['390×844'];
-for (const [k, v] of Object.entries(m)) console.log(k.padEnd(18), 'pos', v.position.join(','), 'pitch', v.pitchDeg, 'fov', v.fovVerticalDeg, 'dist', v.distanceToCarCentre, 'car', JSON.stringify(v.carScreenBox), v.carPx.w + '×' + v.carPx.h + 'px');
+for (const [k, v] of Object.entries(m)) console.log(k.padEnd(18), 'pos', v.position.join(','), 'pitch', v.pitchDeg, 'fov', v.fovVerticalDeg, 'dist', v.distanceToCarCentre, 'car', v.carPx.w + '×' + v.carPx.h + 'px', 'y', v.carScreenBox.top + '–' + v.carScreenBox.bottom, 'stretch', v.rearToFrontScale, 'top/rear', v.topToRearFace, 'r40', JSON.stringify(v.road40m));
 void LANES;

@@ -24,6 +24,10 @@ export class CameraRig {
   }
   private pos = new THREE.Vector3(0, 3, 7);
   private look = new THREE.Vector3(0, 1.2, -8);
+  /** current look-at point (read-only; reports / tests) */
+  get lookTarget(): THREE.Vector3 {
+    return this.look;
+  }
   private trauma = 0;
   /** steady low shake floor (Turbo: light camera shake) */
   rumble = 0;
@@ -142,7 +146,7 @@ export class CameraRig {
         const extra = Math.max(0, py - 3.05);
         wantPos.set(px * C.followX + sway, C.height + base * C.lift + extra * 0.95 + sk * 0.9, back - sk * 0.8);
         wantLook.set(px * C.lookX, C.lookY + base * C.lookLift + extra * 0.8, C.lookZ);
-        fov = this.baseFov + C.fov + speedFactor * 7 + turbo * 9 + this.fovKick;
+        fov = this.baseFov + C.fov + speedFactor * (C.fovSpeed ?? 7) + turbo * (C.fovTurbo ?? 9) + this.fovKick;
         break;
       }
       case 'crash': {

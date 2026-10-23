@@ -1,0 +1,1964 @@
+{
+ "file": "src/assets/models/xwave-x1.glb",
+ "fileBytes": 1058832,
+ "fileSha256": "316678ba823006fd59b059154a4742a68a13710419cb8bb0eb975179d9d65719",
+ "geometrySha256": "59c28a72a3d4c768b3d650320f3da95f768090f936f76eb06be70c2675685164",
+ "meshCount": 40,
+ "vertexCount": 23665,
+ "triangleCount": 33383,
+ "bbox": {
+  "min": [
+   -1.045,
+   0,
+   -1.975994
+  ],
+  "max": [
+   1.045,
+   1.177,
+   2.242
+  ],
+  "size": [
+   2.09,
+   1.177,
+   4.217994
+  ]
+ },
+ "hierarchy": [
+  {
+   "name": "",
+   "parent": null,
+   "type": "Group",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "X1",
+   "parent": "",
+   "type": "Group",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Body",
+   "parent": "X1",
+   "type": "Group",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Body_Paint",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Interior",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Glass_Canopy",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Body_GlossBlack",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Rear_LEDHousing",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Rear_LED",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Rear_LEDCore",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Rear_BadgePanel",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Badge_XWAVE",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Rear_LowerBumper",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Diffuser",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Rear_Markers",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Light_RoofStop",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Front_Splitter",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Front_Intake",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Front_IntakeRecess",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Light_HeadHousing",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Light_Head",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Light_HeadCore",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Body_PanelGaps",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Wheel_Liners",
+   "parent": "Body",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Spoiler_Pivot",
+   "parent": "Body",
+   "type": "Group",
+   "pos": [
+    0,
+    0.752,
+    1.9
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Spoiler",
+   "parent": "Spoiler_Pivot",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Spoiler_Skirt",
+   "parent": "Spoiler_Pivot",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Spoiler_Lip",
+   "parent": "Spoiler_Pivot",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Wheel_FL",
+   "parent": "X1",
+   "type": "Group",
+   "pos": [
+    -0.825,
+    0.34,
+    -1.2128
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Spin_FL",
+   "parent": "Wheel_FL",
+   "type": "Group",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Tyre_FL",
+   "parent": "Spin_FL",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Rim_FL",
+   "parent": "Spin_FL",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Disc_FL",
+   "parent": "Spin_FL",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Caliper_FL",
+   "parent": "Wheel_FL",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Wheel_FR",
+   "parent": "X1",
+   "type": "Group",
+   "pos": [
+    0.825,
+    0.34,
+    -1.2128
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Spin_FR",
+   "parent": "Wheel_FR",
+   "type": "Group",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Tyre_FR",
+   "parent": "Spin_FR",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Rim_FR",
+   "parent": "Spin_FR",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Disc_FR",
+   "parent": "Spin_FR",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Caliper_FR",
+   "parent": "Wheel_FR",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Wheel_RL",
+   "parent": "X1",
+   "type": "Group",
+   "pos": [
+    -0.855,
+    0.37,
+    1.3
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Spin_RL",
+   "parent": "Wheel_RL",
+   "type": "Group",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Tyre_RL",
+   "parent": "Spin_RL",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Rim_RL",
+   "parent": "Spin_RL",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Disc_RL",
+   "parent": "Spin_RL",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Caliper_RL",
+   "parent": "Wheel_RL",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Wheel_RR",
+   "parent": "X1",
+   "type": "Group",
+   "pos": [
+    0.855,
+    0.37,
+    1.3
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Spin_RR",
+   "parent": "Wheel_RR",
+   "type": "Group",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Tyre_RR",
+   "parent": "Spin_RR",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Rim_RR",
+   "parent": "Spin_RR",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Disc_RR",
+   "parent": "Spin_RR",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "Caliper_RR",
+   "parent": "Wheel_RR",
+   "type": "Mesh",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "NitroSocket_L",
+   "parent": "X1",
+   "type": "Group",
+   "pos": [
+    -0.38,
+    0.2,
+    2.23
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "name": "NitroSocket_R",
+   "parent": "X1",
+   "type": "Group",
+   "pos": [
+    0.38,
+    0.2,
+    2.23
+   ],
+   "quat": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  }
+ ],
+ "meshes": [
+  {
+   "mesh": "Body_Paint",
+   "material": "X1_Paint",
+   "verts": 9038,
+   "tris": 17328,
+   "geometrySha256": "10d557737b1224937d9e668ac10b08d960cbc7dc9df2c8ece3b937c04532d9e7",
+   "normalsSha256": "32d3f8d126c56e292e7925089f8bc7ce073b930903d44d515b39fede7b9afa63",
+   "bbox": [
+    [
+     -1.008049,
+     0.13,
+     -1.969424
+    ],
+    [
+     1.008049,
+     1.115003,
+     2.2
+    ]
+   ]
+  },
+  {
+   "mesh": "Interior",
+   "material": "X1_Interior",
+   "verts": 1107,
+   "tris": 1952,
+   "geometrySha256": "b2a3ca7847ec658671e40c7ad5c61f00bd57df7f79ef543e0811ca6ee72c900e",
+   "normalsSha256": "cded2d418e8b9cb445b694a2cac84e5bfdd51ab3d988ae5b4e61a1ad797a55b2",
+   "bbox": [
+    [
+     -0.71,
+     0.709357,
+     -0.8348
+    ],
+    [
+     0.71,
+     1.115003,
+     1.905
+    ]
+   ]
+  },
+  {
+   "mesh": "Glass_Canopy",
+   "material": "X1_Glass",
+   "verts": 1900,
+   "tris": 3539,
+   "geometrySha256": "2890c45c6f6de76acc59e6c71b2b9f222831fb28c82a40d834595b6b37f9061a",
+   "normalsSha256": "131192ddbd98fbf0bdce39af4c036a11a0441ae69af1bb00571f7a2d571fe540",
+   "bbox": [
+    [
+     -0.73,
+     0.690375,
+     -0.9028
+    ],
+    [
+     0.73,
+     1.177,
+     1.88
+    ]
+   ]
+  },
+  {
+   "mesh": "Body_GlossBlack",
+   "material": "X1_GlossBlack",
+   "verts": 48,
+   "tris": 24,
+   "geometrySha256": "e58e1e798f2ea526218407eb4966a84e3c30e1a4d6053657b1dbbd68e898690f",
+   "normalsSha256": "933c848ea7ab6634868a94aa0242f8ac5f87fc193f5816d14cba1878976d66cd",
+   "bbox": [
+    [
+     -0.47,
+     0.736,
+     0.284364
+    ],
+    [
+     0.47,
+     1.171542,
+     2.21
+    ]
+   ]
+  },
+  {
+   "mesh": "Rear_LEDHousing",
+   "material": "X1_LEDHousing",
+   "verts": 204,
+   "tris": 68,
+   "geometrySha256": "b66051df2ede66c7dc2abe2b170ad4599279210f5c69120492494b554412688b",
+   "normalsSha256": "83f8392e23f76d76da17d5d80149c7df306f3a4f1a07763fb62565002bb0d12e",
+   "bbox": [
+    [
+     -0.94917,
+     0.563,
+     2.18
+    ],
+    [
+     0.94917,
+     0.635,
+     2.211
+    ]
+   ]
+  },
+  {
+   "mesh": "Rear_LED",
+   "material": "X1_RearLED",
+   "verts": 120,
+   "tris": 40,
+   "geometrySha256": "958ae0ab315b69691981cd3c7af33e51d7e8493cddd6f212ea142046802d7e87",
+   "normalsSha256": "96c8749cd010329e70c2835f316b3a4b4bb78c6e47a2ce48d69541591a47a19d",
+   "bbox": [
+    [
+     -0.938,
+     0.573,
+     2.209
+    ],
+    [
+     0.938,
+     0.621,
+     2.215
+    ]
+   ]
+  },
+  {
+   "mesh": "Rear_LEDCore",
+   "material": "X1_RearLEDCore",
+   "verts": 36,
+   "tris": 12,
+   "geometrySha256": "346727c952089c62e981f2980b8a34e88996aa87bb0591fc40960dd7ef124572",
+   "normalsSha256": "8ff948a12cbf320a299796710fa85b292f5ec55df0c0e30d0ba75f40e00dd58a",
+   "bbox": [
+    [
+     -0.85,
+     0.6085,
+     2.2155
+    ],
+    [
+     0.85,
+     0.6125,
+     2.2175
+    ]
+   ]
+  },
+  {
+   "mesh": "Rear_BadgePanel",
+   "material": "X1_GlossBlack",
+   "verts": 132,
+   "tris": 44,
+   "geometrySha256": "dc109bc720b5763bb0ae52b737acf9858594175350ade103548b495ee353214b",
+   "normalsSha256": "a690eb02214fc7bc4d306a009dace9e053640ded28fde83d85b4b0ca33cee59c",
+   "bbox": [
+    [
+     -0.565281,
+     0.481,
+     2.199
+    ],
+    [
+     0.565281,
+     0.568027,
+     2.219
+    ]
+   ]
+  },
+  {
+   "mesh": "Badge_XWAVE",
+   "material": "X1_Badge",
+   "verts": 4,
+   "tris": 2,
+   "geometrySha256": "8ee8f97090e9942bb2bb980db764d7c19cbc9da475211e92f5d759984d083f9a",
+   "normalsSha256": "796f0b940d4268e7d9ccbd67f52dca773c768e372dae64d3c1b1caf59e6c8247",
+   "bbox": [
+    [
+     -0.145,
+     0.49175,
+     2.225
+    ],
+    [
+     0.145,
+     0.56425,
+     2.225
+    ]
+   ]
+  },
+  {
+   "mesh": "Rear_LowerBumper",
+   "material": "X1_SatinBlack",
+   "verts": 2112,
+   "tris": 704,
+   "geometrySha256": "668208359474572a7a1bb63698a7e1dd22820ac026a6224f70a5070964ea07b8",
+   "normalsSha256": "fad26fb6a3dc24aec3e0f1fde696980e3e0c894fc511660cbcf8303a46644b96",
+   "bbox": [
+    [
+     -0.87672,
+     0.108,
+     1.8
+    ],
+    [
+     0.87672,
+     0.417,
+     2.235
+    ]
+   ]
+  },
+  {
+   "mesh": "Diffuser",
+   "material": "X1_Carbon",
+   "verts": 76,
+   "tris": 38,
+   "geometrySha256": "511ef4ba2e7d32ac180165172f83675b36e10a0ac7c2f57c7155442a3a7440ca",
+   "normalsSha256": "f4fd35be91b27f7aaa710dcaa404dfe4e3f0c74be87219d9f8fedb1f0980b9df",
+   "bbox": [
+    [
+     -0.52,
+     0.155,
+     2.135
+    ],
+    [
+     0.52,
+     0.3,
+     2.225
+    ]
+   ]
+  },
+  {
+   "mesh": "Rear_Markers",
+   "material": "X1_RedMarker",
+   "verts": 96,
+   "tris": 36,
+   "geometrySha256": "91b856bed3e408fd5e159a331667c54b4517fff38f7f948b329aa164cb491e6a",
+   "normalsSha256": "51c831402167e5dfec0a807c8ad90b9e6cf33c3c3704fe418c55a1ea020c7915",
+   "bbox": [
+    [
+     -0.77,
+     0.323,
+     2.236
+    ],
+    [
+     0.77,
+     0.374,
+     2.242
+    ]
+   ]
+  },
+  {
+   "mesh": "Light_RoofStop",
+   "material": "X1_RearLED",
+   "verts": 24,
+   "tris": 12,
+   "geometrySha256": "a97891a9b7dc974ce4db7382e72f5cbc499f2587d76fe480acd4365635e9c195",
+   "normalsSha256": "3dde71f2b0ce6e85df9ee9ca648518eade6ef231160b95ca1baa70dcce7fe157",
+   "bbox": [
+    [
+     -0.1,
+     1.164221,
+     0.307285
+    ],
+    [
+     0.1,
+     1.173776,
+     0.342715
+    ]
+   ]
+  },
+  {
+   "mesh": "Front_Splitter",
+   "material": "X1_SatinBlack",
+   "verts": 348,
+   "tris": 116,
+   "geometrySha256": "f93ca9ff8906d316293e1399a28355ddd81ce9c2ac64763972eda9473b83331d",
+   "normalsSha256": "50f3a3775fa2ed26bab57341f902dea9d6f0e01329f449071860efe139ca7d5d",
+   "bbox": [
+    [
+     -0.59,
+     0.118,
+     -1.947522
+    ],
+    [
+     0.59,
+     0.198713,
+     -1.719119
+    ]
+   ]
+  },
+  {
+   "mesh": "Front_Intake",
+   "material": "X1_GlossBlack",
+   "verts": 276,
+   "tris": 96,
+   "geometrySha256": "79abef3994a1a853ecf776ac8a0bcfb69434ae6522c25bb218b01e0742c4a12e",
+   "normalsSha256": "b42ccc52aed12e118ad836ba76a3c8d9d1fbfdc906023071c67b6d826b5e8045",
+   "bbox": [
+    [
+     -0.645,
+     0.222,
+     -1.975994
+    ],
+    [
+     0.645,
+     0.33,
+     -1.968172
+    ]
+   ]
+  },
+  {
+   "mesh": "Front_IntakeRecess",
+   "material": "X1_WheelLiner",
+   "verts": 180,
+   "tris": 60,
+   "geometrySha256": "7b611748f179a0fb53c61c84763b0112048f04f123f7c71fb172cad169047023",
+   "normalsSha256": "68d0536c214aebb3672ddc6008c9820cb20ed6d36ec66c503a4b773b815a847f",
+   "bbox": [
+    [
+     -0.43,
+     0.23,
+     -1.974117
+    ],
+    [
+     0.43,
+     0.292,
+     -1.972865
+    ]
+   ]
+  },
+  {
+   "mesh": "Light_HeadHousing",
+   "material": "X1_LightHousing",
+   "verts": 44,
+   "tris": 80,
+   "geometrySha256": "2726c49fc0e3b23cc54a8a3e71581c7bc4d7cca7b6140fa395b8099e206c8409",
+   "normalsSha256": "4b180f96bb8e75510d5816abe1daebd7c54826399a8fa59d9174301ae3b043a3",
+   "bbox": [
+    [
+     -0.553182,
+     0.47539,
+     -1.93645
+    ],
+    [
+     0.553182,
+     0.598866,
+     -1.748816
+    ]
+   ]
+  },
+  {
+   "mesh": "Light_Head",
+   "material": "X1_Headlight",
+   "verts": 48,
+   "tris": 80,
+   "geometrySha256": "2cbd10108191854487a484370509edad829fb10a72e700c5477741a43c646df3",
+   "normalsSha256": "e436a2bc8efc9981e88db86423ad6bbce2a6b6f5fe8e2d58f1b6c0be2822b27c",
+   "bbox": [
+    [
+     -0.562155,
+     0.494004,
+     -1.910686
+    ],
+    [
+     0.562155,
+     0.608906,
+     -1.748168
+    ]
+   ]
+  },
+  {
+   "mesh": "Light_HeadCore",
+   "material": "X1_HeadlightCore",
+   "verts": 28,
+   "tris": 48,
+   "geometrySha256": "a85b14f7df7328f9cd99da21c57cfa3d19681c7c2e5e57d27936eac4b6bcaa79",
+   "normalsSha256": "b3378d9d93193190efb4346a0c9fec0ce5904e44e833b09d58ecbf9f10643ba3",
+   "bbox": [
+    [
+     -0.460125,
+     0.508111,
+     -1.895109
+    ],
+    [
+     0.460125,
+     0.575141,
+     -1.801355
+    ]
+   ]
+  },
+  {
+   "mesh": "Body_PanelGaps",
+   "material": "X1_PanelGap",
+   "verts": 344,
+   "tris": 648,
+   "geometrySha256": "8d2e9d3c30bcc9b05fe61099cfbf17cc2841be0204fc17f3ce1e79edc3d8f457",
+   "normalsSha256": "2a393eee663015370ce6646f857e4ad193528327490954656c74d87092c697bd",
+   "bbox": [
+    [
+     -0.952778,
+     0.16376,
+     -1.927654
+    ],
+    [
+     0.952778,
+     1.105734,
+     0.16225
+    ]
+   ]
+  },
+  {
+   "mesh": "Wheel_Liners",
+   "material": "X1_WheelLiner",
+   "verts": 352,
+   "tris": 336,
+   "geometrySha256": "e01e403c38d0804b1410f4136743a1d80dbf9b5981abec8defada1fec7ae1d0e",
+   "normalsSha256": "5d05ab2aba1e343a12148857efd6a47e42319a74a49c74dbfef4b44b872f6d64",
+   "bbox": [
+    [
+     -0.993989,
+     0.154106,
+     -1.628088
+    ],
+    [
+     0.993989,
+     0.77768,
+     1.715998
+    ]
+   ]
+  },
+  {
+   "mesh": "Spoiler",
+   "material": "X1_GlossBlack",
+   "verts": 72,
+   "tris": 24,
+   "geometrySha256": "ef526867ae7103162a904556dcc6a6147b3ccea5d317b58c22554c06eb26c420",
+   "normalsSha256": "8bc76ffaa11c06c41b53bf4a94906216c308cec88c9aa4b03c866c64458692bc",
+   "bbox": [
+    [
+     -0.46,
+     0.743,
+     1.9
+    ],
+    [
+     0.46,
+     0.779,
+     2.235
+    ]
+   ]
+  },
+  {
+   "mesh": "Spoiler_Skirt",
+   "material": "X1_WheelLiner",
+   "verts": 96,
+   "tris": 36,
+   "geometrySha256": "05888db2328f2a946e8f3bf2c8c466cec0f9d98f8327e315b3250723b273ed9d",
+   "normalsSha256": "7bbb0f084d4fee6c86f8f1bbd8f465b9363eb651eb9d60fabbdb8cb63d83e878",
+   "bbox": [
+    [
+     -0.457,
+     0.556561,
+     1.906
+    ],
+    [
+     0.457,
+     0.762,
+     2.19
+    ]
+   ]
+  },
+  {
+   "mesh": "Spoiler_Lip",
+   "material": "X1_Chrome",
+   "verts": 24,
+   "tris": 12,
+   "geometrySha256": "73c3f190083545acbdd805163cc6fc192d9e6dc18519a683c5fb0c9ec3c775b1",
+   "normalsSha256": "cf38d80691f04d52b9686807b830aec77584c7ecdc0ceed56144923548dd5593",
+   "bbox": [
+    [
+     -0.45,
+     0.773,
+     2.225
+    ],
+    [
+     0.45,
+     0.779,
+     2.233
+    ]
+   ]
+  },
+  {
+   "mesh": "Tyre_FL",
+   "material": "X1_Tyre",
+   "verts": 570,
+   "tris": 1008,
+   "geometrySha256": "b9711b254c6ca62adfbcf47d3f195583883a805ba911f01938db6e49b398f112",
+   "normalsSha256": "2b3fbcaadfb103504cd2880b57df9eb1018bb4c3023d6014d6d822cf3196659a",
+   "bbox": [
+    [
+     -0.96,
+     0,
+     -1.5528
+    ],
+    [
+     -0.69,
+     0.68,
+     -0.8728
+    ]
+   ]
+  },
+  {
+   "mesh": "Rim_FL",
+   "material": "X1_Rim",
+   "verts": 949,
+   "tris": 864,
+   "geometrySha256": "ac4015c14af45bf51e4e929e48e94637ae9b81b929993d960219fdd2481846eb",
+   "normalsSha256": "a65de736d30e13c8b4a66012b05dd4283f9b80df875f3d12ef35a97ac8acb4ae",
+   "bbox": [
+    [
+     -0.9514,
+     0.103,
+     -1.4498
+    ],
+    [
+     -0.7089,
+     0.577,
+     -0.9758
+    ]
+   ]
+  },
+  {
+   "mesh": "Disc_FL",
+   "material": "X1_Disc",
+   "verts": 196,
+   "tris": 128,
+   "geometrySha256": "04ab4de04aba35bf24068b840d1e85270145de57d87816a885c6555256030362",
+   "normalsSha256": "90c9fdf86326991953e81d38bf80ac8c1e9a4290f6fb996136a52e28c332ef89",
+   "bbox": [
+    [
+     -0.859,
+     0.1645,
+     -1.3883
+    ],
+    [
+     -0.831,
+     0.5155,
+     -1.0373
+    ]
+   ]
+  },
+  {
+   "mesh": "Caliper_FL",
+   "material": "X1_Brake",
+   "verts": 24,
+   "tris": 12,
+   "geometrySha256": "17f2f7209e5c049af435bb57d43a9d50cc91035de3201228ce1f27a954d45f9a",
+   "normalsSha256": "3e983aa3717af731e30ff72471f733a3ba96edbf9312bd00a8c4c426b4b80182",
+   "bbox": [
+    [
+     -0.91,
+     0.396895,
+     -1.213768
+    ],
+    [
+     -0.84,
+     0.562105,
+     -1.071832
+    ]
+   ]
+  },
+  {
+   "mesh": "Tyre_FR",
+   "material": "X1_Tyre",
+   "verts": 570,
+   "tris": 1008,
+   "geometrySha256": "b9711b254c6ca62adfbcf47d3f195583883a805ba911f01938db6e49b398f112",
+   "normalsSha256": "2b3fbcaadfb103504cd2880b57df9eb1018bb4c3023d6014d6d822cf3196659a",
+   "bbox": [
+    [
+     0.69,
+     0,
+     -1.5528
+    ],
+    [
+     0.96,
+     0.68,
+     -0.8728
+    ]
+   ]
+  },
+  {
+   "mesh": "Rim_FR",
+   "material": "X1_Rim",
+   "verts": 949,
+   "tris": 864,
+   "geometrySha256": "0353e65e9edf3023097d5c51bde48de00c63ce62d844db8613f1cc9e0b44782c",
+   "normalsSha256": "a65de736d30e13c8b4a66012b05dd4283f9b80df875f3d12ef35a97ac8acb4ae",
+   "bbox": [
+    [
+     0.7089,
+     0.103,
+     -1.4498
+    ],
+    [
+     0.9514,
+     0.577,
+     -0.9758
+    ]
+   ]
+  },
+  {
+   "mesh": "Disc_FR",
+   "material": "X1_Disc",
+   "verts": 196,
+   "tris": 128,
+   "geometrySha256": "1698ddd3831640379b0827e6a9b801632dc2e66527902d78d96b0093102fcd67",
+   "normalsSha256": "90c9fdf86326991953e81d38bf80ac8c1e9a4290f6fb996136a52e28c332ef89",
+   "bbox": [
+    [
+     0.831,
+     0.1645,
+     -1.3883
+    ],
+    [
+     0.859,
+     0.5155,
+     -1.0373
+    ]
+   ]
+  },
+  {
+   "mesh": "Caliper_FR",
+   "material": "X1_Brake",
+   "verts": 24,
+   "tris": 12,
+   "geometrySha256": "e52abea66be9e83b1491ed6dba862f6af9e89b8249224776c39701c9fa47af25",
+   "normalsSha256": "3e983aa3717af731e30ff72471f733a3ba96edbf9312bd00a8c4c426b4b80182",
+   "bbox": [
+    [
+     0.84,
+     0.396895,
+     -1.213768
+    ],
+    [
+     0.91,
+     0.562105,
+     -1.071832
+    ]
+   ]
+  },
+  {
+   "mesh": "Tyre_RL",
+   "material": "X1_Tyre",
+   "verts": 570,
+   "tris": 1008,
+   "geometrySha256": "b53686473145bcd9177813600532d8ba6282b4303efc7d9cff5989dce0670b88",
+   "normalsSha256": "a4eba93c24693de23ece913e260d3d95669f8d0092ccde86ed01ea40d9e22c19",
+   "bbox": [
+    [
+     -1.045,
+     0,
+     0.93
+    ],
+    [
+     -0.665,
+     0.74,
+     1.67
+    ]
+   ]
+  },
+  {
+   "mesh": "Rim_RL",
+   "material": "X1_Rim",
+   "verts": 949,
+   "tris": 864,
+   "geometrySha256": "8d935c051a56aabc598c4b0f5cec368e51fcbaf05a0b72cb7945073ba9f722c8",
+   "normalsSha256": "a65de736d30e13c8b4a66012b05dd4283f9b80df875f3d12ef35a97ac8acb4ae",
+   "bbox": [
+    [
+     -1.024992,
+     0.103,
+     1.033
+    ],
+    [
+     -0.6916,
+     0.637,
+     1.567
+    ]
+   ]
+  },
+  {
+   "mesh": "Disc_RL",
+   "material": "X1_Disc",
+   "verts": 196,
+   "tris": 128,
+   "geometrySha256": "47d7694c4c433b66a4d1ebc6a387bc08c554d561a4923fa89d268d9e54d64d32",
+   "normalsSha256": "90c9fdf86326991953e81d38bf80ac8c1e9a4290f6fb996136a52e28c332ef89",
+   "bbox": [
+    [
+     -0.889,
+     0.1711,
+     1.1011
+    ],
+    [
+     -0.861,
+     0.5689,
+     1.4989
+    ]
+   ]
+  },
+  {
+   "mesh": "Caliper_RL",
+   "material": "X1_Brake",
+   "verts": 24,
+   "tris": 12,
+   "geometrySha256": "4c1485455c908be7cc7611690a4baa24651bde8a74f4c9c22f546658d653bfa7",
+   "normalsSha256": "2e2d68fd42d05d457ac9d962601059ab1fa01deab90f6042dd4cfa4274d039f8",
+   "bbox": [
+    [
+     -0.94,
+     0.445495,
+     1.159032
+    ],
+    [
+     -0.87,
+     0.610705,
+     1.300968
+    ]
+   ]
+  },
+  {
+   "mesh": "Tyre_RR",
+   "material": "X1_Tyre",
+   "verts": 570,
+   "tris": 1008,
+   "geometrySha256": "b53686473145bcd9177813600532d8ba6282b4303efc7d9cff5989dce0670b88",
+   "normalsSha256": "a4eba93c24693de23ece913e260d3d95669f8d0092ccde86ed01ea40d9e22c19",
+   "bbox": [
+    [
+     0.665,
+     0,
+     0.93
+    ],
+    [
+     1.045,
+     0.74,
+     1.67
+    ]
+   ]
+  },
+  {
+   "mesh": "Rim_RR",
+   "material": "X1_Rim",
+   "verts": 949,
+   "tris": 864,
+   "geometrySha256": "c8866190f280c4ba7cf51bd9b0d5b00f970d86b9fb17f88091d72c8d403b6e7e",
+   "normalsSha256": "a65de736d30e13c8b4a66012b05dd4283f9b80df875f3d12ef35a97ac8acb4ae",
+   "bbox": [
+    [
+     0.6916,
+     0.103,
+     1.033
+    ],
+    [
+     1.024992,
+     0.637,
+     1.567
+    ]
+   ]
+  },
+  {
+   "mesh": "Disc_RR",
+   "material": "X1_Disc",
+   "verts": 196,
+   "tris": 128,
+   "geometrySha256": "f1462f3cd33ff21c0af223853e514918b7f95010c1b606039e1aaf53068b184a",
+   "normalsSha256": "90c9fdf86326991953e81d38bf80ac8c1e9a4290f6fb996136a52e28c332ef89",
+   "bbox": [
+    [
+     0.861,
+     0.1711,
+     1.1011
+    ],
+    [
+     0.889,
+     0.5689,
+     1.4989
+    ]
+   ]
+  },
+  {
+   "mesh": "Caliper_RR",
+   "material": "X1_Brake",
+   "verts": 24,
+   "tris": 12,
+   "geometrySha256": "9962cad63bf15893126718f80e787c6b81a8e1f58a03809984d4c752e3aba3c4",
+   "normalsSha256": "2e2d68fd42d05d457ac9d962601059ab1fa01deab90f6042dd4cfa4274d039f8",
+   "bbox": [
+    [
+     0.87,
+     0.445495,
+     1.159032
+    ],
+    [
+     0.94,
+     0.610705,
+     1.300968
+    ]
+   ]
+  }
+ ]
+}

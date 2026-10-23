@@ -45,7 +45,7 @@ page.on('pageerror', (e) => errors.push(e.message));
 page.on('crash', () => console.log('PAGE CRASH'));
 page.on('close', () => console.log('PAGE CLOSED'));
 browser.on('disconnected', () => console.log('BROWSER DISCONNECTED'));
-await page.goto(`http://127.0.0.1:${srv.address().port}/?perf=1&noauto`);
+await page.goto(`http://127.0.0.1:${srv.address().port}/?perf=1&noauto${arg('cam', '') ? '&cam=' + arg('cam', '') : ''}${arg('q', '') ? '&q=' + arg('q', '') : ''}`);
 await page.waitForFunction(() => window.__game?.state === 'menu', null, { timeout: 240000 });
 await page.addStyleTag({ content: 'div[style*="9fffb0"]{display:none!important}' });
 const clickWhen = async (fn) => {

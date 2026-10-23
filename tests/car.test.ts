@@ -2,6 +2,8 @@
 declare const process: { exit(code: number): never };
 // @ts-expect-error node built-in (no @types/node in this project)
 import { readFileSync } from 'node:fs';
+// @ts-expect-error node built-in (no @types/node in this project)
+import { createHash } from 'node:crypto';
 import * as THREE from 'three';
 import { parseGlb } from '../src/render/car/glbParse.ts';
 import { CAR_HALF, RENDER } from '../src/config.ts';
@@ -156,6 +158,13 @@ check(!scene.getObjectByName('Diffuser_Rail') && !scene.getObjectByName('NitroSo
 // in game: the visual width stays close to the hitbox (fair dodges)
 const gameW = size.x * RENDER.carScale;
 check(gameW < CAR_HALF.x * 2 * 1.35, `in-game width ${gameW.toFixed(2)} m vs hitbox ${(CAR_HALF.x * 2).toFixed(2)} m (≤ +35 %)`);
+
+// Step 07 FINAL: the approved car is a locked master asset — the game GLB must stay byte-identical to it
+{
+  const ref = JSON.parse(readFileSync(new URL('../assets-src/x1/approved/xwave-x1-approved-v4.2.0.fingerprint.json', import.meta.url), 'utf8'));
+  const sha: string = createHash('sha256').update(bytes).digest('hex');
+  check(sha === ref.fileSha256, `approved GLB locked: sha256 ${sha.slice(0, 12)}… ${sha === ref.fileSha256 ? '=' : '≠'} approved ${ref.fileSha256.slice(0, 12)}…`);
+}
 
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED');
 if (fails) process.exit(1);
