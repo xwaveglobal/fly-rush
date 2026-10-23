@@ -314,7 +314,7 @@ if (want('special')) {
 // ======================================================= E. CRASH: breaks a little, falls to the road
 if (want('crash')) {
   console.log('E. crash');
-  await ev(() => { const G = window.__g; if (G.state !== 'run') { G.startRun(); for (let i = 0; i < 300 && G.state !== 'run'; i++) G.advance(1 / 60); } G.run.lives = 1; G.continuesUsed = 3; G.carried = null; G.run.superJumps = G.run.hyperJumps = G.run.escapes = 0; window.__steps(1); });
+  await ev(() => { const G = window.__g; G.manual = true; if (G.state !== 'run') { G.startRun(); for (let i = 0; i < 300 && G.state !== 'run'; i++) G.advance(1 / 60); } G.run.lives = 1; G.continuesUsed = 3; G.carried = null; G.run.superJumps = G.run.hyperJumps = G.run.escapes = 0; window.__steps(1); });
   // a real final collision while airborne: jump, then a beam-height obstacle (laser 'high'? use a crate during the hop)
   const c = await ev(() => {
     const G = window.__g, p = G.world.player;
@@ -322,6 +322,7 @@ if (want('crash')) {
     p.input('up');
     window.__steps(0.3);
     const y0 = G.vehicle.root.position.y;
+    G.run.lives = 0; // what Run.handle leaves after the last life
     G.onCrash(true); // final crash while ~3 m up (same entry the collision uses)
     G.advance(0.12);
     return { y0: +y0.toFixed(2), yFalling: +G.vehicle.root.position.y.toFixed(2), parts: G.vehicle.mesh?.partsBroken ?? 0, state: G.state };

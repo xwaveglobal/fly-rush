@@ -10,7 +10,7 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 - Audio starts from the first real tap (no Settings needed), resumed on every tap until running, suspended in background; crash SFX at the collision event (trigger ≈ 0.4 ms after it on the main thread; audible device latency not measured).
 - Pause: one frozen state, never auto Game Over (root cause: `'paused'` shared the revive countdown in `tick`).
 - Air Dash road item (outer lanes, safe-landing spawner guard, runtime `AirDashGuard`), airborne-only spoiler, item balance per level (`ITEM_BALANCE`), last-chance auto Roadster / HYPER / SOS (`Run.lastChance` → `Game.activateSpecial('AUTO_LAST_CHANCE')`), Magic Bag auto-equip (fills an empty special slot only), class unlock matrix (AA = Inferno only; S / SS / SSS future cars), first-time class celebration (A+), flat non-Home buttons, crash: car falls to the road + 3 real parts break off on the final crash.
-- Tests: new `tests/airdash.test.ts`, spoiler matrix in `tests/carMotion.test.ts`; real-build QA `scripts/qa/step065.mjs` (+ `h5.mjs`, `audio-startup.mjs`, `item-balance.ts`).
+- Tests: new `tests/airdash.test.ts`, spoiler matrix in `tests/carMotion.test.ts` (npm test 12 / 12); real-build QA `scripts/qa/step065.mjs` 59 / 59 (+ `h5.mjs`, `audio-startup.mjs`, `item-balance.ts`). Artifact "Sky Roadster v4" republished (Version 10).
 - Step 07 FINAL was paused by the owner before it finished: WIP commit `a9e1476` (approved GLB lock + fingerprint test, camera candidates `?cam=premium|arcade`, PBR pass opt-in `?pbr=1`); defaults unchanged.
 
 **Open decisions for the owner**: where the old C / B / A / AAA cars go (mapped by rarity to S / SS / SSS; Nexus = future car without a condition) — `SKINS` in `src/render/Vehicle.ts`.

@@ -1,0 +1,831 @@
+{
+ "checks": [
+  {
+   "ok": true,
+   "msg": "fresh load: no AudioContext before any gesture (autoplay policy respected)",
+   "data": {
+    "ctx": "none",
+    "settingsOpened": false
+   }
+  },
+  {
+   "ok": true,
+   "msg": "after real taps Play \u2192 Endless \u2192 GO (Settings never opened): audio running, music playing",
+   "data": {
+    "ctx": "running",
+    "music": true,
+    "settingsEverShown": false
+   }
+  },
+  {
+   "ok": true,
+   "msg": "pickup SFX requested on collecting a Shield, context running",
+   "data": {
+    "played": true,
+    "ctx": "running",
+    "sfxOn": true
+   }
+  },
+  {
+   "ok": true,
+   "msg": "impact SFX triggered 0.20 ms after the authoritative collision event (same frame, before the crash visuals); explosion layer on the audio clock (+60 ms, no timer)",
+   "data": {
+    "state": "dying",
+    "collisionT": 118641.40000000037,
+    "crashT": 118641.60000000056,
+    "explodeT": 118641.90000000037,
+    "fresh": true
+   }
+  },
+  {
+   "ok": true,
+   "msg": "restart: same AudioContext, still running, SFX play (no duplicate context)",
+   "data": {
+    "sameCtx": true,
+    "ctx": "running",
+    "state": "run",
+    "coinAfterRestart": true
+   }
+  },
+  {
+   "ok": true,
+   "msg": "Sound / Music switches mute and restore their bus (no re-initialisation)",
+   "data": {
+    "sfxOffGain": 0,
+    "sfxOnGain": 0.8999999761581421,
+    "musicOffGain": 0,
+    "hidden": "suspended",
+    "visible": "running"
+   }
+  },
+  {
+   "ok": true,
+   "msg": "background \u2192 suspended, foreground \u2192 running again",
+   "data": {
+    "sfxOffGain": 0,
+    "sfxOnGain": 0.8999999761581421,
+    "musicOffGain": 0,
+    "hidden": "suspended",
+    "visible": "running"
+   }
+  },
+  {
+   "ok": true,
+   "msg": "normal driving: spoiler fully closed",
+   "data": 0
+  },
+  {
+   "ok": true,
+   "msg": "Turbo on the road: spoiler fully closed",
+   "data": 0
+  },
+  {
+   "ok": true,
+   "msg": "Shield on the road: spoiler fully closed",
+   "data": 0
+  },
+  {
+   "ok": true,
+   "msg": "jump airborne: spoiler open",
+   "data": 0.9391899373747821
+  },
+  {
+   "ok": true,
+   "msg": "landing (Turbo still active): spoiler fully closed again",
+   "data": 0
+  },
+  {
+   "ok": true,
+   "msg": "Air Dash fires on pickup (lane 2)"
+  },
+  {
+   "ok": true,
+   "msg": "take-off: spoiler opening (k 0.61)"
+  },
+  {
+   "ok": true,
+   "msg": "roll 90\u00b0 / 180\u00b0 / 270\u00b0 / 360\u00b0 reached in order (100 / 184 / 281 / 360)"
+  },
+  {
+   "ok": true,
+   "msg": "lands in the opposite outer lane 2 (x 2.6)"
+  },
+  {
+   "ok": true,
+   "msg": "after landing: upright, spoiler flush, normal driving",
+   "data": {
+    "roll": 0,
+    "spoiler": 0,
+    "state": "run"
+   }
+  },
+  {
+   "ok": true,
+   "msg": "lands in the opposite outer lane 0 (x -2.6)"
+  },
+  {
+   "ok": true,
+   "msg": "Air Dash roll: spoiler open",
+   "data": 0.8910282567573686
+  },
+  {
+   "ok": true,
+   "msg": "centre lane: Air Dash does not start",
+   "data": {
+    "started": false,
+    "lane": 1
+   }
+  },
+  {
+   "ok": true,
+   "msg": "manual special button: Roadster Jump fires (MANUAL), one charge used",
+   "data": {
+    "isSuper": true,
+    "src": "MANUAL",
+    "charges": 0,
+    "items": 1
+   }
+  },
+  {
+   "ok": true,
+   "msg": "ROADSTER: lethal hit with no revive left \u2192 auto-activated through the same pathway, exactly one charge, run continues",
+   "data": {
+    "state": "run",
+    "src": "AUTO_LAST_CHANCE",
+    "lives": 1,
+    "carried": null,
+    "items": 0,
+    "items0": 1,
+    "isSuper": true,
+    "isEscape": false,
+    "toast": "ROADSTER AUTO ACTIVATED!"
+   }
+  },
+  {
+   "ok": true,
+   "msg": "notification \"ROADSTER AUTO ACTIVATED!\" shown (non-blocking toast)",
+   "data": "ROADSTER AUTO ACTIVATED!"
+  },
+  {
+   "ok": true,
+   "msg": "HYPER: lethal hit with no revive left \u2192 auto-activated through the same pathway, exactly one charge, run continues",
+   "data": {
+    "state": "run",
+    "src": "AUTO_LAST_CHANCE",
+    "lives": 1,
+    "carried": null,
+    "items": 0,
+    "items0": 1,
+    "isSuper": true,
+    "isEscape": false,
+    "toast": "HYPER AUTO ACTIVATED!"
+   }
+  },
+  {
+   "ok": true,
+   "msg": "SOS: lethal hit with no revive left \u2192 auto-activated through the same pathway, exactly one charge, run continues",
+   "data": {
+    "state": "run",
+    "src": "AUTO_LAST_CHANCE",
+    "lives": 1,
+    "carried": null,
+    "items": 0,
+    "items0": 1,
+    "isSuper": true,
+    "isEscape": true,
+    "toast": "SOS AUTO ACTIVATED!"
+   }
+  },
+  {
+   "ok": true,
+   "msg": "revive offer still available \u2192 existing death / continue flow, special kept",
+   "data": {
+    "state": "dying",
+    "charges": 1,
+    "src": null
+   }
+  },
+  {
+   "ok": true,
+   "msg": "continue (revive) offer shown as before",
+   "data": "continue"
+  },
+  {
+   "ok": true,
+   "msg": "no special left \u2192 normal crash / Game Over, no rescue message",
+   "data": {
+    "afterRevive": "run",
+    "noSpecial": {
+     "state": "dying",
+     "falseMsg": false
+    }
+   }
+  },
+  {
+   "ok": true,
+   "msg": "run-ending crash in the air: 3 real parts break off (car was 3.36 m up)",
+   "data": {
+    "y0": 3.36,
+    "yFalling": 3.12,
+    "parts": 3,
+    "state": "dying"
+   }
+  },
+  {
+   "ok": true,
+   "msg": "car falls and settles on the road (height above road 0 m) \u2014 no floating",
+   "data": {
+    "air": 0,
+    "parts": 3,
+    "partsY": [
+     0.04,
+     0.11,
+     0.36
+    ],
+    "state": "dying"
+   }
+  },
+  {
+   "ok": true,
+   "msg": "Pause (real tap): PAUSED state",
+   "data": {
+    "state": "paused",
+    "turbo": 2.6500000000000012,
+    "shieldT": 4.649999999999983,
+    "dist": 35.9925255511855,
+    "y": 3.067398621364449,
+    "stateT": 0,
+    "time": 10.709266666667334
+   }
+  },
+  {
+   "ok": true,
+   "msg": "10 s real time paused: still paused, world / Turbo / Shield / jump frozen",
+   "data": {
+    "state": "paused",
+    "turbo": 2.6500000000000012,
+    "shieldT": 4.649999999999983,
+    "dist": 35.9925255511855,
+    "y": 3.067398621364449,
+    "time": 10.709266666667334
+   }
+  },
+  {
+   "ok": true,
+   "msg": "60 s real time paused: still paused",
+   "data": {
+    "state": "paused",
+    "dist": 35.9925255511855
+   }
+  },
+  {
+   "ok": true,
+   "msg": "5 min of frames paused: still paused, no Game Over",
+   "data": {
+    "state": "paused",
+    "dist": 35.9925255511855,
+    "turbo": 2.6500000000000012,
+    "shieldT": 4.649999999999983,
+    "gameover": false
+   }
+  },
+  {
+   "ok": true,
+   "msg": "background \u2192 foreground while paused: still paused",
+   "data": "paused"
+  },
+  {
+   "ok": true,
+   "msg": "Resume: continues from the saved state (one frame of movement, Turbo timer resumes where it stopped)",
+   "data": {
+    "state": "run",
+    "step": 0.576,
+    "turbo": 2.633,
+    "y": 3.071
+   }
+  },
+  {
+   "ok": true,
+   "msg": "paused right before an obstacle: no collision, no damage",
+   "data": {
+    "state": "paused",
+    "lives": 3,
+    "after": 3
+   }
+  },
+  {
+   "ok": true,
+   "msg": "Pause \u2192 Retry \u2192 pre-race pick (over the still-paused race) \u2192 GO: a new run starts only on the explicit taps",
+   "data": {
+    "state": "paused",
+    "pick": true,
+    "pauseMenu": true,
+    "afterGo": "countdown"
+   }
+  },
+  {
+   "ok": true,
+   "msg": "empty Magic Bag \u2192 nothing equipped, no error",
+   "data": {
+    "picked": null,
+    "special": null
+   }
+  },
+  {
+   "ok": true,
+   "msg": "one eligible item \u2192 that item equipped, quantity unchanged (consumed only when used)",
+   "data": {
+    "picked": "hyper",
+    "items": {
+     "super": 0,
+     "hyper": 2,
+     "shield": 0,
+     "escape": 0,
+     "turbo": 0,
+     "magnet": 0,
+     "double": 0,
+     "life": 0
+    }
+   }
+  },
+  {
+   "ok": true,
+   "msg": "slot already filled \u2192 no re-roll (Resume / Retry)",
+   "data": {
+    "picked": null,
+    "special": "hyper",
+    "items": {
+     "super": 0,
+     "hyper": 2,
+     "shield": 0,
+     "escape": 0,
+     "turbo": 0,
+     "magnet": 0,
+     "double": 0,
+     "life": 0
+    }
+   }
+  },
+  {
+   "ok": true,
+   "msg": "several eligible \u2192 one random pick, zero-quantity excluded ({\"super\":296,\"hyper\":0,\"escape\":304} of 600)",
+   "data": {
+    "super": 296,
+    "hyper": 0,
+    "escape": 304
+   }
+  },
+  {
+   "ok": true,
+   "msg": "pre-race: \"MAGIC BAG: \u2026 EQUIPPED\" with the real item name",
+   "data": {
+    "special": "escape",
+    "toast": "MAGIC BAG: HYPER JUMP EQUIPPED"
+   }
+  },
+  {
+   "ok": true,
+   "msg": "C / B / A: no new car (only the starter)",
+   "data": {
+    "C": [
+     "zenith"
+    ],
+    "B": [
+     "zenith"
+    ],
+    "A": [
+     "zenith"
+    ]
+   }
+  },
+  {
+   "ok": true,
+   "msg": "AA: exactly ONE new car (XWAVE Inferno)",
+   "data": [
+    "inferno"
+   ]
+  },
+  {
+   "ok": true,
+   "msg": "AAA: no new car",
+   "data": [
+    "zenith",
+    "inferno"
+   ]
+  },
+  {
+   "ok": true,
+   "msg": "S: its configured future car (Vega) unlocks; Nexus stays a future silhouette",
+   "data": [
+    "zenith",
+    "inferno",
+    "vega"
+   ]
+  },
+  {
+   "ok": true,
+   "msg": "cars already owned stay owned, no duplicate unlocks",
+   "data": [
+    "zenith",
+    "vega",
+    "volt",
+    "phantom",
+    "inferno"
+   ]
+  },
+  {
+   "ok": true,
+   "msg": "locked S+ car cannot become the race car",
+   "data": {
+    "vehicle": "zenith",
+    "before": "zenith"
+   }
+  },
+  {
+   "ok": true,
+   "msg": "first-time Class A: celebration, no car",
+   "data": {
+    "shown": true,
+    "title": "Class A",
+    "car": null,
+    "again": {
+     "shown": false,
+     "saved": [
+      "AA",
+      "AAA",
+      "S",
+      "SS",
+      "SSS",
+      "A"
+     ]
+    }
+   }
+  },
+  {
+   "ok": true,
+   "msg": "acknowledged: not shown again",
+   "data": {
+    "shown": false,
+    "saved": [
+     "AA",
+     "AAA",
+     "S",
+     "SS",
+     "SSS",
+     "A"
+    ]
+   }
+  },
+  {
+   "ok": true,
+   "msg": "first-time Class AA: celebration + the one unlocked car (XWAVE Inferno)",
+   "data": {
+    "shown": true,
+    "title": "Class AA",
+    "car": "XWAVE Inferno",
+    "again": {
+     "shown": false,
+     "saved": [
+      "A",
+      "AAA",
+      "S",
+      "SS",
+      "SSS",
+      "AA"
+     ]
+    }
+   }
+  },
+  {
+   "ok": true,
+   "msg": "first-time Class AAA: celebration, no new car",
+   "data": {
+    "shown": true,
+    "title": "Class AAA",
+    "car": null,
+    "again": {
+     "shown": false,
+     "saved": [
+      "A",
+      "AA",
+      "S",
+      "SS",
+      "SSS",
+      "AAA"
+     ]
+    }
+   }
+  },
+  {
+   "ok": true,
+   "msg": "first-time Class S: celebration (only rewards really unlocked)",
+   "data": {
+    "shown": true,
+    "title": "Class S",
+    "car": "XWAVE Vega",
+    "again": {
+     "shown": false,
+     "saved": [
+      "A",
+      "AA",
+      "AAA",
+      "SS",
+      "SSS",
+      "S"
+     ]
+    }
+   }
+  },
+  {
+   "ok": true,
+   "msg": "29_garage_flat_buttons: no glow / shadow / text-shadow / pulsing on non-Home buttons",
+   "data": []
+  },
+  {
+   "ok": true,
+   "msg": "30_settings_flat_buttons: no glow / shadow / text-shadow / pulsing on non-Home buttons",
+   "data": []
+  },
+  {
+   "ok": true,
+   "msg": "31_pause_flat_buttons: no glow / shadow / text-shadow / pulsing on non-Home buttons",
+   "data": []
+  },
+  {
+   "ok": true,
+   "msg": "32_game_over_flat_buttons: no glow / shadow / text-shadow / pulsing on non-Home buttons",
+   "data": []
+  },
+  {
+   "ok": true,
+   "msg": "no page errors (network-blocked font / geo lookups excluded)",
+   "data": []
+  }
+ ],
+ "audioLatency": {
+  "collisionToTriggerMs": 0.2,
+  "note": "main-thread trigger latency (performance.now); audible output latency = AudioContext.baseLatency + outputLatency, device-dependent, not measured here",
+  "baseLatency": 0.01
+ },
+ "airdash_0": [
+  {
+   "label": "takeoff",
+   "x": -2.57,
+   "y": 2.76,
+   "lane": 2,
+   "roll": 0.1,
+   "rollDeg": 11,
+   "spoiler": 0.61,
+   "air": true
+  },
+  {
+   "label": "roll 90\u00b0",
+   "x": -1.71,
+   "y": 3.05,
+   "lane": 2,
+   "roll": 0.35,
+   "rollDeg": 100,
+   "spoiler": 0.86,
+   "air": true
+  },
+  {
+   "label": "roll 180\u00b0",
+   "x": 0.16,
+   "y": 3.07,
+   "lane": 2,
+   "roll": 0.51,
+   "rollDeg": 184,
+   "spoiler": 0.93,
+   "air": true
+  },
+  {
+   "label": "roll 270\u00b0",
+   "x": 2.03,
+   "y": 3.09,
+   "lane": 2,
+   "roll": 0.7,
+   "rollDeg": 281,
+   "spoiler": 0.97,
+   "air": true
+  },
+  {
+   "label": "roll 360\u00b0",
+   "x": 2.6,
+   "y": 3.07,
+   "lane": 2,
+   "roll": 1,
+   "rollDeg": 360,
+   "spoiler": 0.99,
+   "air": true
+  },
+  {
+   "label": "landed",
+   "x": 2.6,
+   "y": 1,
+   "lane": 2,
+   "roll": 0,
+   "rollDeg": 0,
+   "spoiler": 0.97,
+   "air": false
+  }
+ ],
+ "airdash_2": [
+  {
+   "label": "takeoff",
+   "x": 2.57,
+   "y": 2.76,
+   "lane": 0,
+   "roll": 0.1,
+   "rollDeg": 11,
+   "spoiler": 0.61,
+   "air": true
+  },
+  {
+   "label": "roll 90\u00b0",
+   "x": 1.71,
+   "y": 3.05,
+   "lane": 0,
+   "roll": 0.35,
+   "rollDeg": 100,
+   "spoiler": 0.86,
+   "air": true
+  },
+  {
+   "label": "roll 180\u00b0",
+   "x": -0.16,
+   "y": 3.07,
+   "lane": 0,
+   "roll": 0.51,
+   "rollDeg": 184,
+   "spoiler": 0.93,
+   "air": true
+  },
+  {
+   "label": "roll 270\u00b0",
+   "x": -2.03,
+   "y": 3.09,
+   "lane": 0,
+   "roll": 0.7,
+   "rollDeg": 281,
+   "spoiler": 0.97,
+   "air": true
+  },
+  {
+   "label": "roll 360\u00b0",
+   "x": -2.6,
+   "y": 3.07,
+   "lane": 0,
+   "roll": 1,
+   "rollDeg": 360,
+   "spoiler": 0.99,
+   "air": true
+  },
+  {
+   "label": "landed",
+   "x": -2.6,
+   "y": 1,
+   "lane": 0,
+   "roll": 0,
+   "rollDeg": 0,
+   "spoiler": 0.97,
+   "air": false
+  }
+ ],
+ "specialNegatives": {
+  "neg": {
+   "reviveFirst": {
+    "state": "dying",
+    "charges": 1,
+    "src": null
+   }
+  },
+  "neg2": {
+   "afterRevive": "run",
+   "noSpecial": {
+    "state": "dying",
+    "falseMsg": false
+   }
+  }
+ },
+ "crash": {
+  "c": {
+   "y0": 3.36,
+   "yFalling": 3.12,
+   "parts": 3,
+   "state": "dying"
+  },
+  "c2": {
+   "air": 0,
+   "parts": 3,
+   "partsY": [
+    0.04,
+    0.11,
+    0.36
+   ],
+   "state": "dying"
+  }
+ },
+ "classMatrix": {
+  "C": [
+   "zenith"
+  ],
+  "B": [
+   "zenith"
+  ],
+  "A": [
+   "zenith"
+  ],
+  "AA": [
+   "zenith",
+   "inferno"
+  ],
+  "AAA": [
+   "zenith",
+   "inferno"
+  ],
+  "S": [
+   "zenith",
+   "inferno",
+   "vega"
+  ]
+ },
+ "congrats": {
+  "a": {
+   "shown": true,
+   "title": "Class A",
+   "car": null,
+   "again": {
+    "shown": false,
+    "saved": [
+     "AA",
+     "AAA",
+     "S",
+     "SS",
+     "SSS",
+     "A"
+    ]
+   }
+  },
+  "aa": {
+   "shown": true,
+   "title": "Class AA",
+   "car": "XWAVE Inferno",
+   "again": {
+    "shown": false,
+    "saved": [
+     "A",
+     "AAA",
+     "S",
+     "SS",
+     "SSS",
+     "AA"
+    ]
+   }
+  },
+  "aaa": {
+   "shown": true,
+   "title": "Class AAA",
+   "car": null,
+   "again": {
+    "shown": false,
+    "saved": [
+     "A",
+     "AA",
+     "S",
+     "SS",
+     "SSS",
+     "AAA"
+    ]
+   }
+  },
+  "s": {
+   "shown": true,
+   "title": "Class S",
+   "car": "XWAVE Vega",
+   "again": {
+    "shown": false,
+    "saved": [
+     "A",
+     "AA",
+     "AAA",
+     "SS",
+     "SSS",
+     "S"
+    ]
+   }
+  }
+ },
+ "homeButtonsSample": [
+  "rgba(0, 0, 0, 0.4) 0px 4px 14px 0px, rgba(255, 255, 255, 0.12) 0px 1px 0px 0px inset|linear-gradient(rgba(22, 34, 8",
+  "rgba(255, 194, 26, 0.35) 0px 0px 12px 0px, rgba(255, 255, 255, 0.12) 0px 1px 0px 0px inset|linear-gradient(rgba(30, 26, 7",
+  "rgba(0, 0, 0, 0.4) 0px 4px 12px 0px, rgba(255, 255, 255, 0.12) 0px 1px 0px 0px inset|linear-gradient(rgb(28, 42, 10",
+  "rgba(0, 0, 0, 0.4) 0px 4px 12px 0px, rgba(255, 255, 255, 0.12) 0px 1px 0px 0px inset|linear-gradient(rgb(28, 42, 10"
+ ],
+ "errors": [],
+ "runs": [
+  "qa2",
+  "qa3",
+  "qa4",
+  "qa5"
+ ]
+}
