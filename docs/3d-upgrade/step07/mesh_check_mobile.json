@@ -2,8 +2,8 @@
  "file": "src/assets/models/xwave-x1.glb",
  "total": {
   "meshes": 40,
-  "verts": 29709,
-  "tris": 39815,
+  "verts": 29613,
+  "tris": 39767,
   "degenerate": 0,
   "zeroNormals": 0,
   "nonUnit": 0,
@@ -243,19 +243,19 @@
   {
    "mesh": "Trim_Interior",
    "material": "X1_Interior",
-   "verts": 1203,
-   "tris": 2000,
+   "verts": 1107,
+   "tris": 1952,
    "degenerate": 0,
    "zeroNormals": 0,
    "nonUnitNormals": 0,
    "normalsAgainstFace": 0,
-   "normalsChecked": 6000,
+   "normalsChecked": 5856,
    "uv": true,
    "uvNaN": 0,
    "uvExtent": [
     -0.72,
     -0.98,
-    1,
+    0.72,
     1.9
    ]
   },

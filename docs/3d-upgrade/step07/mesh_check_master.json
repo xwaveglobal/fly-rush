@@ -2,8 +2,8 @@
  "file": "assets-src/x1/xwave-x1-master.glb",
  "total": {
   "meshes": 41,
-  "verts": 78176,
-  "tris": 122047,
+  "verts": 78080,
+  "tris": 121999,
   "degenerate": 0,
   "zeroNormals": 0,
   "nonUnit": 0,
@@ -34,19 +34,19 @@
   {
    "mesh": "Interior",
    "material": "X1_Interior",
-   "verts": 4686,
-   "tris": 8656,
+   "verts": 4590,
+   "tris": 8608,
    "degenerate": 0,
    "zeroNormals": 0,
    "nonUnitNormals": 0,
    "normalsAgainstFace": 0,
-   "normalsChecked": 25968,
+   "normalsChecked": 25824,
    "uv": true,
    "uvNaN": 0,
    "uvExtent": [
     -0.72,
     -0.99,
-    1,
+    0.72,
     1.93
    ]
   },
