@@ -85,6 +85,16 @@ await page.evaluate(() => {
   };
   g.advance(2.5);
 });
+if (arg('set', 'drive') === 'crash') {
+  // just the crash frame (re-shoot without the whole effects set)
+  await page.evaluate(() => { const g = window.__game; g.onCrash(false); g.advance(0.18); });
+  await shot('08_crash');
+  meta.errors = errors;
+  writeFileSync(join(out, 'state_crash.json'), JSON.stringify(meta, null, 1));
+  await browser.close();
+  srv.close();
+  process.exit(0);
+}
 if (arg('set', 'drive') === 'effects') {
   // Step 05 effect states: Shield + Turbo, Phase Ghost, dive (down), Ring Coins ahead + collect, crash
   await page.evaluate(() => { const g = window.__game; window.__clear(); const r = g.run; r.shield = true; r.shieldHits = 9; r.shieldT = 0; r.turboT = 6; g.advance(1.2); });

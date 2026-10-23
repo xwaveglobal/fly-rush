@@ -160,6 +160,10 @@ picture does not come back. This is the open native item, now reproduced. It is 
 All 9:16 (720 × 1280). Real-game frames: `scripts/car/gameplay-states.mjs` (drive set and `--set=effects`),
 fixed 1/60 s steps, obstacles within 45 m removed before each state so no crash ends the sequence; the
 green text bottom-left is the `?perf=1` readout. Software WebGL: colours / bloom differ from a phone GPU.
+Notes on what the frames show: in `07_down_action` the red edge light on the car is the pickup sweep of a
+Magnet just collected (HUD icon top-left), not the dive itself; in the last sequence frame the large gold
+arcs are the collected ring expanding past the camera (0.35 s collect animation) — on screen for a few
+frames only; the Shield + Turbo frame shows both auras (lime outside cyan).
 
 ## 9 — Tests
 
