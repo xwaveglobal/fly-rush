@@ -4,6 +4,14 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-23 — v4.0.1: branch `v4.0.1` for the 3D upgrade
+
+**Done**: new branch `v4.0.1`, started from the H5 web game v2.3.0 (branch `v2`), not from `main` (v3 native) — owner chose H5 as the base because it is easier to upgrade to better 3D. VERSION → v4.0.1, AGENTS.md workflow lists all four branches.
+
+**Next**: the 3D upgrade itself (render/ — lighting, shadows, models, road, city, effects), keeping gameplay/fairness unchanged.
+
+---
+
 ## 2026-10-22 — v2.3.0: accounts & cloud save (owner chose "cách 2", server coming)
 
 **Done**: `src/net/Cloud.ts` (guest token, email code, Google/Apple via server-side OAuth popup/redirect, GET/PUT /save with rev + 409 conflict, run queue), Game: `cloudSync` / `resolveCloud` / `applyCloud` (writes the cloud save then reloads) / `cloudAction` / `reportRun`; UI: Settings → Account popup, "Which progress?" chooser. Server rewritten: `server/index.mjs` + `server/core.mjs` + `schema.sql` + README (env vars, go-live). Tested end-to-end headless with a local server: device A (4,600 EXP, 7,054 coins) signs in by email → device B fresh install signs in → same progress restored.

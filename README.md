@@ -187,6 +187,10 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v4.0.1 — start of v4 (3D upgrade)
+
+v4 is developed on branch `v4.0.1`, starting from the H5 web game v2.3.0 (same gameplay, UI, accounts and cloud save). Goal: much better 3D graphics. No gameplay changes in this version.
+
 ## v2.3.0 changes — accounts & cloud save
 
 - **Settings → Account**: sign in with **Google**, **Apple** or an **email code**. Progress (rank, EXP, coins, specials, cars, missions…) is saved to the account and comes back after a reinstall or on a new phone.
