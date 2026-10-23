@@ -4,6 +4,16 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-23 — 3D upgrade Step 01: audit (no game code changed)
+
+**Done**: branch `feature/sky-roadster-3d-v4.1` (from `v4.0.1`), audit docs in `docs/3d-upgrade/` (01 source audit, 02 architecture, 03 roadmap, 04 baseline tests). Key finding: the car on screen is a 2D studio image (billboard in an overlay pass, `render/Vehicle.ts`), not a 3D model; a hidden procedural car and a GLB hook exist. `npm test` passes; typecheck/build could not run here (npm registry blocked in the cloud session).
+
+**Half-done**: tag `v4.0.1` exists only in the cloud clone (tag push refused) — create + push it from the PC (`04-baseline-test-results.md`).
+
+**Next**: owner approves the plan and chooses the X1 3D source (model file / model from images / AI image-to-3D) → Step 02 (3D vehicle). Do not start Step 02 before that.
+
+---
+
 ## 2026-10-23 — v4.0.1: branch `v4.0.1` for the 3D upgrade
 
 **Done**: new branch `v4.0.1`, started from the H5 web game v2.3.0 (branch `v2`), not from `main` (v3 native) — owner chose H5 as the base because it is easier to upgrade to better 3D. VERSION → v4.0.1, AGENTS.md workflow lists all four branches.
