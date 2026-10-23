@@ -62,8 +62,8 @@ await clickWhen(() => { const el = [...document.querySelectorAll('*')].find((e) 
 await clickWhen(() => { const b = [...document.querySelectorAll('button')].filter((e) => e.offsetParent && /\bGO\b/.test(e.textContent)).at(-1); b?.click(); return !!b; });
 await clickWhen(() => window.__game.state === 'run');
 const meta = {};
-const shot = async (name) => {
-  await page.evaluate(() => window.__clear());
+const shot = async (name, clear = !name.startsWith('seq') && name !== '08_crash') => {
+  if (clear) await page.evaluate(() => window.__clear());
   await page.waitForTimeout(700); // the loop keeps rendering the held state
   await page.screenshot({ path: join(out, `${name}.png`), timeout: 180000 });
   meta[name] = await page.evaluate(() => {
@@ -85,6 +85,49 @@ await page.evaluate(() => {
   };
   g.advance(2.5);
 });
+if (arg('set', 'drive') === 'effects') {
+  // Step 05 effect states: Shield + Turbo, Phase Ghost, dive (down), Ring Coins ahead + collect, crash
+  await page.evaluate(() => { const g = window.__game; window.__clear(); const r = g.run; r.shield = true; r.shieldHits = 9; r.shieldT = 0; r.turboT = 6; g.advance(1.2); });
+  await shot('05_shield_turbo');
+  await page.evaluate(() => { const g = window.__game; g.run.turboT = 0; g.run.shield = false; window.__clear(); g.advance(1.5); window.__clear(); g.startShowcase('ghost', 4.5); g.advance(1.0); });
+  await shot('06_phase_ghost');
+  await page.evaluate(() => { const g = window.__game; window.__clear(); g.advance(4.2); window.__clear(); g.world.player.input('down'); g.advance(0.35); });
+  await shot('07_down_action');
+  const ring = await page.evaluate(() => {
+    const g = window.__game;
+    const w = g.world;
+    const near = () => w.obstacles.find((o) => o.spec.type === 'ring' && o.z < -14 && o.z > -30);
+    for (let n = 0; !near() && n < 60 * 120; n++) {
+      for (const o of w.obstacles) if (o.z > -45 && o.spec.type !== 'ring') w.hooks?.despawnObstacle?.(o);
+      w.obstacles = w.obstacles.filter((o) => o.z <= -45 || o.spec.type === 'ring');
+      g.advance(1 / 60);
+    }
+    const o = near();
+    if (!o) return null;
+    window.__ring = o;
+    return o.spec.lane;
+  });
+  if (ring !== null) {
+    await shot('seq6_ring_ahead');
+    await page.evaluate(() => {
+      const g = window.__game, o = window.__ring, p = g.world.player;
+      for (let n = 0; o.z < -1.2 && n < 400; n++) {
+        if (p.lane < o.spec.lane) p.input('right');
+        else if (p.lane > o.spec.lane) p.input('left');
+        g.advance(1 / 60);
+      }
+      g.advance(0.1);
+    });
+    await shot('seq7_ring_collect');
+  }
+  await page.evaluate(() => { const g = window.__game; g.onCrash(false); g.advance(0.18); });
+  await shot('08_crash');
+  meta.errors = errors;
+  writeFileSync(join(out, 'state.json'), JSON.stringify(meta, null, 1));
+  await browser.close();
+  srv.close();
+  process.exit(0);
+}
 await shot('01_normal');
 await page.evaluate(() => window.__game.world.player.input('left'));
 await step(0.12);
@@ -110,6 +153,7 @@ await page.evaluate(() => { window.__clear(); window.__game.run.turboT = 6; wind
 await shot('07_turbo');
 await page.evaluate(() => { const g = window.__game; window.__clear(); const r = g.run; r.shield = true; r.shieldHits = 9; r.shieldT = 0; r.turboT = 0; g.advance(1.6); });
 await shot('08_shield');
+// --set=effects: Step 05 effect states instead of the drive states
 // top speed: still shielded while the speed builds up (no crash ends the sequence), shield off for the shot
 await page.evaluate(() => { const g = window.__game; g.world.spawner.speed = () => 46; window.__clear(); g.advance(2); window.__clear(); g.run.shield = false; g.advance(0.5); });
 await shot('09_top_speed');

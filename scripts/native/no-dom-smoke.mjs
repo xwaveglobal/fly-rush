@@ -44,6 +44,8 @@ try {
 }
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage();
+page.on('worker', (w) => w.on('console', (m) => console.log('[worker]', m.text().slice(0, 300))));
+page.on('console', (m) => console.log('[page]', m.text().slice(0, 300)));
 await page.goto(`http://127.0.0.1:${srv.address().port}/`);
 await page.waitForFunction(() => window.__result, null, { timeout: 300000 });
 const r = await page.evaluate(() => window.__result);

@@ -1,0 +1,61 @@
+{
+ "steps": [
+  {
+   "name": "WebGL2 renderer on a runtime canvas (no DOM)",
+   "ok": true,
+   "info": "WebGL 2.0 (OpenGL ES 3.0 Chromium) · maxTex 8192"
+  },
+  {
+   "name": "night city (Scenery: instanced buildings, crowns, neon, far lights, canvas textures)",
+   "ok": true,
+   "info": ""
+  },
+  {
+   "name": "procedural road (Track: DataTextures, road shader with fwidth)",
+   "ok": true,
+   "info": ""
+  },
+  {
+   "name": "obstacles + Ring Coins (ObstacleViews, canvas hazard textures)",
+   "ok": true,
+   "info": "3 spawned"
+  },
+  {
+   "name": "3D XWAVE X1 (GLB from a data URL through the own parser, canvas textures)",
+   "ok": true,
+   "info": "loaded"
+  },
+  {
+   "name": "render on LOW (post-processing per preset)",
+   "ok": true,
+   "info": "122 calls · dpr 1.25 · 40 programs"
+  },
+  {
+   "name": "render on MEDIUM (post-processing per preset)",
+   "ok": true,
+   "info": "144 calls · dpr 1.5 · 83 programs"
+  },
+  {
+   "name": "render on HIGH (post-processing per preset)",
+   "ok": true,
+   "info": "151 calls · dpr 2 · 84 programs"
+  },
+  {
+   "name": "effects: shield, turbo, shield + turbo, pickup sweep, jump, dive, ring collect, phase ghost, crash",
+   "ok": true,
+   "info": ""
+  },
+  {
+   "name": "pixels were drawn (frame copied out of the runtime canvas)",
+   "ok": true,
+   "info": "64/64 lit pixels on a row through the car (720×1280)"
+  },
+  {
+   "name": "context loss → restore (WEBGL_lose_context)",
+   "ok": false,
+   "info": "Error: GL error 0x9242\n    at frame (http://127.0.0.1:36749/w.js:33166:22)\n    at http://127.0.0.1:36749/w.js:33226:9\n    at async step (http://127.0.0.1:36749/w.js:33081:24)\n    at async http://127.0.0.1:36749/w.js:33218:7"
+  }
+ ],
+ "errors": [],
+ "images": 14
+}

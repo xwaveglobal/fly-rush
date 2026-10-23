@@ -1,0 +1,36 @@
+{
+ "passed": 6,
+ "failed": 0,
+ "results": [
+  {
+   "name": "long run (3.6 km after warm-up): no geometry / texture growth",
+   "ok": true,
+   "info": "geometries 119→119, textures 36→36"
+  },
+  {
+   "name": "long run: no new shader programs (no recompiles)",
+   "ok": true,
+   "info": "programs 43→43"
+  },
+  {
+   "name": "v4.2.1 road texture per preset (LOW 256, MEDIUM / HIGH 512)",
+   "ok": true,
+   "info": "low:256 high:512 medium:512 low:256 medium:512"
+  },
+  {
+   "name": "v4.2.1 quality switching: textures stable (old road textures disposed)",
+   "ok": true,
+   "info": "36→36"
+  },
+  {
+   "name": "quality switching low ↔ medium ↔ high: presets applied",
+   "ok": true,
+   "info": "low:1.25 high:2 medium:1.5 low:1.25 medium:1.5"
+  },
+  {
+   "name": "quality switching: geometries stable",
+   "ok": true,
+   "info": "119→119"
+  }
+ ]
+}

@@ -136,15 +136,43 @@ on `main` against the v4 code, a **no-DOM smoke test** (`node scripts/native/no-
 test-package steps and the device checklist. New in this step: WebGL context loss / restore handling
 in `Renderer` (browser); on native the adapter does not forward those events (open item).
 
-SMOKE_RESULT
+**No-DOM smoke test** (`node scripts/native/no-dom-smoke.mjs`, result `no_dom_smoke.json`): the v4 render
+stack runs in a Web Worker — no `window`, no `document` — through a shim shaped like the native adapter
+(runtime canvas = OffscreenCanvas, images through an `Image` shim, in-memory storage). Desktop Chromium,
+SwiftShader: **10 / 11 checks pass** — WebGL2 on the runtime canvas; night city, procedural road,
+obstacles + Ring Coins, the 3D X1 from its data-URL GLB; rendering on LOW / MEDIUM / HIGH (122 / 144 / 151
+calls); every car effect; a lit frame copied out of the canvas. **Fails: context loss → restore**
+(GL error 0x9242, CONTEXT_LOST) — with canvas events not delivered (as in the native adapter, whose
+`addEventListener` is a no-op), neither three.js nor `Renderer` sees `webglcontextrestored`, so the
+picture does not come back. This is the open native item, now reproduced. It is **not** a TikTok test.
 
 ## 8 — Screenshots (this folder)
 
-SHOTS_TABLE
+| File | Content | Source |
+|---|---|---|
+| `01_ring_coins_before_after.png` | Ring Coins v4.2.0 vs v4.2.1, near and ahead | environment harness (game Renderer / Scenery / Track / ObstacleViews / Vehicle) |
+| `02_jump_camera_before_after.png` | take-off and apex, v4.2.0 vs v4.2.1 | same harness |
+| `03_shield.png` … `08_crash.png` | Shield · Turbo · Shield + Turbo · Phase Ghost · Down · Crash | **real game build** (current v4.4.0, so the car is the Step 07 model) |
+| `09_city_variation.png` | mid / far layers, v4.2.0 vs v4.2.1 | environment harness |
+| `10_low.png` · `11_medium.png` · `12_high.png` | the same frame on each preset | environment harness |
+| `13_gameplay_sequence.png` | Normal → Jump → Landing → Shield → Turbo → Ring Coins ahead → collected | real game build |
+
+All 9:16 (720 × 1280). Real-game frames: `scripts/car/gameplay-states.mjs` (drive set and `--set=effects`),
+fixed 1/60 s steps, obstacles within 45 m removed before each state so no crash ends the sequence; the
+green text bottom-left is the `?perf=1` readout. Software WebGL: colours / bloom differ from a phone GPU.
 
 ## 9 — Tests
 
-TESTS_TABLE
+| Check | Result |
+|---|---|
+| `npx tsc --noEmit` | pass |
+| `npm test` (11 suites) | pass — incl. new: airborne camera framing (`test:camera`), preset particle / road-texture rules and the `?perf=1` recorder (`test:env`) |
+| `test:envshots` → `env_selftest.json` (real WebGL) | 6 / 6 — no geometry / texture / program growth over 3.6 km; road texture 256 / 512 per preset; **textures stable across preset switches** |
+| VFX / animation self-test | 24 / 24 (Step 07 run, `docs/3d-upgrade/step07/vfx_selftest.json`) |
+| No-DOM smoke | 10 / 11 (context restore fails — documented above) |
+| Profiler (`perf_desktop_swiftshader.json`) | no page errors on any preset; preset-switch texture counts below |
+| H5 build / single file | pass; single file loads to Home without page errors |
+| Gameplay balance / hitboxes / timing | unchanged — `git diff d222b92 -- src/gameplay src/core/Rng.ts server` is empty |
 
 ## Known limitations
 

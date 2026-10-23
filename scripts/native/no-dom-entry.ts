@@ -18,9 +18,13 @@ console.error = (...a: any[]) => {
   origErr(...a);
 };
 
+console.log('worker: start');
 (async () => {
+ try {
   const steps: { name: string; ok: boolean; info: string }[] = [];
   const step = async (name: string, f: () => any) => {
+    console.log('step', name);
+    const t0 = Date.now();
     try {
       const info = await f();
       steps.push({ name, ok: true, info: info ? String(info) : '' });
@@ -103,8 +107,11 @@ console.error = (...a: any[]) => {
       track.update(dist, 0.6, turbo);
       views.update(live, i * dt, dt);
       rig.update(dt, p, 0.6, turbo);
-      renderer.render();
+      // simulate every 1/60 s step, draw every 10th and the last one (software GL is slow; every
+      // effect still reaches the GPU), then wait for the GPU so work never piles up
+      if (i % 10 === 0 || i === n - 1) renderer.render();
     }
+    gl.finish();
     const e = gl.getError();
     if (e) throw new Error('GL error 0x' + e.toString(16));
   };
@@ -143,18 +150,20 @@ console.error = (...a: any[]) => {
     frame(2);
   });
   let drawn = 0;
-  await step('pixels were drawn (read back the frame)', () => {
+  await step('pixels were drawn (frame copied out of the runtime canvas)', async () => {
+    // synchronous readPixels stalls in this worker + SwiftShader setup: copy the presented frame instead
     const r = renderer.renderer;
-    const w = r.domElement.width;
-    const h = r.domElement.height;
-    const px = new Uint8Array(4 * 64);
     r.setRenderTarget(null);
-    r.autoClear = true;
-    r.render(scene, rig.camera);
-    gl.readPixels(Math.floor(w / 2) - 32, Math.floor(h / 2), 64, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
-    for (let i = 0; i < 64; i++) if (px[i * 4] + px[i * 4 + 1] + px[i * 4 + 2] > 30) drawn++;
+    renderer.render();
+    const cv = r.domElement as OffscreenCanvas;
+    const bm = cv.transferToImageBitmap();
+    const c2 = new OffscreenCanvas(bm.width, bm.height);
+    const g2 = c2.getContext('2d')!;
+    g2.drawImage(bm, 0, 0);
+    const row = g2.getImageData(Math.floor(bm.width / 2) - 32, Math.floor(bm.height * 0.6), 64, 1).data;
+    for (let i = 0; i < 64; i++) if (row[i * 4] + row[i * 4 + 1] + row[i * 4 + 2] > 30) drawn++;
     if (!drawn) throw new Error('blank frame');
-    return `${drawn}/64 lit pixels on the centre row (${w}×${h})`;
+    return `${drawn}/64 lit pixels on a row through the car (${bm.width}×${bm.height})`;
   });
   await step('context loss → restore (WEBGL_lose_context)', async () => {
     const ext = gl.getExtension('WEBGL_lose_context');
@@ -168,4 +177,7 @@ console.error = (...a: any[]) => {
     return `restored, lost flag ${renderer.lost}`;
   });
   post({ steps, errors, images: shimLog.length });
+ } catch (e: any) {
+  post({ fatal: String(e?.stack ?? e).slice(0, 800), errors });
+ }
 })();
