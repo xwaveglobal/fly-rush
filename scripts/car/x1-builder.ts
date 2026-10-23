@@ -760,7 +760,7 @@ function buildBody(P: Parts) {
     }
     for (const flip of [false, true]) P.add('Body_Paint', M.paint, grid(header, flip));
   }
-  // ---- v4.4 (Step 07): two seats with red edge light behind the glass (the master shows them through
+  // ---- v4.4 (Step 07): two dark seats behind the glass (the master shows them through
   // the rear window; an all-black cabin read as an opaque block from the gameplay camera)
   for (const sx of [-1, 1]) {
     const seat = T(sx * 0.27, 0.6, 0.64, 0.3); // backrest leans back toward the rear (+z)
@@ -768,8 +768,7 @@ function buildBody(P: Parts) {
     back.translate(0, 0.21, 0);
     P.add('Interior', M.interior, back, seat);
     P.add('Interior', M.interior, new THREE.BoxGeometry(0.36, 0.08, 0.4), T(sx * 0.27, 0.62, 0.42));
-    for (const ex of [-0.17, 0.17]) P.add('Interior_SeatTrim', M.ledSoft, new THREE.BoxGeometry(0.014, 0.38, 0.014), seat.clone().multiply(T(ex, 0.2, 0.05)));
-    P.add('Interior_SeatTrim', M.ledSoft, new THREE.BoxGeometry(0.35, 0.014, 0.014), seat.clone().multiply(T(0, 0.405, 0.05)));
+    // (no lit red seat trims: at gameplay size they read as red lines drawn on the roof glass)
   }
   const gz = stations(G_Z0, G_Z1, Q.glassStep);
   const glassGeo = (() => {
