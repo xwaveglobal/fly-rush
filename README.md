@@ -187,6 +187,12 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v4.4.1 — X1 model back to the v4.2.0 car (owner request)
+
+- The in-game 3D car is the v4.2.0 X1 again (the model in the Step 04 screenshots, the owner's favourite): `src/assets/models/xwave-x1.glb`, `scripts/car/x1-builder.ts` and `tests/car.test.ts` restored from `d222b92`.
+- Everything else from v4.2.1–v4.4.0 stays: Ring Coins, jump camera, VFX / particle presets, LOW road texture, city variety, `?perf=1`, preset-switch texture-leak fix, context-loss handling.
+- The Step 06 and Step 07 cars are kept: `assets-src/x1/rollback/` (GLBs) and git commit `d00b71c` (builder + tools).
+
 ## v4.4.0 — shorter rear, gameplay-camera polish (3D upgrade Step 07)
 
 - The X1's rear overhang is 11 cm shorter (0.94 → 0.84 m), compressed only behind the rear wheel arch; wheelbase, cabin and front unchanged.

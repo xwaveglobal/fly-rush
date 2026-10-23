@@ -73,11 +73,10 @@ check(!scene.getObjectByName('Diffuser_Rail') && !scene.getObjectByName('NitroSo
       }
     }
   });
-  // v4.3 (Step 06): the master's diffuser fins reach down below the bumper — 8 cm off the road, rest ≥ 10 cm
-  check(lowest >= 0.075, `nothing hangs below 7.5 cm: lowest body point ${lowest.toFixed(3)} m (${who})`);
+  check(lowest >= 0.1, `nothing hangs below the body: lowest body point ${lowest.toFixed(3)} m (${who})`);
   const bumper = new THREE.Box3().setFromObject(scene.getObjectByName('Rear_LowerBumper')!);
   const diff = new THREE.Box3().setFromObject(scene.getObjectByName('Diffuser')!);
-  check(diff.max.z <= bumper.max.z + 0.001 && diff.min.x >= bumper.min.x && diff.max.x <= bumper.max.x && diff.min.y >= 0.075, 'diffuser inside the bumper outline; its fins end flush with the bumper face and ≥ 7.5 cm off the road');
+  check(diff.min.y >= bumper.min.y - 0.001 && diff.max.z <= bumper.max.z + 0.001 && diff.min.x >= bumper.min.x, 'diffuser sits inside the lower bumper (recessed, fins attached)');
   for (const id of ['NitroSocket_L', 'NitroSocket_R']) {
     const so = scene.getObjectByName(id)!.getWorldPosition(new THREE.Vector3());
     check(Math.abs(so.x) < 0.52 && so.y > 0.155 && so.y < 0.3 && so.z > bumper.max.z - 0.12 && so.z <= bumper.max.z + 0.01, `${id} hidden in the diffuser recess (${so.toArray().map((n) => n.toFixed(2)).join(', ')})`);
@@ -119,14 +118,11 @@ check(!scene.getObjectByName('Diffuser_Rail') && !scene.getObjectByName('NitroSo
   });
   check(mirrors.length === 0, `no side-mirror meshes or materials${mirrors.length ? ' — found ' + mirrors.join(', ') : ''}`);
   const len = box.max.z - box.min.z;
-  check(len > 4.0 && len < 4.4, `body length ${len.toFixed(3)} m (design 4.60 m → −${((1 - len / 4.6) * 100).toFixed(1)} %)`);
+  check(len > 4.1 && len < 4.4, `body length ${len.toFixed(3)} m (design 4.60 m → −${((1 - len / 4.6) * 100).toFixed(1)} %)`);
   const wb = scene.getObjectByName('Wheel_RL')!.position.z - scene.getObjectByName('Wheel_FL')!.position.z;
   check(wb > 2.4 && wb < 2.62, `wheelbase ${wb.toFixed(3)} m (believable for the length: ${(wb / len).toFixed(2)} of it)`);
-  // v4.3 (Step 06): track +2 cm per side so the width / height ratio matches the rear master (1.81)
-  check(Math.abs(size.x - 2.13) < 0.03, `overall width ${size.x.toFixed(3)} m = rear tyres (master ratio), no mirror bulge`);
-  // v4.4 (Step 07): shorter rear overhang (0.94 → 0.84 m, compressed behind the rear arch only)
-  const rearOver = box.max.z - scene.getObjectByName('Wheel_RL')!.position.z;
-  check(rearOver > 0.78 && rearOver < 0.88 && ledZ > box.max.z - 0.06, `rear overhang ${rearOver.toFixed(3)} m (Step 06: 0.942), LED at the tail (z ${ledZ.toFixed(2)})`);
+  check(Math.abs(size.x - 2.09) < 0.03, `overall width kept (${size.x.toFixed(3)} m = rear tyres, no mirror bulge)`);
+  check(Math.abs(box.max.z - 2.242) < 0.002 && Math.abs(ledZ - 2.21) < 0.01, 'rear end unchanged (tail 2.242 m, LED plane 2.21 m)');
   check(box.min.y > -0.001, `nothing below the road (min y ${box.min.y.toFixed(3)})`);
   const fl = scene.getObjectByName('Tyre_FL')!;
   const tb = new THREE.Box3().setFromObject(fl);
