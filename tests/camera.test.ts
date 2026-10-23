@@ -28,6 +28,7 @@ function rigFor(aspect: number, mode: 'run' | 'menu', preset: ChaseName | null) 
   rig.resize(aspect);
   rig.car3d = true;
   rig.mode = mode;
+  rig.dynamic = true; // the framing checks below are for the moving chase camera (Settings → Camera motion ON)
   if (preset) rig.presetOverride = CAMERA.presets[preset];
   return rig;
 }
@@ -170,30 +171,39 @@ for (const [label, aspect] of ASPECTS) {
   check(spread < 0.05, `home ${label}: orbit distance constant (spread ${spread.toFixed(3)} m)`);
 }
 
-// v4.6 Settings "Dive camera": OFF (default) = a dive never moves the race camera; ON = it drops with the car
+// v4.6 Settings "Camera motion": OFF (default) = fixed view — lane changes, jumps and dives never move
+// the race camera; the car stays fully on screen in every lane. ON = the camera moves with the car as before.
 {
-  const dive = (follow: boolean) => {
-    const rig = rigFor(390 / 844, 'run', null);
-    rig.diveFollow = follow;
+  const trial = (dynamic: boolean, aspect: number) => {
+    const rig = rigFor(aspect, 'run', null);
+    rig.dynamic = dynamic;
     const p = new Player();
     p.reset(1);
-    for (let i = 0; i < 120; i++) { p.update(1 / 60); rig.update(1 / 60, p, 0.4, 0); }
-    const y0 = rig.camera.position.y;
+    const step = (n: number) => { for (let i = 0; i < n; i++) { p.update(1 / 60); rig.update(1 / 60, p, 0.4, 0); } };
+    step(120);
+    const pos0 = rig.camera.position.clone();
     const q0 = rig.camera.quaternion.clone();
-    p.input('down');
-    let minY = y0, maxAng = 0;
-    for (let i = 0; i < 60; i++) {
-      p.update(1 / 60);
-      rig.update(1 / 60, p, 0.4, 0);
-      minY = Math.min(minY, rig.camera.position.y);
-      maxAng = Math.max(maxAng, rig.camera.quaternion.angleTo(q0));
+    let move = 0, ang = 0, worstEdge = 1;
+    const track = () => {
+      move = Math.max(move, rig.camera.position.distanceTo(pos0));
+      ang = Math.max(ang, (rig.camera.quaternion.angleTo(q0) * 180) / Math.PI);
+      const vy = carHeight(p.y, HEIGHT.LOW, HEIGHT.NORMAL, HEIGHT.HIGH, CAR_HALF.y, true) - 0.51;
+      const b = screenBox(rig.camera, car.clone().translate(new THREE.Vector3(p.x, Math.max(0, vy), 0)));
+      worstEdge = Math.min(worstEdge, b.x0, 1 - b.x1, b.y0, 1 - b.y1);
+    };
+    for (const a of ['left', 'up', 'down', 'right', 'right', 'up', 'down'] as const) {
+      p.input(a);
+      for (let i = 0; i < 70; i++) { step(1); track(); }
     }
-    return { drop: y0 - minY, ang: (maxAng * 180) / Math.PI };
+    return { move, ang, worstEdge };
   };
-  const off = dive(false), on = dive(true);
-  check(new CameraRig().diveFollow === false, 'Dive camera is OFF by default');
-  check(off.drop < 0.01 && off.ang < 0.6, `Dive camera OFF: dive keeps the camera (drop ${(off.drop * 100).toFixed(1)} cm, angle ${off.ang.toFixed(2)}° — sway / roll only)`);
-  check(on.drop > 0.3, `Dive camera ON: camera drops with the dive as before (${on.drop.toFixed(2)} m)`);
+  check(new CameraRig().dynamic === false, 'Camera motion is OFF by default');
+  for (const [label, aspect] of ASPECTS) {
+    const off = trial(false, aspect), on = trial(true, aspect);
+    check(off.move < 0.02 && off.ang < 0.05, `${label} Camera motion OFF: lanes / jumps / dives never move the camera (max ${(off.move * 100).toFixed(1)} cm, ${off.ang.toFixed(3)}°)`);
+    check(off.worstEdge > 0, `${label} Camera motion OFF: the car stays fully on screen in every lane, jumping and diving (closest edge ${(off.worstEdge * 100).toFixed(1)} % of the screen)`);
+    check(on.move > 0.5, `${label} Camera motion ON: the camera follows as before (moves up to ${on.move.toFixed(2)} m)`);
+  }
 }
 
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED');

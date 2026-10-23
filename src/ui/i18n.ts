@@ -33,7 +33,7 @@ const T: [string, string, string, string, string, string][] = [
   ['Sound', 'Son', 'サウンド', 'Som', 'Sound', 'Sonido'],
   ['Music', 'Musique', '音楽', 'Música', 'Musik', 'Música'],
   ['Vibration', 'Vibration', '振動', 'Vibração', 'Vibration', 'Vibración'],
-  ['Dive camera', 'Caméra plongée', 'ダイブカメラ', 'Câmera mergulho', 'Tauch-Kamera', 'Cámara al bajar'],
+  ['Camera motion', 'Caméra mobile', 'カメラ追従', 'Câmera em movimento', 'Kamera-Bewegung', 'Cámara en movimiento'],
   ['Hint arrows', 'Flèches', 'ヒント', 'Setas', 'Pfeile', 'Flechas'],
   ['Comfort', 'Confort', '目に優しい', 'Conforto', 'Komfort', 'Confort'],
   ['Buy items', 'Acheter', 'アイテム購入', 'Comprar itens', 'Items kaufen', 'Comprar objetos'],

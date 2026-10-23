@@ -18,10 +18,12 @@ export class CameraRig {
   /** v4: the 3D car is on screen → home uses CAMERA.home, the race uses the CAMERA.chase preset */
   car3d = false;
   /**
-   * v4.6 Settings "Dive camera": true = the race camera drops with the car when it dives (DOWN), as
-   * before; false (default) = a dive never changes the camera position / angle (jumps still lift it)
+   * v4.6 Settings "Camera motion": true = the race camera moves with the car as before (follows lane
+   * changes, lifts on jumps, drops on dives, sways and rolls); false (default) = a fixed view down the
+   * centre of the road — lane changes, jumps and dives never change its position or angle. Only flights
+   * far above a normal hop (Roadster / HYPER / SOS) still lift it, so the car never leaves the screen.
    */
-  diveFollow = false;
+  dynamic = false;
   /** override the chase preset (previews / tests); null = CAMERA.chase */
   presetOverride: ChasePreset | null = null;
   get preset(): ChasePreset {
@@ -142,16 +144,18 @@ export class CameraRig {
         if (this.swingT > 0) this.swingT = Math.max(0, this.swingT - dt);
         const sk = this.swingDur > 0 ? Math.sin(Math.PI * (1 - this.swingT / this.swingDur)) : 0;
         const C = this.preset;
-        const sway = Math.sin(t * 0.55) * 0.18 + sk * 2.6;
-        const back = C.back + this.pushBack - speedFactor * C.speedBack;
+        const dyn = this.dynamic;
+        const sway = (dyn ? Math.sin(t * 0.55) * 0.18 : 0) + sk * 2.6;
+        const F = CAMERA.fixed;
+        const back = C.back + this.pushBack - speedFactor * C.speedBack + (dyn ? 0 : F.back);
         // above the normal HIGH hop (Roadster / HYPER jumps) the camera climbs almost 1:1 so the car stays framed
         // a normal hop is seen rising clearly over the obstacle (camera follows only a little);
         // above it (Roadster / HYPER) the camera climbs almost 1:1 so the car stays framed
-        let base = Math.min(py, 3.05) - 1;
-        if (!this.diveFollow) base = Math.max(0, base); // dive (below road height): camera stays put
-        const extra = Math.max(0, py - 3.05);
-        wantPos.set(px * C.followX + sway, C.height + base * C.lift + extra * 0.95 + sk * 0.9, back - sk * 0.8);
-        wantLook.set(px * C.lookX, C.lookY + base * C.lookLift + extra * 0.8, C.lookZ);
+        const base = dyn ? Math.min(py, 3.05) - 1 : 0; // fixed view: no lift on a hop, no drop on a dive
+        const extra = Math.max(0, py - (dyn ? 3.05 : F.hopTop));
+        const fx = dyn ? px : 0; // fixed view: never follows the lane
+        wantPos.set(fx * C.followX + sway, C.height + (dyn ? 0 : F.height) + base * C.lift + extra * 0.95 + sk * 0.9, back - sk * 0.8);
+        wantLook.set(fx * C.lookX, C.lookY + (dyn ? 0 : F.lookY) + base * C.lookLift + extra * 0.8, C.lookZ);
         fov = this.baseFov + C.fov + speedFactor * (C.fovSpeed ?? 7) + turbo * (C.fovTurbo ?? 9) + this.fovKick;
         break;
       }
@@ -187,7 +191,7 @@ export class CameraRig {
       this.camera.position.y += (Math.sin(t * 53.7) + Math.sin(t * 29.9)) * 0.14 * s;
     }
     this.camera.lookAt(this.look);
-    const wantRoll = this.mode === 'run' && p ? clamp(-p.vx * 0.006, -0.06, 0.06) : 0;
+    const wantRoll = this.mode === 'run' && p && this.dynamic ? clamp(-p.vx * 0.006, -0.06, 0.06) : 0;
     this.roll = lerp(this.roll, wantRoll, damp(6, dt));
     this.camera.rotateZ(this.roll + (s > 0 ? Math.sin(t * 47) * 0.03 * s : 0));
     this.fovKick = lerp(this.fovKick, 0, damp(4, dt));

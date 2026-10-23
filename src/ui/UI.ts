@@ -107,8 +107,8 @@ export interface UIHandlers {
   toggleAssist(): void;
   toggleComfort(): void;
   toggleVibrate(): void;
-  /** v4.6 setting: the race camera follows the car down when it dives (off = the view stays put) */
-  toggleDiveCam(): void;
+  /** v4.6 setting: the race camera moves with the car (lanes, jumps, dives); off = fixed view */
+  toggleCamMotion(): void;
   skipTutorial(): void;
   // ---- ads
   continueAd(): void;
@@ -446,7 +446,7 @@ export class UI {
           <div class="stile"><span class="si">≋</span><span class="sl">Vibration</span><button class="switch" data-a="vibrate" role="switch" aria-label="Vibration"><i></i></button></div>
           <div class="stile"><span class="si">${ICON.info}</span><span class="sl">Hint arrows</span><button class="switch" data-a="assist" role="switch" aria-label="Danger arrows"><i></i></button></div>
           <div class="stile"><span class="si">◐</span><span class="sl">Eye comfort</span><button class="switch" data-a="comfort" role="switch" aria-label="Comfort visuals"><i></i></button></div>
-          <div class="stile"><span class="si">🎥</span><span class="sl">Dive camera</span><button class="switch" data-a="divecam" role="switch" aria-label="Camera follows the dive"><i></i></button></div>
+          <div class="stile"><span class="si">🎥</span><span class="sl">Camera motion</span><button class="switch" data-a="cammotion" role="switch" aria-label="Camera moves with the car"><i></i></button></div>
           <div class="stile wide"><span class="si">${ICON.gear}</span><span class="sl">Graphics</span><div class="seg" data-k="qseg"><button data-a="quality" data-v="low">LO</button><button data-a="quality" data-v="medium">MED</button><button data-a="quality" data-v="high">HI</button></div></div>
         </div>
         <button class="srow lang acct" data-a="account"><span class="si">☁️</span><span class="sl">Account</span><b data-k="acctline">Guest</b>${ICON.chevR}</button>
@@ -823,7 +823,7 @@ export class UI {
         case 'assist': return this.h.toggleAssist();
         case 'comfort': return this.h.toggleComfort();
         case 'vibrate': return this.h.toggleVibrate();
-        case 'divecam': return this.h.toggleDiveCam();
+        case 'cammotion': return this.h.toggleCamMotion();
         case 'tutskip': return this.h.skipTutorial();
         case 'track': return this.h.pickTrack(el.dataset.id!);
         case 'spick': {
@@ -1074,7 +1074,7 @@ export class UI {
     this.root.querySelectorAll<HTMLElement>('.switch[data-a="sound"]').forEach((b) => b.setAttribute('aria-checked', String(s.settings.sound)));
     this.root.querySelectorAll<HTMLElement>('.switch[data-a="music"]').forEach((b) => b.setAttribute('aria-checked', String(s.settings.music)));
     this.root.querySelectorAll<HTMLElement>('.switch[data-a="comfort"]').forEach((b) => b.setAttribute('aria-checked', String(s.settings.comfort !== false)));
-    this.root.querySelectorAll<HTMLElement>('.switch[data-a="divecam"]').forEach((b) => b.setAttribute('aria-checked', String(s.settings.diveCam === true)));
+    this.root.querySelectorAll<HTMLElement>('.switch[data-a="cammotion"]').forEach((b) => b.setAttribute('aria-checked', String(s.settings.camMotion === true)));
     this.root.querySelectorAll<HTMLElement>('.switch[data-a="vibrate"]').forEach((b) => b.setAttribute('aria-checked', String(s.settings.vibrate !== false)));
     this.root.querySelectorAll<HTMLElement>('.switch[data-a="assist"]').forEach((b) => b.setAttribute('aria-checked', String(s.settings.assist !== false)));
     const q = this.liveQuality ?? s.settings.quality;

@@ -457,6 +457,13 @@ export const CAMERA = {
    */
   // v4.5.1 (owner): the orbit stays INSIDE the road (camera x ≤ dist·sin(yaw+swing) ≈ 3.1 m, the guard rails
   // are at ±4.3 m) — it used to swing out past the right rail, so the barrier crossed the whole view
+  /**
+   * v4.6 Settings "Camera motion" OFF (default): fixed view down the centre of the road. It never follows
+   * the lane, so it sits further back / higher than the chase preset (back / height added, metres) to
+   * keep the car fully on screen in both outer lanes on narrow portrait phones; `hopTop` = gameplay
+   * height above which (Roadster / HYPER / SOS flights only) it still climbs so the car stays framed.
+   */
+  fixed: { back: 2.9, height: 0.75, lookY: 0.15, hopTop: 3.4 },
   home: { yaw: 0.24, yawSwing: 0.14, speed: 0.22, height: 2.45, dist: 8.3, lookY: 0.98, lookZ: 0.2, fovScale: 0.82 },
 };
 

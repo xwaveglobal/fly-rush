@@ -508,9 +508,9 @@ export class Game {
       toggleQuality: (v?: string) => this.toggleQuality(v),
       toggleAssist: () => this.toggleAssist(),
       toggleComfort: () => this.toggleComfort(),
-      toggleDiveCam: () => {
-        this.save.settings.diveCam = this.save.settings.diveCam !== true;
-        this.rig.diveFollow = this.save.settings.diveCam;
+      toggleCamMotion: () => {
+        this.save.settings.camMotion = this.save.settings.camMotion !== true;
+        this.rig.dynamic = this.save.settings.camMotion;
         this.persist();
         this.audio.play('click');
         this.ui.refreshProfile(this.save);
@@ -533,7 +533,7 @@ export class Game {
 
     this.audio.setSfx(this.save.settings.sound);
     this.audio.setMusic(this.save.settings.music);
-    this.rig.diveFollow = this.save.settings.diveCam === true; // v4.6 setting, default OFF
+    this.rig.dynamic = this.save.settings.camMotion === true; // v4.6 setting "Camera motion", default OFF
     this.migrateV2();
     // Step 06.5: classes reached before the celebration existed count as already celebrated (first-time only)
     if (!this.save.classCelebrated) this.save.classCelebrated = CLASSES.slice(rankIdx('A'), rankIdx(this.rank) + 1).map(String);

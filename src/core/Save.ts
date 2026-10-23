@@ -20,7 +20,7 @@ export interface SaveData {
   unlocked: string[];
   upgrades: { engine: number; shield: number; magnet: number };
   missions: { active: { id: string; progress: number }[]; completed: number; rank: number };
-  settings: { sound: boolean; music: boolean; quality: 'high' | 'medium' | 'low'; gfx3?: boolean; speed: 'easy' | 'normal' | 'hard'; assist?: boolean; comfort?: boolean; autoClaim?: boolean; vibrate?: boolean; lang?: string; /** v4.6: race camera follows the DOWN dive (default off) */ diveCam?: boolean };
+  settings: { sound: boolean; music: boolean; quality: 'high' | 'medium' | 'low'; gfx3?: boolean; speed: 'easy' | 'normal' | 'hard'; assist?: boolean; comfort?: boolean; autoClaim?: boolean; vibrate?: boolean; lang?: string; /** v4.6 "Camera motion": race camera moves with the car (default off = fixed view) */ camMotion?: boolean };
   /** rewarded "free coins": day key + how many claimed that day */
   adFreeDay?: string;
   adFreeCount?: number;
