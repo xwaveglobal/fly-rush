@@ -36,7 +36,7 @@ import { Ads, ADS } from './ads/Ads.ts';
 import { advancedScript, basicScript, boostScript, WORLD_LESSONS, type BoostKind, type TrainingScript, type TutorialStep } from './gameplay/Tutorial.ts';
 import { PASS_H, PASS_L, PASS_N } from './gameplay/types.ts';
 import { MAPS, TIER_NAME, type Tier } from './gameplay/Difficulty.ts';
-import { FAIRNESS, V2_POWERUPS, BONUS_SET, CLOUD } from './config.ts';
+import { FAIRNESS, V2_POWERUPS, BONUS_SET, CLOUD, GRAPHICS, nextGraphics, type GraphicsQuality } from './config.ts';
 import { RANK_ORDER, rankDist, expRate, VARIANTS, type Variant } from './gameplay/Difficulty.ts';
 import type { Box, PickupKind, RowSpec } from './gameplay/types.ts';
 import { Meta, type EventResult, type RunSummary } from './meta/Meta.ts';
@@ -58,7 +58,7 @@ import { drawShareCard, shareImage, copyText } from './ui/ShareCard.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v4.1.3';
+const VERSION = 'v4.2.0';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -281,6 +281,9 @@ export class Game {
     const scene = this.renderer.scene;
     this.scenery = new Scenery(scene);
     scene.add(this.scenery.group, this.track.group, this.vehicle.root);
+    // v4.2 graphics preset: city density / extras, road detail (the renderer applied its part)
+    this.scenery.setQuality(GRAPHICS[this.renderer.quality]);
+    this.track.setQuality(GRAPHICS[this.renderer.quality]);
     const worldRoot = new THREE.Group();
     scene.add(worldRoot);
     this.obstacleViews = new ObstacleViews(worldRoot);
@@ -498,7 +501,7 @@ export class Game {
       upgrade: (k) => this.buyUpgrade(k),
       toggleSound: () => this.toggleSound(),
       toggleMusic: () => this.toggleMusic(),
-      toggleQuality: () => this.toggleQuality(),
+      toggleQuality: (v?: string) => this.toggleQuality(v),
       toggleAssist: () => this.toggleAssist(),
       toggleComfort: () => this.toggleComfort(),
       toggleVibrate: () => {
@@ -3027,7 +3030,7 @@ export class Game {
     const speedFactor = clamp((w.speed - SPEED.start) / (SPEED.max - SPEED.start), 0, 1);
     if (this.state !== 'countdown') {
       this.scenery.update(w.dist, this.time, dt);
-      this.track.update(w.dist);
+      this.track.update(w.dist, this.state === 'run' ? speedFactor : 0, this.state === 'run' ? this.turboK : 0);
     }
     // v2 Bonus showcase specials: eased in / out over the effect
     if (this.showcaseT > 0) {
@@ -3076,6 +3079,8 @@ export class Game {
     this.vehicle.auraTarget = racing && this.showcaseK === 'ghost' ? 1 : 0;
     // steady while it lasts; a timed shield fades down over its last 2 s instead of flickering
     this.vehicle.shieldTarget = racing && run.shield ? (run.shieldT > 0 && run.shieldT < 2 ? 0.35 + 0.325 * run.shieldT : 1) : 0;
+    // Turbo smashes obstacles → it wears an aura too (lime), dimming over its last second
+    this.vehicle.turboTarget = racing && run.turboT > 0 ? Math.min(1, 0.35 + 0.65 * run.turboT) : 0;
     // boost look while Turbo runs or a Roadster / HYPER / SOS rocket is climbing
     this.vehicle.boostTarget = run && this.state === 'run' && (run.turboT > 0 || (this.world.player.isSuper && this.world.player.vphase !== 'recover')) ? 1 : 0;
     if (this.debugCol) {
@@ -3366,15 +3371,18 @@ export class Game {
     this.ui.toast(this.save.settings.comfort !== false ? '◐ Eye comfort ON · fewer speed lines, less blur & shake, softer glows' : '◐ Eye comfort OFF · full speed effects', '#9fb3dd');
   }
 
-  private toggleQuality() {
-    this.save.settings.quality = this.renderer.quality === 'high' ? 'low' : 'high';
+  private toggleQuality(v?: string) {
+    // a preset picked from the LO / MED / HI switch, or LOW → MEDIUM → HIGH → LOW from the cycle button
+    this.save.settings.quality = v === 'low' || v === 'medium' || v === 'high' ? v : nextGraphics(this.renderer.quality);
     this.applyQuality(this.save.settings.quality);
     this.persist();
     this.audio.play('click');
   }
 
-  private applyQuality(q: 'high' | 'low') {
+  private applyQuality(q: GraphicsQuality) {
     this.renderer.setQuality(q);
+    this.scenery.setQuality(GRAPHICS[q]);
+    this.track.setQuality(GRAPHICS[q]);
     this.particles.setPixelRatio(this.renderer.pixelRatio);
     this.smoke.setPixelRatio(this.renderer.pixelRatio);
     this.ui.refreshProfile(this.save, q);
@@ -3393,7 +3401,7 @@ export class Game {
     const avg = this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
     this.fps = 1 / Math.max(1e-4, avg);
     this.qualityChecked += rawDt;
-    if (this.state === 'run' && this.qualityChecked > 4 && this.renderer.quality === 'high' && this.fps < 42 && !DEBUG && !/[?&]noauto/.test(location.search)) {
+    if (this.state === 'run' && this.qualityChecked > 4 && this.renderer.quality !== 'low' && this.fps < 42 && !DEBUG && !/[?&]noauto/.test(location.search)) {
       this.qualityChecked = 0;
       this.frameTimes.length = 0;
       // graceful scaling: resolution 2 → 1.75 → 1.5, then bloom off, only then LOW (session only)

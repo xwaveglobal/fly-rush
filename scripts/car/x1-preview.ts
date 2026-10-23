@@ -157,6 +157,7 @@ function meshLoaded() {
     }
   };
   if (q.get('shield')) v.shieldTarget = 1;
+  if (q.get('turbo')) v.turboTarget = 1; // Turbo (smashes obstacles): lime aura
   if (q.get('ghost')) v.showcase = { kind: 'ghost', e: 1 };
   step(60);
   rig.snap();
@@ -470,6 +471,15 @@ function meshLoaded() {
   v.boostTarget = 0;
   step(240); // the boost light envelope fades first, then hold 0.25 s, then the slower close
   check('nitro end (no jump): spoiler retracted', mesh.spoilerK < 0.03, `spoiler ${mesh.spoilerK.toFixed(3)}`);
+  // Turbo aura (Turbo smashes obstacles): on with the shield, both visible, Turbo shell outside
+  v.turboTarget = 1;
+  step(30);
+  const ta = mesh.turboAura;
+  check('turbo: lime aura visible, follows the car', ta.mesh.visible && ta.k > 0.95 && ta.mesh.parent === mesh.root, `k ${ta.k.toFixed(2)}`);
+  check('turbo + shield: both shells, turbo outside', aura.mesh.visible && ta.mesh.scale.x > aura.mesh.scale.x, `${ta.mesh.scale.x.toFixed(2)} > ${aura.mesh.scale.x.toFixed(2)}`);
+  v.turboTarget = 0;
+  step(90);
+  check('turbo ends: its aura fades out and hides', !ta.mesh.visible && ta.k === 0, `k ${ta.k}`);
   v.shieldTarget = 0;
   step(90);
   check('shield expires: aura faded out and hidden', !aura.mesh.visible && aura.k === 0, `k ${aura.k}`);

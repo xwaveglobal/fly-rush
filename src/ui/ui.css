@@ -1428,6 +1428,8 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .stile .sl { font: 700 12.5px var(--font-body); color: #dbe6ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .stile .switch { transform: scale(.85); transform-origin: right center; }
 .stile .seg button { padding: 4px 7px; font-size: 11px; }
+/* v4.2: full-row tiles (three graphics presets, long labels) */
+.stile.wide { grid-column: 1 / -1; }
 .srow.lang { appearance: none; width: 100%; display: grid; grid-template-columns: 22px 1fr auto 16px; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 12px; background: var(--card); border: 1px solid var(--card-rim); color: #dbe6ff; font: 700 13px var(--font-body); cursor: pointer; text-align: left; }
 .srow.lang b { color: #fff; font-weight: 800; }
 .srow.lang svg { width: 16px; height: 16px; }

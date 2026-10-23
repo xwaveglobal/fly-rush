@@ -20,7 +20,7 @@ export interface SaveData {
   unlocked: string[];
   upgrades: { engine: number; shield: number; magnet: number };
   missions: { active: { id: string; progress: number }[]; completed: number; rank: number };
-  settings: { sound: boolean; music: boolean; quality: 'high' | 'low'; speed: 'easy' | 'normal' | 'hard'; assist?: boolean; comfort?: boolean; autoClaim?: boolean; vibrate?: boolean; lang?: string };
+  settings: { sound: boolean; music: boolean; quality: 'high' | 'medium' | 'low'; gfx3?: boolean; speed: 'easy' | 'normal' | 'hard'; assist?: boolean; comfort?: boolean; autoClaim?: boolean; vibrate?: boolean; lang?: string };
   /** rewarded "free coins": day key + how many claimed that day */
   adFreeDay?: string;
   adFreeCount?: number;
@@ -118,7 +118,8 @@ const defaults = (): SaveData => ({
   settings: {
     sound: true,
     music: true,
-    quality: 'high',
+    quality: 'medium', // v4.2: MEDIUM until device benchmarks exist (a slow device still steps down)
+    gfx3: true,
     speed: 'normal',
     assist: true,
     comfort: true,
@@ -175,6 +176,12 @@ export function loadSave(): SaveData {
       p.settings.quality = 'high';
       p.settings.sound = true;
       p.settings.music = true;
+    }
+    // v4.2 three graphics presets: the old default HIGH becomes MEDIUM once (a stored LOW stays LOW);
+    // the player can pick HIGH again in Settings
+    if (p.settings && !p.settings.gfx3) {
+      if (p.settings.quality === 'high') p.settings.quality = 'medium';
+      p.settings.gfx3 = true;
     }
     return {
       ...d,

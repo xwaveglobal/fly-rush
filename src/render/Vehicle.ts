@@ -287,6 +287,8 @@ export class Vehicle {
   shieldTarget = 0;
   private shieldK = 0;
   private shieldHitK = 0;
+  /** v4.1.4: 0..1 Turbo aura (set by the game while Turbo smashes obstacles) */
+  turboTarget = 0;
   /** 0..1 boost burst target (turbo / launch), current value */
   boostTarget = 0;
   private boostK = 0;
@@ -298,6 +300,7 @@ export class Vehicle {
     this.shieldK = 0;
     this.shieldHitK = 0;
     this.boostTarget = 0;
+    this.turboTarget = 0;
     this.boostK = 0;
     this.boostHold = 0;
     this.dome.visible = false;
@@ -310,6 +313,8 @@ export class Vehicle {
       this.mesh.nitro = 0;
       this.mesh.shield = 0;
       this.mesh.aura.reset();
+      this.mesh.turbo = 0;
+      this.mesh.turboAura.reset();
       this.mesh.setGhost(0);
     }
   }
@@ -1657,6 +1662,7 @@ export class Vehicle {
       // Bonus Phase Ghost: the 3D car turns translucent with a cyan edge (materials restored after)
       this.mesh.setGhost(this.showcase?.kind === 'ghost' ? this.showcase.e : 0);
       this.mesh.shield = this.shieldTarget;
+      this.mesh.turbo = this.turboTarget;
       // DOWN: how deep the dive is (gameplay squash while diving) → wheels fold, body drops
       const duck = p.vmode === 'down' ? clamp01(p.squash / 0.32) : 0;
       this.mesh.update(dt, speed, lat, p.air, this.locked, p.vmode === 'up', duck);

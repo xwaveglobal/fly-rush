@@ -1,5 +1,5 @@
 {
- "passed": 21,
+ "passed": 24,
  "failed": 0,
  "results": [
   {
@@ -31,6 +31,21 @@
    "name": "nitro end (no jump): spoiler retracted",
    "ok": true,
    "info": "spoiler 0.004"
+  },
+  {
+   "name": "turbo: lime aura visible, follows the car",
+   "ok": true,
+   "info": "k 1.00"
+  },
+  {
+   "name": "turbo + shield: both shells, turbo outside",
+   "ok": true,
+   "info": "1.20 > 1.12"
+  },
+  {
+   "name": "turbo ends: its aura fades out and hides",
+   "ok": true,
+   "info": "k 0"
   },
   {
    "name": "shield expires: aura faded out and hidden",

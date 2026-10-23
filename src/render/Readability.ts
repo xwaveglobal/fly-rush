@@ -33,8 +33,9 @@ export interface ReadabilityProfile {
 }
 
 export const READABILITY: Record<WorldId, ReadabilityProfile> = {
-  // Future City: clean separation, holograms kept away from the road
-  city: { roadGlow: 0.5, roadTone: 1, roadEnv: 0.22, rails: 0.85, edge: 0xff7a3a, edgeOpacity: 0.8, hazardLift: 0.08, bloom: 0.3 },
+  // Future City (v4.2 night): darker scene → full hazard outlines and lighter obstacle metal so
+  // gates / beams never sink into the night city; road markings a touch brighter
+  city: { roadGlow: 0.6, roadTone: 1, roadEnv: 0.3, rails: 0.85, edge: 0xff7a3a, edgeOpacity: 1, hazardLift: 0.24, bloom: 0.3 },
   // Neon Tunnel: dark road + dark obstacles → strong orange hazard outlines, lighter obstacle metal, fewer reflections
   tunnel: { roadGlow: 0.42, roadTone: 1.18, roadEnv: 0.1, rails: 0.55, edge: 0xff6a1a, edgeOpacity: 1, hazardLift: 0.32, bloom: 0.26 },
   // Cloud City: bright scene → lane glow −55 %, neutral road, obstacles dominant via deep orange outlines

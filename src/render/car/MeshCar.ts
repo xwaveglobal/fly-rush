@@ -57,6 +57,10 @@ export class MeshCar {
   fx = makeCarFxUniforms();
   /** shield aura (follows the car pose) */
   aura = new ShieldAura();
+  /** Turbo aura: Turbo smashes obstacles, so it gets the same kind of shell, in its own colour */
+  turboAura = new ShieldAura(RENDER.turboAura);
+  /** Turbo level 0..1 — set by Vehicle from the gameplay Turbo state */
+  turbo = 0;
   /** shield level 0..1 — set by Vehicle from the gameplay shield state (fades over a timed shield's end) */
   shield = 0;
   private sweepT = 99;
@@ -123,7 +127,7 @@ export class MeshCar {
     this.hover.visible = false;
     this.hover.renderOrder = 2;
     this.root.add(this.hover);
-    this.root.add(this.aura.mesh);
+    this.root.add(this.aura.mesh, this.turboAura.mesh);
     void this.load();
   }
 
@@ -361,6 +365,7 @@ export class MeshCar {
     this.nozzleMat.opacity = 0.6 * k;
     // ---- shield aura + pickup light sweep
     this.aura.update(dt, locked ? 0 : this.shield);
+    this.turboAura.update(dt, locked ? 0 : this.turbo);
     if (this.sweepT < RENDER.sweepTime) {
       this.sweepT += dt;
       const u = Math.min(1, this.sweepT / RENDER.sweepTime);
@@ -421,6 +426,7 @@ export class MeshCar {
   settle(dt: number) {
     this.nitro = 0;
     this.shield = 0;
+    this.turbo = 0;
     this.update(dt, 0, 0, 0, false, false, 0);
   }
 
@@ -429,7 +435,7 @@ export class MeshCar {
     if (!this.ready) return;
     const was = this.root.visible;
     this.root.visible = true;
-    const show = [...this.flames, ...this.nozzles, this.aura.mesh, this.hover];
+    const show = [...this.flames, ...this.nozzles, this.aura.mesh, this.turboAura.mesh, this.hover];
     for (const o of show) o.visible = true;
     this.setFade(0.5);
     renderer.compile(scene, camera);
@@ -452,6 +458,7 @@ export class MeshCar {
     this.duckS.velocity = 0;
     if (this.model) this.model.scale.setScalar(this.baseScale);
     this.aura.reset();
+    this.turboAura.reset();
     this.sweepT = 99;
     this.fx.uFxSweep.value = 0;
   }

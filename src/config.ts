@@ -327,6 +327,9 @@ export const RENDER = {
   airAlignRamp: 0.45,
   /** shield aura: colour, rim strength, pulse (Hz), fade in / out rates (1/s) */
   shield: { color: 0x7fe6ff, rim: 1.25, pulse: 0.6, fadeIn: 9, fadeOut: 4 },
+  /** Turbo smashes obstacles like the shield blocks them → the same shell, in Turbo's lime, a little
+   *  larger (sits outside the shield when both run) and pulsing faster */
+  turboAura: { color: 0x8fd61f, rim: 1.0, pulse: 1.4, fadeIn: 12, fadeOut: 5, size: 1.07, name: 'TurboAura' },
   /** pickup light sweep (turbo / rockets / power-ups): seconds front → back */
   sweepTime: 0.5,
   /** crash: debris fragments (pooled), their life (s), impact flash life (s) */
@@ -374,4 +377,61 @@ export const CAMERA = {
    * fovScale × the base FOV.
    */
   home: { yaw: 0.5, yawSwing: 0.26, speed: 0.22, height: 2.3, dist: 8.3, lookY: 0.98, lookZ: 0.5, fovScale: 0.82 },
+};
+
+/**
+ * v4.2 (3D upgrade Step 04) graphics presets. Render-only: the game logic, speeds and hitboxes are
+ * identical on every preset. MEDIUM is the starting preset until device benchmarks exist; a device
+ * that cannot hold ~42 fps steps down on its own (resolution → bloom → LOW, session only).
+ */
+export type GraphicsQuality = 'low' | 'medium' | 'high';
+export interface GraphicsPreset {
+  /** max device pixel ratio */
+  dprCap: number;
+  /** bloom (half-resolution) on lights / LEDs */
+  bloom: boolean;
+  /** edge speed blur post pass */
+  speedBlur: boolean;
+  /** share of the city buildings drawn (instance count) */
+  cityDensity: number;
+  /** far skyline lights, rooftop neon, roadside signs */
+  cityExtras: boolean;
+  /** road: light pools under the lamps, joints, polished tyre tracks (shader detail) */
+  roadDetail: boolean;
+  /** max anisotropic filtering on the road (sharp markings at grazing angles) */
+  anisotropy: number;
+}
+export const GRAPHICS: Record<GraphicsQuality, GraphicsPreset> = {
+  low: { dprCap: 1.25, bloom: false, speedBlur: false, cityDensity: 0.55, cityExtras: false, roadDetail: false, anisotropy: 2 },
+  medium: { dprCap: 1.5, bloom: true, speedBlur: false, cityDensity: 0.8, cityExtras: true, roadDetail: true, anisotropy: 4 },
+  high: { dprCap: 2, bloom: true, speedBlur: true, cityDensity: 1, cityExtras: true, roadDetail: true, anisotropy: 8 },
+};
+export const GRAPHICS_ORDER: GraphicsQuality[] = ['low', 'medium', 'high'];
+/** the next preset when the player taps the Graphics setting */
+export const nextGraphics = (q: GraphicsQuality): GraphicsQuality => GRAPHICS_ORDER[(GRAPHICS_ORDER.indexOf(q) + 1) % GRAPHICS_ORDER.length];
+
+/**
+ * v4.2 road surface (metres, road-local x: 0 = road centre). Marking positions are derived from the
+ * gameplay LANES so the paint always sits between / beside the real lanes.
+ */
+export const ROAD = {
+  /** half width of the road deck (the drivable plane) */
+  half: 4.3,
+  /** length covered by one road texture tile; every painted period below divides it */
+  tile: 12,
+  /** lane divider: width, dash length (of the tile) */
+  dividerW: 0.12,
+  dash: 3,
+  /** edge line: centre distance from the road centre, width */
+  edgeX: LANES[2] + LANE_WIDTH / 2 + 0.05,
+  edgeW: 0.14,
+  /** reflective studs: spacing along the lines, size */
+  studEvery: 6,
+  stud: 0.1,
+  /** expansion joints (shader): spacing, width */
+  jointEvery: 48,
+  jointW: 0.035,
+  /** polished tyre tracks: offset from each lane centre */
+  trackX: 0.78,
+  trackW: 0.42,
 };

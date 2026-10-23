@@ -80,12 +80,20 @@ export class ShieldAura {
   k = 0;
   private hit = 0;
   private t = 0;
-  constructor() {
+  /**
+   * @param look colour / rim / pulse (Hz) / size factor — default = the shield (RENDER.shield);
+   *             Turbo uses RENDER.turboAura (it smashes obstacles too, so it gets the same language)
+   */
+  private fadeIn: number;
+  private fadeOut: number;
+  constructor(look: { color: number; rim: number; pulse: number; fadeIn: number; fadeOut: number; size?: number; name?: string } = RENDER.shield) {
+    this.fadeIn = look.fadeIn;
+    this.fadeOut = look.fadeOut;
     // half-axes chosen from the in-game car box (1.59 × 0.90 × 3.23 m) so no corner pokes through
     const g = new THREE.SphereGeometry(1, 40, 18, 0, Math.PI * 2, 0, Math.PI * 0.53);
-    const c = RENDER.shield;
+    const c = look;
     const mat = new THREE.ShaderMaterial({
-      uniforms: { k: { value: 0 }, t: { value: 0 }, hit: { value: 0 }, color: { value: new THREE.Color(c.color) }, rim: { value: c.rim } },
+      uniforms: { k: { value: 0 }, t: { value: 0 }, hit: { value: 0 }, color: { value: new THREE.Color(c.color) }, rim: { value: c.rim }, pulse: { value: c.pulse * Math.PI * 2 } },
       vertexShader: `varying vec3 vN; varying vec3 vV; varying float vY;
         void main(){
           vY = position.y;
@@ -94,15 +102,15 @@ export class ShieldAura {
           vV = normalize(-mv.xyz);
           gl_Position = projectionMatrix * mv;
         }`,
-      fragmentShader: `uniform float k; uniform float t; uniform float hit; uniform vec3 color; uniform float rim; varying vec3 vN; varying vec3 vV; varying float vY;
+      fragmentShader: `uniform float k; uniform float t; uniform float hit; uniform vec3 color; uniform float rim; uniform float pulse; varying vec3 vN; varying vec3 vV; varying float vY;
         void main(){
           float f = 1.0 - abs(dot(normalize(vN), normalize(vV)));
-          float edge = pow(f, 3.2) * rim;                       // thin contour at the silhouette
-          float base = smoothstep(0.16, 0.0, vY) * 0.9;           // luminous line on the road
+          float edge = smoothstep(0.9, 0.995, f) * rim * 1.3 + pow(f, 4.0) * 0.12; // thin contour + faint inner glow
+          float base = smoothstep(0.07, 0.0, vY) * 0.9;           // luminous line on the road
           float bands = smoothstep(0.92, 1.0, fract(vY * 5.0 - t * 0.35)) * 0.07; // faint rising scan lines
-          float pulse = 0.86 + 0.14 * sin(t * ${(c.pulse * Math.PI * 2).toFixed(3)});
-          float a = (edge + base + bands * 0.6 + 0.012) * pulse + hit * (0.25 + edge); // near-clear inside (bloom adds the rest)
-          if (!gl_FrontFacing) a *= 0.45;                          // the far side reads softer
+          float pl = 0.86 + 0.14 * sin(t * pulse);
+          float a = (edge + base + bands * 0.6 + 0.012) * pl + hit * (0.25 + edge); // near-clear inside (bloom adds the rest)
+          if (!gl_FrontFacing) a *= 0.3;                           // the far side reads softer
           gl_FragColor = vec4(color * a * k, 1.0);
         }`,
       transparent: true,
@@ -112,8 +120,9 @@ export class ShieldAura {
       toneMapped: false,
     });
     this.mesh = new THREE.Mesh(g, mat);
-    this.mesh.name = 'ShieldAura';
-    this.mesh.scale.set(1.12, 1.28, 2.3);
+    this.mesh.name = c.name ?? 'ShieldAura';
+    const f = c.size ?? 1;
+    this.mesh.scale.set(1.12 * f, 1.28 * f, 2.3 * f);
     this.mesh.position.set(0, 0, 0.09);
     this.mesh.renderOrder = 6;
     this.mesh.visible = false;
@@ -125,9 +134,8 @@ export class ShieldAura {
   }
   /** @param level 0 = off … 1 = shield active (gameplay state; a timed shield fades in its last 2 s) */
   update(dt: number, level: number) {
-    const c = RENDER.shield;
     this.t += dt;
-    this.k = approach(this.k, level, c.fadeIn, c.fadeOut, dt);
+    this.k = approach(this.k, level, this.fadeIn, this.fadeOut, dt);
     if (level <= 0 && this.k < 0.01) this.k = 0;
     this.hit = Math.max(0, this.hit - dt * 3);
     const u = this.mesh.material.uniforms;

@@ -187,6 +187,15 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v4.2.0 — procedural road, night city, graphics presets, Turbo aura (3D upgrade Step 04)
+
+- New road surface: dark asphalt with fine grain and polished tyre tracks, dashed lane dividers, solid edge lines, reflective studs, sealed shoulders, expansion joints and soft light pools under the street lamps; seamless at any speed.
+- Future City at night: deep blue-violet sky, violet haze, neon edges on the buildings, XWAVE billboards and roadside signs, distant city lights; steel guard rails and LED street lamps that streak at speed and in Turbo.
+- Scenery no longer pops in at the horizon: recycled buildings, lamps and signs fade in from the haze.
+- Graphics setting is now LOW / MEDIUM / HIGH (new default MEDIUM; old HIGH saves move to MEDIUM once, LOW stays LOW).
+- Turbo wears a lime aura around the car, like the Shield (it smashes obstacles too).
+- Gameplay, lanes, speeds, obstacles and hitboxes unchanged. Details and screenshots: `docs/3d-upgrade/step04/`.
+
 ## v4.1.3 — front end, pop-up spoiler, premium effects, dive pose (3D upgrade Step 03.2)
 
 - Front of the 3D X1 reworked: rounded nose, splitter tucked under the bumper (no plate sticking out), slim lower intake and corner air curtains, slim LED headlights in smoked housings, hood / bumper / door seams, pearl-white paint, darker glass.

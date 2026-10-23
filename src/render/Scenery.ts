@@ -6,6 +6,8 @@ import { billboardTexture, cloudSeaTexture, cloudTexture, glowTexture, groundTex
 import type { BonusWorld, LadderWorld } from '../gameplay/Spawner.ts';
 import { wrapZ } from './Track.ts';
 import { bakeVertexColors } from './merge.ts';
+import { addFarFade } from './envFx.ts';
+import type { GraphicsPreset } from '../config.ts';
 
 const NEAR = 40;
 
@@ -26,12 +28,16 @@ export interface ThemeLook {
   cloudSea: number; // opacity
   cloudTint: number;
   openAir: boolean;
+  /** v4.2: colour of the big horizon glow sprite (default: the sun colour) — at night a soft city glow */
+  glow?: number;
 }
 
 export const LOOKS: Record<WorldId, ThemeLook> = {
+  // v4.2 (Step 04): Future City at night — deep blue-violet sky, a warm city glow on the horizon,
+  // violet haze for depth; a cool moon key light + the rim keep the car's silhouette readable
   city: {
-    skyTop: 0x1a1446, skyMid: 0x6a3d92, skyBottom: 0xffa66b, fog: 0x8c6aa8, fogNear: 60, fogFar: 330,
-    hemiSky: 0xbfd4ff, hemiGround: 0x5a3d6e, hemi: 1.1, sun: 0xffc59a, sunI: 2.2, accent: 0x39b6ff, stars: 0.15, cloudSea: 0.9, cloudTint: 0xf3d6ff, openAir: true,
+    skyTop: 0x05071a, skyMid: 0x1a1645, skyBottom: 0x6a3a72, fog: 0x2a2450, fogNear: 50, fogFar: 300,
+    hemiSky: 0xa9bcff, hemiGround: 0x2e2448, hemi: 1.05, sun: 0xc9d8ff, sunI: 1.9, accent: 0x39b6ff, stars: 0.6, cloudSea: 0.5, cloudTint: 0x7a6aa8, openAir: true, glow: 0x4a2c66,
   },
   tunnel: {
     skyTop: 0x05020f, skyMid: 0x1a0638, skyBottom: 0x2a0a52, fog: 0x1a0838, fogNear: 30, fogFar: 190,
@@ -144,12 +150,34 @@ class BuildingField {
     this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.mesh.frustumCulled = false;
     for (let i = 0; i < n; i++) {
-      const s = { x: 0, w: 0, d: 0, h: 0, base: (i / n) * range, y: 0, prevZ: 0 };
+      // v4.2: low-discrepancy spacing, so any first-k slots (lower density presets) still spread
+      // evenly along the whole range — no empty stretch of city
+      const s = { x: 0, w: 0, d: 0, h: 0, base: ((i * 0.6180339887) % 1) * range, y: 0, prevZ: 0 };
       this.roll(s, i);
       this.slots.push(s);
       this.mesh.setColorAt(i, this.c.setHex(this.rng.pick(this.palette)));
     }
+    addFarFade(mat, NEAR - range);
+    this.count = n;
   }
+  /** v4.2 rooftop / corner neon on the road-facing side (one InstancedMesh for the whole field) */
+  neon: THREE.InstancedMesh | null = null;
+  addNeon(colors: number[]) {
+    const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
+    this.neon = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat, this.n * 2);
+    this.neon.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.neon.frustumCulled = false;
+    for (let i = 0; i < this.n * 2; i++) this.neon.setColorAt(i, this.c.setHex(colors[(i * 7 + (i >> 1)) % colors.length]).multiplyScalar(0.85));
+    addFarFade(mat, NEAR - this.range);
+    return this.neon;
+  }
+  /** share of buildings drawn (graphics preset) */
+  setDensity(k: number) {
+    this.count = Math.max(2, Math.round(this.n * k));
+    this.mesh.count = this.count;
+    if (this.neon) this.neon.count = this.count * 2;
+  }
+  private count = 0;
   private roll(s: { x: number; w: number; d: number; h: number; y: number }, i: number) {
     const side = i % 2 === 0 ? -1 : 1;
     s.x = side * this.rng.range(this.xMin, this.xMax);
@@ -170,8 +198,61 @@ class BuildingField {
       s.prevZ = z;
       this.m.makeScale(s.w, s.h, s.d).setPosition(s.x, s.y, z);
       this.mesh.setMatrixAt(i, this.m);
+      if (this.neon && i < this.count) {
+        const side = s.x < 0 ? -1 : 1;
+        const face = s.x - (side * s.w) / 2 - side * 0.08; // road-facing wall
+        const top = s.y + s.h;
+        // a neon line along the roof edge, and on every other building a vertical strip at the corner
+        this.m.makeScale(0.14, 0.32, s.d * 0.92).setPosition(face, top - 0.6, z);
+        this.neon.setMatrixAt(i * 2, this.m);
+        if (i % 2 === 0) this.m.makeScale(0.14, Math.min(s.h * 0.5, 22), 0.14).setPosition(face, top - Math.min(s.h * 0.5, 22) / 2 - 2, z + s.d / 2 - 0.3);
+        else this.m.makeScale(0, 0, 0);
+        this.neon.setMatrixAt(i * 2 + 1, this.m);
+      }
     }
     this.mesh.instanceMatrix.needsUpdate = true;
+    if (this.neon) this.neon.instanceMatrix.needsUpdate = true;
+  }
+}
+
+/**
+ * v4.2 distant city lights: a band of small light points at the horizon, far beyond the fog,
+ * drifting slowly (parallax). The pattern repeats every TILE metres, so the wrap is invisible.
+ */
+class FarLights {
+  points: THREE.Points;
+  private static TILE = 160;
+  constructor(rng: Rng, perTile: number) {
+    const tiles = 4;
+    const pos = new Float32Array(perTile * tiles * 3);
+    const col = new Float32Array(perTile * tiles * 3);
+    const cols = [0xffd9a0, 0xfff1d8, 0x9fd4ff, 0xff9ad8, 0xffc070].map((c) => new THREE.Color(c));
+    const base: [number, number, number, THREE.Color][] = [];
+    for (let i = 0; i < perTile; i++) {
+      const side = i % 2 ? 1 : -1;
+      base.push([side * rng.range(30, 300) * rng.range(0.4, 1), rng.range(-6, 30) * rng.range(0.3, 1), rng.range(0, FarLights.TILE), rng.pick(cols)]);
+    }
+    for (let t = 0; t < tiles; t++)
+      base.forEach(([x, y, z, c], i) => {
+        const k = (t * perTile + i) * 3;
+        pos[k] = x;
+        pos[k + 1] = y;
+        pos[k + 2] = -260 - t * FarLights.TILE - z;
+        col[k] = c.r;
+        col[k + 1] = c.g;
+        col[k + 2] = c.b;
+      });
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    this.points = new THREE.Points(
+      g,
+      new THREE.PointsMaterial({ map: glowTexture(), size: 6.5, sizeAttenuation: true, vertexColors: true, transparent: true, opacity: 0.75, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }),
+    );
+    this.points.frustumCulled = false;
+  }
+  update(dist: number) {
+    this.points.position.z = (dist * 0.22) % FarLights.TILE;
   }
 }
 
@@ -190,13 +271,38 @@ class Scroller {
 interface Theme {
   group: THREE.Group;
   update(dist: number, t: number, dt: number): void;
+  /** v4.2 graphics preset (density / extras); themes without it look the same on every preset */
+  setQuality?(p: GraphicsPreset): void;
 }
 
-function makeBillboard(variant: number, w = 9, h = 4.5) {
+// v4.2: billboard materials are shared (one per artwork) — 10 boards no longer mean 20 materials
+const bbMats = new Map<string, THREE.Material>();
+function bbMat(key: string, make: () => THREE.Material, spawnZ: number) {
+  let m = bbMats.get(key);
+  if (!m) {
+    bbMats.set(key, (m = make()));
+  }
+  addFarFade(m, spawnZ);
+  return m;
+}
+/** variant −1 = XWAVE brand board (logo on a dark panel) */
+function makeBillboard(variant: number, spawnZ: number, w = 9, h = 4.5) {
   const g = new THREE.Group();
-  const panel = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: billboardTexture(variant), color: 0xa8a8a8 }));
+  const panelMat =
+    variant < 0
+      ? bbMat('xwave', () => new THREE.MeshBasicMaterial({ color: 0x0b1024 }), spawnZ)
+      : bbMat(`bb${variant}`, () => new THREE.MeshBasicMaterial({ map: billboardTexture(variant), color: 0xa8a8a8 }), spawnZ);
+  const panel = new THREE.Mesh(new THREE.PlaneGeometry(w, h), panelMat);
   g.add(panel);
-  const frame = new THREE.Mesh(new THREE.BoxGeometry(w + 0.5, h + 0.5, 0.3), new THREE.MeshStandardMaterial({ color: 0x1a1f2e, metalness: 0.8, roughness: 0.4 }));
+  if (variant < 0) {
+    const logo = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.86, w * 0.86 * 0.205), bbMat('xwlogo', () => new THREE.MeshBasicMaterial({ map: logoTexture(null, '#39b6ff'), transparent: true, toneMapped: false }), spawnZ));
+    logo.position.z = 0.02;
+    g.add(logo);
+    const line = new THREE.Mesh(new THREE.PlaneGeometry(w, 0.12), bbMat('xwline', () => new THREE.MeshBasicMaterial({ color: 0x39b6ff, toneMapped: false }), spawnZ));
+    line.position.set(0, -h / 2 + 0.3, 0.02);
+    g.add(line);
+  }
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(w + 0.5, h + 0.5, 0.3), bbMat('frame', () => new THREE.MeshStandardMaterial({ color: 0x1a1f2e, metalness: 0.8, roughness: 0.4 }), spawnZ));
   frame.position.z = -0.2;
   g.add(frame);
   return g;
@@ -290,11 +396,16 @@ function buildCity(mega: boolean): Theme {
   const near = new BuildingField(mega ? 54 : 40, 340, 14, 34, mega ? 30 : 18, mega ? 110 : 70, pal, rng, mega ? 3 : 1);
   const far = new BuildingField(mega ? 60 : 50, 420, 40, 140, mega ? 60 : 30, mega ? 200 : 140, pal, rng, 2, -40);
   group.add(near.mesh, far.mesh);
+  // v4.2 mid layer: neon edges on the road-facing side of the near buildings; far layer: city lights
+  const neon = near.addNeon(mega ? [0xffc21a, 0xff7a3a, 0x5ad1ff, 0xffe08a] : [0x39b6ff, 0xff4fd8, 0x8a6bff, 0x5ee6ff, 0xff8a3a]);
+  group.add(neon);
+  const lights = new FarLights(rng, mega ? 200 : 170);
+  group.add(lights.points);
 
   const sc = new Scroller(320);
   for (let i = 0; i < 10; i++) {
     const side = i % 2 ? 1 : -1;
-    const bb = makeBillboard(mega ? (i % 3 === 0 ? 0 : i % 4) : i % 4);
+    const bb = makeBillboard(i % 3 === 0 ? -1 : mega ? (i % 3 === 0 ? 0 : i % 4) : i % 4, NEAR - 320);
     bb.position.set(side * rng.range(11, 15), rng.range(7, 18), 0);
     bb.rotation.y = side * -0.95;
     group.add(bb);
@@ -303,6 +414,7 @@ function buildCity(mega: boolean): Theme {
   // flying traffic lanes in the background (instanced: 1 mesh + 1 Points)
   const traffic = new SkyTraffic(rng, 22);
   group.add(traffic.mesh, traffic.glows);
+  addFarFade(traffic.mesh.material as THREE.Material, NEAR - 500);
   // floating garden platforms
   const islands = new Scroller(480);
   for (let i = 0; i < 5; i++) {
@@ -358,6 +470,13 @@ function buildCity(mega: boolean): Theme {
       traffic.update(dist, t);
       islands.update(dist * 0.7, t);
       arches.update(dist, t);
+      lights.update(dist);
+    },
+    setQuality(p) {
+      near.setDensity(p.cityDensity);
+      far.setDensity(p.cityDensity);
+      neon.visible = p.cityExtras;
+      lights.points.visible = p.cityExtras;
     },
   };
 }
@@ -1096,10 +1215,18 @@ export class Scenery {
         : id === 'desert' || id === 'forest' || id === 'country' || id === 'sea' ? buildBonus(id)
         : buildLadder(id);
       t.group.visible = false;
+      if (this.preset) t.setQuality?.(this.preset);
       this.group.add(t.group);
       this.themes.set(id, t);
     }
     return t;
+  }
+
+  /** v4.2 graphics preset, applied to every theme (also the ones built later) */
+  private preset: GraphicsPreset | null = null;
+  setQuality(p: GraphicsPreset) {
+    this.preset = p;
+    for (const [, t] of this.themes) t.setQuality?.(p);
   }
 
   /** Build a theme ahead of time to avoid a hitch at the world boundary. */
@@ -1161,7 +1288,7 @@ export class Scenery {
     this.sea.visible = L.cloudSea > 0.02;
     (this.sea.userData.base as THREE.Mesh).visible = L.cloudSea > 0.5;
     ((this.sea.userData.base as THREE.Mesh).material as THREE.MeshBasicMaterial).color.setHex(L.skyBottom).lerp(this.tmpA.setHex(L.cloudTint), 0.5);
-    (this.sunSprite.material as THREE.SpriteMaterial).color.setHex(L.sun);
+    (this.sunSprite.material as THREE.SpriteMaterial).color.setHex(this.target.glow ?? L.sun);
     this.sunSprite.visible = this.current !== 'tunnel';
   }
 

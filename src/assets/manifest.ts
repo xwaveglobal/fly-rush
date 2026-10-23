@@ -50,7 +50,7 @@ export const MANIFEST: AssetEntry[] = [
   { id: 'powerup.double', category: 'powerups', kind: 'model', procedural: 'render/PickupViews.ts#double' },
   { id: 'powerup.life', category: 'powerups', kind: 'model', procedural: 'render/PickupViews.ts#life' },
   // environments
-  { id: 'env.road', category: 'environments', kind: 'texture', procedural: 'render/textures.ts#roadTexture' },
+  { id: 'env.road', category: 'environments', kind: 'texture', procedural: 'render/roadSurface.ts#roadPixels' },
   { id: 'env.city', category: 'environments', kind: 'model', procedural: 'render/Scenery.ts#buildCity', notes: 'WORLD 1 — Future City (fully playable).' },
   { id: 'env.tunnel', category: 'environments', kind: 'model', procedural: 'render/Scenery.ts#buildTunnel', notes: 'WORLD 2 — Neon Tunnel.' },
   { id: 'env.cloud', category: 'environments', kind: 'model', procedural: 'render/Scenery.ts#buildCloud', notes: 'WORLD 3 — Cloud City.' },

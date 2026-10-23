@@ -75,7 +75,7 @@ export interface UIHandlers {
   upgrade(k: UpgradeKey): void;
   toggleSound(): void;
   toggleMusic(): void;
-  toggleQuality(): void;
+  toggleQuality(v?: string): void;
   previewSkin(id: string): void;
   /** start a run on a track ('endless' or a course id) */
   startTrack(id: string): void;
@@ -433,8 +433,8 @@ export class UI {
           <div class="stile"><span class="si">${ICON.music}</span><span class="sl">Music</span><button class="switch" data-a="music" role="switch" aria-label="Music"><i></i></button></div>
           <div class="stile"><span class="si">≋</span><span class="sl">Vibration</span><button class="switch" data-a="vibrate" role="switch" aria-label="Vibration"><i></i></button></div>
           <div class="stile"><span class="si">${ICON.info}</span><span class="sl">Hint arrows</span><button class="switch" data-a="assist" role="switch" aria-label="Danger arrows"><i></i></button></div>
-          <div class="stile"><span class="si">◐</span><span class="sl">Eye comfort</span><button class="switch" data-a="comfort" role="switch" aria-label="Comfort visuals"><i></i></button></div>
-          <div class="stile"><span class="si">${ICON.gear}</span><span class="sl">Graphics</span><div class="seg" data-k="qseg"><button data-a="quality" data-v="high">HI</button><button data-a="quality" data-v="low">LO</button></div></div>
+          <div class="stile wide"><span class="si">◐</span><span class="sl">Eye comfort</span><button class="switch" data-a="comfort" role="switch" aria-label="Comfort visuals"><i></i></button></div>
+          <div class="stile wide"><span class="si">${ICON.gear}</span><span class="sl">Graphics</span><div class="seg" data-k="qseg"><button data-a="quality" data-v="low">LO</button><button data-a="quality" data-v="medium">MED</button><button data-a="quality" data-v="high">HI</button></div></div>
         </div>
         <button class="srow lang acct" data-a="account"><span class="si">☁️</span><span class="sl">Account</span><b data-k="acctline">Guest</b>${ICON.chevR}</button>
         <button class="srow lang" data-a="lang"><span class="si">🌐</span><span class="sl">Language</span><b data-k="langname">English</b>${ICON.chevR}</button>
@@ -837,7 +837,7 @@ export class UI {
         case 'music': return this.h.toggleMusic();
         case 'quality':
           if (el.dataset.v && el.classList.contains('on')) return;
-          return this.h.toggleQuality();
+          return this.h.toggleQuality(el.dataset.v);
         case 'settings': return this.h.settings();
         case 'closemodal':
           this.root.querySelectorAll('.gstep.open').forEach((g) => g.classList.remove('open'));
@@ -1024,9 +1024,9 @@ export class UI {
   }
 
   /** quality actually in use (may be a session-only LOW fallback) */
-  private liveQuality: 'high' | 'low' | null = null;
+  private liveQuality: 'high' | 'medium' | 'low' | null = null;
 
-  refreshProfile(s: SaveData, liveQuality?: 'high' | 'low') {
+  refreshProfile(s: SaveData, liveQuality?: 'high' | 'medium' | 'low') {
     if (liveQuality) this.liveQuality = liveQuality;
     this.setAll('wallet', fmt(s.wallet));
     // home top bar: compact amount (11.2K) so the profile chip keeps its room

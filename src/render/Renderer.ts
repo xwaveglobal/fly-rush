@@ -30,11 +30,14 @@ const SpeedBlurShader = {
 /** objects on this layer skip post-processing and are drawn last, pixel-exact (the car render) */
 export const OVERLAY_LAYER = 1;
 
-export type Quality = 'high' | 'low';
+import { GRAPHICS, type GraphicsQuality } from '../config.ts';
+/** v4.2: LOW / MEDIUM / HIGH presets (config GRAPHICS) */
+export type Quality = GraphicsQuality;
 
 /**
- * WebGL renderer + optional half-resolution bloom. "low" quality drops bloom,
- * MSAA and caps the pixel ratio — the game logic is identical either way.
+ * WebGL renderer + optional half-resolution bloom and edge speed blur, per graphics preset
+ * (config GRAPHICS: LOW = no post-processing, capped pixel ratio; MEDIUM = bloom; HIGH = bloom +
+ * speed blur, full pixel ratio). The game logic is identical on every preset.
  */
 export class Renderer {
   renderer: THREE.WebGLRenderer;
@@ -83,32 +86,41 @@ export class Renderer {
 
   setQuality(q: Quality) {
     this.quality = q;
+    const pr = GRAPHICS[q];
     const dpr = window.devicePixelRatio || 1;
-    this.pixelRatio = q === 'high' ? Math.min(dpr, this.scaleCap) : Math.min(dpr, 1.5);
+    this.pixelRatio = Math.min(dpr, pr.dprCap, this.scaleCap);
     this.renderer.setPixelRatio(this.pixelRatio);
-    if (q === 'high' && this.bloomEnabled) {
-      if (!this.composer) {
-        // the composer renders into its own target: give it MSAA, otherwise the canvas
-        // antialias flag is silently ignored and every edge looks soft/jagged
-        const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: this.renderer.capabilities.isWebGL2 ? 4 : 0 });
-        this.composer = new EffectComposer(this.renderer, rt);
-        this.renderPass = new RenderPass(this.scene, this.camera);
-        this.composer.addPass(this.renderPass);
-        // tight, high-threshold bloom: lights glow, silhouettes stay crisp
-        this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.3, 0.22, 1.0);
-        this.composer.addPass(this.bloom);
-        this.speedBlur = new ShaderPass(SpeedBlurShader);
-        this.composer.addPass(this.speedBlur);
-        this.composer.addPass(new OutputPass());
-      }
-    } else if (this.composer) {
+    const wantBloom = pr.bloom && this.bloomEnabled;
+    const wantBlur = pr.speedBlur;
+    const post = wantBloom || wantBlur;
+    // rebuild the composer when the set of passes changes (presets are switched rarely, in menus)
+    if (this.composer && (!post || !!this.bloom !== wantBloom || !!this.speedBlur !== wantBlur)) {
       this.composer.dispose();
       this.composer = null;
       this.bloom = null;
       this.speedBlur = null;
     }
+    if (post && !this.composer) {
+      // the composer renders into its own target: give it MSAA, otherwise the canvas
+      // antialias flag is silently ignored and every edge looks soft/jagged
+      const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: this.renderer.capabilities.isWebGL2 ? 4 : 0 });
+      this.composer = new EffectComposer(this.renderer, rt);
+      this.renderPass = new RenderPass(this.scene, this.camera);
+      this.composer.addPass(this.renderPass);
+      if (wantBloom) {
+        // tight, high-threshold bloom: lights glow, silhouettes stay crisp
+        this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), this.bloomStrength, 0.22, 1.0);
+        this.composer.addPass(this.bloom);
+      }
+      if (wantBlur) {
+        this.speedBlur = new ShaderPass(SpeedBlurShader);
+        this.composer.addPass(this.speedBlur);
+      }
+      this.composer.addPass(new OutputPass());
+    }
     this.resize();
   }
+  private bloomStrength = 0.3;
 
   resize() {
     const w = Math.max(1, this.container.clientWidth);
@@ -127,27 +139,29 @@ export class Renderer {
 
   /** step dynamic resolution down; returns false when nothing is left to reduce */
   degrade(): boolean {
-    if (this.quality !== 'high') return false;
+    if (this.quality === 'low') return false;
     const dpr = window.devicePixelRatio || 1;
-    if (this.scaleCap > 1.5 && dpr > 1.5) {
+    const cap = GRAPHICS[this.quality].dprCap;
+    if (this.scaleCap > 1.5 && dpr > 1.5 && cap > 1.5) {
       this.scaleCap = this.scaleCap > 1.75 ? 1.75 : 1.5;
-      this.setQuality('high');
+      this.setQuality(this.quality);
       return true;
     }
-    if (this.bloomEnabled) {
+    if (this.bloomEnabled && GRAPHICS[this.quality].bloom) {
       this.bloomEnabled = false;
-      this.setQuality('high');
+      this.setQuality(this.quality);
       return true;
     }
     return false;
   }
 
-  /** 0 … ~0.08: how far the screen edges smear toward the vanishing point (High quality only) */
+  /** 0 … ~0.08: how far the screen edges smear toward the vanishing point (HIGH preset only) */
   setSpeedBlur(strength: number) {
     if (this.speedBlur) this.speedBlur.uniforms.strength.value = strength;
   }
 
   setBloom(strength: number) {
+    this.bloomStrength = strength;
     if (this.bloom) this.bloom.strength = strength;
   }
 
