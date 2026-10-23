@@ -1,7 +1,8 @@
-import { HEIGHT, SPEED, WORLD_LENGTH, FAIRNESS, COIN_LINES, HEARTS, EXP, BONUS_SET, GIFTS } from '../config.ts';
+import { HEIGHT, SPEED, WORLD_LENGTH, FAIRNESS, COIN_LINES, HEARTS, EXP, BONUS_SET, GIFTS, AIR_DASH, ITEM_BALANCE } from '../config.ts';
+import { airDashDest, airDashFlightTime } from './AirDash.ts';
 import { clamp01, lerp } from '../core/math.ts';
 import { Rng } from '../core/Rng.ts';
-import { START_STATE, step, lanesOf, modeIn, MODE_H, MODE_L, stateBit } from './Fairness.ts';
+import { START_STATE, step, lanesOf, modeIn, MODE_H, MODE_L, MODE_N, stateBit } from './Fairness.ts';
 import { rowMasks } from './ObstacleRules.ts';
 import type { LaserMode, ObstacleSpec, PickupKind, PickupSpec, RowSpec } from './types.ts';
 import { sectionAt, type Course, type PatternKey } from './Courses.ts';
@@ -192,8 +193,9 @@ export class Spawner {
     this.lastDist = startDist + 45; // first row comes after a short warm-up
     this.coinLane = 1;
     this.nextPowerAt = startDist + 300;
-    this.nextHeartAt = startDist + HEARTS.everyExp / expRate(this.level, this.variant);
+    this.nextHeartAt = startDist + this.heartGap();
     this.nextBoxAt = startDist + 400;
+    this.dashGuard = null;
     this.prevRecovery = 0;
     this.prevOccludes = false;
     this.hardStreak = 0;
@@ -215,6 +217,62 @@ export class Spawner {
   }
 
   /** After a respawn the player is in a known lane at normal height. */
+  /** metres between two hearts (HEARTS.everyExp EXP, × the speed level's balance factor) */
+  private heartGap() {
+    return (HEARTS.everyExp * ITEM_BALANCE.level[this.level].heartEvery) / expRate(this.level, this.variant);
+  }
+
+  // ---------------------------------------------------------------- Step 06.5 AIR DASH placement
+  /**
+   * Active landing guarantee of the last Air Dash placed: rows near its touch-down point keep the
+   * destination lane drivable at NORMAL height, and the rows after it stay passable starting from
+   * the destination lane (its own reachability track, alongside the normal one).
+   */
+  private dashGuard: { dest: number; from: number; to: number; reach: number; lastD: number; rows: number } | null = null;
+  /** can a row with these masks at distance d be placed without breaking the Air Dash landing? */
+  private dashRowOk(d: number, masks: readonly number[], slack: number) {
+    const g = this.dashGuard;
+    if (!g || d < g.from) return true; // still in the air (protected) — or no dash pending
+    if (d <= g.to) return !!(masks[g.dest] & PASS_N);
+    return step(g.reach, masks, Math.max(FAIRNESS.minRowTime, (d - g.lastD) / this.speed(d)), slack) !== 0;
+  }
+  private dashRowDone(d: number, masks: readonly number[], slack: number) {
+    const g = this.dashGuard;
+    if (!g || d < g.from) return;
+    if (d <= g.to) {
+      g.lastD = d;
+      return;
+    }
+    g.reach = step(g.reach, masks, Math.max(FAIRNESS.minRowTime, (d - g.lastD) / this.speed(d)), slack);
+    g.lastD = d;
+    if (--g.rows <= 0 || !g.reach) this.dashGuard = null;
+  }
+  /**
+   * Air Dash only in an outer lane, at road height, clear of the row it precedes, with a landing
+   * spot that the row already generated (`row`) does not block. Sets the landing guard on success.
+   */
+  private dashPlaceable(lane: number, dist: number, y: number, row: RowSpec) {
+    const dest = airDashDest(lane);
+    if (dest === null || y !== HEIGHT.NORMAL || this.dashGuard) return false;
+    if (Math.abs(row.dist - dist) < 8) return false; // never on top of an obstacle
+    const v = this.speed(dist);
+    const land = dist + v * airDashFlightTime();
+    const from = land - AIR_DASH.clearBehind;
+    const to = land + v * (AIR_DASH.maxExtend + AIR_DASH.clearAhead);
+    const slack = Math.max(0, this.mapAt(row.dist).cfg.slack + LEVEL_RULES[this.level].slack);
+    const g = { dest, from, to, reach: stateBit(dest, MODE_N), lastD: to, rows: 3 };
+    if (row.dist >= from && row.dist <= to && !(row.masks[dest] & PASS_N)) return false;
+    if (row.dist > to) {
+      const n = step(g.reach, row.masks, Math.max(FAIRNESS.minRowTime, (row.dist - to) / v), slack);
+      if (!n) return false;
+      g.reach = n;
+      g.lastD = row.dist;
+      g.rows = 2;
+    }
+    this.dashGuard = g;
+    return true;
+  }
+
   resetReach(lane: number) {
     this.reach = stateBit(lane, 0) | stateBit(0, 0) | stateBit(1, 0) | stateBit(2, 0);
   }
@@ -367,6 +425,7 @@ export class Spawner {
       const next = step(this.reach, empty.masks, Math.max(p0.dt, FAIRNESS.minRowTime));
       if (density > 0) {
         this.rows.push(empty);
+        this.dashRowDone(empty.dist, empty.masks, slack);
         this.placeCoins(this.lastDist, empty, next);
       }
       this.reach = next;
@@ -404,6 +463,10 @@ export class Spawner {
         this.reject('blockers');
         continue;
       }
+      if (!this.dashRowOk(pl.d, masks, slack)) {
+        this.reject('airdash');
+        continue;
+      }
       const n = step(this.reach, masks, pl.dt, slack);
       if (n) {
         obstacles = cand;
@@ -417,7 +480,8 @@ export class Spawner {
     if (!obstacles) {
       // Guaranteed-safe fallback: a single crate in a lane the player can avoid.
       this.reject('fallback');
-      const lane = r.int(0, 2);
+      let lane = r.int(0, 2);
+      if (!this.dashRowOk(p0.d, rowMasks([{ type: 'crate', lane }]), 0)) lane = 1; // keep an Air Dash landing lane free
       obstacles = [{ type: 'crate', lane, variant: r.int(0, 3) }];
       const t = Math.max(p0.dt, FAIRNESS.minRowTime);
       next = step(this.reach, rowMasks(obstacles), t, slack) || step(this.reach, rowMasks(obstacles), t);
@@ -432,6 +496,7 @@ export class Spawner {
     const row: RowSpec = { dist: at.d, dt: at.dt, masks, obstacles, pid: def.id, tier: def.tier, occludes: def.occludes };
     this.rows.push(row);
     this.generated++;
+    this.dashRowDone(row.dist, masks, slack);
     this.placeCoins(this.lastDist, row, next);
     this.reach = next;
     this.lastDist = at.d;
@@ -477,7 +542,7 @@ export class Spawner {
       }
       // v2 hearts on the EXP roads: one about every HEARTS.everyExp EXP
       if (!this.course && dist >= this.nextHeartAt && i === Math.floor(n / 2)) {
-        this.nextHeartAt = dist + HEARTS.everyExp / expRate(this.level, this.variant);
+        this.nextHeartAt = dist + this.heartGap();
         this.pickups.push({ kind: 'life', lane, dist, y });
         continue;
       }
@@ -511,18 +576,29 @@ export class Spawner {
         }
         // v2 Endless / Track 2: specials (Roadster, SOS…) and extra lives are never on the road
         const v1 = !!this.course;
+        // Step 06.5: weights + per-level survival factors from config ITEM_BALANCE; Air Dash (outer
+        // lanes only, safe landing) is rarer than Turbo
+        const B = ITEM_BALANCE.weights;
+        const L = ITEM_BALANCE.level[this.level].weights;
+        const w = (k: string, base = B[k] ?? 0) => base * (L[k] ?? 1);
         kind = r.weighted<PickupKind>([
-          { w: 3, v: 'magnet' },
-          { w: 3, v: 'shield' },
-          { w: v1 ? 2.2 : 0.7, v: 'turbo' }, // v2: turbo is rare (it also adds EXP)
-          { w: v1 ? 0 : 0.5, v: 'mystery' }, // v2.2 random reward box (now and then)
-          { w: 2, v: 'double' },
+          { w: w('magnet'), v: 'magnet' },
+          { w: w('shield'), v: 'shield' },
+          { w: v1 ? 2.2 : w('turbo'), v: 'turbo' }, // v2: turbo is rare (it also adds EXP)
+          { w: v1 ? 0 : w('mystery'), v: 'mystery' }, // v2.2 random reward box (now and then)
+          { w: w('double'), v: 'double' },
           { w: v1 && dist > 600 ? 1 : 0, v: 'life' },
           { w: v1 && dist > 250 ? 2 : 0, v: 'super' },
-          { w: v1 && dist > 150 ? 2 : 0, v: 'dash' },
+          { w: dist > 150 ? (v1 ? 1.2 : w('dash')) : 0, v: 'dash' },
           { w: v1 && dist > 400 ? 1.2 : 0, v: 'escape' },
         ]);
         this.nextPowerAt = dist + (v1 ? r.range(260, 420) : r.range(220, 360)); // v2.2.4: road power-ups about as often as v1
+        if (kind === 'dash' && !this.dashPlaceable(lane, dist, y, row)) {
+          // no safe Air Dash here (centre lane, raised spot, blocked landing): defer it to a later slot
+          kind = 'coin';
+          this.nextPowerAt = dist + 40;
+          this.reject('airdash-deferred');
+        }
       }
       this.pickups.push({ kind, lane, dist, y });
     }

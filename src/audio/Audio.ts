@@ -5,7 +5,7 @@
  */
 export type Sfx =
   | 'coin' | 'lane' | 'up' | 'down' | 'land' | 'power' | 'shield' | 'shieldBreak' | 'crash' | 'explode'
-  | 'near' | 'ring' | 'beep' | 'go' | 'mission' | 'click' | 'turbo' | 'respawn' | 'bump' | 'combo' | 'warp' | 'expire';
+  | 'near' | 'ring' | 'beep' | 'go' | 'mission' | 'click' | 'turbo' | 'respawn' | 'bump' | 'combo' | 'warp' | 'expire' | 'fanfare';
 
 export class Audio {
   ctx: AudioContext | null = null;
@@ -30,16 +30,38 @@ export class Audio {
   intensity = 0; // 0 menu, 1 run, 2 turbo
   private playing = false;
 
-  /** Must be called from a user gesture (browser autoplay policy). */
+  /** called when the context becomes able to sound (first gesture, back from background) */
+  onRunning: (() => void) | null = null;
+  /** performance.now() of the last request per SFX (Step 06.5 latency instrumentation) */
+  lastPlayed: Partial<Record<Sfx, number>> = {};
+  /** true once the context is running (sound can actually be heard) */
+  get running() {
+    return this.ctx?.state === 'running';
+  }
+
+  /**
+   * Must be called from a real user gesture (browser autoplay policy) — Game calls it on every tap /
+   * key until the context runs, so the first VALID gesture anywhere (Play, a menu button, the canvas)
+   * unlocks sound; Settings is never needed. Creates the context once; afterwards only resumes it
+   * (also from the iOS 'interrupted' state). Inside the gesture a 1-sample silent buffer is started:
+   * WebKit only unlocks output when something starts from the gesture itself.
+   */
   unlock() {
     if (this.ctx) {
-      if (this.ctx.state === 'suspended') void this.ctx.resume();
+      if (this.ctx.state !== 'running') {
+        this.ctx.resume().catch(() => undefined);
+        this.prime();
+      }
       return;
     }
     const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!AC) return;
-    this.ctx = new AC();
+    this.ctx = new AC({ latencyHint: 'interactive' });
     const c = this.ctx;
+    c.addEventListener('statechange', () => {
+      if (c.state === 'running') this.onRunning?.();
+    });
+    if (c.state !== 'running') c.resume().catch(() => undefined);
     this.master = c.createGain();
     this.master.gain.value = 0.8;
     const comp = c.createDynamicsCompressor();
@@ -75,6 +97,28 @@ export class Audio {
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     for (const [n, u] of this.pendingOverrides) void this.loadOverride(n, u);
     this.pendingOverrides.length = 0;
+    this.prime();
+    if (c.state === 'running') queueMicrotask(() => this.onRunning?.());
+  }
+
+  /** silent 1-sample buffer started from the current gesture (WebKit output unlock) */
+  private prime() {
+    const c = this.ctx;
+    if (!c) return;
+    const b = c.createBuffer(1, 1, 22050);
+    const s = c.createBufferSource();
+    s.buffer = b;
+    s.connect(c.destination);
+    s.start(0);
+  }
+
+  /** app hidden: stop the audio clock (no sounds pile up); shown: try to resume (a later tap also does) */
+  setHidden(hidden: boolean) {
+    const c = this.ctx;
+    if (!c) return;
+    if (hidden) {
+      if (c.state === 'running') c.suspend().catch(() => undefined);
+    } else if (c.state !== 'running') c.resume().catch(() => undefined);
   }
 
   async loadOverride(name: string, url: string) {
@@ -156,16 +200,18 @@ export class Audio {
     s.stop(t0 + dur + 0.02);
   }
 
-  play(name: Sfx, opt: { pan?: number } = {}) {
+  /** @param opt.delay seconds after now on the AUDIO clock (sample-accurate; never a timer) */
+  play(name: Sfx, opt: { pan?: number; delay?: number } = {}) {
+    this.lastPlayed[name] = performance.now();
     if (!this.ctx || !this.sfxOn) return;
     const c = this.ctx;
-    const t = c.currentTime;
+    const t = c.currentTime + (opt.delay ?? 0);
     const ov = this.overrides.get(name);
     if (ov) {
       const s = c.createBufferSource();
       s.buffer = ov;
       s.connect(this.sfxBus);
-      s.start();
+      s.start(t);
       return;
     }
     const pan = opt.pan ?? 0;
@@ -235,6 +281,13 @@ export class Audio {
       case 'go':
         this.osc('square', 1320, 1320, t, 0.3, 0.09);
         this.osc('sawtooth', 660, 1320, t, 0.3, 0.05);
+        break;
+      case 'fanfare':
+        // Step 06.5 class promotion: low swell + bright major chord, then a high sparkle (≈1.4 s)
+        this.noise(t, 0.9, 0.12, 200, 2400, 0.5);
+        [0, 7, 12].forEach((n) => this.osc('sawtooth', 220 * Math.pow(2, n / 12), 220 * Math.pow(2, n / 12), t + 0.05, 1.2, 0.05));
+        [0, 4, 7, 12].forEach((n, i) => this.osc('square', 523 * Math.pow(2, n / 12), 523 * Math.pow(2, n / 12), t + 0.25 + i * 0.09, 0.5, 0.05));
+        this.osc('triangle', 2093, 2637, t + 0.7, 0.6, 0.05);
         break;
       case 'mission':
         [0, 4, 7, 12, 16].forEach((n, i) => this.osc('square', 660 * Math.pow(2, n / 12), 660 * Math.pow(2, n / 12), t + i * 0.08, 0.22, 0.06));

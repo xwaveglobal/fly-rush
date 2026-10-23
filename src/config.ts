@@ -57,6 +57,31 @@ export const TIMING = {
   dashDur: 0.34,
 };
 
+/**
+ * Step 06.5 AIR DASH (road collectible, fires the moment it is picked up): only on the two outer
+ * lanes; the car lifts to HIGH, opens the spoiler, rolls exactly once (360°, sideways around its
+ * length axis) while it crosses exactly two lanes to the opposite outer lane, then lands there.
+ * exec / hold / recover = vertical phases (s); lateralStart / lateral = when and how long the
+ * sideways move (and the roll) runs; maxExtend = most extra hover (s) when the landing spot is
+ * briefly blocked; grace = protection after touch-down (s); clearAhead / clearBehind = metres of the
+ * destination lane that must be free around the touch-down point (spawner + runtime check).
+ */
+/**
+ * Step 06.5 road-item balance (Endless / Track 2 power-up slot). `weights` = relative chance per slot;
+ * per speed level: `weights` multipliers (EASY: more survival help, HARD: less) and `heartEvery` × the
+ * heart spacing (HEARTS.everyExp: < 1 = hearts more often). Air Dash < Turbo, Life rare.
+ */
+export const ITEM_BALANCE = {
+  weights: { magnet: 3, shield: 3, turbo: 0.7, mystery: 0.5, double: 2, dash: 0.45 } as Record<string, number>,
+  level: {
+    easy: { weights: { shield: 1.3, dash: 1.1 } as Record<string, number>, heartEvery: 0.8 },
+    normal: { weights: {} as Record<string, number>, heartEvery: 1 },
+    hard: { weights: { shield: 0.75, mystery: 0.8 } as Record<string, number>, heartEvery: 1.25 },
+  },
+};
+
+export const AIR_DASH = { exec: 0.26, hold: 0.5, recover: 0.3, lateralStart: 0.06, lateral: 0.62, maxExtend: 0.45, grace: 0.25, clearAhead: 0.6, clearBehind: 4 };
+
 /** Player speed levels chosen on the home screen (3 audiences: new, regular, expert). */
 export type SpeedLevel = 'easy' | 'normal' | 'hard';
 
@@ -340,7 +365,7 @@ export const RENDER = {
   spoilerUp: 7,
   spoilerDown: 2.0,
   /** seconds the spoiler stays up after jump + nitro end (no flicker on landing) */
-  spoilerHold: 0.25,
+  spoilerHold: 0, // Step 06.5: closing starts at ground contact
   /** Bonus "Phase Ghost": opacity of the 3D car at full effect, cyan edge strength */
   ghostOpacity: 0.35,
   ghostRim: 1.6,
@@ -365,6 +390,13 @@ export const RENDER = {
   sweepTime: 0.5,
   /** crash: debris fragments (pooled), their life (s), impact flash life (s) */
   crash: { fragments: 12, life: 1.4, flash: 0.2 },
+  /**
+   * Step 06.5 (owner): the car never hangs in the air after a crash — it drops to the road (gravity m/s²,
+   * bounce = kept fraction of the landing speed, nose-down tilt in rad while falling). On the run-ending
+   * crash a few real parts of the approved car (no geometry change: the same meshes, moved) break off,
+   * tumble and lie on the road until the next run.
+   */
+  crashFall: { gravity: 24, bounce: 0.25, tilt: 0.12, parts: ['Front_Splitter', 'Spoiler_Pivot', 'Wheel_FL'] },
 };
 
 /** one chase-camera setup (metres relative to the car; damping rates 1/s) */

@@ -35,16 +35,22 @@ export interface SpoilerState {
 }
 
 /**
- * v4.1.2 active spoiler: open while the car is jumping (take-off → airborne → touch-down, from the
- * gameplay jump state) or nitro is running; once both have ended it holds `holdTime` before
- * retracting, so landing and short gaps between effects never make it flicker.
+ * Step 06.5 active spoiler — AUTHORITATIVE RULE: it opens only while the car is airborne (gameplay
+ * flight state: jump take-off → air → descent, AIR DASH, Roadster / HYPER / SOS flights) and starts
+ * closing at ground contact, all the way to flush. Turbo / nitro, Shield, Phase Ghost never open it
+ * on the road. `holdTime` (default 0) = optional delay after touch-down.
  */
-export function spoilerUpdate(s: SpoilerState, jumping: boolean, nitro: number, dt: number, up = 5, down = 2.2, holdTime = 0.25, threshold = 0.05) {
-  const open = jumping || nitro > threshold;
-  s.hold = open ? holdTime : Math.max(0, s.hold - dt);
-  s.k = approach(s.k, open || s.hold > 0 ? 1 : 0, up, down, dt);
+export function spoilerUpdate(s: SpoilerState, airborne: boolean, dt: number, up = 5, down = 2.2, holdTime = 0) {
+  s.hold = airborne ? holdTime : Math.max(0, s.hold - dt);
+  // opening: quick ease-out; closing: a steady stroke of 1/down seconds (the hinge angle is ease(k), so
+  // it still starts and stops softly) that always ends exactly flush — no residual gap
+  if (airborne || s.hold > 0) s.k = approach(s.k, 1, up, down, dt);
+  else s.k = Math.max(0, s.k - dt * down);
   return s.k;
 }
+
+/** the gameplay flight state the spoiler follows (Player: vmode 'up' or above road height) */
+export const isAirborne = (vmode: string, y: number, normal: number) => vmode === 'up' || y > normal + 0.05;
 
 /**
  * Height of the car's visual pose origin (Vehicle.root.y) for a gameplay height y. The visual body

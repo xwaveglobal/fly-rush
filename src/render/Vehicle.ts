@@ -3,7 +3,7 @@ import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeom
 import { Spring, clamp, clamp01, lerp } from '../core/math.ts';
 import { CAR_HALF, HEIGHT, RENDER, TYRE } from '../config.ts';
 import { MeshCar } from './car/MeshCar.ts';
-import { carHeight } from './car/carMotion.ts';
+import { carHeight, isAirborne } from './car/carMotion.ts';
 import { CrashFx } from './car/CarFx.ts';
 import { OVERLAY_LAYER } from './Renderer.ts';
 import { glowTexture, logoTexture, rearBadgeTexture, treadTexture, wheelBlurTexture, wheelFaceTexture } from './textures.ts';
@@ -77,6 +77,8 @@ export interface VehicleSkin {
   rarity?: 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic';
   /** rank class required before the car can be bought */
   need?: string;
+  /** Step 06.5: a configured future car with no unlock condition yet — always a locked dark silhouette */
+  future?: boolean;
   /** score bonus in % while driving this car */
   bonus?: number;
   /** how strongly the X1 render's body paint is recoloured (0 = original pearl) */
@@ -88,22 +90,28 @@ export interface VehicleSkin {
   rear?: string;
 }
 
+/**
+ * Step 06.5 class unlocks: D = the starter car; C / B / A / AAA = no new car; AA = exactly ONE new car
+ * (XWAVE Inferno — the car already configured for AA); S / SS / SSS = future cars, dark locked
+ * silhouettes until their rank is reached (Nexus: future, no unlock condition configured yet).
+ * Cars a player already owns are never taken away (unlocks only ever add).
+ */
 export const SKINS: VehicleSkin[] = [
   { id: 'zenith', name: 'XWAVE Zenith', shape: 'gt', cls: 'Common · Balanced for every run', rarity: 'Common', need: 'D', price: 0, bonus: 0, tintAmt: 0,
     body: 0xf3f5fa, trim: 0xb9c2d3, glass: 0x0a0d16, glow: 0x39b6ff, accent: 0x1c64ff, stats: [7, 7, 8, 7],
     skills: [{ name: 'Turbo Boost', desc: 'Short burst of high speed.' }, { name: 'Stable Flight', desc: 'Easier to control.' }] },
-  { id: 'vega', name: 'XWAVE Vega', shape: 'gt', cls: 'Uncommon · Red-line racer', rarity: 'Rare', need: 'C', price: 0, bonus: 0, tintAmt: 0, rear: vegaBack,
-    body: 0xf3f5fa, trim: 0xb9c2d3, glass: 0x0a0d16, glow: 0xff3b4e, accent: 0xff3b4e, stats: [8, 7, 8, 7] },
-  { id: 'volt', name: 'XWAVE Volt', shape: 'gt', cls: 'Rare · Speed beyond limits', rarity: 'Rare', need: 'B', price: 0, bonus: 0, tintAmt: 0.92,
-    body: 0x6a3cf0, trim: 0x9aa6bd, glass: 0x05060a, glow: 0xb46bff, accent: 0x8a4dff, stats: [9, 9, 8, 8],
-    skills: [{ name: 'Ion Burst', desc: 'Massive speed boost for 5 seconds.' }, { name: 'Shockwave', desc: 'Pushes nearby obstacles out of the way.' }] },
-  { id: 'phantom', name: 'XWAVE Phantom', shape: 'gt', cls: 'Epic · Invisible. Unstoppable.', rarity: 'Epic', need: 'A', price: 0, bonus: 0, tintAmt: 0.85,
-    body: 0xd4a548, trim: 0x2a2416, glass: 0x140c00, glow: 0xffc24a, accent: 0xffd23d, stats: [9, 8, 9, 9],
-    skills: [{ name: 'Phase Shift', desc: 'Turns semi-invisible for 3 seconds.' }, { name: 'Auto Collect', desc: 'Automatically collects nearby coins.' }] },
   { id: 'inferno', name: 'XWAVE Inferno', shape: 'gt', cls: 'Legendary · Burn through everything', rarity: 'Legendary', need: 'AA', price: 0, bonus: 0, tintAmt: 0.92,
     body: 0xc4121f, trim: 0x1a1a1a, glass: 0x0a0202, glow: 0xff3b2a, accent: 0xff6a2a, stats: [10, 9, 8, 8],
     skills: [{ name: 'Fire Trail', desc: 'Destroys all obstacles in its path.' }, { name: 'Speed Rush', desc: 'Extreme speed boost for 8 seconds.' }] },
-  { id: 'nexus', name: 'XWAVE Nexus', shape: 'gt', cls: 'Mythic · The ultimate evolution', rarity: 'Mythic', need: 'AAA', price: 0, bonus: 0, tintAmt: 0.35,
+  { id: 'vega', name: 'XWAVE Vega', shape: 'gt', cls: 'Uncommon · Red-line racer', rarity: 'Rare', need: 'S', price: 0, bonus: 0, tintAmt: 0, rear: vegaBack,
+    body: 0xf3f5fa, trim: 0xb9c2d3, glass: 0x0a0d16, glow: 0xff3b4e, accent: 0xff3b4e, stats: [8, 7, 8, 7] },
+  { id: 'volt', name: 'XWAVE Volt', shape: 'gt', cls: 'Rare · Speed beyond limits', rarity: 'Rare', need: 'SS', price: 0, bonus: 0, tintAmt: 0.92,
+    body: 0x6a3cf0, trim: 0x9aa6bd, glass: 0x05060a, glow: 0xb46bff, accent: 0x8a4dff, stats: [9, 9, 8, 8],
+    skills: [{ name: 'Ion Burst', desc: 'Massive speed boost for 5 seconds.' }, { name: 'Shockwave', desc: 'Pushes nearby obstacles out of the way.' }] },
+  { id: 'phantom', name: 'XWAVE Phantom', shape: 'gt', cls: 'Epic · Invisible. Unstoppable.', rarity: 'Epic', need: 'SSS', price: 0, bonus: 0, tintAmt: 0.85,
+    body: 0xd4a548, trim: 0x2a2416, glass: 0x140c00, glow: 0xffc24a, accent: 0xffd23d, stats: [9, 8, 9, 9],
+    skills: [{ name: 'Phase Shift', desc: 'Turns semi-invisible for 3 seconds.' }, { name: 'Auto Collect', desc: 'Automatically collects nearby coins.' }] },
+  { id: 'nexus', name: 'XWAVE Nexus', shape: 'gt', cls: 'Mythic · The ultimate evolution', rarity: 'Mythic', need: 'SSS', future: true, price: 0, bonus: 0, tintAmt: 0.35,
     body: 0xdfe8ff, trim: 0xc9d2e6, glass: 0x0b1830, glow: 0x3cf2ff, accent: 0xd04dff, stats: [10, 10, 10, 10],
     skills: [{ name: 'Gravity Control', desc: 'Switches flight height freely for 5 seconds.' }, { name: 'Dimension Dash', desc: 'Teleports forward a short distance.' }] },
 ];
@@ -115,9 +123,15 @@ export const SKINS: VehicleSkin[] = [
  */
 export function carVisibility(unlocked: string[], id: string): 'own' | 'next' | 'dark' {
   if (unlocked.includes(id)) return 'own';
-  // v2: only the rank-C car is shown before it is earned; rank B and up stay black silhouettes
-  const next = SKINS.find((k) => !unlocked.includes(k.id));
-  return next?.id === id && next.need === 'C' ? 'next' : 'dark';
+  // Step 06.5: the one class-AA car is shown (locked) before it is earned; every S+ / future car stays a
+  // black silhouette (no colours, no materials) until it is unlocked
+  const k = SKINS.find((x) => x.id === id);
+  return k && !k.future && k.need === 'AA' ? 'next' : 'dark';
+}
+
+/** cars a rank unlocks (Step 06.5 matrix): never a future car */
+export function carsForRank(rankAtLeast: (need: string) => boolean): string[] {
+  return SKINS.filter((k) => !k.future && rankAtLeast(k.need ?? 'D')).map((k) => k.id);
 }
 
 const BLUE = new THREE.Color(0x39b6ff);
@@ -1317,6 +1331,8 @@ export class Vehicle {
     this.celebrate = this.celebrateTotal;
   }
   private celebrateTotal = Math.PI * 2;
+  /** current AIR DASH roll angle (rad, 0 … ±2π) — tests / captures */
+  airDashRollAngle = 0;
   private celebrateDir = 1;
   private celebrateSpeed = 9;
 
@@ -1341,16 +1357,52 @@ export class Vehicle {
    * v4.1.3 3D crash presentation (visual only): body jolt on its springs, impact flash at the nose,
    * a few pooled shards. The car stays whole and visible.
    */
-  crashBreak() {
+  crashBreak(final = false) {
     if (!this.mesh || !this.meshOn) return;
     this.mesh.crashJolt();
     this.mesh.root.updateWorldMatrix(true, false);
     const at = this.tmpV3.set(0, 0.42, -CAR_HALF.z).applyMatrix4(this.mesh.root.matrixWorld);
     this.crash.burst(at, this.skin.tintAmt ? this.skin.body : 0xf3f2ee);
+    // Step 06.5: drop to the road from wherever the crash happened (no floating), a few parts break off
+    this.fallV = 0;
+    this.fallGround = carHeight(HEIGHT.NORMAL, HEIGHT.LOW, HEIGHT.NORMAL, HEIGHT.HIGH, CAR_HALF.y, true, RENDER.airAlignRamp);
+    this.falling = this.root.position.y > this.fallGround + 0.01;
+    if (final && this.root.parent) this.mesh.breakParts(this.root.parent, RENDER.crashFall.parts);
   }
-  /** while dying / on the game-over screen: the 3D body settles, debris flies (Game calls this) */
-  crashUpdate(dt: number) {
-    if (this.mesh && this.meshOn) this.mesh.settle(dt);
+  private fallV = 0;
+  private fallGround = 0;
+  private falling = false;
+  /** visual crash height above the road (0 = settled on the road) — tests / captures */
+  get crashAirborne() {
+    return this.root.position.y - this.fallGround;
+  }
+  /** while dying / on the game-over screen: the 3D body falls to the road and settles, debris flies (Game calls this) */
+  crashUpdate(dt: number, roadSpeed = 0) {
+    if (this.mesh && this.meshOn) {
+      this.mesh.settle(dt);
+      const F = RENDER.crashFall;
+      if (this.falling) {
+        this.fallV -= F.gravity * dt;
+        this.root.position.y += this.fallV * dt;
+        // nose dips while it drops, levels out on the road
+        this.pitch.rotation.x = lerp(this.pitch.rotation.x, F.tilt, clamp01(dt * 6));
+        if (this.root.position.y <= this.fallGround) {
+          this.root.position.y = this.fallGround;
+          if (this.fallV < -2.5) {
+            this.fallV = -this.fallV * F.bounce;
+            this.mesh.crashJolt();
+          } else {
+            this.fallV = 0;
+            this.falling = false;
+          }
+        }
+      } else this.pitch.rotation.x = lerp(this.pitch.rotation.x, 0, clamp01(dt * 5));
+      this.mesh.updateParts(dt, roadSpeed, F.gravity);
+      // a wrecked car has no flight jets; its contact shadow stays on the road under it
+      this.jetG.visible = false;
+      this.contactShadow.position.y = -this.root.position.y + 0.025;
+      (this.contactShadow.material as THREE.MeshBasicMaterial).opacity = clamp(0.62 - (this.root.position.y - this.fallGround) * 0.25, 0.12, 0.62);
+    }
     this.crash.update(dt);
   }
   /** compile the 3D car's effect variants once the model is ready (no shader compile mid-race) */
@@ -1366,6 +1418,8 @@ export class Vehicle {
 
   resetPose() {
     this.recoilZ = 0;
+    this.falling = false;
+    this.fallV = 0;
     this.crash.clear();
     this.mesh?.resetPose();
     this.roll.snap(0);
@@ -1427,6 +1481,15 @@ export class Vehicle {
     this.yaw.update(dt);
     this.pitchS.update(dt);
     let extraRoll = 0;
+    // Step 06.5 AIR DASH: exactly one sideways roll (around the car's length axis), locked to the
+    // gameplay maneuver's progress — 0 → 360° while it crosses the two lanes, ends exactly upright
+    if (p.isAirDash) {
+      const k = p.airDashRoll;
+      const e = k * k * (3 - 2 * k);
+      this.airDashRollAngle = Math.PI * 2 * e * -p.airDashDir;
+      extraRoll = this.airDashRollAngle;
+      this.celebrate = 0;
+    } else this.airDashRollAngle = 0;
     if (this.celebrate > 0) {
       const step = Math.min(this.celebrate, dt * this.celebrateSpeed);
       this.celebrate -= step;
@@ -1665,7 +1728,7 @@ export class Vehicle {
       this.mesh.turbo = this.turboTarget;
       // DOWN: how deep the dive is (gameplay squash while diving) → wheels fold, body drops
       const duck = p.vmode === 'down' ? clamp01(p.squash / 0.32) : 0;
-      this.mesh.update(dt, speed, lat, p.air, this.locked, p.vmode === 'up', duck);
+      this.mesh.update(dt, speed, lat, p.air, this.locked, isAirborne(p.vmode, p.y, HEIGHT.NORMAL), duck);
       // flight jets hang under the rear of the car; the contact shadow stays on the road
       this.jetG.position.set(0, ground + 0.3, 0.75);
       this.contactShadow.position.y = -vy + 0.025;

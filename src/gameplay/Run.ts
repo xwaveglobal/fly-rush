@@ -12,6 +12,7 @@ export interface Upgrades {
 export type Feedback =
   | { t: 'coin'; x: number; y: number; z: number }
   | { t: 'power'; kind: PickupKind; x: number; y: number; z: number }
+  | { t: 'rescued' }
   | { t: 'near'; points: number; x: number; y: number; z: number }
   | { t: 'ring'; points: number }
   | { t: 'combo'; mult: number }
@@ -194,6 +195,13 @@ export class Run {
             this.feedback.push({ t: 'smash', x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2, z: e.o.z, type: e.o.spec.type });
             break;
           }
+          // Step 06.5: a hit that would END the run asks the game for a last-chance rescue (selected
+          // pre-race special, only when no normal revive is left); a successful rescue absorbs this hit
+          // (no life lost, no crash) — the special's own flight protection takes over
+          if (this.lives <= 1 && this.lastChance?.()) {
+            this.feedback.push({ t: 'rescued' });
+            return null;
+          }
           this.combo = 0;
           this.lives--;
           const final = this.lives <= 0;
@@ -208,6 +216,9 @@ export class Run {
     }
     return result;
   }
+
+  /** Step 06.5 last-chance hook (Game): true = the lethal hit was rescued by an auto-activated special */
+  lastChance: (() => boolean) | null = null;
 
   /** random source (tests can seed it) */
   rand: () => number = Math.random;
@@ -262,7 +273,8 @@ export class Run {
         this.superJumps = Math.min(2, this.superJumps + 1);
         break;
       case 'dash':
-        this.dashes = Math.min(3, this.dashes + 2);
+        // Step 06.5: AIR DASH is an ordinary road collectible that fires at once (Game starts the
+        // maneuver from the pickup feedback) — no charges, no button
         break;
       case 'escape':
         this.escapes = Math.min(2, this.escapes + 1);

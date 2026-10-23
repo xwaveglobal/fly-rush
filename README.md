@@ -187,6 +187,19 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v4.5.0 — Step 06.5: Air Dash, airborne-only spoiler, audio + pause fixes, auto special, class unlocks
+
+- **Audio**: sound starts from the first real tap (Play / any button / the road) — Settings is no longer needed; the context is resumed on every tap until it runs (also from the iOS "interrupted" state) and suspended while the app is hidden. The crash sound fires at the collision itself (before any crash visuals; the explosion layer on the audio clock, no timer).
+- **Pause** stays paused forever (it used to share the revive countdown and ended the run); Resume continues from the exact state.
+- **Air Dash** road item (outer lanes only): fires on pickup — lift, spoiler up, one sideways 360° roll across exactly two lanes, lands in the opposite outer lane. Spawned only where the landing is safe; protected only during the move + 0.25 s.
+- **Spoiler** opens only in the air (jumps, Air Dash, Roadster / HYPER / SOS flights) and closes flush on the road — Turbo no longer opens it.
+- **Road items** rebalanced per speed level (`ITEM_BALANCE`): more Shields / hearts on EASY, fewer on HARD, Air Dash rarer than Turbo.
+- **Last-chance special**: when a hit would end the run and no revive is left, the pre-race Roadster / HYPER / SOS fires by itself through the button's own code (one charge, "… AUTO ACTIVATED!").
+- **Magic Bag** auto-equips one random special before a run when the slot is empty (never replaces a pick, never re-rolls, consumes nothing).
+- **Crash**: the car drops to the road (never floats) and on the run-ending crash a few real parts (splitter, spoiler, a wheel) break off.
+- **Classes**: only AA unlocks a new car (XWAVE Inferno); S / SS / SSS cars are dark silhouettes until earned (owned cars are kept). First-time Class A / AA / AAA / S+ promotion celebration.
+- **Buttons** outside Home are flat (no glow, shadows or pulsing). Details + screenshots: `docs/gameplay-upgrade/step06-5/`.
+
 ## v4.4.1 — X1 model back to the v4.2.0 car (owner request)
 
 - The in-game 3D car is the v4.2.0 X1 again (the model in the Step 04 screenshots, the owner's favourite): `src/assets/models/xwave-x1.glb`, `scripts/car/x1-builder.ts` and `tests/car.test.ts` restored from `d222b92`.

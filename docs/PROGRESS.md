@@ -4,9 +4,26 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-23 — v4.5.0: Step 06.5 + Patch 02 (H5 gameplay) — STOP, waiting for approval
+
+**Done** (details, screenshots, test results: `docs/gameplay-upgrade/step06-5/`):
+- Audio starts from the first real tap (no Settings needed), resumed on every tap until running, suspended in background; crash SFX at the collision event (trigger ≈ 0.4 ms after it on the main thread; audible device latency not measured).
+- Pause: one frozen state, never auto Game Over (root cause: `'paused'` shared the revive countdown in `tick`).
+- Air Dash road item (outer lanes, safe-landing spawner guard, runtime `AirDashGuard`), airborne-only spoiler, item balance per level (`ITEM_BALANCE`), last-chance auto Roadster / HYPER / SOS (`Run.lastChance` → `Game.activateSpecial('AUTO_LAST_CHANCE')`), Magic Bag auto-equip (fills an empty special slot only), class unlock matrix (AA = Inferno only; S / SS / SSS future cars), first-time class celebration (A+), flat non-Home buttons, crash: car falls to the road + 3 real parts break off on the final crash.
+- Tests: new `tests/airdash.test.ts`, spoiler matrix in `tests/carMotion.test.ts`; real-build QA `scripts/qa/step065.mjs` (+ `h5.mjs`, `audio-startup.mjs`, `item-balance.ts`).
+- Step 07 FINAL was paused by the owner before it finished: WIP commit `a9e1476` (approved GLB lock + fingerprint test, camera candidates `?cam=premium|arcade`, PBR pass opt-in `?pbr=1`); defaults unchanged.
+
+**Open decisions for the owner**: where the old C / B / A / AAA cars go (mapped by rarity to S / SS / SSS; Nexus = future car without a condition) — `SKINS` in `src/render/Vehicle.ts`.
+
+**Known**: no phone / Native test (H5 only, SwiftShader in the cloud); audible audio latency and real-device FPS not measured.
+
+**Next**: owner reviews Step 06.5 → approval. Do not start Step 07 / Native sync before that.
+
+---
+
 ## 2026-10-23 — v4.4.1: X1 car model restored to v4.2.0 (owner request)
 
-**Done**: owner preferred the v4.2.0 car (Step 04 screenshots). Restored the game GLB, `scripts/car/x1-builder.ts` and `tests/car.test.ts` from `d222b92`; other v4.2.1–v4.4.0 work kept. Step 06 / 07 models saved in `assets-src/x1/rollback/` (+ masters); their builder lives in commit `d00b71c`. Step 05 finished: screenshots 01–13, no-DOM smoke 10/11 (context restore fails without canvas events — native open item), env self-test 6/6, clean v4.4.0 profile.
+**Done**: owner preferred the v4.2.0 car (Step 04 screenshots). Restored the game GLB, `scripts/car/x1-builder.ts` and `tests/car.test.ts` from `d222b92`; other v4.2.1–v4.4.0 work kept. Step 06 / 07 models saved in `assets-src/x1/rollback/` (+ masters); their builder lives in commit `d00b71c`. Step 05 finished: screenshots 01–13, no-DOM smoke 10/11 (context restore fails without canvas events — native open item), env self-test 6/6. The clean MEDIUM / HIGH re-profile was dropped by the owner ("bỏ đo hiệu năng step 05"); MEDIUM / HIGH timings stay marked invalid.
 
 **Known**: Step 06/07 reports describe the rolled-back car; the studio / compare tools now build the v4.2.0 car by default. Phone FPS still not measured; TikTok native not ported.
 

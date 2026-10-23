@@ -63,6 +63,8 @@ export const upgradeCost = (lvl: number) => Math.round(150 * Math.pow(lvl + 1, 1
 export const SAMPLE_BOARD_NOTE = true;
 
 export interface UIHandlers {
+  /** Step 06.5: the class promotion celebration was acknowledged (Continue) */
+  classOk?: () => void;
   play(): void;
   garage(): void;
   missions(): void;
@@ -714,6 +716,18 @@ export class UI {
       </div>
     </section>
 
+    <section id="classup" class="screen overlay">
+      <div class="cu-bg" aria-hidden="true"><i class="cu-sweep"></i><span class="cu-dots">${'<b></b>'.repeat(14)}</span></div>
+      <div class="cu-top">
+        <div class="cu-kicker">CLASS PROMOTION</div>
+        <div class="cu-emblem" data-k="cuemblem"><span data-k="cucls">A</span></div>
+        <div class="cu-title" data-k="cutitle">Class A</div>
+        <div class="cu-sub" data-k="cusub"></div>
+      </div>
+      <div class="cu-car" data-k="cucar" hidden><img data-k="cucarimg" alt="" /><small>New car unlocked</small><b data-k="cucarname"></b></div>
+      <button class="btn big cu-ok" data-a="classok">Continue</button>
+    </section>
+
     <section id="gameover" class="screen overlay">
       <div class="panel result">
         <div class="res-top"><button class="icon-btn sm" data-a="home" aria-label="Close">${ICON.close}</button><img class="res-logo" src="${logoUrl}" alt="" /><button class="icon-btn sm" data-a="share" aria-label="Share">${ICON.share}</button></div>
@@ -912,6 +926,8 @@ export class UI {
         case 'closeov':
           this.screens[el.dataset.v!]?.classList.remove('show');
           return;
+        case 'classok':
+          return this.h.classOk?.();
         case 'savepname': return this.h.setName($<HTMLInputElement>(this.root, '[data-k="pnameinput"]').value);
         case 'pickcar':
           this.garageIndex = SKINS.findIndex((x) => x.id === el.dataset.id);
@@ -1410,12 +1426,12 @@ export class UI {
     const vis = carVisibility(s.unlocked, skin.id);
     const rankOk = (k: (typeof SKINS)[number]) => CLASSES.indexOf(myClass) >= CLASSES.indexOf((k.need ?? 'D') as RankClass);
     $(this.root, '[data-k="lockbadge"]').hidden = vis === 'own';
-    this.setAll('locktxt', vis === 'dark' ? `RANK ${skin.need} NEEDED` : 'LOCKED');
+    this.setAll('locktxt', skin.future && vis !== 'own' ? 'COMING SOON' : vis === 'dark' ? `RANK ${skin.need} NEEDED` : 'LOCKED');
     const strip = $(this.root, '[data-k="carstrip"]');
     strip.innerHTML = SKINS.map((k, i) => {
       const v = carVisibility(s.unlocked, k.id);
       const img = v === 'dark' ? `<img class="cimg shadow" src="${carShadow}" alt="" />` : CAR_IMG[k.id] ? `<img class="cimg" src="${CAR_IMG[k.id]}" alt="" />` : carSvg(k.shape, k.body, k.glow);
-      const label = v === 'own' ? (s.vehicle === k.id ? 'In use' : 'Owned') : v === 'next' ? (rankOk(k) ? `${ICON.coin}${fmt(k.price)}` : `${ICON.lock} Rank ${k.need}`) : `Rank ${k.need}`;
+      const label = v === 'own' ? (s.vehicle === k.id ? 'In use' : 'Owned') : k.future ? 'Coming soon' : v === 'next' ? (rankOk(k) ? `${ICON.coin}${fmt(k.price)}` : `${ICON.lock} Rank ${k.need}`) : `Rank ${k.need}`;
       return `<button class="ccard ${v === 'own' ? '' : 'locked'} ${v} ${i === this.garageIndex ? 'on' : ''} ${s.vehicle === k.id ? 'cur' : ''}" data-a="pickcar" data-id="${k.id}" style="--rc:${RARITY_COLOR[k.rarity ?? 'Common']}">
         ${img}${v === 'dark' ? '<i class="q">?</i>' : ''}<b>${v === 'dark' ? '???' : k.name.replace('XWAVE ', '')}</b><small>${label}</small>${v === 'own' ? '' : `<i class="lk">${ICON.lock}</i>`}</button>`;
     }).join('') + `<button class="ccard locked dark more" data-a="morecars"><img class="cimg shadow" src="${carShadow}" alt="" /><i class="q">+</i><b>MORE</b><small>${classBadge('S')}${classBadge('SS')}${classBadge('SSS')}</small></button>`;
@@ -1423,7 +1439,7 @@ export class UI {
     const st = skin.stats ?? [7, 7, 7, 7];
     const bars = ['Speed', 'Acceleration', 'Handling', 'Energy'].map((n, i) => `<div class="cst"><span>${n}</span><i><b style="width:${st[i] * 10}%"></b></i><em>${vis === 'dark' ? '?' : st[i]}</em></div>`).join('');
     $(this.root, '[data-k="carinfo"]').innerHTML = vis === 'dark'
-      ? `<div class="crare" style="--rc:${RARITY_COLOR[skin.rarity ?? 'Common']}"><b class="cname">???</b>${skin.rarity ?? ''}</div><p class="cdark">${ICON.lock} Reach rank ${classBadge(skin.need as RankClass)} to reveal and unlock this car. Drive farther in one run to earn EXP.</p>`
+      ? `<div class="crare" style="--rc:${RARITY_COLOR[skin.rarity ?? 'Common']}"><b class="cname">???</b>${skin.rarity ?? ''}</div><p class="cdark">${ICON.lock} ${skin.future ? 'A future XWAVE car — its unlock is coming soon.' : `Reach rank ${classBadge(skin.need as RankClass)} to reveal and unlock this car. Drive farther in one run to earn EXP.`}</p>`
       : `<div class="crare" style="--rc:${RARITY_COLOR[skin.rarity ?? 'Common']}"><b class="cname">${skin.name}</b>${skin.rarity ?? ''}<small>${esc(skin.cls.split('·')[1]?.trim() ?? '')}</small></div>
          <div class="cbonus">${ICON.lock} Unlocks at rank ${classBadge(skin.need as RankClass)}</div>
          <p class="cfair">Every car drives the same — EXP stays fair. Cars show off your rank.</p>`;
@@ -1436,7 +1452,7 @@ export class UI {
     if (!owned) {
       btn.dataset.mode = 'rank';
       btn.className = 'btn purple';
-      btn.innerHTML = `${ICON.lock} Reach rank ${skin.need}`;
+      btn.innerHTML = skin.future ? `${ICON.lock} Coming soon` : `${ICON.lock} Reach rank ${skin.need}`;
       btn.removeAttribute('disabled');
     } else if (!owned) {
       btn.dataset.mode = 'buy';
@@ -1815,6 +1831,27 @@ export class UI {
       <button class="btn big spgo" data-a="sgo">${ICON.play} GO</button>`;
     this.screens.specialpick.classList.add('show');
     this.scheduleFit();
+  }
+
+  /** Step 06.5 first-time class promotion (A and up): emblem, light sweep, particles; car showcase on AA */
+  classUp(o: { cls: string; color: string; sub: string; car: { id: string; name: string } | null }) {
+    const sc = this.screens.classup;
+    if (!sc) return;
+    sc.style.setProperty('--cc', o.color);
+    this.setAll('cucls', o.cls);
+    this.setAll('cutitle', `Class ${o.cls}`);
+    this.setAll('cusub', o.sub);
+    const car = $(this.root, '[data-k="cucar"]');
+    car.hidden = !o.car;
+    sc.classList.toggle('withcar', !!o.car);
+    if (o.car) {
+      this.setAll('cucarname', o.car.name);
+      $<HTMLImageElement>(this.root, '[data-k="cucarimg"]').src = carImage(o.car.id);
+    }
+    sc.classList.remove('play');
+    void sc.offsetWidth; // restart the entrance animation
+    sc.classList.add('play');
+    this.showOverlay('classup');
   }
 
   showOverlay(id: string) {

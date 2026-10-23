@@ -1,0 +1,83 @@
+{
+ "seeds": 24,
+ "kmPerSeed": 30,
+ "note": "items per 10 km of Endless, seeded spawner (same seeds before / after)",
+ "easy": {
+  "before": {
+   "per10km": {
+    "shield": 9.38,
+    "turbo": 2.11,
+    "life": 1.67,
+    "dash": 0,
+    "magnet": 9.71,
+    "double": 6.5,
+    "mystery": 4.97
+   },
+   "dashOuterLane": "—"
+  },
+  "after": {
+   "per10km": {
+    "shield": 10.81,
+    "turbo": 1.61,
+    "life": 2,
+    "dash": 0.72,
+    "magnet": 8.47,
+    "double": 6.24,
+    "mystery": 4.44
+   },
+   "dashOuterLane": "52/52"
+  }
+ },
+ "normal": {
+  "before": {
+   "per10km": {
+    "shield": 10.14,
+    "turbo": 1.97,
+    "life": 1.67,
+    "dash": 0,
+    "magnet": 9.26,
+    "double": 5.92,
+    "mystery": 4.42
+   },
+   "dashOuterLane": "—"
+  },
+  "after": {
+   "per10km": {
+    "shield": 9.49,
+    "turbo": 2.07,
+    "life": 1.67,
+    "dash": 0.88,
+    "magnet": 9.31,
+    "double": 5.74,
+    "mystery": 4.35
+   },
+   "dashOuterLane": "63/63"
+  }
+ },
+ "hard": {
+  "before": {
+   "per10km": {
+    "shield": 8.76,
+    "turbo": 2.38,
+    "life": 3,
+    "dash": 0,
+    "magnet": 9.58,
+    "double": 5.79,
+    "mystery": 4.86
+   },
+   "dashOuterLane": "—"
+  },
+  "after": {
+   "per10km": {
+    "shield": 7.07,
+    "turbo": 2.29,
+    "life": 2.33,
+    "dash": 0.94,
+    "magnet": 9.68,
+    "double": 6.46,
+    "mystery": 4.58
+   },
+   "dashOuterLane": "68/68"
+  }
+ }
+}

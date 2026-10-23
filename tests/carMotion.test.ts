@@ -1,6 +1,6 @@
 /** v4 3D car motion helpers: frame-rate independent, spoiler deploys with nitro and retracts after. */
 declare const process: { exit(code: number): never };
-import { approach, carHeight, ease, spoilerStep, spoilerUpdate, wheelStep, type SpoilerState } from '../src/render/car/carMotion.ts';
+import { approach, carHeight, ease, isAirborne, spoilerStep, spoilerUpdate, wheelStep, type SpoilerState } from '../src/render/car/carMotion.ts';
 import { Player } from '../src/gameplay/Player.ts';
 import { CAR_HALF, HEIGHT, RENDER } from '../src/config.ts';
 
@@ -46,30 +46,30 @@ check(wheelStep(69, 0.28, dt, RENDER.wheelMaxStep) === RENDER.wheelMaxStep, `whe
 check(RENDER.wheelMaxStep < Math.PI / 10, 'cap below half a spoke gap (10 spokes) → never rolls backwards');
 check(wheelStep(-5, 0.28, dt, 1) === 0, 'wheelStep(): never negative');
 
-// ---- v4.1.2 spoiler state machine, driven by the REAL gameplay jump (Player.vmode === 'up')
+// ---- Step 06.5 spoiler state matrix, driven by the REAL gameplay flight state (Player) + Turbo flag
 {
   const R = RENDER;
   const sim = () => {
     const p = new Player();
     p.reset(1);
     const st: SpoilerState = { k: 0, hold: 0 };
-    let nitro = 0;
-    let t = 0;
-    const log: { t: number; k: number; jumping: boolean; nitro: number }[] = [];
+    let turbo = false;
+    const log: { k: number; air: boolean; turbo: boolean }[] = [];
     const step = (sec: number) => {
       for (let i = 0; i < Math.round(sec * 60); i++) {
         p.update(dt);
-        t += dt;
-        const jumping = p.vmode === 'up';
-        spoilerUpdate(st, jumping, nitro, dt, R.spoilerUp, R.spoilerDown, R.spoilerHold);
-        log.push({ t, k: st.k, jumping, nitro });
+        // Turbo is passed nowhere: the rule only reads the flight state (the flag is logged to prove it)
+        const air = isAirborne(p.vmode, p.y, HEIGHT.NORMAL);
+        spoilerUpdate(st, air, dt, R.spoilerUp, R.spoilerDown, R.spoilerHold);
+        log.push({ k: st.k, air, turbo });
       }
     };
     const untilLanded = () => {
       let n = 0;
-      while (p.vmode === 'up' && n++ < 600) step(1 / 60);
+      while (p.vmode === 'up' && n++ < 900) step(1 / 60);
     };
-    return { p, st, step, untilLanded, setNitro: (v: number) => (nitro = v), log };
+    const groundedOpen = () => log.filter((l) => !l.air).length && Math.max(0, ...log.map((l, i) => (!l.air && i > 0 && log[i - 1].air === false ? l.k : 0)));
+    return { p, st, step, untilLanded, setTurbo: (v: boolean) => (turbo = v), log, groundedOpen };
   };
   const flips = (log: { k: number }[]) => {
     let dir = 0;
@@ -81,66 +81,64 @@ check(wheelStep(-5, 0.28, dt, 1) === 0, 'wheelStep(): never negative');
     }
     return n;
   };
-
-  // 1–4: normal → jump → airborne → landing → normal
+  // grounded / grounded + Turbo / grounded + Shield (shield is not an input either) = fully closed
   {
     const s = sim();
     s.step(2);
-    check(s.st.k < 0.001, `normal driving: closed (k ${s.st.k.toFixed(3)})`);
+    check(s.st.k === 0, `normal driving: fully closed (k ${s.st.k})`);
+    s.setTurbo(true);
+    s.step(3);
+    check(s.st.k === 0, `Turbo on the road: fully closed (k ${s.st.k})`);
+  }
+  // jump: take-off opening → airborne open → descending open → landing → fully closed
+  {
+    const s = sim();
+    s.step(1);
     s.p.input('up');
     s.step(0.12);
-    check(s.p.vmode === 'up' && s.st.k > 0.2, `jump take-off: opening as the car leaves the ground (k ${s.st.k.toFixed(2)} after 0.12 s)`);
+    check(s.p.vmode === 'up' && s.st.k > 0.2, `jump take-off: opening (k ${s.st.k.toFixed(2)} after 0.12 s)`);
     s.step(0.4);
-    check(s.p.air > 0.5 && s.st.k > 0.9, `airborne: open (k ${s.st.k.toFixed(3)}, air ${s.p.air.toFixed(2)})`);
+    check(s.st.k > 0.9, `airborne: open (k ${s.st.k.toFixed(3)})`);
+    while (s.p.vphase !== 'recover') s.step(1 / 60);
+    s.step(0.15);
+    check(s.p.y > HEIGHT.NORMAL + 0.05 && s.st.k > 0.9, `descending while airborne: open (k ${s.st.k.toFixed(3)}, y ${s.p.y.toFixed(2)})`);
     s.untilLanded();
-    check(s.st.k > 0.9, `touch-down: still up (k ${s.st.k.toFixed(3)}) — holds ${R.spoilerHold} s, no snap`);
-    s.step(0.4);
-    const mid = s.st.k;
-    s.step(1.6);
-    check(mid < 0.99 && s.st.k < 0.03, `after landing (no nitro): retracts smoothly (k ${mid.toFixed(2)} → ${s.st.k.toFixed(3)})`);
+    s.step(1.2);
+    check(s.st.k === 0, `after landing: fully closed, flush (k ${s.st.k})`);
     check(flips(s.log) <= 1, `one open → close cycle, no flicker (${flips(s.log)} direction change)`);
+    // after ground contact it only ever closes
+    const iLand = s.log.findIndex((l, i) => i > 0 && s.log[i - 1].air && !l.air);
+    check(s.log.slice(iLand).every((l, i, a) => i === 0 || l.k <= a[i - 1].k), 'from ground contact the spoiler only closes (no re-open on the road)');
   }
-  // 5: nitro alone
+  // Turbo + jump = open (airborne); landing while Turbo stays active = fully closed
   {
     const s = sim();
-    s.step(1);
-    s.setNitro(1);
-    s.step(1);
-    check(s.st.k > 0.99, `nitro: open (k ${s.st.k.toFixed(3)})`);
-    s.setNitro(0);
-    s.step(2.5);
-    check(s.st.k < 0.03, `nitro end: closes (k ${s.st.k.toFixed(3)} after 2.5 s — slower, smooth close)`);
-  }
-  // 6–9: nitro → jump → land while nitro → nitro ends while airborne on a second jump → both off
-  {
-    const s = sim();
-    s.setNitro(1);
+    s.setTurbo(true);
     s.step(1);
     s.p.input('up');
-    let minK = 1;
-    for (let i = 0; i < 40; i++) {
+    s.step(0.4);
+    check(s.st.k > 0.9, `Turbo + jump: open because airborne (k ${s.st.k.toFixed(3)})`);
+    s.untilLanded();
+    s.step(1.2);
+    check(s.st.k === 0, `landing while Turbo remains active: fully closed (k ${s.st.k})`);
+  }
+  // AIR DASH: open through take-off, roll and descent; closed after the landing
+  {
+    const s = sim();
+    s.p.reset(0);
+    s.step(0.5);
+    s.p.airDash();
+    s.step(0.1);
+    const take = s.st.k;
+    let minAir = 1;
+    let n = 0;
+    while (s.p.isAirDash && n++ < 300) {
       s.step(1 / 60);
-      minK = Math.min(minK, s.st.k);
+      if (s.p.vphase === 'hold' || (s.p.vphase === 'recover' && s.p.y > HEIGHT.NORMAL + 0.3)) minAir = Math.min(minAir, ease(s.st.k));
     }
-    check(minK > 0.98, `jump + nitro: stays open, no re-animation (min k ${minK.toFixed(3)})`);
-    s.untilLanded();
-    s.step(0.6);
-    check(s.st.k > 0.98, `landing while nitro is active: stays open (k ${s.st.k.toFixed(3)})`);
-    s.p.input('up');
-    s.step(0.3);
-    s.setNitro(0);
-    s.step(0.2);
-    check(s.p.vmode === 'up' && s.st.k > 0.98, `nitro ends while airborne: stays open (k ${s.st.k.toFixed(3)})`);
-    s.untilLanded();
-    s.step(2.2);
-    check(s.st.k < 0.03, `both inactive: closed (k ${s.st.k.toFixed(3)})`);
-    check(flips(s.log) <= 1, `jump / nitro overlaps cause no flicker (${flips(s.log)} direction change)`);
-  }
-  // a faint boost tail (envelope fading out) does not hold the spoiler up
-  {
-    const st: SpoilerState = { k: 1, hold: 0 };
-    for (let i = 0; i < 180; i++) spoilerUpdate(st, false, 0.03, dt, R.spoilerUp, R.spoilerDown, R.spoilerHold);
-    check(st.k < 0.03, 'nitro below threshold (fading boost light) → closes');
+    check(take > 0.2 && minAir > 0.9, `AIR DASH: opening at take-off (k ${take.toFixed(2)}), open through the roll and descent (hinge ≥ ${(minAir * 100).toFixed(0)} % of full angle)`);
+    s.step(1.2);
+    check(s.st.k === 0, `AIR DASH landing: fully closed (k ${s.st.k})`);
   }
 }
 

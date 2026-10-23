@@ -2530,3 +2530,70 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 .acin { grid-template-columns: minmax(0, 1fr) auto !important; }
 .acin .btn { font-size: 13px !important; padding: 0 12px !important; min-width: 0 !important; height: 44px; }
 .srow.acct b { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ===================== Step 06.5 — class promotion celebration (A and up) ===================== */
+#classup { z-index: 60; flex-direction: column; justify-content: space-between; align-items: center; gap: 12px;
+  padding: calc(env(safe-area-inset-top, 0px) + 28px) 20px calc(env(safe-area-inset-bottom, 0px) + 28px);
+  background: radial-gradient(120% 70% at 50% 32%, color-mix(in srgb, var(--cc, #9b6bff) 26%, #05061a) 0%, #03040f 62%, #010208 100%); backdrop-filter: none; -webkit-backdrop-filter: none; overflow: hidden; }
+#classup .cu-bg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+#classup .cu-sweep { position: absolute; top: -20%; bottom: -20%; width: 38%; left: -60%; transform: skewX(-18deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.16), transparent); }
+#classup.play .cu-sweep { animation: cuSweep 2.4s .35s ease-in-out infinite; }
+@keyframes cuSweep { 0% { left: -60%; } 55%, 100% { left: 130%; } }
+#classup .cu-dots b { position: absolute; bottom: -10px; width: 4px; height: 4px; border-radius: 50%; background: var(--cc, #fff); opacity: 0; }
+#classup.play .cu-dots b { animation: cuRise 3.2s linear infinite; }
+#classup .cu-dots b:nth-child(1) { left: 6%; animation-delay: .1s; } #classup .cu-dots b:nth-child(2) { left: 14%; animation-delay: 1.3s; }
+#classup .cu-dots b:nth-child(3) { left: 22%; animation-delay: .6s; } #classup .cu-dots b:nth-child(4) { left: 31%; animation-delay: 2.1s; }
+#classup .cu-dots b:nth-child(5) { left: 39%; animation-delay: .9s; } #classup .cu-dots b:nth-child(6) { left: 47%; animation-delay: 2.6s; }
+#classup .cu-dots b:nth-child(7) { left: 55%; animation-delay: .3s; } #classup .cu-dots b:nth-child(8) { left: 62%; animation-delay: 1.7s; }
+#classup .cu-dots b:nth-child(9) { left: 70%; animation-delay: 1.1s; } #classup .cu-dots b:nth-child(10) { left: 77%; animation-delay: 2.9s; }
+#classup .cu-dots b:nth-child(11) { left: 84%; animation-delay: .5s; } #classup .cu-dots b:nth-child(12) { left: 91%; animation-delay: 2.3s; }
+#classup .cu-dots b:nth-child(13) { left: 96%; animation-delay: 1.5s; } #classup .cu-dots b:nth-child(14) { left: 3%; animation-delay: 2.8s; }
+@keyframes cuRise { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: .8; } 100% { transform: translateY(-92vh); opacity: 0; } }
+#classup .cu-top { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 4vh; }
+#classup .cu-kicker { font-size: 13px; font-weight: 800; letter-spacing: 4px; color: rgba(255,255,255,.72); }
+#classup .cu-emblem { width: 150px; height: 150px; display: grid; place-items: center; position: relative;
+  clip-path: polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--cc) 85%, #fff) 0%, var(--cc) 45%, color-mix(in srgb, var(--cc) 55%, #000) 100%); }
+#classup .cu-emblem::after { content: ''; position: absolute; inset: 7px; clip-path: inherit; background: linear-gradient(180deg, #0b0d26, #05061a); }
+#classup .cu-emblem span { position: relative; z-index: 1; font-size: 58px; font-weight: 900; font-style: italic; letter-spacing: -1px;
+  color: #fff; text-shadow: 0 0 18px var(--cc), 0 0 42px var(--cc); }
+#classup.play .cu-emblem { animation: cuPop .7s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes cuPop { 0% { transform: scale(.3) rotate(-12deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+#classup .cu-title { font-size: 40px; font-weight: 900; font-style: italic; color: #fff; letter-spacing: .5px; }
+#classup.play .cu-title, #classup.play .cu-sub, #classup.play .cu-car { animation: cuIn .6s .35s both; }
+@keyframes cuIn { from { transform: translateY(14px); opacity: 0; } to { transform: none; opacity: 1; } }
+#classup .cu-sub { font-size: 15px; color: rgba(255,255,255,.78); text-align: center; max-width: 300px; }
+#classup .cu-car { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+#classup .cu-car img { width: min(78vw, 300px); height: auto; margin-bottom: 4px; }
+#classup .cu-car small { font-size: 12px; font-weight: 800; letter-spacing: 2px; color: var(--cc); text-transform: uppercase; }
+#classup .cu-car b { font-size: 22px; color: #fff; }
+#classup .cu-ok { position: relative; min-width: 220px; }
+@media (max-height: 680px) { #classup .cu-emblem { width: 118px; height: 118px; } #classup .cu-emblem span { font-size: 46px; } #classup .cu-title { font-size: 32px; } #classup .cu-car img { width: min(64vw, 230px); } }
+
+/* ===================== Step 06.5 — flat buttons everywhere except the Home screen =====================
+   Every button / tappable control OUTSIDE #start (Garage, Ranks, Settings, Pause, Game Over, Revive,
+   item selection, Shop, rewards, celebrations, HUD…): no glow, no outer/inner shadow, no text shadow, no
+   drop-shadow filter on its icon, no gloss / light-beam pseudo-element, no pulsing. Solid colour,
+   1 px solid border; states by colour / opacity / a small scale. Home (#start) is untouched. */
+#ui .screen:not(#start) :is(button, .btn, [data-a], .toggle, .switch) {
+  box-shadow: none !important; text-shadow: none !important; filter: none !important; animation: none !important;
+}
+#ui .screen:not(#start) :is(button, .btn, [data-a], .toggle, .switch) :is(*, svg, span, b, i, em, small) {
+  text-shadow: none !important; filter: none !important; box-shadow: none !important;
+}
+#ui .screen:not(#start) :is(button, .btn, [data-a])::before,
+#ui .screen:not(#start) :is(button, .btn, [data-a])::after { box-shadow: none !important; filter: none !important; animation: none !important; }
+/* gloss strips / shine beams on the big buttons (keep the invisible enlarged hit area of the HUD specials) */
+#ui .screen:not(#start) .btn:not(.rocketbtn):not(.sos)::before,
+#ui .screen:not(#start) .btn:not(.rocketbtn):not(.sos)::after { display: none !important; }
+/* flat solid surface + thin solid border (colour from the button's own palette) */
+#ui .screen:not(#start) .btn { background: var(--c2) !important; background: color-mix(in srgb, var(--c1) 45%, var(--c2)) !important;
+  border: 1px solid color-mix(in srgb, var(--edge, rgba(0,0,0,.35)) 80%, transparent) !important; }
+#ui .screen:not(#start) .btn.gold { color: #2a1700 !important; }
+/* states */
+#ui .screen:not(#start) :is(button, .btn, [data-a]):active { transform: scale(.97) !important; filter: brightness(.88) !important; }
+#ui .screen:not(#start) :is(button, .btn, [data-a])[disabled],
+#ui .screen:not(#start) :is(button, .btn, [data-a]).disabled { opacity: .45 !important; filter: grayscale(.6) !important; }
+#ui .screen:not(#start) :is(.ccard, .tcard, .boost, .bgt, .sptile, .bagit, .avpick).on,
+#ui .screen:not(#start) .tcard.sel { border-width: 2px !important; }

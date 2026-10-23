@@ -17,6 +17,9 @@ export const LANGS: { code: Lang; name: string; flag: string }[] = [
 // [en, fr, ja, pt, de, es]
 const T: [string, string, string, string, string, string][] = [
   ['Play', 'Jouer', 'プレイ', 'Jogar', 'Spielen', 'Jugar'],
+  ['CLASS PROMOTION', 'PROMOTION DE CLASSE', 'クラス昇格', 'PROMOÇÃO DE CLASSE', 'KLASSENAUFSTIEG', 'ASCENSO DE CLASE'],
+  ['New car unlocked', 'Nouvelle voiture débloquée', '新しい車をアンロック', 'Novo carro desbloqueado', 'Neues Auto freigeschaltet', 'Nuevo coche desbloqueado'],
+  ['Continue', 'Continuer', '続ける', 'Continuar', 'Weiter', 'Continuar'],
   ['Garage', 'Garage', 'ガレージ', 'Garagem', 'Garage', 'Garaje'],
   ['Shop', 'Boutique', 'ショップ', 'Loja', 'Shop', 'Tienda'],
   ['Missions', 'Missions', 'ミッション', 'Missões', 'Missionen', 'Misiones'],

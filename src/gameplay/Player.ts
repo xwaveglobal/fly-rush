@@ -1,4 +1,4 @@
-import { CAR_HALF, CAR_HALF_Y_LOW, HEIGHT, LANES, TIMING } from '../config.ts';
+import { AIR_DASH, CAR_HALF, CAR_HALF_Y_LOW, HEIGHT, LANES, TIMING } from '../config.ts';
 import { clamp, clamp01, easeInOutSine, easeOutBack, easeOutCubic, easeOutQuad, lerp } from '../core/math.ts';
 
 const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -18,6 +18,10 @@ export interface PlayerEvents {
   airDash?: (dir: -1 | 1) => void;
   /** an extra air swipe was refused (one lane per hop) */
   airBlocked?: (dir: -1 | 1) => void;
+  /** Step 06.5 AIR DASH collectible: the maneuver starts (dir = sideways direction) */
+  airDashStart?: (dir: -1 | 1) => void;
+  /** a swipe made during the AIR DASH (absorbed) */
+  dashAbsorbed?: (a: Action) => void;
 }
 
 /**
@@ -78,6 +82,9 @@ export class Player {
     this.buffer.length = 0;
     this.landLane = 0;
     this.pendingLane = 0;
+    this.isAirDash = false;
+    this.airDashPending = false;
+    this.airDashT = 0;
     this.jumpReadyAt = 0;
     this.isSuper = false;
     this.isHyper = false;
@@ -89,6 +96,12 @@ export class Player {
 
   input(a: Action) {
     if (this.frozen) return;
+    // Step 06.5: the AIR DASH trajectory is fixed (two lanes, one roll, opposite edge): swipes during it
+    // are absorbed — never queued, so nothing fires unexpectedly after the landing
+    if (this.isAirDash) {
+      this.events.dashAbsorbed?.(a);
+      return;
+    }
     if (a === 'left' || a === 'right') {
       this.changeLane(a === 'left' ? -1 : 1);
       return;
@@ -131,6 +144,11 @@ export class Player {
   get timeToLand() {
     if (this.vmode !== 'up') return 0;
     const left = Math.max(0, this.phaseDur - this.phaseT);
+    if (this.isAirDash) {
+      if (this.vphase === 'exec') return left + AIR_DASH.hold + AIR_DASH.recover;
+      if (this.vphase === 'hold') return left + AIR_DASH.recover;
+      return left;
+    }
     const ex = this.isEscape ? TIMING.escExec : this.isHyper ? TIMING.hyperExec : this.isSuper ? TIMING.superExec : TIMING.upExec;
     const ho = this.isEscape ? TIMING.escHold : this.isHyper ? TIMING.hyperHold : this.isSuper ? TIMING.superHold : TIMING.upHold;
     const re = this.isEscape ? TIMING.escRecover : this.isHyper ? TIMING.hyperRecover : this.isSuper ? TIMING.superRecover : TIMING.upRecover;
@@ -207,6 +225,70 @@ export class Player {
   /** true during a SKY ESCAPE (implies isSuper) */
   isEscape = false;
 
+  // ---- Step 06.5 AIR DASH (road collectible) ----
+  /** true from the pickup until the wheels are back on the road */
+  isAirDash = false;
+  /** sideways direction of the dash (+1 = to the right) */
+  airDashDir: 1 | -1 = 1;
+  /** seconds since the dash started */
+  airDashT = 0;
+  /** extra hover granted so far (bounded by AIR_DASH.maxExtend) */
+  airDashExtra = 0;
+  /** lane the dash started from / lands in */
+  airDashFrom = 0;
+  airDashTo = 0;
+  private airDashLaneDone = false;
+  private airDashPending = false;
+  /** roll progress 0..1 (exactly one full turn when it reaches 1) */
+  get airDashRoll() {
+    if (!this.isAirDash) return 0;
+    return clamp01((this.airDashT - AIR_DASH.lateralStart) / AIR_DASH.lateral);
+  }
+  /** seconds until touch-down of the dash */
+  get airDashLeft() {
+    if (!this.isAirDash) return 0;
+    return this.timeToLand;
+  }
+  /**
+   * Start an AIR DASH from an outer lane (0 or 2): up to HIGH, across exactly two lanes to the
+   * opposite outer lane with one roll, land. Not from the centre lane, not during a Roadster /
+   * HYPER / SOS flight or another dash. Returns false when it can't start (pickup then just counts).
+   */
+  airDash() {
+    if (this.frozen || this.isAirDash || this.isSuper || this.isEscape) return false;
+    if (this.lane !== 0 && this.lane !== 2) return false;
+    if (this.laneT < 1) {
+      // still sliding INTO the outer lane: start the moment it is there (never from between lanes)
+      this.airDashPending = true;
+      return true;
+    }
+    const dir: 1 | -1 = this.lane === 0 ? 1 : -1;
+    this.isAirDash = true;
+    this.airDashDir = dir;
+    this.airDashT = 0;
+    this.airDashExtra = 0;
+    this.airDashFrom = this.lane;
+    this.airDashTo = 2 - this.lane;
+    this.airDashLaneDone = false;
+    this.buffer.length = 0;
+    this.pendingLane = 0;
+    this.landLane = 0;
+    this.stats.ups++;
+    this.startPhase('up', 'exec', AIR_DASH.exec * clamp(Math.abs(HEIGHT.HIGH - this.y) / (HEIGHT.HIGH - HEIGHT.NORMAL), 0.4, 1.3));
+    this.airLaneUsed = 2; // no extra air lanes on top of the dash
+    this.events.airDashStart?.(dir);
+    return true;
+  }
+  /** keep hovering a little longer (the landing spot is briefly blocked); bounded, never infinite */
+  extendAirDash(sec: number) {
+    if (!this.isAirDash || this.vmode !== 'up' || this.vphase !== 'hold') return 0;
+    const add = Math.min(sec, AIR_DASH.maxExtend - this.airDashExtra);
+    if (add <= 0) return 0;
+    this.airDashExtra += add;
+    this.phaseDur += add;
+    return add;
+  }
+
   /** airborne enough to steer 2 lanes with an AIR DASH */
   get canDash() {
     return this.vmode === 'up' && this.vphase !== 'antic' && this.vphase !== 'recover' && this.y > HEIGHT.NORMAL + 0.5;
@@ -256,6 +338,7 @@ export class Player {
   }
 
   private get topY(): number {
+    if (this.isAirDash) return HEIGHT.HIGH;
     return this.isEscape ? HEIGHT.ESCAPE : this.isHyper ? HEIGHT.HYPER : this.isSuper ? HEIGHT.SUPER : HEIGHT.HIGH;
   }
 
@@ -336,6 +419,23 @@ export class Player {
 
   update(dt: number) {
     this.time += dt;
+    if (this.airDashPending && this.laneT >= 1) {
+      this.airDashPending = false;
+      this.airDash();
+    }
+    // ---- AIR DASH: the sideways move starts just after lift-off and crosses exactly two lanes
+    if (this.isAirDash) {
+      this.airDashT += dt;
+      if (!this.airDashLaneDone && this.airDashT >= AIR_DASH.lateralStart) {
+        this.airDashLaneDone = true;
+        this.lane = this.airDashTo;
+        this.laneFrom = this.x;
+        this.laneT = 0;
+        this.laneDur = AIR_DASH.lateral;
+        this.stats.lanes += 2;
+        this.events.lane?.(this.airDashDir);
+      }
+    }
     // ---- lateral
     const prevX = this.x;
     if (this.laneT < 1) {
@@ -461,9 +561,17 @@ export class Player {
         this.startPhase(m, 'exec', m === 'up' ? (this.isEscape ? TIMING.escExec : this.isHyper ? TIMING.hyperExec : this.isSuper ? TIMING.superExec : TIMING.upExec) : TIMING.downExec);
         break;
       case 'exec':
+        if (m === 'up' && this.isAirDash) {
+          this.startPhase(m, 'hold', AIR_DASH.hold);
+          break;
+        }
         this.startPhase(m, 'hold', m === 'up' ? (this.isEscape ? TIMING.escHold : this.isHyper ? TIMING.hyperHold : this.isSuper ? TIMING.superHold : TIMING.upHold) : TIMING.downHold);
         break;
       case 'hold':
+        if (m === 'up' && this.isAirDash) {
+          this.startPhase(m, 'recover', AIR_DASH.recover);
+          break;
+        }
         this.startPhase(m, 'recover', m === 'up' ? (this.isEscape ? TIMING.escRecover : this.isHyper ? TIMING.hyperRecover : this.isSuper ? TIMING.superRecover : TIMING.upRecover) : TIMING.downRecover);
         break;
       case 'recover':
@@ -475,6 +583,7 @@ export class Player {
         this.isSuper = false;
         this.isHyper = false;
         this.isEscape = false;
+        this.isAirDash = false;
         this.events.land?.(m);
         break;
     }

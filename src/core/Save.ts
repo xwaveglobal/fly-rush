@@ -61,6 +61,8 @@ export interface SaveData {
   special?: 'super' | 'hyper' | 'escape' | null;
   /** mission rewards waiting for a manual claim (auto-claim off) */
   pendingMissions: { text: string; reward: number }[];
+  /** Step 06.5: classes (A and up) whose first-promotion celebration the player has acknowledged */
+  classCelebrated?: string[];
   /** consumable items (equipped on the track screen, used in a run) */
   items: { super: number; hyper: number; shield: number; escape: number; turbo: number; magnet: number; double: number; life: number };
   /** which owned items are equipped for the next run */

@@ -381,10 +381,10 @@ export class MeshCar {
     const buzz = (Math.sin(this.t * 41) * 0.5 + Math.sin(this.t * 67) * 0.3) * 0.004 * clamp01(speed / 30) * (1 - air);
     this.bodyPivot.rotation.set(clamp(this.pitch.value, -0.08, 0.08), clamp(this.yaw.value, -0.04, 0.04), clamp(this.roll.value, -0.06, 0.06));
     this.bodyPivot.position.y = 0.5 + clamp(this.dip.value, -0.08, 0.04) + buzz;
-    // ---- active spoiler (pop-up): open while jumping (gameplay jump state) or nitro runs; rises off
-    // the deck and tilts on its hinge; retracts after both end (hold, then a slower close)
+    // ---- active spoiler (pop-up), Step 06.5: open ONLY while airborne (`jumping` = gameplay flight
+    // state); rises off the deck and tilts on its hinge; closes flush from ground contact (Turbo never opens it)
     if (this.spoilerForce !== null) this.spoilerState.k = this.spoilerForce;
-    else spoilerUpdate(this.spoilerState, !locked && jumping, locked ? 0 : this.nitro, dt, RENDER.spoilerUp, RENDER.spoilerDown, RENDER.spoilerHold);
+    else spoilerUpdate(this.spoilerState, !locked && jumping, dt, RENDER.spoilerUp, RENDER.spoilerDown, RENDER.spoilerHold);
     if (this.spoiler) {
       const sk = ease(this.spoilerState.k);
       this.spoiler.rotation.x = -RENDER.spoilerAngle * sk;
@@ -489,8 +489,74 @@ export class MeshCar {
     this.root.visible = was;
   }
 
+  // ---- Step 06.5: parts that break off on the run-ending crash (same meshes, re-parented and moved)
+  private broken: { o: THREE.Object3D; parent: THREE.Object3D; pos: THREE.Vector3; quat: THREE.Quaternion; pivot: THREE.Object3D; v: THREE.Vector3; w: THREE.Vector3; half: number; rest: boolean }[] = [];
+  /** detach a few named parts into `world` (their world pose kept) and throw them off the car */
+  breakParts(world: THREE.Object3D, names: readonly string[]) {
+    if (!this.model || this.broken.length) return;
+    this.model.updateWorldMatrix(true, true);
+    let k = 0;
+    for (const name of names) {
+      const o = this.model.getObjectByName(name);
+      if (!o || !o.parent) continue;
+      const box = new THREE.Box3().setFromObject(o);
+      if (box.isEmpty()) continue;
+      const c = box.getCenter(new THREE.Vector3());
+      const pivot = new THREE.Group();
+      pivot.position.copy(c);
+      world.add(pivot);
+      const rec = { o, parent: o.parent, pos: o.position.clone(), quat: o.quaternion.clone(), pivot, v: new THREE.Vector3(), w: new THREE.Vector3(), half: (box.max.y - box.min.y) / 2, rest: false };
+      pivot.attach(o); // keeps the world pose: nothing jumps at the moment of the break
+      const side = k % 2 ? 1 : -1;
+      // the car stopped at the obstacle; loose parts carry on a little (ahead = −z) and off to the sides
+      rec.v.set(side * (1.4 + k * 0.6), 3.0 + k * 0.8, -(0.8 + k * 0.7));
+      rec.w.set(4 + k * 2, side * 3, side * (5 - k));
+      this.broken.push(rec);
+      k++;
+    }
+  }
+  /** broken parts: fall, bounce, tumble, come to rest on the road (y = 0); resting parts move with the
+   *  road (which is braking to a stop under the crashed car) */
+  updateParts(dt: number, roadSpeed: number, gravity: number) {
+    for (const b of this.broken) {
+      const p = b.pivot;
+      if (b.rest) {
+        p.position.z += roadSpeed * dt;
+        continue;
+      }
+      b.v.y -= gravity * dt;
+      p.position.addScaledVector(b.v, dt);
+      p.rotation.x += b.w.x * dt;
+      p.rotation.y += b.w.y * dt;
+      p.rotation.z += b.w.z * dt;
+      if (p.position.y < b.half) {
+        p.position.y = b.half;
+        if (Math.abs(b.v.y) > 1.2) {
+          b.v.y = -b.v.y * 0.3;
+          b.v.x *= 0.5;
+          b.v.z *= 0.5;
+          b.w.multiplyScalar(0.45);
+        } else b.rest = true;
+      }
+    }
+  }
+  /** put every broken part back on the car */
+  restoreParts() {
+    for (const b of this.broken) {
+      b.parent.add(b.o);
+      b.o.position.copy(b.pos);
+      b.o.quaternion.copy(b.quat);
+      b.pivot.removeFromParent();
+    }
+    this.broken.length = 0;
+  }
+  get partsBroken() {
+    return this.broken.length;
+  }
+
   /** settle the sprung body instantly (respawn / menu) */
   resetPose() {
+    this.restoreParts();
     this.yaw.snap(0);
     this.spoilerState.k = 0;
     this.spoilerState.hold = 0;

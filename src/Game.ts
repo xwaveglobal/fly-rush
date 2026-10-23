@@ -5,6 +5,7 @@ import { clamp, damp } from './core/math.ts';
 import { Input, type Action } from './core/Input.ts';
 import { loadSave, writeSave, type SaveData } from './core/Save.ts';
 import { World, type WorldEvent } from './gameplay/World.ts';
+import { AirDashGuard } from './gameplay/AirDash.ts';
 import { Run, type Feedback, SHIELD_HITS } from './gameplay/Run.ts';
 import { MissionTracker } from './gameplay/Missions.ts';
 import { Autopilot } from './gameplay/Autopilot.ts';
@@ -15,7 +16,7 @@ import { BONUS, BONUS_NAME, BONUS_SECTIONS, bonusState } from './meta/Bonus.ts';
 const BONUS_DIFF_OFFSET = 900;
 import { Renderer } from './render/Renderer.ts';
 import { CameraRig } from './render/CameraRig.ts';
-import { Vehicle, SKINS, carVisibility } from './render/Vehicle.ts';
+import { Vehicle, SKINS, carVisibility, carsForRank } from './render/Vehicle.ts';
 import { CarShatter } from './render/Shatter.ts';
 import { Track } from './render/Track.ts';
 import { Scenery } from './render/Scenery.ts';
@@ -42,7 +43,7 @@ import { RANK_ORDER, rankDist, expRate, VARIANTS, type Variant } from './gamepla
 import type { Box, PickupKind, RowSpec } from './gameplay/types.ts';
 import { Meta, type EventResult, type RunSummary } from './meta/Meta.ts';
 import { schedule, fmtLeft, localTime, prizesFor, cupFor } from './meta/Events.ts';
-import { classFor, classProgress, CLASSES, BASE_CLASSES, CLASS_MIN, XPT as XPT_ICON, playerRank, rankAtLeast, toBase, type RankClass } from './meta/Rank.ts';
+import { classFor, classProgress, CLASSES, BASE_CLASSES, CLASS_COLOR, CLASS_MIN, XPT as XPT_ICON, playerRank, rankAtLeast, rankIdx, toBase, type RankClass } from './meta/Rank.ts';
 import type { RunRewards } from './ui/UI.ts';
 import { crashTip, type CrashTip } from './gameplay/CrashTip.ts';
 import { createStore, weekBoard, type PlayerStore } from './net/PlayerStore.ts';
@@ -59,7 +60,7 @@ import { drawShareCard, shareImage, copyText } from './ui/ShareCard.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v4.4.1';
+const VERSION = 'v4.5.0';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -319,8 +320,8 @@ export class Game {
 
     this.input = new Input(container);
     this.input.onAction = (a) => this.onAction(a);
-    this.input.onSpecial = () => this.useEscape();
-    this.input.onRocket = () => this.useRocket();
+    this.input.onSpecial = () => this.activateSpecial('MANUAL', 'sos');
+    this.input.onRocket = () => this.activateSpecial('MANUAL', 'rocket');
     this.world.player.canAirDash = () => !!this.run && this.run.dashes > 0;
     this.input.onPause = () => (this.state === 'run' ? this.pause() : this.state === 'paused' ? this.resume() : undefined);
 
@@ -422,8 +423,9 @@ export class Game {
       },
       claimResults: () => this.claimResults(),
       share: () => void this.share(),
-      sos: () => this.useEscape(),
-      rocket: () => this.useRocket(),
+      classOk: () => this.classOk(),
+      sos: () => this.activateSpecial('MANUAL', 'sos'),
+      rocket: () => this.activateSpecial('MANUAL', 'rocket'),
       popAction: (a) => this.popAction(a),
       freePop: () => this.openAdPopup(),
       perk: (k) => this.openPerk(k as PerkKind, true),
@@ -525,6 +527,8 @@ export class Game {
     this.audio.setSfx(this.save.settings.sound);
     this.audio.setMusic(this.save.settings.music);
     this.migrateV2();
+    // Step 06.5: classes reached before the celebration existed count as already celebrated (first-time only)
+    if (!this.save.classCelebrated) this.save.classCelebrated = CLASSES.slice(rankIdx('A'), rankIdx(this.rank) + 1).map(String);
     this.syncCarUnlocks();
     this.applySkin(this.save.vehicle);
 
@@ -533,6 +537,7 @@ export class Game {
     window.visualViewport?.addEventListener('resize', resize);
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && this.state === 'run') this.pause();
+      this.audio.setHidden(document.hidden);
       if (document.hidden) void this.pushSave(); // leaving the app: save to the cloud right away
       else if (this.cloud.enabled) void this.cloudSync();
     });
@@ -543,14 +548,18 @@ export class Game {
     };
     this.cloud.listen();
     if (this.cloud.enabled) window.setTimeout(() => void this.cloudSync(), 1500);
-    // unlock audio on first gesture anywhere
+    // Step 06.5 audio start: every real tap / key (capture phase — UI handlers that stop propagation
+    // can't swallow it) unlocks / resumes the context until it runs. touchend / click / pointerup are
+    // the events WebKit accepts as a user activation for audio (touchstart / pointerdown are not), so
+    // the first valid interaction — Play, any menu button, the canvas — starts sound; music starts as
+    // soon as the context actually runs. Settings is only configuration.
     const unlock = () => {
-      this.audio.unlock();
-      this.audio.startMusic();
+      if (!this.audio.running) this.audio.unlock();
     };
-    window.addEventListener('pointerdown', unlock, { once: true });
-    window.addEventListener('keydown', unlock, { once: true });
-    window.addEventListener('touchstart', unlock, { once: true });
+    for (const ev of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) window.addEventListener(ev, unlock, { capture: true, passive: true });
+    this.audio.onRunning = () => {
+      if (this.save.settings.music) this.audio.startMusic();
+    };
 
     if (DEBUG) this.makeDebugBoxes();
     this.onResize();
@@ -1459,9 +1468,11 @@ export class Game {
       const V1_CAR_PRICE: Record<string, number> = { volt: 2500, phantom: 6000, inferno: 12000, nexus: 25000 };
       const r = this.rank;
       let back = 0;
+      // (the v2 rank table of that migration — not today's class matrix, so no car is taken back)
+      const V2_NEED: Record<string, RankClass> = { zenith: 'D', vega: 'C', volt: 'B', phantom: 'A', inferno: 'AA', nexus: 'AAA' };
       this.save.unlocked = this.save.unlocked.filter((id) => {
         const k = SKINS.find((x) => x.id === id);
-        if (!k || rankAtLeast(r, (k.need ?? 'D') as RankClass)) return true;
+        if (!k || rankAtLeast(r, V2_NEED[id] ?? 'D')) return true;
         back += V1_CAR_PRICE[id] ?? 0;
         return false;
       });
@@ -1512,7 +1523,27 @@ export class Game {
     this.audio.play('click');
     this.pickTrackId = trackId;
     if (this.save.special && this.save.items[this.save.special] <= 0) this.save.special = null;
+    this.magicBagAutoEquip();
     this.ui.specialPick(this.save, this.pickLabel());
+  }
+  /**
+   * Step 06.5 Patch 02 — Magic Bag auto-equip before each new run. The Magic Bag IS the special
+   * inventory (save.items: Roadster / HYPER / SOS) and its one equipment slot is save.special, so this
+   * only fills an EMPTY slot: a special the player picked is never replaced and a filled slot is never
+   * re-rolled (Retry / Resume). Eligible = count > 0. Uniform random pick. Nothing is consumed here —
+   * a special still leaves the bag only when it is used in the race (existing rule). Empty bag: nothing.
+   * The player can still change the pick (or race without) on the pick screen.
+   */
+  magicBagAutoEquip(rand = Math.random): SpecialKey | null {
+    if (this.save.special) return null;
+    const eligible = SPECIALS.filter((k) => this.save.items[k] > 0);
+    if (!eligible.length) return null;
+    const k = eligible[Math.min(eligible.length - 1, Math.floor(rand() * eligible.length))];
+    this.save.special = k;
+    this.persist();
+    const name = { super: 'Roadster Jump', hyper: 'HYPER JUMP', escape: 'SOS' }[k];
+    this.ui.toast(`${POWER_ICON[k]} <b>MAGIC BAG: ${name.toUpperCase()} EQUIPPED</b>`, '#c24dff');
+    return k;
   }
   private pickLabel() {
     return `${this.pickTrackId === 'track2' ? 'Mega Rush' : 'Endless'} · ${LEVELS[this.save.settings.speed].label}`;
@@ -1742,10 +1773,12 @@ export class Game {
   private syncCarUnlocks() {
     const r = this.rank;
     let got: string | null = null;
-    for (const k of SKINS) {
-      if (!this.save.unlocked.includes(k.id) && rankAtLeast(r, (k.need ?? 'D') as RankClass)) {
-        this.save.unlocked.push(k.id);
-        got = k.name;
+    // Step 06.5: unlocks only ever ADD (owned cars are kept), each car once (no duplicate reward),
+    // future cars never; see SKINS for the class matrix
+    for (const id of carsForRank((need) => rankAtLeast(r, need as RankClass))) {
+      if (!this.save.unlocked.includes(id)) {
+        this.save.unlocked.push(id);
+        got = SKINS.find((k) => k.id === id)!.name;
       }
     }
     return got;
@@ -1806,6 +1839,8 @@ export class Game {
     this.ui.tutPrompt(null);
     const car = SKINS.find((x) => x.id === this.save.vehicle) ?? SKINS[0];
     this.run = new Run({ ...V2_POWERUPS }, LEVELS[level].score * (1 + (car.bonus ?? 0) / 100)); // v2: same power-ups for everyone
+    this.run.lastChance = () => this.lastChance();
+    this.autoRescueUsed = false;
     // Bonus roads pay coins only; training counts EXP on the HUD for practice (recordMeta never saves it)
     this.run.expRate = this.course ? 0 : this.tutorialMode ? expRate('easy', 'endless') : expRate(level, this.variant);
     this.run.distance = startDist;
@@ -1881,6 +1916,7 @@ export class Game {
     this.runMissionsDone = [];
     this.applySkin(this.save.vehicle);
     this.vehicle.resetPose();
+    this.airDashGuard.reset();
     this.vehicle.visibleBlink = true;
     this.scenery.setWorld(this.course?.world ?? ((this.tutorialMode && this.trainWorld) || 'city'), true);
     this.track.setAccent(new THREE.Color(this.scenery.accent));
@@ -1916,6 +1952,7 @@ export class Game {
   resume() {
     if (this.state !== 'paused') return;
     this.audio.play('click');
+    this.clock.getDelta(); // new frame-time baseline: the paused time is never applied as one big step
     this.state = 'run';
     this.ui.show('hud');
     if (this.tutorialMode && this.tutPrompting) {
@@ -2244,6 +2281,22 @@ export class Game {
         const c = this.vehicle.root.position;
         for (let i = 0; i < 22; i++) this.particles.emit(c.x, c.y + (Math.random() - 0.5) * 0.6, 0.3 + Math.random(), -dir * (8 + Math.random() * 6), (Math.random() - 0.5) * 2, 3, i % 2 ? 0x2ee6c8 : 0xa8fff0, 0.22, 0.35, { drag: 3, locked: true });
       },
+      airDashStart: (dir) => {
+        // Step 06.5 AIR DASH: lift + spoiler + one sideways roll across two lanes (Player / Vehicle);
+        // restrained cyan-white trail, short thrust, subtle camera response
+        this.vibrate(28);
+        this.audio.play('up');
+        this.audio.play('ring', { delay: 0.08 });
+        this.vehicle.boostKick(0.6);
+        this.rig.fovKick += 3;
+        this.ui.pop('AIR DASH!', '#7ff5e2', '', -8);
+        const c = this.vehicle.root.position;
+        for (let i = 0; i < 18; i++) this.particles.emit(c.x, c.y + (Math.random() - 0.5) * 0.4, 0.4 + Math.random(), -dir * (5 + Math.random() * 5), 1 + Math.random() * 2, 3, i % 2 ? 0x2ee6c8 : 0xe8fffb, 0.2, 0.32, { drag: 3, locked: true });
+        if (this.run && this.state === 'run') this.run.score += 100 * this.run.scoreMul;
+      },
+      dashAbsorbed: () => {
+        /* the dash trajectory is fixed; the swipe is ignored (never replayed after the landing) */
+      },
       airBlocked: (dir) => {
         // one lane per hop: a little side puff and a hint, the car must land first
         this.audio.play('bump', { pan: dir * 0.4 });
@@ -2313,12 +2366,16 @@ export class Game {
 
   private tick(dt: number, rawDt: number) {
     if (this.ads?.showing) return; // ad on screen: everything holds still
+    // Step 06.5 Patch 02: PAUSED is one authoritative frozen state — no game time, timers, physics,
+    // collisions, spawns or visuals advance, and nothing ends the run until the player picks
+    // Resume / Restart / Home (it used to share the continue-offer countdown → automatic Game Over)
+    if (this.state === 'paused') return;
     // cinematic slow motion (Roadster / HYPER landing) — ends on its own
     if (this.slowmoT > 0) {
       this.slowmoT -= rawDt;
       if (this.slowmoT <= 0 && !this.tutPrompting) this.timeScaleTarget = 1;
     }
-    if ((this.tutorialMode && (this.state === 'run' || this.state === 'paused')) || this.slowmoT > 0 || this.timeScale < 0.999) {
+    if ((this.tutorialMode && this.state === 'run') || this.slowmoT > 0 || this.timeScale < 0.999) {
       this.timeScale += (this.timeScaleTarget - this.timeScale) * damp(this.timeScaleTarget < 1 ? 10 : 6, rawDt);
       if (this.state !== 'run' && !this.tutorialMode) this.timeScale = this.timeScaleTarget = 1;
       dt *= this.timeScale;
@@ -2343,7 +2400,6 @@ export class Game {
       case 'finish':
         this.updateRun(dt);
         break;
-      case 'paused':
       case 'continue': {
         if (this.holdContinue) {
           this.stateT -= dt;
@@ -2358,9 +2414,7 @@ export class Game {
       case 'loading':
         break;
     }
-    if (this.state !== 'paused') {
-      this.updateVisuals(this.state === 'gameover' ? dt * 0.3 : dt);
-    }
+    this.updateVisuals(this.state === 'gameover' ? dt * 0.3 : dt);
   }
 
   /** Menu/garage: car hovers on the highway while the city scrolls by slowly. */
@@ -2423,8 +2477,11 @@ export class Game {
     // ---- fixed sub-steps for precise collision at high speed
     const steps = Math.max(1, Math.ceil(dt / (1 / 120)));
     const h = dt / steps;
+    // Step 06.5 AIR DASH: protected only during the maneuver + a short grace after touch-down; while
+    // hovering, a bounded extension if the landing spot is briefly blocked
+    const dashSafe = this.airDashGuard.update(p, w.obstacles, w.speed * this.speedScale, dt);
     const opts = {
-      invulnerable: this.state !== 'run' || run.invulnerable || (this.tutorialMode && !this.tut.vulnerable),
+      invulnerable: this.state !== 'run' || run.invulnerable || dashSafe || (this.tutorialMode && !this.tut.vulnerable),
       // Bonus showcase specials ride the wall / the sky / the roof: obstacles they pass break apart,
       // and coins on the road fly up to the car (it is not down in the lane any more)
       smash: run.turboT > 0 || (!!this.showcaseK && this.showcaseK !== 'ghost'),
@@ -2440,6 +2497,7 @@ export class Game {
       const crash = this.state === 'run' ? run.handle(ev) : null;
       this.handleFeedback();
       if (crash) {
+        this.lastCrashEventT = performance.now();
         const hit = ev.find((e) => e.type === 'hit');
         const pl = w.player;
         this.lastTip = hit && hit.type === 'hit' ? crashTip(hit.o, pl.lane, pl.vmode === 'up', pl.vmode === 'down' && pl.vphase !== 'recover') : null;
@@ -2741,7 +2799,7 @@ export class Game {
             this.ui.toast(`${POWER_ICON.life} EXTRA LIFE`, 'var(--red)');
           }
           if (k === 'super') this.ui.toast(`${POWER_ICON.super} ROADSTER JUMP ready · tap the ROADSTER button`, '#9b6bff');
-          if (k === 'dash') this.ui.toast(`${POWER_ICON.dash} AIR DASH ×${this.run.dashes} · from an edge lane: jump, swipe twice → flip`, '#2ee6c8');
+          if (k === 'dash' && this.state === 'run') this.world.player.airDash(); // Step 06.5: fires at once
           if (k === 'escape') this.ui.toast(`${POWER_ICON.escape} SKY ESCAPE ready · tap SOS (E) in an emergency`, '#ff5a3c');
           break;
         }
@@ -2817,7 +2875,95 @@ export class Game {
   /** what would have avoided the last crash (shown on respawn / continue / game over) */
   private lastTip: CrashTip | null = null;
 
+  /**
+   * Step 06.5 LAST-CHANCE auto-activation of the pre-race special (Roadster / HYPER / SOS). Called by
+   * Run at the instant a hit would end the run — before any life, revive or Game Over is processed.
+   *  1. a normal revive still available (rewarded-ad / coin continue, or a Life) → the existing flow
+   *     runs unchanged (a Life means the hit is not lethal and never reaches here);
+   *  2. otherwise the special selected before the race, if still unused, is fired through the SAME
+   *     entry point as the lower-right button (useRocket / useEscape: same charge, same effect);
+   *  3. it counts as a rescue only if that activation really started (Roadster / HYPER need the wheels
+   *     on the road — in the air their button can't fire either; SOS works from any state).
+   * One auto-activation per run; never after the run is over; the message only on a real rescue.
+   */
+  private autoRescueUsed = false;
+  lastChance(): boolean {
+    const r = this.run;
+    if (!r || this.state !== 'run' || this.tutorialMode || this.autoRescueUsed) return false;
+    if (this.continuesUsed < ADS.maxContinues) return false; // revive offer still available: existing flow
+    const k = this.carried; // the pre-race special, still unused (cleared when used manually)
+    if (!k) return false;
+    const before = r.superJumps + r.hyperJumps + r.escapes;
+    if (k === 'escape') {
+      if (r.escapes <= 0) return false;
+      this.activateSpecial('AUTO_LAST_CHANCE');
+    } else {
+      if (r.superJumps + r.hyperJumps <= 0 || !this.world.player.canJump) return false;
+      this.activateSpecial('AUTO_LAST_CHANCE');
+    }
+    const ok = r.superJumps + r.hyperJumps + r.escapes === before - 1 && r.invulnT > 0;
+    if (!ok) return false;
+    this.autoRescueUsed = true;
+    const name = { super: 'ROADSTER', hyper: 'HYPER', escape: 'SOS' }[k];
+    // short, non-blocking (top toast — never over the road ahead), no confirmation, game keeps running
+    this.ui.toastNow(`${k === 'escape' ? ICON.sos : ICON.rocket} <b>${name} AUTO ACTIVATED!</b>`, k === 'escape' ? '#ff5a3c' : k === 'hyper' ? '#ffc21a' : '#9b6bff');
+    return true;
+  }
+  /** shared entry point of the pre-race special (button = MANUAL, last-chance = AUTO_LAST_CHANCE) */
+  activateSpecial(source: 'MANUAL' | 'AUTO_LAST_CHANCE', which?: 'rocket' | 'sos') {
+    this.lastSpecialSource = source;
+    const r = this.run;
+    if (!r) return;
+    const w = which ?? (this.carried === 'escape' || (r.escapes > 0 && r.superJumps + r.hyperJumps <= 0) ? 'sos' : 'rocket');
+    if (w === 'sos') this.useEscape();
+    else this.useRocket();
+  }
+  lastSpecialSource: 'MANUAL' | 'AUTO_LAST_CHANCE' | null = null;
+
+  // ---- Step 06.5 first-time class promotion celebration (A, AA, AAA, S, SS, SSS)
+  private classQueue: RankClass[] = [];
+  /** after the run is over and saved: queue every class ≥ A reached for the first time */
+  private queueClassCelebration() {
+    const seen = new Set(this.save.classCelebrated ?? []);
+    for (let i = rankIdx('A'); i <= rankIdx(this.rank); i++) {
+      const c = CLASSES[i];
+      if (!seen.has(c) && !this.classQueue.includes(c)) this.classQueue.push(c);
+    }
+    if (this.classQueue.length && !this.ui.isShown('classup')) window.setTimeout(() => this.showNextClass(), 900);
+  }
+  private showNextClass() {
+    const c = this.classQueue[0];
+    // never over active gameplay: only on the result / menu screens
+    if (!c || this.state === 'run' || this.state === 'countdown' || this.state === 'paused' || this.state === 'dying' || this.state === 'respawn') return;
+    // reward accuracy: the car this class REALLY unlocked (only AA has one; S+ only if configured + owned)
+    const carId = SKINS.find((k) => !k.future && k.need === c && this.save.unlocked.includes(k.id))?.id ?? null;
+    const sub: Record<string, string> = { A: 'Top-class driving. Keep the streak going!', AA: 'Elite driver — a new XWAVE car is yours.', AAA: 'The highest Endless class. Mega Rush is open!', S: 'Mega Rush legend.', SS: 'Almost untouchable.', SSS: 'The very top of Sky Roadster.' };
+    this.audio.play('fanfare');
+    this.vibrate([30, 40, 60]);
+    this.ui.classUp({ cls: c, color: CLASS_COLOR[c], sub: sub[c] ?? '', car: carId ? { id: carId, name: SKINS.find((k) => k.id === carId)!.name } : null });
+  }
+  private classOk() {
+    const c = this.classQueue.shift();
+    if (c) {
+      const list = (this.save.classCelebrated ??= []);
+      if (!list.includes(c)) list.push(c);
+      this.persist();
+    }
+    this.audio.play('click');
+    this.ui.hideOverlay('classup');
+    if (this.classQueue.length) window.setTimeout(() => this.showNextClass(), 350);
+  }
+
+  /** Step 06.5 AIR DASH runtime protection / landing check */
+  airDashGuard = new AirDashGuard();
+  /** performance.now() of the last authoritative collision (Step 06.5 audio latency check) */
+  lastCrashEventT = 0;
   private onCrash(final: boolean) {
+    // Step 06.5: impact sound FIRST, straight from the authoritative collision — before any crash visuals
+    // (shards, flash, UI) are built in this frame; the explosion layer is scheduled on the audio clock
+    // 60 ms later (no timer that a heavy frame could push back, nothing waits for the animation)
+    this.audio.play('crash');
+    this.audio.play('explode', { delay: 0.06 });
     if (this.lastTip && !final) {
       const t = this.lastTip;
       window.setTimeout(() => this.ui.toast(`${ICON.info} <b>TIP</b> · ${t.text}`, '#4fc3ff'), 700);
@@ -2840,11 +2986,9 @@ export class Game {
     } else {
       // 3D car (v4.1.3): impact flash + jolt + pooled shards from the nose, a short spark burst —
       // no grey smoke cloud, the car stays whole and visible
-      this.vehicle.crashBreak();
+      this.vehicle.crashBreak(final);
       this.particles.burst(pos.x, pos.y - 0.1, pos.z - 1.1, 22, 0xffa040, 9, 0.18, 0.55, { grav: 6 });
     }
-    this.audio.play('crash');
-    window.setTimeout(() => this.audio.play('explode'), 60);
     this.rig.shake(final ? 0.7 : 0.45);
     // heavy, ragged rumble on the final crash; one solid hit otherwise
     this.vibrate(final ? [90, 40, 140, 50, 60] : [70]);
@@ -2864,6 +3008,7 @@ export class Game {
     p.frozen = false;
     this.input.enabled = true;
     this.run.invulnT = 2.4;
+    this.airDashGuard.reset();
     this.vehicle.resetPose();
     this.speedScale = 0.25;
     const c = this.tmpV.set(LANES[p.lane], HEIGHT.NORMAL, 0);
@@ -2978,6 +3123,7 @@ export class Game {
     if (bonusItems.length) window.setTimeout(() => this.ui.toast(`${ICON.bag} Track bonus → Magic Bag · ${bonusItems.join(' · ')}`, '#c24dff'), 1200);
     const rewards = this.recordMeta(true);
     this.persist();
+    this.queueClassCelebration();
     this.ui.finish({
       rewards,
       track: c.name,
@@ -3020,6 +3166,7 @@ export class Game {
     this.save.totalRuns++;
     const rewards = this.recordMeta(false);
     this.persist();
+    this.queueClassCelebration();
     const isBonus = !!this.course?.bonus;
     let pos = '';
     if (!isBonus && run.exp > 0) {
@@ -3090,7 +3237,7 @@ export class Game {
     }
     // (countdown: updateCountdown already stepped the car at rest — a second step here with road speed
     // made speed jump 0 ↔ v every frame and the suspension shook the car before the start, v4.1.3 fix)
-    if (this.state === 'dying' || this.state === 'gameover') this.vehicle.crashUpdate(dt);
+    if (this.state === 'dying' || this.state === 'gameover') this.vehicle.crashUpdate(dt, w.speed * this.speedScale);
     else if (this.state !== 'countdown') this.vehicle.update(p, dt, w.speed, turbo); // 3D body settles to a stable crash pose, shards fly and fade
     this.tyreSpray(dt, w.speed);
     this.diveSparks(dt);
