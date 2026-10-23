@@ -56,7 +56,8 @@ above; the cabin looked like an opaque box; the rear lower block looked heavy. C
   windscreen header (concepts 01 / 05 / 16): the black roof becomes a framed glass roof;
 - closed spoiler in body colour (concept 14 "flush with body"); raised, its black skirt and the black
   deck well still show the pop-up;
-- glass opacity 0.9 → 0.8 with two dark seats behind it (no lit trims: they read as red lines);
+- glass: black tinted, nothing visible through it (owner: "kính đen") — opacity 0.9 → 0.94, no seats
+  modelled behind it (a first try with seats / lit seat trims read as red lines on the roof);
 - pearl iridescence 0.22 → 0.10 (gold sheen on the buttresses under the city light);
 - diffuser ramp and shorter rear (Phase 2).
 Camera, car scale and lighting were not changed.
@@ -85,7 +86,7 @@ corrected with documented GrabCut seeds (wet-road reflections, dark roof against
 
 Front intake smaller (±0.40–0.50 m × 0.115 m, was ±0.47–0.575 × 0.15) with a fine horizontal grille
 (the owner noted it was too large and plain; the master shows no front, so the concepts 02 / 03 / 08
-guided it). Diffuser ramp, flush bumper face. Materials: glass 0.8 opacity, iridescence 0.10, body-colour
+guided it). Diffuser ramp, flush bumper face. Materials: black glass (0.94 opacity), iridescence 0.10, body-colour
 spoiler; LED / paint flake / clearcoat from Step 06 kept.
 
 ## Phase 7–8 — export, reimport, in game
@@ -93,7 +94,7 @@ spoiler; LED / paint flake / clearcoat from Step 06 kept.
 | Check | Result |
 |---|---|
 | `npm run test:car` (GLB parsed in Node by the game parser; names, hierarchy, pivots, sockets, spoiler, budgets, overhang) | pass — 41 checks |
-| `scripts/car/check-mesh.ts` | 40 meshes, 39,815 tris; 0 degenerate, 0 zero / non-unit normals, 0 meshes without UVs |
+| `scripts/car/check-mesh.ts` | 40 meshes, 39,767 tris; 0 degenerate, 0 zero / non-unit normals, 0 meshes without UVs |
 | VFX / animation self-test (real `Vehicle` + `MeshCar`: wheels, steering, roll, jump, dive, landing, spoiler, nitro, shield, turbo, ghost restore, crash) | see `vfx_selftest.json` |
 | Real game build, 9 states (normal, lane left / right, take-off, airborne, landing, Turbo, Shield, top speed) | `xwave_step07_gameplay_comparison.png` — all states in `run`, no page errors |
 | `npx tsc --noEmit`, `npm test` (11 suites) | pass |

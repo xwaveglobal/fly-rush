@@ -63,7 +63,42 @@ the previous design, six palettes. Buildings stay outside the barriers — nothi
 
 ## 5 — Performance (desktop measurements — NOT phone FPS)
 
-PERF_TABLES
+`scripts/perf/profile.mjs` on the v4.2.1 build, headless Chromium + **SwiftShader** (software WebGL on 2
+desktop CPU cores), 360 × 640 @2, fixed 1/60 s steps (JS update and render + `gl.finish` timed per frame).
+Raw data: `perf_desktop_swiftshader.json`.
+
+**Only the LOW run is clean.** The MEDIUM and HIGH runs overlapped with other heavy jobs on the same
+2-core machine (Step 06 model renders): their render times (seconds per frame) are contention, not the
+presets — they are kept in the JSON but must not be read as measurements. The draw-call, triangle,
+memory and leak figures are not timing-dependent and are valid for all three.
+
+| LOW (clean run) | CPU frame avg / p50 / p95 | JS update avg / p95 | draw calls | triangles |
+|---|---|---|---|---|
+| Normal | 141 / 17.8 / 31.3 ms (avg inflated by 1st-frame shader compile, max 3.7 s) | 3.7 / 8.6 ms | 139 | 65 k |
+| Nitro | — / 13.8 / 26.3 ms | 2.7 / 6.5 ms | 151 | 67 k |
+| Shield | — / 10.3 / 31.2 ms | 2.7 / 5.2 ms | 151 | 69 k |
+| Nitro + Shield | — / 11.1 / 486 ms (p95 = compile spike of the combined effect) | 1.7 / 4.8 ms | 151 | 69 k |
+| Jump | — / 8.2 / 18.5 ms | 1.6 / 5.2 ms | 148 | 69 k |
+| Heavy (most obstacles) | 11.6 / 8.8 / 18.9 ms | 0.2 / 0.3 ms | 143 | 66 k |
+| Extended (60 s) | — / 8.3 / 24.6 ms | 0.5 / 1.7 ms | 138–154 | 64 k |
+
+| All presets (valid) | LOW | MEDIUM | HIGH |
+|---|---|---|---|
+| Draw calls, race (avg) | 139 | 163 | 162 |
+| Draw calls, Home | 99 | 118 | 114 |
+| Canvas (CSS 360 × 640) | 450 × 800 | 540 × 960 | 720 × 1280 |
+| JS heap start → end of 60 s | 33 → 35 MB | 32 → 33 MB | 32 → 33 MB |
+| Load to Home | 16.2 s | 9.5 s | 20.0 s (software GL, contended) |
+| Single-file HTML | 4,776 KB (v4.2.1 + Step 06 car) | | |
+
+**Effect activation spikes**: the first frame with a new effect compiles its shader (up to seconds on
+software GL; on a phone typically tens of ms). The game prewarms the car effects (`MeshCar.prewarm`) but
+not every combination — Nitro + Shield together compiled on first use here. Follow-up: prewarm the
+combined auras.
+
+**Leak found and fixed**: switching presets grew GPU textures by ~12 per switch into MEDIUM / HIGH
+(41 → 53 → 65 …): `EffectComposer.dispose()` does not dispose its passes (UnrealBloomPass holds 11 render
+targets). `Renderer.disposeComposer()` now disposes every pass. Geometries / programs were stable.
 
 **Why no phone numbers:** no phone or GPU is available in this environment; headless Chromium renders
 with SwiftShader (software WebGL on 2 CPU cores). These numbers compare presets and builds; they do not

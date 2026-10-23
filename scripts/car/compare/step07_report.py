@@ -3,7 +3,8 @@
 Step 07: self-contained HTML report (images embedded) from the step07 folder.
   python3 scripts/car/compare/step07_report.py docs/3d-upgrade/step07
 """
-import base64, json, os, sys
+import base64, io, json, os, sys
+from PIL import Image
 
 d = sys.argv[1]
 M = json.load(open(os.path.join(d, 'xwave_step07_metrics.json')))
@@ -13,8 +14,13 @@ def img(name, alt):
     p = os.path.join(d, name)
     if not os.path.exists(p):
         return f'<p class="miss">missing: {name}</p>'
-    b = base64.b64encode(open(p, 'rb').read()).decode()
-    return f'<figure><img src="data:image/png;base64,{b}" alt="{alt}" loading="lazy"><figcaption>{alt}</figcaption></figure>'
+    im = Image.open(p).convert('RGB')
+    if im.width > 1600:
+        im = im.resize((1600, round(im.height * 1600 / im.width)), Image.LANCZOS)
+    buf = io.BytesIO()
+    im.save(buf, 'JPEG', quality=84, optimize=True)  # keeps the single-file report small (artifact limit)
+    b = base64.b64encode(buf.getvalue()).decode()
+    return f'<figure><img src="data:image/jpeg;base64,{b}" alt="{alt}" loading="lazy"><figcaption>{alt}</figcaption></figure>'
 
 
 rows = []

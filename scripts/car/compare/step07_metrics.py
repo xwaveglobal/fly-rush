@@ -49,7 +49,7 @@ unresolved = [
     'Gameplay captures run on software WebGL; colours / bloom differ from a phone GPU.',
 ]
 res = {
-    'summary': 'Step 07 (v4.4): rear overhang shortened locally behind the rear arch (0.942 → 0.835 m), framed roof and body-colour closed spoiler for the elevated gameplay camera, smaller front intake, diffuser ramp, darker seats visible through lighter glass. Same frozen cameras and reference masks for Step 06 and Step 07.',
+    'summary': 'Step 07 (v4.4): rear overhang shortened locally behind the rear arch (0.942 → 0.835 m), framed roof and body-colour closed spoiler for the elevated gameplay camera, smaller front intake, diffuser ramp, black glass (nothing visible through it). Same frozen cameras and reference masks for Step 06 and Step 07.',
     'metrics_note': 'IoU / edge error compare silhouettes after one uniform scale + translation. Rear-3/4 cameras were re-calibrated by grid search on the FIXED Step 06 model and then frozen; both models are scored with them. Seeded GrabCut corrections on the night concepts (reflections, dark roofs) are listed in scripts/car/compare/refs.json.',
     'views': views, 'step06': m6, 'step07': m7, 'geometry': geo, 'gates': gates, 'unresolved': unresolved,
 }

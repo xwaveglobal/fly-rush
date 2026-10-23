@@ -1,9 +1,9 @@
 {
  "file": "assets-src/x1/xwave-x1-master.glb",
  "total": {
-  "meshes": 42,
-  "verts": 78320,
-  "tris": 122157,
+  "meshes": 41,
+  "verts": 78176,
+  "tris": 122047,
   "degenerate": 0,
   "zeroNormals": 0,
   "nonUnit": 0,
@@ -48,25 +48,6 @@
     -0.99,
     1,
     1.93
-   ]
-  },
-  {
-   "mesh": "Interior_SeatTrim",
-   "material": "X1_RedMarker",
-   "verts": 144,
-   "tris": 72,
-   "degenerate": 0,
-   "zeroNormals": 0,
-   "nonUnitNormals": 0,
-   "normalsAgainstFace": 0,
-   "normalsChecked": 216,
-   "uv": true,
-   "uvNaN": 0,
-   "uvExtent": [
-    0,
-    0,
-    1,
-    1
    ]
   },
   {
@@ -206,12 +187,12 @@
    "mesh": "Rear_LowerBumper",
    "material": "X1_SatinBlack",
    "verts": 2112,
-   "tris": 704,
+   "tris": 666,
    "degenerate": 0,
    "zeroNormals": 0,
    "nonUnitNormals": 0,
    "normalsAgainstFace": 0,
-   "normalsChecked": 2112,
+   "normalsChecked": 1998,
    "uv": true,
    "uvNaN": 0,
    "uvExtent": [

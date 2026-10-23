@@ -2,8 +2,8 @@
  "file": "src/assets/models/xwave-x1.glb",
  "total": {
   "meshes": 40,
-  "verts": 29853,
-  "tris": 39925,
+  "verts": 29709,
+  "tris": 39815,
   "degenerate": 0,
   "zeroNormals": 0,
   "nonUnit": 0,
@@ -92,12 +92,12 @@
    "mesh": "Rear_LowerBumper",
    "material": "X1_SatinBlack",
    "verts": 2112,
-   "tris": 704,
+   "tris": 666,
    "degenerate": 0,
    "zeroNormals": 0,
    "nonUnitNormals": 0,
    "normalsAgainstFace": 0,
-   "normalsChecked": 2112,
+   "normalsChecked": 1998,
    "uv": true,
    "uvNaN": 0,
    "uvExtent": [
@@ -260,25 +260,6 @@
    ]
   },
   {
-   "mesh": "Trim_RedMarker",
-   "material": "X1_RedMarker",
-   "verts": 240,
-   "tris": 108,
-   "degenerate": 0,
-   "zeroNormals": 0,
-   "nonUnitNormals": 0,
-   "normalsAgainstFace": 0,
-   "normalsChecked": 324,
-   "uv": true,
-   "uvNaN": 0,
-   "uvExtent": [
-    -0.69,
-    0,
-    1,
-    1
-   ]
-  },
-  {
    "mesh": "Trim_GlossBlack",
    "material": "X1_GlossBlack",
    "verts": 492,
@@ -332,6 +313,25 @@
     -0.86,
     0.62,
     0.86,
+    1
+   ]
+  },
+  {
+   "mesh": "Trim_RedMarker",
+   "material": "X1_RedMarker",
+   "verts": 96,
+   "tris": 36,
+   "degenerate": 0,
+   "zeroNormals": 0,
+   "nonUnitNormals": 0,
+   "normalsAgainstFace": 0,
+   "normalsChecked": 108,
+   "uv": true,
+   "uvNaN": 0,
+   "uvExtent": [
+    -0.69,
+    0,
+    1,
     1
    ]
   },

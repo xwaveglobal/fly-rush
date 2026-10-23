@@ -187,6 +187,27 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v4.4.0 — shorter rear, gameplay-camera polish (3D upgrade Step 07)
+
+- The X1's rear overhang is 11 cm shorter (0.94 → 0.84 m), compressed only behind the rear wheel arch; wheelbase, cabin and front unchanged.
+- Seen from the chase camera: the glass roof is framed by white A-pillars / roof rails, the closed spoiler is body-coloured, the glass is black (nothing visible through it), the rear underside ramps up like a diffuser.
+- Smaller front intake with a fine grille; softer pearl sheen.
+- Step 06 car kept as rollback (`assets-src/x1/rollback/`). Details: `docs/3d-upgrade/step07/`.
+
+## v4.3.0 — X1 rebuilt against the original rear master (3D upgrade Step 06)
+
+- Cabin, haunches, wheel openings and lower rear reshaped to match the rear master image (silhouette match 0.921 → 0.946 at the same view); rounded C-pillars with a black window frame, roof spoiler, bolder light bar, diffuser fins, rear tyres visible.
+- Side / front refinements (roof line, side glass, fenders, raked nose, intake, side skirts, five twin-spoke wheels); mesh fixes (normals, winding, UVs); metallic-flake paint.
+- High-detail master model (`assets-src/x1/xwave-x1-master.glb`) from the same generator. Details: `docs/3d-upgrade/step06/`.
+
+## v4.2.1 — readability and performance (3D upgrade Step 05)
+
+- Ring Coins: thin gold ring with an open centre and a short collect animation (coins / mechanics unchanged).
+- Jumps: the chase camera rises with the car so the road ahead stays visible.
+- Smaller, fewer effect particles (LOW 50 %, MEDIUM 80 %); LOW uses a smaller road texture.
+- City: varied tower heights, roof crowns, per-building window patterns, less billboard repetition.
+- `?perf=1` on-screen FPS / frame-time readout; WebGL context-loss handling; fixed a GPU texture leak when switching graphics presets. Details: `docs/3d-upgrade/step05/`.
+
 ## v4.2.0 — procedural road, night city, graphics presets, Turbo aura (3D upgrade Step 04)
 
 - New road surface: dark asphalt with fine grain and polished tyre tracks, dashed lane dividers, solid edge lines, reflective studs, sealed shoulders, expansion joints and soft light pools under the street lamps; seamless at any speed.

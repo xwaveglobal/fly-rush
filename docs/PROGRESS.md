@@ -4,6 +4,19 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-23 — v4.4.0: 3D upgrade Steps 05 → 07 (readability / perf, X1 reconstruction, shorter rear)
+
+**Done**:
+- Step 05 (v4.2.1): thin gold Ring Coins + collect fade; airborne camera (BALANCED / LOW rise with the car); particle density per preset, LOW 256 road texture; city silhouettes / window variety; `?perf=1` (`src/core/perf.ts`); context-loss handling; `scripts/perf/profile.mjs`; no-DOM smoke test (`scripts/native/`); preset-switch texture leak fixed (`Renderer.disposeComposer`). Report: `docs/3d-upgrade/step05/` (MEDIUM / HIGH timings invalid — contended run).
+- Step 06 (v4.3.0): X1 matched to the rear master with studio renders + automated silhouette comparison (`scripts/car/x1-studio.ts`, `studio-x1.mjs`, `compare/*.py`); master model `--detail=master`; mesh fixes. Report: `docs/3d-upgrade/step06/reconstruction/`.
+- Step 07 (v4.4.0): rear overhang 0.94 → 0.84 m (`REAR_K`), roof frame, body-colour closed spoiler, black glass (owner), smaller intake, diffuser ramp; real gameplay camera (`scripts/car/game-camera.ts`), real-game state captures (`scripts/car/gameplay-states.mjs`). Rollback GLBs in `assets-src/x1/rollback/`. Report: `docs/3d-upgrade/step07/`.
+
+**Known**: rear-3/4 ≥ 0.85 is met through a re-calibrated camera, not geometry (documented); Step 05 MEDIUM / HIGH timings need a clean rerun; Step 05 screenshot set 01–12 not produced; TikTok native not tested (v4 not ported); no Blender in the cloud session.
+
+**Next**: owner reviews Step 07 → Step 08. Do not merge to `main` / submit to TikTok without approval.
+
+---
+
 ## 2026-10-23 — v4.2.0: 3D upgrade Step 04 — procedural road, night city, graphics presets, Turbo aura
 
 **Done**: `roadSurface.ts` (pure, tested) → road DataTextures in `Track` (asphalt grain, tyre tracks, shoulders, dashed dividers / edge lines / studs from LANES; joints + lamp light pools in the road shader), steel rails, LED lamp streaks, roadside XWAVE signs, `envFx.addFarFade` (recycled props fade in from the haze — no popping). City: night palette, neon on the near buildings, XWAVE boards, distant city lights, shared billboard materials. Graphics LOW / MEDIUM / HIGH (`GRAPHICS` in config, default MEDIUM, save migration HIGH → MEDIUM once, Settings LO / MED / HI). Turbo aura (owner note). Tests: 11 suites / 217 checks; `test:envshots` 4/4, `test:vfx` 24/24 in real WebGL. Report: `docs/3d-upgrade/step04/README.md`.

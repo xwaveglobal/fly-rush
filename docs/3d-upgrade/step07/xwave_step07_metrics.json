@@ -1,0 +1,439 @@
+{
+ "summary": "Step 07 (v4.4): rear overhang shortened locally behind the rear arch (0.942 → 0.835 m), framed roof and body-colour closed spoiler for the elevated gameplay camera, smaller front intake, diffuser ramp, darker seats visible through lighter glass. Same frozen cameras and reference masks for Step 06 and Step 07.",
+ "metrics_note": "IoU / edge error compare silhouettes after one uniform scale + translation. Rear-3/4 cameras were re-calibrated by grid search on the FIXED Step 06 model and then frozen; both models are scored with them. Seeded GrabCut corrections on the night concepts (reflections, dark roofs) are listed in scripts/car/compare/refs.json.",
+ "views": {
+  "rear0": "Rear 0° — original master",
+  "rl45": "Rear-left 3/4 — concept 01",
+  "rr45": "Rear-right 3/4 — concept 01 mirrored",
+  "side90": "Side 90° — concept 04",
+  "front0": "Front 0° — concept 03",
+  "fl45": "Front 3/4 — concept 02",
+  "top": "Top — concept 05"
+ },
+ "step06": {
+  "rear0": {
+   "view": "rear0",
+   "label": "Rear 0° — ORIGINAL MASTER (authoritative)",
+   "iou": 0.946,
+   "edge_mean_pct_h": 1.63,
+   "edge_p95_pct_h": 5.55,
+   "aspect_ref": 1.807,
+   "aspect_render": 1.786,
+   "band_width_diff_pct": [
+    -0.6,
+    -1.4,
+    4.5,
+    3.1,
+    1.6,
+    0.2,
+    -1.0,
+    -1.2,
+    -1.3,
+    -0.9
+   ]
+  },
+  "rl45": {
+   "view": "rl45",
+   "label": "Rear-left 45° — concept 01",
+   "iou": 0.856,
+   "edge_mean_pct_h": 4.39,
+   "edge_p95_pct_h": 14.06,
+   "aspect_ref": 2.258,
+   "aspect_render": 2.479,
+   "band_width_diff_pct": [
+    -8.4,
+    -4.9,
+    -0.3,
+    3.5,
+    2.2,
+    1.9,
+    2.2,
+    1.4,
+    -13.0,
+    32.3
+   ]
+  },
+  "rr45": {
+   "view": "rr45",
+   "label": "Rear-right 30–45° — concept 01 mirrored (the car is symmetric; no rear-right reference exists)",
+   "iou": 0.855,
+   "edge_mean_pct_h": 4.39,
+   "edge_p95_pct_h": 13.98,
+   "aspect_ref": 2.258,
+   "aspect_render": 2.491,
+   "band_width_diff_pct": [
+    -8.7,
+    -4.6,
+    0.3,
+    3.3,
+    2.2,
+    1.6,
+    2.2,
+    0.5,
+    -13.3,
+    31.8
+   ]
+  },
+  "side90": {
+   "view": "side90",
+   "label": "Side 90° — concept 04 (cropped at the tail)",
+   "iou": 0.857,
+   "edge_mean_pct_h": 5.14,
+   "edge_p95_pct_h": 10.63,
+   "aspect_ref": null,
+   "aspect_render": null,
+   "band_width_diff_pct": [
+    -1.1,
+    -4.2,
+    -3.4,
+    1.1,
+    5.0,
+    -1.4,
+    -0.8,
+    0.8,
+    1.1,
+    -62.3
+   ]
+  },
+  "front0": {
+   "view": "front0",
+   "label": "Front 0° — concept 03",
+   "iou": 0.854,
+   "edge_mean_pct_h": 4.37,
+   "edge_p95_pct_h": 10.08,
+   "aspect_ref": 1.896,
+   "aspect_render": 1.713,
+   "band_width_diff_pct": [
+    -11.0,
+    -8.7,
+    -17.0,
+    -13.8,
+    -11.0,
+    -9.6,
+    -9.2,
+    -9.6,
+    -9.2,
+    -9.2
+   ]
+  },
+  "fl45": {
+   "view": "fl45",
+   "label": "Front 45° — concept 02",
+   "iou": 0.843,
+   "edge_mean_pct_h": 5.69,
+   "edge_p95_pct_h": 21.68,
+   "aspect_ref": 2.343,
+   "aspect_render": 2.378,
+   "band_width_diff_pct": [
+    -10.7,
+    -4.5,
+    2.1,
+    0.0,
+    4.8,
+    9.6,
+    11.3,
+    6.9,
+    -1.8,
+    -14.9
+   ]
+  },
+  "top": {
+   "view": "top",
+   "label": "Top — concept 05",
+   "iou": 0.905,
+   "edge_mean_pct_h": 1.47,
+   "edge_p95_pct_h": 3.25,
+   "aspect_ref": 0.505,
+   "aspect_render": 0.505,
+   "band_width_diff_pct": [
+    8.7,
+    9.6,
+    9.6,
+    9.6,
+    1.9,
+    -4.8,
+    -10.6,
+    -7.7,
+    -7.7,
+    -1.0
+   ]
+  }
+ },
+ "step07": {
+  "rear0": {
+   "view": "rear0",
+   "label": "Rear 0° — ORIGINAL MASTER (authoritative)",
+   "iou": 0.949,
+   "edge_mean_pct_h": 1.51,
+   "edge_p95_pct_h": 5.28,
+   "aspect_ref": 1.807,
+   "aspect_render": 1.803,
+   "band_width_diff_pct": [
+    0.7,
+    -1.4,
+    4.9,
+    3.2,
+    2.4,
+    1.0,
+    -0.1,
+    -0.2,
+    -0.4,
+    -0.1
+   ]
+  },
+  "rl45": {
+   "view": "rl45",
+   "label": "Rear-left 45° — concept 01",
+   "iou": 0.858,
+   "edge_mean_pct_h": 4.18,
+   "edge_p95_pct_h": 12.3,
+   "aspect_ref": 2.258,
+   "aspect_render": 2.423,
+   "band_width_diff_pct": [
+    -7.6,
+    -4.3,
+    -1.4,
+    3.5,
+    2.2,
+    -0.3,
+    0.0,
+    -1.4,
+    -17.1,
+    17.1
+   ]
+  },
+  "rr45": {
+   "view": "rr45",
+   "label": "Rear-right 30–45° — concept 01 mirrored (the car is symmetric; no rear-right reference exists)",
+   "iou": 0.854,
+   "edge_mean_pct_h": 4.29,
+   "edge_p95_pct_h": 12.3,
+   "aspect_ref": 2.258,
+   "aspect_render": 2.417,
+   "band_width_diff_pct": [
+    -8.7,
+    -4.9,
+    -2.7,
+    3.3,
+    2.2,
+    -0.8,
+    -0.3,
+    -2.2,
+    -17.7,
+    16.8
+   ]
+  },
+  "side90": {
+   "view": "side90",
+   "label": "Side 90° — concept 04 (cropped at the tail)",
+   "iou": 0.845,
+   "edge_mean_pct_h": 5.62,
+   "edge_p95_pct_h": 11.08,
+   "aspect_ref": null,
+   "aspect_render": null,
+   "band_width_diff_pct": [
+    -1.1,
+    -4.5,
+    -0.3,
+    1.4,
+    5.3,
+    -1.4,
+    -0.8,
+    0.8,
+    -0.3,
+    -64.8
+   ]
+  },
+  "front0": {
+   "view": "front0",
+   "label": "Front 0° — concept 03",
+   "iou": 0.864,
+   "edge_mean_pct_h": 4.06,
+   "edge_p95_pct_h": 10.0,
+   "aspect_ref": 1.896,
+   "aspect_render": 1.722,
+   "band_width_diff_pct": [
+    -10.1,
+    -9.2,
+    -17.0,
+    -13.8,
+    -11.0,
+    -9.2,
+    -8.7,
+    -9.2,
+    -9.2,
+    -9.2
+   ]
+  },
+  "fl45": {
+   "view": "fl45",
+   "label": "Front 45° — concept 02",
+   "iou": 0.841,
+   "edge_mean_pct_h": 5.78,
+   "edge_p95_pct_h": 21.92,
+   "aspect_ref": 2.343,
+   "aspect_render": 2.35,
+   "band_width_diff_pct": [
+    -9.6,
+    -3.6,
+    1.5,
+    -0.9,
+    4.8,
+    9.6,
+    11.3,
+    5.1,
+    -2.1,
+    -14.6
+   ]
+  },
+  "top": {
+   "view": "top",
+   "label": "Top — concept 05",
+   "iou": 0.901,
+   "edge_mean_pct_h": 1.57,
+   "edge_p95_pct_h": 3.71,
+   "aspect_ref": 0.505,
+   "aspect_render": 0.519,
+   "band_width_diff_pct": [
+    12.5,
+    12.5,
+    12.5,
+    7.7,
+    2.9,
+    -2.9,
+    -6.7,
+    -5.8,
+    -5.8,
+    1.9
+   ]
+  }
+ },
+ "geometry": {
+  "Total length (m)": {
+   "step06": 4.217,
+   "step07": 4.107
+  },
+  "Wheelbase (m)": {
+   "step06": 2.513,
+   "step07": 2.513
+  },
+  "Front overhang (m)": {
+   "step06": 0.762,
+   "step07": 0.759
+  },
+  "Rear overhang, rear axle → bumper end (m)": {
+   "step06": 0.942,
+   "step07": 0.835
+  },
+  "Rear overhang / wheelbase": {
+   "step06": 0.375,
+   "step07": 0.332
+  },
+  "Rear deck, glass end → tail (m)": {
+   "step06": 0.362,
+   "step07": 0.286
+  },
+  "Cabin, windscreen base → glass end (m)": {
+   "step06": 2.783,
+   "step07": 2.752
+  },
+  "Rear body, rear axle → tail / cabin length": {
+   "step06": 0.338,
+   "step07": 0.303
+  },
+  "Width incl. tyres (m)": {
+   "step06": 2.13,
+   "step07": 2.13
+  },
+  "Height (m)": {
+   "step06": 1.177,
+   "step07": 1.177
+  },
+  "Game GLB: meshes / triangles": {
+   "step06": "40 / 39,157",
+   "step07": "40 / 39,815"
+  }
+ },
+ "gates": [
+  {
+   "gate": "A",
+   "check": "Rear overhang visibly corrected",
+   "status": "pass",
+   "evidence": "rear overhang 0.942 → 0.835 m (0.375 → 0.332 × WB), xwave_step07_rear_overhang_comparison.png"
+  },
+  {
+   "gate": "A",
+   "check": "Rear deck proportions improved",
+   "status": "pass",
+   "evidence": "deck 0.362 → 0.286 m; body-colour closed spoiler, black glass no longer runs into a black deck"
+  },
+  {
+   "gate": "A",
+   "check": "Rear 0° IoU ≥ 0.945",
+   "status": "pass",
+   "evidence": "0.946 → 0.949"
+  },
+  {
+   "gate": "A",
+   "check": "Rear 3/4 IoU ≥ 0.85",
+   "status": "pass (camera)",
+   "evidence": "rl 0.858 / rr 0.854. NOT a geometry gain: with the same re-calibrated camera Step 06 scores 0.856 / 0.855. Under the old Step 06 camera both models are ≈ 0.79."
+  },
+  {
+   "gate": "A",
+   "check": "Rear 3/4 edge error ≤ 4.5 %",
+   "status": "pass",
+   "evidence": "rl 4.18 % / rr 4.29 % (Step 06 same camera 4.39 / 4.39 %)"
+  },
+  {
+   "gate": "A",
+   "check": "Rear aspect ratio 1.79–1.82",
+   "status": "pass",
+   "evidence": "1.803 (master 1.807)"
+  },
+  {
+   "gate": "B",
+   "check": "Attractive from the real gameplay camera; roof / cabin balanced; rear not elongated; lights readable; recognisable at mobile size",
+   "status": "owner review",
+   "evidence": "qualitative only (no reference mask exists for the gameplay view): xwave_step07_gameplay_comparison.png, 9 states in the real game build, car ≈ 120 × 97 px on a 390 × 844 phone"
+  },
+  {
+   "gate": "C",
+   "check": "Front / side / top: no major regression",
+   "status": "pass (minor)",
+   "evidence": "side 0.857 → 0.845, front 0.854 → 0.864, front 3/4 0.843 → 0.841, top 0.905 → 0.901"
+  },
+  {
+   "gate": "C",
+   "check": "Wheelbase consistent",
+   "status": "pass",
+   "evidence": "wheelbase 2.513 m both; rear wheels not moved; front untouched"
+  },
+  {
+   "gate": "D",
+   "check": "GLB imports, hierarchy, materials, animations",
+   "status": "pass",
+   "evidence": "npm run test:car (parse + 41 checks), VFX/animation self-test 24/24 with the real Vehicle + MeshCar, game build loads (no page errors)"
+  },
+  {
+   "gate": "D",
+   "check": "Mesh validity",
+   "status": "pass",
+   "evidence": "degenerate 0, zero / non-unit normals 0, meshes without UVs 0; 208 of ~80k vertex normals lean > 90° off their face at sharp creases"
+  },
+  {
+   "gate": "D",
+   "check": "Within the game budget",
+   "status": "pass",
+   "evidence": "40 meshes ≤ 40, 39,815 triangles ≤ 40,000 (test:car budget)"
+  }
+ ],
+ "unresolved": [
+  "Rear 3/4: the concept 01 car has a narrower, longer roof and a shorter-looking body; matching it would contradict the master rear (priority 1). Shortening the rear further LOWERS the rear-3/4 score (0.844 at ×0.70, 0.839 at ×0.60) — the concept does not support a shorter rear than ×0.805.",
+  "The rear-overhang target (≈ 0.33 × wheelbase) is a visual estimate: the side reference is cropped at the tail and no view gives an exact rear length.",
+  "Side view −0.012 IoU (raked nose / roof frame vs the concept, which is itself a perspective AI image).",
+  "Gameplay appearance has no reference mask, so it is judged visually only (owner review).",
+  "No Blender here (PyPI unreachable): geometry is edited in the procedural generator; no .blend file.",
+  "Gameplay captures run on software WebGL; colours / bloom differ from a phone GPU."
+ ]
+}

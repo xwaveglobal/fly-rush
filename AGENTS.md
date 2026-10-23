@@ -38,7 +38,9 @@ src/render/DebugCollision.ts  ?debug=collision overlay (visual bounds vs hitboxe
 src/render/roadSurface.ts     v4.2 procedural road tile (pure data, tested in Node) → Track.ts DataTextures; envFx.ts: wrapZ + far fade (no popping)
                      graphics presets LOW / MEDIUM / HIGH: GRAPHICS in config.ts (Renderer, Scenery.setQuality, Track.setQuality)
                      cameras: CAMERA presets (low / balanced / high) + CAMERA.home in config.ts, used by render/CameraRig.ts
-scripts/car/         X1 model builder (build-x1.mjs → src/assets/models/xwave-x1.glb) + preview shots (preview-x1.mjs)
+scripts/car/         X1 model builder (build-x1.mjs [--detail=master] → src/assets/models/xwave-x1.glb / assets-src/x1/xwave-x1-master.glb), preview shots (preview-x1.mjs),
+                     studio + reference matching (studio-x1.mjs, compare/run.sh), real gameplay camera (game-camera.ts) and states (gameplay-states.mjs)
+src/core/perf.ts     ?perf=1 frame-time recorder (scripts/perf/profile.mjs = desktop/SwiftShader baseline)
 src/ui/              DOM overlay UI, ui.css, i18n.ts (EN/FR/JA/PT-BR/DE/ES), icons, avatars
 src/meta/            shop, rank, daily, events, leaderboard
 src/net/PlayerStore  local (default) or remote player store (?api=…)

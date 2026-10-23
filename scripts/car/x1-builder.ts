@@ -510,7 +510,7 @@ const M = {
   satin: new THREE.MeshPhysicalMaterial({ name: 'X1_SatinBlack', color: 0x0c0d10, metalness: 0.15, roughness: 0.5, clearcoat: 0.35, clearcoatRoughness: 0.35 }),
   carbon: new THREE.MeshStandardMaterial({ name: 'X1_Carbon', color: 0x3a3a3a, map: tex(x1CarbonCanvas()), metalness: 0.35, roughness: 0.42, side: THREE.DoubleSide }),
   chrome: new THREE.MeshStandardMaterial({ name: 'X1_Chrome', color: 0xc8ccd2, metalness: 1, roughness: 0.22 }),
-  glass: new THREE.MeshPhysicalMaterial({ name: 'X1_Glass', color: 0x010203, metalness: 0.0, roughness: 0.1, transparent: true, opacity: 0.8, envMapIntensity: 0.07 }), // v4.3: darker tint, less grey sheen (master)
+  glass: new THREE.MeshPhysicalMaterial({ name: 'X1_Glass', color: 0x010203, metalness: 0.0, roughness: 0.1, transparent: true, opacity: 0.94, envMapIntensity: 0.07 }), // v4.3: darker tint, less grey sheen (master)
   liner: new THREE.MeshStandardMaterial({ name: 'X1_WheelLiner', color: 0x08090b, metalness: 0.05, roughness: 0.85, side: THREE.DoubleSide }),
   gap: new THREE.MeshStandardMaterial({ name: 'X1_PanelGap', color: 0x2a2d33, metalness: 0.1, roughness: 0.6 }),
   lightHousing: new THREE.MeshPhysicalMaterial({ name: 'X1_LightHousing', color: 0x050608, metalness: 0.4, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.03 }),
@@ -760,16 +760,7 @@ function buildBody(P: Parts) {
     }
     for (const flip of [false, true]) P.add('Body_Paint', M.paint, grid(header, flip));
   }
-  // ---- v4.4 (Step 07): two dark seats behind the glass (the master shows them through
-  // the rear window; an all-black cabin read as an opaque block from the gameplay camera)
-  for (const sx of [-1, 1]) {
-    const seat = T(sx * 0.27, 0.6, 0.64, 0.3); // backrest leans back toward the rear (+z)
-    const back = new THREE.BoxGeometry(0.36, 0.42, 0.09);
-    back.translate(0, 0.21, 0);
-    P.add('Interior', M.interior, back, seat);
-    P.add('Interior', M.interior, new THREE.BoxGeometry(0.36, 0.08, 0.4), T(sx * 0.27, 0.62, 0.42));
-    // (no lit red seat trims: at gameplay size they read as red lines drawn on the roof glass)
-  }
+  // (v4.4: no seats — owner: the glass stays black, nothing shows through it)
   const gz = stations(G_Z0, G_Z1, Q.glassStep);
   const glassGeo = (() => {
     const pos: number[] = [];
