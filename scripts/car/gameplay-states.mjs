@@ -63,6 +63,7 @@ await clickWhen(() => { const b = [...document.querySelectorAll('button')].filte
 await clickWhen(() => window.__game.state === 'run');
 const meta = {};
 const shot = async (name) => {
+  await page.evaluate(() => window.__clear());
   await page.waitForTimeout(700); // the loop keeps rendering the held state
   await page.screenshot({ path: join(out, `${name}.png`), timeout: 180000 });
   meta[name] = await page.evaluate(() => {
@@ -71,10 +72,17 @@ const shot = async (name) => {
   });
   console.log('shot', name, JSON.stringify(meta[name]));
 };
-const step = (s) => page.evaluate((s) => window.__game.advance(s), s);
+const step = (s) => page.evaluate((s) => { window.__clear(); window.__game.advance(s); }, s);
+// keep the capture deterministic: obstacles within ~45 m are removed before each state (they would end
+// the run mid-sequence); the road further ahead keeps its obstacles, so they stay in the frame
 await page.evaluate(() => {
   const g = window.__game;
   g.manual = true;
+  window.__clear = () => {
+    const w = g.world;
+    for (const o of w.obstacles) if (o.z > -45) w.hooks?.despawnObstacle?.(o);
+    w.obstacles = w.obstacles.filter((o) => o.z <= -45);
+  };
   g.advance(2.5);
 });
 await shot('01_normal');
@@ -93,16 +101,17 @@ await step(0.3);
 await shot('05_airborne');
 await page.evaluate(() => {
   const g = window.__game;
+  window.__clear();
   for (let n = 0; g.world.player.y > 1.02 && n < 200; n++) g.advance(1 / 60);
   g.advance(0.05);
 });
 await shot('06_landing');
-await page.evaluate(() => { window.__game.run.turboT = 6; window.__game.advance(1); });
+await page.evaluate(() => { window.__clear(); window.__game.run.turboT = 6; window.__game.advance(1); });
 await shot('07_turbo');
-await page.evaluate(() => { const g = window.__game; const r = g.run; r.shield = true; r.shieldHits = 9; r.shieldT = 0; r.turboT = 0; g.advance(1.6); });
+await page.evaluate(() => { const g = window.__game; window.__clear(); const r = g.run; r.shield = true; r.shieldHits = 9; r.shieldT = 0; r.turboT = 0; g.advance(1.6); });
 await shot('08_shield');
 // top speed: still shielded while the speed builds up (no crash ends the sequence), shield off for the shot
-await page.evaluate(() => { const g = window.__game; g.world.spawner.speed = () => 46; g.advance(2); g.run.shield = false; g.advance(0.5); });
+await page.evaluate(() => { const g = window.__game; g.world.spawner.speed = () => 46; window.__clear(); g.advance(2); window.__clear(); g.run.shield = false; g.advance(0.5); });
 await shot('09_top_speed');
 meta.errors = errors;
 writeFileSync(join(out, 'state.json'), JSON.stringify(meta, null, 1));
