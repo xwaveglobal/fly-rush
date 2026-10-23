@@ -47,8 +47,8 @@ for (const job of jobs) {
   const i = job.lastIndexOf('=');
   const query = job.slice(0, i);
   const name = job.slice(i + 1);
-  const studio = !/view=chase/.test(query) && /view=/.test(query);
-  const page = await browser.newPage({ viewport: studio ? { width: 1024, height: 936 } : { width: 780, height: 1688 } });
+  const qs = new URLSearchParams(query);
+  const page = await browser.newPage({ viewport: { width: +(qs.get('w') ?? 720), height: +(qs.get('h') ?? 1280) } });
   page.on('pageerror', (e) => console.log('[pageerror]', e.message));
   page.on('console', (m) => m.type() === 'error' && console.log('[console]', m.text().slice(0, 200)));
   await page.goto(`http://127.0.0.1:${port}/?${query}`);

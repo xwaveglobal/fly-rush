@@ -187,6 +187,14 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v4.1.1 — integrated rear bumper, active spoiler, new cameras (3D upgrade Step 03)
+
+- Rear of the 3D X1 rebuilt: the rods, chrome rail, hanging fins and exposed nitro tubes are gone; one solid satin-black lower bumper with a recessed three-fin diffuser; nitro flames come out of the recess.
+- Active rear spoiler: flush deck flap, rises during nitro (Turbo / launch) and retracts after.
+- Cameras: Home has its own slow three-quarter orbit, clear of the difficulty panel; races use the BALANCED chase camera (`?cam=low|balanced|high` to compare; HIGH = the old camera).
+- The car no longer disappears on crash / Game Over; Phase Ghost makes it translucent.
+- Gameplay, hitboxes and UI unchanged. Details and screenshots: `docs/3d-upgrade/step03/`.
+
 ## v4.1.0 — 3D XWAVE X1 (3D upgrade Step 02)
 
 - The player car is now a real 3D model (`src/assets/models/xwave-x1.glb`) instead of the studio rear image: spinning wheel assemblies, front-wheel steer, a sprung body that rolls on lane changes and dips on landing, emissive red LED blade / markers / XWAVE badge, nitro flames from the two rear sockets during Turbo and launch.

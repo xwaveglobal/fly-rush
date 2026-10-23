@@ -298,4 +298,55 @@ export const RENDER = {
   badgeGlow: 1.4,
   /** nitro flame length (m) at full boost */
   nitroLen: 1.1,
+  /** sprung body yaw per unit of lateral speed (subtle nose-in on lane changes) */
+  bodyYaw: 0.02,
+  /** active rear spoiler: max angle (rad, trailing edge up), raise / retract rates (1/s) */
+  spoilerAngle: 0.28,
+  spoilerUp: 5,
+  spoilerDown: 2.2,
+  /** Bonus "Phase Ghost": opacity of the 3D car at full effect */
+  ghostOpacity: 0.35,
+};
+
+/** one chase-camera setup (metres relative to the car; damping rates 1/s) */
+export interface ChasePreset {
+  /** camera height and distance behind the car; speedBack = extra pull-in at top speed */
+  height: number;
+  back: number;
+  speedBack: number;
+  /** look-at point: height and distance ahead */
+  lookY: number;
+  lookZ: number;
+  /** how much of the car's lane offset the camera / look point follow */
+  followX: number;
+  lookX: number;
+  /** how much the camera / look point rise with a normal hop */
+  lift: number;
+  lookLift: number;
+  /** damping: horizontal position, vertical position, look point */
+  hDamp: number;
+  vDamp: number;
+  lookDamp: number;
+  /** added to the base FOV (degrees) */
+  fov: number;
+}
+
+/**
+ * v4 chase cameras (render-only). HIGH = the v1–v4.1.0 camera, kept for the old rear image.
+ * The 3D car uses `CAMERA.chase` (URL `?cam=low|balanced|high` to compare).
+ */
+export const CAMERA = {
+  presets: {
+    low: { height: 1.6, back: 5.3, speedBack: 0.4, lookY: 1.05, lookZ: -16, followX: 0.8, lookX: 0.6, lift: 0.35, lookLift: 0.35, hDamp: 6, vDamp: 5, lookDamp: 6.5, fov: -3 },
+    balanced: { height: 2.25, back: 5.9, speedBack: 0.5, lookY: 1.0, lookZ: -13, followX: 0.76, lookX: 0.58, lift: 0.28, lookLift: 0.32, hDamp: 6.5, vDamp: 5.5, lookDamp: 7, fov: -1 },
+    high: { height: 3.25, back: 6.6, speedBack: 0.6, lookY: 1.15, lookZ: -9, followX: 0.72, lookX: 0.55, lift: 0.22, lookLift: 0.3, hDamp: 6.5, vDamp: 6, lookDamp: 7, fov: 0 },
+  } as Record<'low' | 'balanced' | 'high', ChasePreset>,
+  chase: ((typeof location !== 'undefined' && /[?&]cam=(low|balanced|high)/.exec(location.search)?.[1]) || 'balanced') as 'low' | 'balanced' | 'high',
+  /**
+   * Home screen with the 3D car: a slow three-quarter orbit behind the car at a constant distance
+   * (constant size), framed in the free band between the side buttons and the difficulty panel.
+   * yaw in radians (0 = straight behind), height / distance in metres, lookY / lookZ = aim point,
+   * fovScale × the base FOV.
+   */
+  home: { yaw: 0.5, yawSwing: 0.26, speed: 0.22, height: 2.3, dist: 8.3, lookY: 0.98, lookZ: 0.5, fovScale: 0.82 },
 };

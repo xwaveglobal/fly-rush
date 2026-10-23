@@ -19,7 +19,7 @@ const buf = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLe
 const scene = parseGlb(buf);
 const car = scene.getObjectByName('X1');
 check(!!car, 'GLB parses; root node X1');
-const need = ['Body', 'Wheel_FL', 'Wheel_FR', 'Wheel_RL', 'Wheel_RR', 'Spin_FL', 'Spin_FR', 'Spin_RL', 'Spin_RR', 'Tyre_RL', 'Rim_RL', 'Caliper_RL', 'NitroSocket_L', 'NitroSocket_R', 'Rear_LED', 'Badge_XWAVE', 'Glass_Canopy', 'Diffuser'];
+const need = ['Body', 'Wheel_FL', 'Wheel_FR', 'Wheel_RL', 'Wheel_RR', 'Spin_FL', 'Spin_FR', 'Spin_RL', 'Spin_RR', 'Tyre_RL', 'Rim_RL', 'Caliper_RL', 'NitroSocket_L', 'NitroSocket_R', 'Rear_LED', 'Badge_XWAVE', 'Glass_Canopy', 'Diffuser', 'Rear_LowerBumper', 'Spoiler_Pivot', 'Spoiler'];
 const missing = need.filter((n) => !scene.getObjectByName(n));
 check(missing.length === 0, `named nodes present (${need.length})${missing.length ? ' — missing ' + missing.join(', ') : ''}`);
 
@@ -53,6 +53,51 @@ check(meshes <= 40, `draw calls (meshes): ${meshes} ≤ 40`);
 for (const n of ['X1_Paint', 'X1_RearLED', 'X1_Glass', 'X1_Tyre', 'X1_Badge', 'X1_Carbon']) check(mats.has(n), `material ${n}`);
 const ledMat = (led as THREE.Mesh).material as THREE.MeshStandardMaterial;
 check(ledMat.emissive.r > 0.5 && ledMat.emissive.g < 0.1, 'rear LED material is emissive red');
+
+// ---- v4.1.1 rear: no hanging rods / rails / tubes; parts other than wheels stay ≥ 10 cm off the road
+check(!scene.getObjectByName('Diffuser_Rail') && !scene.getObjectByName('NitroSocket_Housing'), 'no chrome rail / exposed nitro tubes');
+{
+  let lowest = Infinity;
+  let who = '';
+  const v = new THREE.Vector3();
+  const body = scene.getObjectByName('Body')!;
+  body.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (!m.isMesh) return;
+    const pos = m.geometry.getAttribute('position');
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld);
+      if (v.y < lowest) {
+        lowest = v.y;
+        who = m.name;
+      }
+    }
+  });
+  check(lowest >= 0.1, `nothing hangs below the body: lowest body point ${lowest.toFixed(3)} m (${who})`);
+  const bumper = new THREE.Box3().setFromObject(scene.getObjectByName('Rear_LowerBumper')!);
+  const diff = new THREE.Box3().setFromObject(scene.getObjectByName('Diffuser')!);
+  check(diff.min.y >= bumper.min.y - 0.001 && diff.max.z <= bumper.max.z + 0.001 && diff.min.x >= bumper.min.x, 'diffuser sits inside the lower bumper (recessed, fins attached)');
+  for (const id of ['NitroSocket_L', 'NitroSocket_R']) {
+    const so = scene.getObjectByName(id)!.getWorldPosition(new THREE.Vector3());
+    check(Math.abs(so.x) < 0.52 && so.y > 0.155 && so.y < 0.3 && so.z > bumper.max.z - 0.12 && so.z <= bumper.max.z + 0.01, `${id} hidden in the diffuser recess (${so.toArray().map((n) => n.toFixed(2)).join(', ')})`);
+  }
+}
+// ---- active spoiler: flush when closed, hinged at its front edge, trailing edge lifts a few cm
+{
+  const pivot = scene.getObjectByName('Spoiler_Pivot')!;
+  const sp = scene.getObjectByName('Spoiler')!;
+  const closed = new THREE.Box3().setFromObject(sp);
+  check(closed.max.y < 0.79 && closed.min.y > 0.73, `closed spoiler flush with the deck (y ${closed.min.y.toFixed(3)}–${closed.max.y.toFixed(3)})`);
+  pivot.rotation.x = -RENDER.spoilerAngle;
+  scene.updateMatrixWorld(true);
+  const raised = new THREE.Box3().setFromObject(sp);
+  const lift = raised.max.y - closed.max.y;
+  check(lift > 0.04 && lift < 0.12, `raised spoiler: trailing edge up ${(lift * 100).toFixed(1)} cm, no struts (hinge only)`);
+  check(raised.max.z <= closed.max.z + 0.01, 'raised spoiler does not swing past the tail');
+  pivot.rotation.x = 0;
+  scene.updateMatrixWorld(true);
+  check(sp.children.length === 0 && pivot.children.length === 1, 'spoiler is a single mesh on its pivot (nothing hangs off it)');
+}
 
 // in game: the visual width stays close to the hitbox (fair dodges)
 const gameW = size.x * RENDER.carScale;

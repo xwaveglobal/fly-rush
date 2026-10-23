@@ -4,6 +4,16 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-23 — v4.1.1: 3D upgrade Step 03 — rear bumper, active spoiler, cameras
+
+**Done**: builder rear rebuilt (solid `Rear_LowerBumper` + recessed `Diffuser`, `Spoiler_Pivot`/`Spoiler`, sockets in the recess, rail/rods/tubes deleted); `carMotion.ts` (pure, tested); `MeshCar` spoiler / yaw / ghost fade; `CAMERA` presets + `CAMERA.home` in `config.ts`, `CameraRig.car3d` / `presetOverride`; `Game.ts`: 3D car stays visible while dying, `rig.car3d` set on skin / model ready. New tests `test:camera`, `test:motion`; `test:car` extended. 10 suites / 155 checks pass; esbuild builds pass; Vite + TikTok not run. Report: `docs/3d-upgrade/step03/README.md`.
+
+**Known**: crash frame — car longer than hitbox, obstacle overlaps the hood; no 3D crash shatter / aura; glass still greyish in studio light.
+
+**Next**: owner reviews Step 03 → Step 04. Do not start before approval.
+
+---
+
 ## 2026-10-23 — v4.1.0: 3D upgrade Step 02 — 3D XWAVE X1
 
 **Done**: refined X1 model (scripted builder `scripts/car/x1-builder.ts` → `src/assets/models/xwave-x1.glb`, 31.9k tris), own GLB reader `src/render/car/glbParse.ts` (no GLTFLoader / fetch / TextDecoder for bundled data), `src/render/car/MeshCar.ts` wired into `Vehicle.ts` (rear image = fallback until loaded, `?car=sprite` to compare), `RENDER` block in `config.ts`, `tests/car.test.ts`. Typecheck, 8 test suites, esbuild builds pass; Vite build and TikTok native not run here. Report + screenshots: `docs/3d-upgrade/05-step02-vehicle.md`, `docs/3d-upgrade/step02/`.

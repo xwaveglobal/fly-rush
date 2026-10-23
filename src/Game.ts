@@ -57,7 +57,7 @@ import { drawShareCard, shareImage, copyText } from './ui/ShareCard.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v4.1.0';
+const VERSION = 'v4.1.1';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
@@ -269,6 +269,8 @@ export class Game {
   constructor(container: HTMLElement) {
     this.renderer = new Renderer(container, this.save.settings.quality, this.rig.camera);
     this.vehicle.camera = this.rig.camera;
+    // v4: once the 3D car replaces the rear image, home and race use the 3D camera setups
+    this.vehicle.onModelReady = () => (this.rig.car3d = !this.vehicle.usesSprite);
     const scene = this.renderer.scene;
     this.scenery = new Scenery(scene);
     scene.add(this.scenery.group, this.track.group, this.vehicle.root);
@@ -2443,7 +2445,8 @@ export class Game {
     const blink = run.invulnT > 0 && run.turboT <= 0 && this.state !== 'dying' && !p.isSuper;
     // no blinking (eye comfort): the car stays solid; protection shows as a steady soft bubble + HUD chip
     void blink;
-    this.vehicle.visibleBlink = this.state !== 'dying';
+    // the rear image is replaced by shatter pieces while dying; the 3D car stays on the road (v4.1.1)
+    this.vehicle.visibleBlink = this.state !== 'dying' || !this.vehicle.usesSprite;
 
     // ---- pilot training: wait for each gesture, captions, finish
     if (this.tutorialMode) {
@@ -3234,6 +3237,7 @@ export class Game {
     // the next car to earn shows in colour (curiosity); cars after it stay a black silhouette
     this.vehicle.setSkin(s, preview && carVisibility(this.save.unlocked, s.id) === 'dark');
     this.rig.rearOnly = s.shape === 'gt';
+    this.rig.car3d = !this.vehicle.usesSprite;
   }
 
   private previewSkin(id: string) {

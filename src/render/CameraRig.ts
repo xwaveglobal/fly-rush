@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { clamp, damp, lerp } from '../core/math.ts';
 import type { Player } from '../gameplay/Player.ts';
+import { CAMERA, type ChasePreset } from '../config.ts';
 
 export type CamMode = 'menu' | 'garage' | 'run' | 'crash';
 
@@ -14,6 +15,13 @@ export class CameraRig {
   mode: CamMode = 'menu';
   /** the car is drawn from its rear render: menu / garage cameras sway behind it instead of orbiting */
   rearOnly = false;
+  /** v4: the 3D car is on screen → home uses CAMERA.home, the race uses the CAMERA.chase preset */
+  car3d = false;
+  /** override the chase preset (previews / tests); null = CAMERA.chase */
+  presetOverride: ChasePreset | null = null;
+  get preset(): ChasePreset {
+    return this.presetOverride ?? (this.car3d ? CAMERA.presets[CAMERA.chase] : CAMERA.presets.high);
+  }
   private pos = new THREE.Vector3(0, 3, 7);
   private look = new THREE.Vector3(0, 1.2, -8);
   private trauma = 0;
@@ -71,7 +79,14 @@ export class CameraRig {
         this.orbit += dt * 0.25;
         // slow three-quarter showcase orbit; look point below the car lifts it into the
         // gap between the logo and the menu buttons
-        if (this.rearOnly) {
+        if (this.car3d) {
+          // v4 home: slow three-quarter orbit behind the 3D car, constant distance (constant size)
+          const H = CAMERA.home;
+          const yaw = H.yaw + H.yawSwing * Math.sin(this.orbit * (H.speed / 0.25));
+          wantPos.set(px + Math.sin(yaw) * H.dist, H.height, Math.cos(yaw) * H.dist);
+          wantLook.set(px, H.lookY, H.lookZ);
+          fov = this.baseFov * H.fovScale;
+        } else if (this.rearOnly) {
           // showroom: glide between camera shots every ~5 s — wide chase, low hero, close left/right, high crane
           const SHOTS: [number, number, number, number, number][] = [
             // yaw, height, distance, look-y, fov scale
@@ -117,16 +132,17 @@ export class CameraRig {
         // cinematic swing (Roadster roll): eases out to one side and back
         if (this.swingT > 0) this.swingT = Math.max(0, this.swingT - dt);
         const sk = this.swingDur > 0 ? Math.sin(Math.PI * (1 - this.swingT / this.swingDur)) : 0;
+        const C = this.preset;
         const sway = Math.sin(t * 0.55) * 0.18 + sk * 2.6;
-        const back = 6.6 + this.pushBack - speedFactor * 0.6;
+        const back = C.back + this.pushBack - speedFactor * C.speedBack;
         // above the normal HIGH hop (Roadster / HYPER jumps) the camera climbs almost 1:1 so the car stays framed
         // a normal hop is seen rising clearly over the obstacle (camera follows only a little);
         // above it (Roadster / HYPER) the camera climbs almost 1:1 so the car stays framed
         const base = Math.min(py, 3.05) - 1;
         const extra = Math.max(0, py - 3.05);
-        wantPos.set(px * 0.72 + sway, 3.25 + base * 0.22 + extra * 0.95 + sk * 0.9, back - sk * 0.8);
-        wantLook.set(px * 0.55, 1.15 + base * 0.3 + extra * 0.8, -9);
-        fov = this.baseFov + speedFactor * 7 + turbo * 9 + this.fovKick;
+        wantPos.set(px * C.followX + sway, C.height + base * C.lift + extra * 0.95 + sk * 0.9, back - sk * 0.8);
+        wantLook.set(px * C.lookX, C.lookY + base * C.lookLift + extra * 0.8, C.lookZ);
+        fov = this.baseFov + C.fov + speedFactor * 7 + turbo * 9 + this.fovKick;
         break;
       }
       case 'crash': {
@@ -137,12 +153,13 @@ export class CameraRig {
       }
     }
 
-    const k = snap ? 1 : damp(this.mode === 'run' ? 6.5 : 3, dt);
-    const ky = snap ? 1 : damp(this.mode === 'run' ? 6 : 3, dt);
+    const P = this.preset;
+    const k = snap ? 1 : damp(this.mode === 'run' ? P.hDamp : 3, dt);
+    const ky = snap ? 1 : damp(this.mode === 'run' ? P.vDamp : 3, dt);
     this.pos.x = lerp(this.pos.x, wantPos.x, k);
     this.pos.y = lerp(this.pos.y, wantPos.y, ky);
     this.pos.z = lerp(this.pos.z, wantPos.z, k);
-    this.look.x = lerp(this.look.x, wantLook.x, damp(this.mode === 'run' ? 7 : 3, dt));
+    this.look.x = lerp(this.look.x, wantLook.x, snap ? 1 : damp(this.mode === 'run' ? P.lookDamp : 3, dt));
     this.look.y = lerp(this.look.y, wantLook.y, ky);
     this.look.z = lerp(this.look.z, wantLook.z, k);
     if (snap) {

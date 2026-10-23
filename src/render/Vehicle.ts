@@ -1595,6 +1595,8 @@ export class Vehicle {
       const ground = vy < 0.51 ? -vy : -0.51;
       this.mesh.root.position.set(0, ground, 0);
       this.mesh.nitro = Math.max(clamp01(this.boostK), turbo);
+      // Bonus Phase Ghost: the 3D car turns translucent (the rear image used to fade)
+      this.mesh.setFade(this.showcase?.kind === 'ghost' ? 1 - (1 - RENDER.ghostOpacity) * this.showcase.e : 1);
       this.mesh.update(dt, speed, lat, p.air, this.locked);
       // flight jets hang under the rear of the car; the contact shadow stays on the road
       this.jetG.position.set(0, ground + 0.3, 0.75);

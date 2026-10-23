@@ -238,9 +238,10 @@ badgeTex.wrapS = badgeTex.wrapT = THREE.ClampToEdgeWrapping;
 const M = {
   paint: new THREE.MeshPhysicalMaterial({ name: 'X1_Paint', color: 0xf2f4f8, metalness: 0.2, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.05 }),
   black: new THREE.MeshPhysicalMaterial({ name: 'X1_GlossBlack', color: 0x0b0c0f, metalness: 0.3, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.08 }),
+  satin: new THREE.MeshPhysicalMaterial({ name: 'X1_SatinBlack', color: 0x0c0d10, metalness: 0.15, roughness: 0.5, clearcoat: 0.35, clearcoatRoughness: 0.35 }),
   carbon: new THREE.MeshStandardMaterial({ name: 'X1_Carbon', color: 0x3a3a3a, map: tex(x1CarbonCanvas()), metalness: 0.35, roughness: 0.42, side: THREE.DoubleSide }),
   chrome: new THREE.MeshStandardMaterial({ name: 'X1_Chrome', color: 0xc8ccd2, metalness: 1, roughness: 0.22 }),
-  glass: new THREE.MeshPhysicalMaterial({ name: 'X1_Glass', color: 0x020306, metalness: 0.0, roughness: 0.1, transparent: true, opacity: 0.72, envMapIntensity: 0.12 }),
+  glass: new THREE.MeshPhysicalMaterial({ name: 'X1_Glass', color: 0x010204, metalness: 0.0, roughness: 0.32, transparent: true, opacity: 0.84, envMapIntensity: 0.12 }),
   led: new THREE.MeshStandardMaterial({ name: 'X1_RearLED', color: 0xff0010, emissive: 0xff0010, emissiveIntensity: 1.5, roughness: 0.3 }),
   ledCore: new THREE.MeshStandardMaterial({ name: 'X1_RearLEDCore', color: 0xffc0c0, emissive: 0xff5050, emissiveIntensity: 1.8, roughness: 0.3 }),
   ledSoft: new THREE.MeshStandardMaterial({ name: 'X1_RedMarker', color: 0xff0018, emissive: 0xff0018, emissiveIntensity: 1.3, roughness: 0.3 }),
@@ -374,14 +375,13 @@ function buildBody(P: Parts) {
 
   // ---- rear face (z = Z_TAIL), measured from the master
   const zf = Z_TAIL + 0.003;
-  // spoiler lip on the rear deck edge, between the buttresses (black, slightly kicked up)
-  P.add('Body_GlossBlack', M.black, slab([[-0.46, 0.736], [0.46, 0.736], [0.47, 0.758], [-0.47, 0.758]], 1.98, 0.26, 0.006));
-  // black deck between the buttresses, under the rear glass end
-  P.add('Body_GlossBlack', M.black, new THREE.BoxGeometry(0.92, 0.012, 0.36), T(0, 0.748, 2.03));
+  // deck well between the buttresses: the active spoiler (separate node, see buildSpoiler) lies flush
+  // in it; when the spoiler rises the well shows black, never body paint
+  P.add('Body_GlossBlack', M.black, new THREE.BoxGeometry(0.94, 0.012, 0.36), T(0, 0.742, 2.03));
   // LED housing: smoked long hexagon around the light blade
   P.add('Rear_LEDHousing', M.ledHousing, slab([[-0.88, 0.632], [0.88, 0.632], [0.945, 0.596], [0.92, 0.566], [-0.92, 0.566], [-0.945, 0.596]], zf - 0.02, 0.025, 0.003));
   // continuous LED blade: top line with chevron ends + thin lower return line
-  const blade: [number, number][] = [[0.0, 0.615], [0.865, 0.615], [0.935, 0.585], [0.925, 0.574], [0.858, 0.601], [0.0, 0.601]];
+  const blade: [number, number][] = [[0.0, 0.621], [0.866, 0.621], [0.938, 0.588], [0.925, 0.573], [0.856, 0.599], [0.0, 0.599]];
   const bl = (pts: [number, number][]) => {
     const right = pts;
     const left = right.map(([x, y]) => [-x, y] as [number, number]);
@@ -390,68 +390,48 @@ function buildBody(P: Parts) {
   };
   P.add('Rear_LED', M.led, slab(bl(blade), zf + 0.006, 0.006));
   // hot inner line along the blade (the master's near-white core)
-  P.add('Rear_LEDCore', M.ledCore, slab([[-0.85, 0.6065], [0.85, 0.6065], [0.85, 0.6095], [-0.85, 0.6095]], zf + 0.0125, 0.002));
+  P.add('Rear_LEDCore', M.ledCore, slab([[-0.85, 0.6085], [0.85, 0.6085], [0.85, 0.6125], [-0.85, 0.6125]], zf + 0.0125, 0.002));
   P.add('Rear_LED', M.led, slab([[-0.83, 0.5735], [0.83, 0.5735], [0.83, 0.5795], [-0.83, 0.5795]], zf + 0.006, 0.004));
   // black badge panel (trapezoid under the light), XWAVE badge centred on it
   P.add('Rear_BadgePanel', M.black, slab([[-0.56, 0.566], [0.56, 0.566], [0.47, 0.485], [-0.47, 0.485]], zf, 0.012, 0.004));
   const badge = new THREE.PlaneGeometry(0.29, 0.0725);
   P.add('Badge_XWAVE', M.badge, badge, T(0, 0.528, zf + 0.022));
-  // lower valance (black) + red markers + centre brake light
-  P.add('Body_GlossBlack', M.black, slab([[-0.86, 0.425], [0.86, 0.425], [0.8, 0.35], [0.64, 0.31], [-0.64, 0.31], [-0.8, 0.35]], 1.75, Z_TAIL + 0.02 - 1.75, 0.01));
-  for (const s of [-1, 1]) {
-    P.add('Rear_Markers', M.ledSoft, slab([[0.57 * s, 0.36], [0.76 * s, 0.358], [0.75 * s, 0.375], [0.575 * s, 0.38]], Z_TAIL + 0.031, 0.006));
-  }
-  P.add('Rear_Markers', M.ledSoft, new THREE.BoxGeometry(0.22, 0.016, 0.008), T(0, 0.342, Z_TAIL + 0.034));
-
-  // ---- diffuser: carbon tray rising to the rear, fins, chrome rail, side walls
+  // ---- lower rear bumper (v3, Tesla-Roadster-inspired integration, XWAVE layout):
+  // one solid satin-black body from the white bumper band down, wrapping between the rear tyres,
+  // with a recessed diffuser opening. No rods, rails, tubes or fins hanging below it.
   {
-    const tray = new THREE.PlaneGeometry(1.24, 0.74, 1, 1);
-    tray.applyMatrix4(T(0, 0, 0, -Math.PI / 2));
-    // tilt: front (−z) low at 0.13, rear high at 0.30
-    const p = tray.getAttribute('position');
-    for (let i = 0; i < p.count; i++) {
-      const z = p.getZ(i); // −0.37 … 0.37
-      p.setY(i, mix(0.13, 0.3, (z + 0.37) / 0.74));
-      p.setZ(i, z + 1.88);
-    }
-    // face down (seen from behind / below)
-    const idx = tray.getIndex()!;
-    for (let i = 0; i < idx.count; i += 3) {
-      const a = idx.getX(i);
-      idx.setX(i, idx.getX(i + 1));
-      idx.setX(i + 1, a);
-    }
-    tray.computeVertexNormals();
-    P.add('Diffuser', M.carbon, planarUV(tray, 'x', 'z', 4));
-    // fins: central three straight, two outer ones flared
-    for (const x of [-0.33, 0, 0.325]) {
-      const deep = x === 0 ? 0.03 : 0.06;
-      P.add('Diffuser', M.carbon, planarUV(finYZ([[1.62, 0.14], [2.27, 0.3], [2.31, 0.29], [2.29, deep], [2.18, deep + 0.01], [1.95, 0.12]], x, 0.016), 'z', 'y', 4));
-    }
-    for (const s of [-1, 1]) {
-      const g = finYZ([[1.7, 0.15], [2.25, 0.3], [2.28, 0.28], [2.25, 0.1], [2.0, 0.12]], 0, 0.018);
-      P.add('Diffuser', M.carbon, planarUV(g, 'z', 'y', 4), T(0.5 * s, 0, 0, 0, -0.06 * s, 0));
-      // side walls of the tunnel (dark, under the valance)
-      P.add('Diffuser', M.carbon, planarUV(finYZ([[1.6, 0.15], [2.22, 0.31], [2.22, 0.12], [1.8, 0.1]], 0.625 * s, 0.02), 'z', 'y', 4));
-    }
-    // chrome rail across the diffuser (the thin silver arc in the master), ends turning down
-    const rail = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-0.5, 0.08, 2.27),
-      new THREE.Vector3(-0.495, 0.2, 2.275),
-      new THREE.Vector3(-0.44, 0.255, 2.28),
-      new THREE.Vector3(0, 0.262, 2.285),
-      new THREE.Vector3(0.44, 0.255, 2.28),
-      new THREE.Vector3(0.495, 0.2, 2.275),
-      new THREE.Vector3(0.5, 0.08, 2.27),
-    ]);
-    P.add('Diffuser_Rail', M.chrome, new THREE.TubeGeometry(rail, 64, 0.008, 6, false));
-    // fin trailing edges (chrome lines)
-    for (const x of [-0.33, 0, 0.325]) P.add('Diffuser_Rail', M.chrome, new THREE.BoxGeometry(0.02, 0.24, 0.012), T(x, x === 0 ? 0.16 : 0.18, 2.3, 0.2));
-  }
-  // nitro sockets (inside the diffuser, either side of the centre fin)
-  for (const s of [-1, 1]) {
-    P.add('NitroSocket_Housing', M.rim, new THREE.CylinderGeometry(0.04, 0.045, 0.12, 20, 1, true), T(0.17 * s, 0.2, 2.18, Math.PI / 2));
-    P.add('NitroSocket_Housing', M.interior, new THREE.CircleGeometry(0.04, 20), T(0.17 * s, 0.2, 2.15));
+    const BUMPER_FACE = Z_TAIL + 0.035;
+    const BUMPER_FRONT = 1.8;
+    const right: [number, number][] = [[0.84, 0.405], [0.862, 0.39], [0.85, 0.36], [0.8, 0.325], [0.7, 0.26], [0.655, 0.2], [0.635, 0.145], [0.6, 0.12]];
+    const outline = [...right.map(([x, y]) => new THREE.Vector2(x, y)), ...right.slice().reverse().map(([x, y]) => new THREE.Vector2(-x, y))];
+    const shape = new THREE.Shape(outline);
+    // diffuser opening: rounded rectangle, the recess goes 0.1 m into the bumper
+    const hole = new THREE.Path();
+    const hx = 0.52;
+    const y0 = 0.155;
+    const y1 = 0.3;
+    const rr = 0.035;
+    hole.moveTo(-hx + rr, y0);
+    hole.lineTo(hx - rr, y0);
+    hole.quadraticCurveTo(hx, y0, hx, y0 + rr);
+    hole.lineTo(hx, y1 - rr);
+    hole.quadraticCurveTo(hx, y1, hx - rr, y1);
+    hole.lineTo(-hx + rr, y1);
+    hole.quadraticCurveTo(-hx, y1, -hx, y1 - rr);
+    hole.lineTo(-hx, y0 + rr);
+    hole.quadraticCurveTo(-hx, y0, -hx + rr, y0);
+    shape.holes.push(hole);
+    const depth = BUMPER_FACE - BUMPER_FRONT;
+    const bumper = new THREE.ExtrudeGeometry(shape, { depth: depth - 0.024, bevelEnabled: true, bevelSize: 0.012, bevelThickness: 0.012, bevelSegments: 3, curveSegments: 6 });
+    bumper.translate(0, 0, BUMPER_FRONT + 0.012);
+    P.add('Rear_LowerBumper', M.satin, bumper);
+    // recess back wall + three restrained fins joined to the wall, floor and ceiling of the recess
+    const back = BUMPER_FACE - 0.1;
+    P.add('Diffuser', M.carbon, planarUV(new THREE.PlaneGeometry(hx * 2, y1 - y0), 'x', 'y', 5), T(0, (y0 + y1) / 2, back));
+    for (const x of [-0.26, 0, 0.26]) P.add('Diffuser', M.satin, new THREE.BoxGeometry(0.012, y1 - y0, 0.09), T(x, (y0 + y1) / 2, back + 0.045));
+    // red markers and the centre brake light on the bumper face
+    for (const s of [-1, 1]) P.add('Rear_Markers', M.ledSoft, slab([[0.57 * s, 0.355], [0.77 * s, 0.352], [0.76 * s, 0.37], [0.575 * s, 0.374]], BUMPER_FACE + 0.001, 0.004));
+    P.add('Rear_Markers', M.ledSoft, new THREE.BoxGeometry(0.22, 0.014, 0.006), T(0, 0.33, BUMPER_FACE + 0.004));
   }
 
   // ---- roof stop light (top of the rear glass)
@@ -556,6 +536,27 @@ function wheel(name: string, ax: typeof AX_F, side: -1 | 1, front: boolean) {
   return hub;
 }
 
+// ------------------------------------------------------------------ active spoiler
+/** hinge line of the rear-deck spoiler (front edge, flush with the deck) */
+export const SPOILER_HINGE = { y: 0.752, z: 1.9 };
+/**
+ * XWAVE active spoiler: the black rear-deck lip between the buttresses is a flap hinged at its front
+ * edge. Closed it is flush with the deck; the game rotates `Spoiler_Pivot` around X (negative =
+ * trailing edge up) while nitro runs. No struts: the hinge is the only connection.
+ */
+function buildSpoiler() {
+  const pivot = new THREE.Group();
+  pivot.name = 'Spoiler_Pivot';
+  pivot.position.set(0, SPOILER_HINGE.y, SPOILER_HINGE.z);
+  // aerofoil section in the (z, y) side plane, relative to the hinge
+  const sec: [number, number][] = [[0, -0.003], [0.15, 0.011], [0.3, 0.02], [0.335, 0.027], [0.335, 0.013], [0.2, 0.0], [0.02, -0.009]];
+  const g = finYZ(sec, 0, 0.92);
+  const m = new THREE.Mesh(norm(g), M.black);
+  m.name = 'Spoiler';
+  pivot.add(m);
+  return pivot;
+}
+
 // ------------------------------------------------------------------ assemble + export
 export function buildX1(): THREE.Group {
   const root = new THREE.Group();
@@ -567,10 +568,11 @@ export function buildX1(): THREE.Group {
   buildBody(P);
   for (const m of P.meshes()) body.add(m);
   root.add(wheel('FL', AX_F, -1, true), wheel('FR', AX_F, 1, true), wheel('RL', AX_R, -1, false), wheel('RR', AX_R, 1, false));
+  body.add(buildSpoiler());
   for (const s of [-1, 1] as const) {
     const n = new THREE.Object3D();
     n.name = s < 0 ? 'NitroSocket_L' : 'NitroSocket_R';
-    n.position.set(0.17 * s, 0.2, 2.24);
+    n.position.set(0.38 * s, 0.2, Z_TAIL + 0.03);
     root.add(n);
   }
   return root;

@@ -3,6 +3,7 @@ import { RENDER } from '../../config.ts';
 import { Spring, clamp, clamp01 } from '../../core/math.ts';
 import { glowTexture } from '../textures.ts';
 import { assetBytes, parseGlb } from './glbParse.ts';
+import { ease, spoilerStep, wheelStep } from './carMotion.ts';
 import { x1BadgeCanvas, x1CarbonCanvas, x1TreadCanvas } from './x1Textures.ts';
 import x1Url from '../../assets/models/xwave-x1.glb';
 
@@ -47,6 +48,16 @@ export class MeshCar {
   private roll = new Spring(0, 140, 16);
   private pitch = new Spring(0, 160, 14);
   private dip = new Spring(0, 220, 16);
+  private yaw = new Spring(0, 140, 16);
+  /** active spoiler: pivot (hinge at the front edge) and 0..1 deployment */
+  private spoiler: THREE.Object3D | null = null;
+  spoilerK = 0;
+  /** previews / tests: force the spoiler target (null = follow nitro) */
+  spoilerForce: number | null = null;
+  /** Phase Ghost: materials' own transparency, restored when the effect ends */
+  private fadeState: { m: THREE.Material; transparent: boolean; opacity: number; depthWrite: boolean }[] = [];
+  private fade = 1;
+  private fadeSolid = true;
   private wheelV = 0;
   private prevAir = 0;
   private t = 0;
@@ -110,8 +121,12 @@ export class MeshCar {
       if (k) m.emissiveIntensity = k;
     }
     const glass = this.mats.get('X1_Glass');
-    if (glass) glass.envMapIntensity = 0.5;
-    for (const m of this.mats.values()) this.orig.set(m, { color: m.color.getHex(), emissive: m.emissive.getHex(), ei: m.emissiveIntensity });
+    if (glass) glass.envMapIntensity = 0.18; // dark tint, soft highlight (no glare blob from the sun)
+    this.spoiler = model.getObjectByName('Spoiler_Pivot') ?? null;
+    for (const m of this.mats.values()) {
+      this.orig.set(m, { color: m.color.getHex(), emissive: m.emissive.getHex(), ei: m.emissiveIntensity });
+      this.fadeState.push({ m, transparent: m.transparent, opacity: m.opacity, depthWrite: m.depthWrite });
+    }
 
     // sprung body: re-parent under a pivot at axle height
     const body = model.getObjectByName('Body');
@@ -203,7 +218,7 @@ export class MeshCar {
     this.wheelV = onRoad ? speed : this.wheelV * Math.exp(-0.45 * dt);
     const blurK = clamp01((this.wheelV - RENDER.wheelBlurFrom) / (RENDER.wheelBlurFull - RENDER.wheelBlurFrom));
     for (const w of this.wheels) {
-      const step = Math.min((this.wheelV * dt) / w.r, RENDER.wheelMaxStep);
+      const step = wheelStep(this.wheelV, w.r, dt, RENDER.wheelMaxStep);
       w.spin.rotation.x -= step; // top of the wheel moves forward (−z)
       if (w.front) w.hub.rotation.y = -lat * RENDER.steer * (1 - air);
       (w.blur.material as THREE.MeshBasicMaterial).opacity = 0.75 * blurK;
@@ -215,6 +230,8 @@ export class MeshCar {
     }
     this.prevAir = air;
     this.roll.target = lat * RENDER.bodyRoll * (1 - air);
+    this.yaw.target = -lat * RENDER.bodyYaw;
+    this.yaw.update(dt);
     this.pitch.target = 0;
     this.dip.target = 0;
     this.roll.update(dt);
@@ -222,7 +239,10 @@ export class MeshCar {
     this.dip.update(dt);
     // light road buzz at speed (sub-centimetre) so the body feels planted, not glued
     const buzz = (Math.sin(this.t * 41) * 0.5 + Math.sin(this.t * 67) * 0.3) * 0.004 * clamp01(speed / 30) * (1 - air);
-    this.bodyPivot.rotation.set(clamp(this.pitch.value, -0.08, 0.08), 0, clamp(this.roll.value, -0.06, 0.06));
+    this.bodyPivot.rotation.set(clamp(this.pitch.value, -0.08, 0.08), clamp(this.yaw.value, -0.04, 0.04), clamp(this.roll.value, -0.06, 0.06));
+    // ---- active spoiler: rises with nitro, retracts smoothly after (hinged at its front edge)
+    this.spoilerK = this.spoilerForce ?? spoilerStep(this.spoilerK, locked ? 0 : this.nitro, dt, RENDER.spoilerUp, RENDER.spoilerDown);
+    if (this.spoiler) this.spoiler.rotation.x = -RENDER.spoilerAngle * ease(this.spoilerK);
     this.bodyPivot.position.y = 0.5 + clamp(this.dip.value, -0.08, 0.04) + buzz;
     // ---- nitro flames from the sockets
     const k = locked ? 0 : clamp01(this.nitro);
@@ -239,8 +259,25 @@ export class MeshCar {
     this.coreMat.opacity = 0.9 * k;
   }
 
+  /** Phase Ghost: 1 = solid, lower = translucent (materials restored exactly at 1) */
+  setFade(k: number) {
+    if (Math.abs(k - this.fade) < 0.005) return;
+    this.fade = k;
+    const solid = k >= 0.995;
+    const flip = solid !== this.fadeSolid;
+    this.fadeSolid = solid;
+    for (const f of this.fadeState) {
+      f.m.transparent = solid ? f.transparent : true;
+      f.m.opacity = solid ? f.opacity : f.opacity * k;
+      f.m.depthWrite = solid ? f.depthWrite : false;
+      if (flip) f.m.needsUpdate = true; // only when switching between solid and translucent
+    }
+  }
+
   /** settle the sprung body instantly (respawn / menu) */
   resetPose() {
+    this.yaw.snap(0);
+    this.spoilerK = 0;
     this.roll.snap(0);
     this.pitch.snap(0);
     this.dip.snap(0);
