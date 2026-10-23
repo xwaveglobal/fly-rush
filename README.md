@@ -193,6 +193,7 @@ Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder M
 - The 3D car is drawn **15 % taller** (body only, at runtime — the approved GLB file is unchanged, wheels stay round and on the road) so the DOWN dive reads more clearly. Visual only: hitboxes / timings unchanged (`RENDER.carHeightScale`).
 - **Home camera**: the slow orbit stays inside the road (it used to swing out past the right guard rail, so the barrier crossed the whole view).
 - **Car pictures** in every panel (Garage cards, celebration, share card, result screen, profile tips) are renders of the in-game 3D X1 in each car's colours (`scripts/car/thumbs-x1.mjs` + `thumbs-pack.py`); locked cars stay black silhouettes.
+- **Settings → Dive camera** (default OFF): OFF = a DOWN dive never moves the race camera; ON = the camera drops with the car as before. Jumps still lift the camera either way.
 - **Rewarded-ad revive** no longer adds a heart and shows no heart / life notice — only "REVIVED!" (the next hit still ends the run, as before).
 - Details: `docs/gameplay-upgrade/v4.6/`.
 

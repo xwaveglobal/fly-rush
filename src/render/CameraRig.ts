@@ -17,6 +17,11 @@ export class CameraRig {
   rearOnly = false;
   /** v4: the 3D car is on screen → home uses CAMERA.home, the race uses the CAMERA.chase preset */
   car3d = false;
+  /**
+   * v4.6 Settings "Dive camera": true = the race camera drops with the car when it dives (DOWN), as
+   * before; false (default) = a dive never changes the camera position / angle (jumps still lift it)
+   */
+  diveFollow = false;
   /** override the chase preset (previews / tests); null = CAMERA.chase */
   presetOverride: ChasePreset | null = null;
   get preset(): ChasePreset {
@@ -142,7 +147,8 @@ export class CameraRig {
         // above the normal HIGH hop (Roadster / HYPER jumps) the camera climbs almost 1:1 so the car stays framed
         // a normal hop is seen rising clearly over the obstacle (camera follows only a little);
         // above it (Roadster / HYPER) the camera climbs almost 1:1 so the car stays framed
-        const base = Math.min(py, 3.05) - 1;
+        let base = Math.min(py, 3.05) - 1;
+        if (!this.diveFollow) base = Math.max(0, base); // dive (below road height): camera stays put
         const extra = Math.max(0, py - 3.05);
         wantPos.set(px * C.followX + sway, C.height + base * C.lift + extra * 0.95 + sk * 0.9, back - sk * 0.8);
         wantLook.set(px * C.lookX, C.lookY + base * C.lookLift + extra * 0.8, C.lookZ);

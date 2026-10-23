@@ -6,7 +6,7 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ## 2026-10-23 — v4.6.0 on NEW branch `feature/sky-roadster-v4.6-big-update` (owner requests)
 
-**Done**: 3D car 15 % taller (runtime Y scale, wheels compensated, GLB untouched — fingerprint test still green); home orbit kept inside the road (`CAMERA.home` yaw 0.24 ± 0.14); UI car pictures = renders of the 3D X1 per colourway (`src/assets/images/cars/*.webp`, `rear-*.webp`); ad revive adds no heart, shows only "REVIVED!"; flat-button rule no longer un-blackens locked car silhouettes. npm test 12 / 12. Shots: `docs/gameplay-upgrade/v4.6/`.
+**Done**: 3D car 15 % taller (runtime Y scale, wheels compensated, GLB untouched — fingerprint test still green); home orbit kept inside the road (`CAMERA.home` yaw 0.24 ± 0.14); UI car pictures = renders of the 3D X1 per colourway (`src/assets/images/cars/*.webp`, `rear-*.webp`); ad revive adds no heart, shows only "REVIVED!"; Settings → Dive camera (default OFF: a dive never moves the camera); flat-button rule no longer un-blackens locked car silhouettes. npm test 12 / 12. Shots: `docs/gameplay-upgrade/v4.6/`.
 
 **Note**: `feature/sky-roadster-3d-v4.1` still holds v4.5.0 (Step 06.5) — this branch starts from it. Vega and Zenith render identically (same white paint; Vega's red only lived in the old 2-D picture).
 
