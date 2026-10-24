@@ -165,8 +165,6 @@ const BAG_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradi
 
 /** tutorial (book + ?) and launch (megaphone) icons */
 const TUT_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M10.2 8.3a2 2 0 1 1 2.6 1.9c-.5.2-.8.6-.8 1.1v.6"/><path d="M12 14.4h.01"/></g></svg>`;
-export const MEGA_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.6" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M12 6.2c1.7 1.2 2.4 3 2.2 5.4l-.9.9h-2.6l-.9-.9c-.2-2.4.5-4.2 2.2-5.4z" fill="#fff"/><circle cx="12" cy="9.3" r=".9" fill="#2a7bff"/><path d="M10.6 13.2 12 16.4l1.4-3.2z" fill="#ffc21a"/><path d="M10.4 18.6h3.2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>`;
-
 /** what a finished / crashed run paid out (result screens) */
 export interface RunRewards {
   /** EXP of this run */
@@ -1979,7 +1977,7 @@ export class UI {
     $(this.root, '[data-k="buybody"]').innerHTML = `
       <div class="spwallet">${ICON.coin}<b>${fmt(s.wallet)}</b><span class="bgrule">Buy any amount · keep them in the bag</span></div>
       <div class="bgbuys">${SPECIALS.map(row).join('')}</div>
-      <button class="btn ghost" data-a="closeov" data-v="bagbuy">${ICON.chevL} Back to the bag</button>`;
+      <button class="btn ghost" data-a="closeov" data-v="bagbuy">${ICON.chevL} Back</button>`;
   }
 
   private shareText = '';
@@ -2177,6 +2175,7 @@ export class UI {
   }
 
   shopSync(s: SaveData) {
+    this.lastSave = s; // the exchange popup (bagbuy) opened from the Shop reads it
     const card = (p: Product) => {
       const owned = (p.sku === 'no_ads' && s.noAds) || (p.sku === 'starter_pack' && s.starterBought);
       const passOn = p.sku === 'xwave_pass' && s.passUntil > Date.now();

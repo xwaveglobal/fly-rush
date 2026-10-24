@@ -66,8 +66,3 @@ export function bonusState(now = Date.now()) {
 /** plays already used in this event (save.bonusPlays = { key, n }) */
 export const bonusPlaysUsed = (rec: { key: string; n: number } | undefined, key: string) => (rec && rec.key === key ? rec.n : 0);
 
-export function fmtClock(ms: number) {
-  const s = Math.max(0, Math.floor(ms / 1000));
-  const m = Math.floor(s / 60);
-  return `${m}:${String(s % 60).padStart(2, '0')}`;
-}

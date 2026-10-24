@@ -8,6 +8,8 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 **Done**: 3D car 15 % taller (runtime Y scale, wheels compensated, GLB untouched — fingerprint test still green); home orbit kept inside the road (`CAMERA.home` yaw 0.24 ± 0.14); UI car pictures = renders of the 3D X1 per colourway (`src/assets/images/cars/*.webp`, `rear-*.webp`); ad revive adds no heart, shows only "REVIVED!"; Settings → Camera motion (default OFF: fixed view — lanes, jumps, dives never move / tilt the camera; Roadster / HYPER / SOS flights still lift it); flat-button rule no longer un-blackens locked car silhouettes. npm test 12 / 12. Shots: `docs/gameplay-upgrade/v4.6/`.
 
+**Done 2026-10-24 (owner list of 11)**: special button under the hearts + smaller; bigger car in the fixed view (screen-adaptive camera distance, `RENDER.carScaleFixed`); Home / Play no shadows; Garage AA + AAA dark (Nexus = AAA); Restart label; NORMAL on launch; Shop exchange at the top (item tap → exchange popup); running loading bar; post-race weekly rank board (`#runrank`, `aroundYou`); Bonus hourly / 30 min / 3 plays; training fixes (`scripts/qa/training.mjs`: 7 lessons, 0 obstacles driven through); cleanup (pre-3D sprite images, dead exports, needRocket paywall) + per-frame allocation fixes. Bundle 4.59 → 3.56 MB.
+
 **Note**: `feature/sky-roadster-3d-v4.1` still holds v4.5.0 (Step 06.5) — this branch starts from it. Vega and Zenith render identically (same white paint; Vega's red only lived in the old 2-D picture).
 
 **Next**: owner review; Step 06.5 approval still pending. No merge to `main`.

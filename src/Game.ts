@@ -2635,7 +2635,7 @@ export class Game {
     this.portal.group.visible = !c && toPortal < 260;
     if (this.portal.group.visible) {
       this.portal.group.position.z = -toPortal;
-      this.portal.setColor(new THREE.Color(this.scenery.accent));
+      this.portal.setColor(this.portalColor.set(this.scenery.accent)); // v4.6 perf: no per-frame allocation
     }
 
     // ---- tutorial
@@ -2952,6 +2952,7 @@ export class Game {
     if (this.classQueue.length) window.setTimeout(() => this.showNextClass(), 350);
   }
 
+  private portalColor = new THREE.Color();
   /** Step 06.5 AIR DASH runtime protection / landing check */
   airDashGuard = new AirDashGuard();
   /** performance.now() of the last authoritative collision (Step 06.5 audio latency check) */

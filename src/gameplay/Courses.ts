@@ -175,9 +175,6 @@ export const COURSES: Course[] = [...BASE, ...REMIX.flatMap((names, t) => BASE.m
   needClass: i >= 10 ? 'A' : undefined,
 }));
 
-/** the Rank-A gate sits before this track index */
-export const RANK_GATE_AT = 10;
-
 export type TrackLock = { open: true } | { open: false; why: 'score'; need: number; prev: Course } | { open: false; why: 'class' };
 /** is track `c` playable for this player? (best scores per track id, current rank class index ≥ A?) */
 export function trackLock(c: Course, best: Record<string, number>, hasClassA: boolean): TrackLock {
@@ -189,7 +186,5 @@ export function trackLock(c: Course, best: Record<string, number>, hasClassA: bo
   if ((best[prev.id] ?? 0) >= need) return { open: true };
   return { open: false, why: 'score', need, prev };
 }
-
-export const courseById = (id: string | null | undefined) => COURSES.find((c) => c.id === id) ?? null;
 
 export const sectionAt = (c: Course, d: number) => c.sections.find((s) => d >= s.from && d < s.to) ?? c.sections[c.sections.length - 1];

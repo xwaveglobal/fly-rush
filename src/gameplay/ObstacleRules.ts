@@ -131,4 +131,3 @@ export function hitboxes(o: ObstacleSpec, sx: number, out: Box[] = []): Box[] {
   return out;
 }
 
-export const isMultiLane = (o: ObstacleSpec) => o.type === 'laser' || o.type === 'gate';

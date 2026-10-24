@@ -6,57 +6,47 @@ import { MeshCar } from './car/MeshCar.ts';
 import { carHeight, isAirborne } from './car/carMotion.ts';
 import { CrashFx } from './car/CarFx.ts';
 import { OVERLAY_LAYER } from './Renderer.ts';
+// v4.6 cleanup: the pre-3D studio renders (8 views, boost look, Vega rear, aura, tyre masks ≈ 760 KB)
+// are gone; the rear-image fallback (only drawn if the 3D model can't load, or with ?car=sprite) now
+// uses the 3D car's own rear render and procedural masks
+import x1Back from '../assets/images/cars/rear-zenith.webp';
+import vegaBack from '../assets/images/cars/rear-vega.webp';
+const x1BackBoost = x1Back;
 import { glowTexture, logoTexture, rearBadgeTexture, treadTexture, wheelBlurTexture, wheelFaceTexture } from './textures.ts';
 import { mergeByMaterial } from './merge.ts';
 import type { Player } from '../gameplay/Player.ts';
-import x1Back from '../assets/images/car/x1-back.webp';
-import x1BackBoost from '../assets/images/car/x1-back-boost.webp';
-import vegaBack from '../assets/images/car/vega-back.webp';
-import x1TyreFx from '../assets/images/car/x1-tyrefx.png';
-import x1Tread from '../assets/images/car/x1-tread.png';
 
 /** tread mask (R) + original tyre shading (G) for the rear render, and the tileable tread texture */
 let _fx: THREE.Texture | null = null;
 let _tread: THREE.Texture | null = null;
+/** empty mask (no tread / tyre shading overlay on the fallback rear image) */
+function blankTex() {
+  const t = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
+  t.needsUpdate = true;
+  return t;
+}
 function tyreFxTex() {
   if (_fx) return _fx;
-  _fx = new THREE.TextureLoader().load(x1TyreFx);
+  _fx = blankTex();
   _fx.colorSpace = THREE.NoColorSpace;
   return _fx;
 }
 function treadTex() {
   if (_tread) return _tread;
-  _tread = new THREE.TextureLoader().load(x1Tread);
+  _tread = blankTex();
   _tread.colorSpace = THREE.NoColorSpace;
   _tread.wrapS = THREE.ClampToEdgeWrapping;
   _tread.wrapT = THREE.RepeatWrapping;
   _tread.anisotropy = 4;
   return _tread;
 }
-import x1BackLeft from '../assets/images/car/x1-backleft.webp';
-import x1BackRight from '../assets/images/car/x1-backright.webp';
-import x1Left from '../assets/images/car/x1-left.webp';
-import x1Right from '../assets/images/car/x1-right.webp';
-import x1Front from '../assets/images/car/x1-front.webp';
-import x1FrontLeft from '../assets/images/car/x1-frontleft.webp';
-import x1FrontRight from '../assets/images/car/x1-frontright.webp';
-import x1Aura from '../assets/images/car/x1-aura.webp';
 
 /**
  * XWAVE X1 rendered from the studio renders: 8 views around the car (45° apart).
  * index 0 = seen from behind, going clockwise seen from above (behind-right, right, …).
  * h = on-screen height of that view in metres (the car is ~1.1 m tall).
  */
-const X1_VIEWS: { url: string; h: number }[] = [
-  { url: x1Back, h: 1.12 },
-  { url: x1BackRight, h: 1.22 },
-  { url: x1Right, h: 1.15 },
-  { url: x1FrontRight, h: 1.22 },
-  { url: x1Front, h: 1.12 },
-  { url: x1FrontLeft, h: 1.22 },
-  { url: x1Left, h: 1.15 },
-  { url: x1BackLeft, h: 1.22 },
-];
+const X1_VIEWS: { url: string; h: number }[] = Array.from({ length: 8 }, () => ({ url: x1Back, h: 1.12 }));
 
 export type CarShape = 'gt' | 'wedge' | 'muscle' | 'bubble' | 'cyber';
 
@@ -271,6 +261,7 @@ export class Vehicle {
   /** extra spin for celebration barrel roll (radians remaining) */
   private celebrate = 0;
   private flameColor = new THREE.Color();
+  private glowC = new THREE.Color(); // v4.6 perf: reused every frame (no allocation)
   private wheelAngle = 0;
   private wheelBlurMat!: THREE.MeshBasicMaterial;
   visibleBlink = true;
@@ -958,8 +949,7 @@ export class Vehicle {
     this.jetG.visible = false;
     this.squashG.add(this.jetG);
     // power-up aura: rim light + soft halo + a few energy wisps, generated from the rear render's outline
-    const at = new THREE.TextureLoader().load(x1Aura);
-    at.colorSpace = THREE.SRGBColorSpace;
+    const at = glowTexture();
     this.aura = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: at, transparent: true, depthWrite: false, opacity: 0, toneMapped: false }));
     this.aura.renderOrder = 4;
     this.aura.visible = false;
@@ -1529,7 +1519,7 @@ export class Vehicle {
 
     // ---- pods: wheels on the road, thrusters in the air, tucked away when diving
     this.flameColor.copy(BLUE).lerp(ORANGE, p.orange);
-    if (this.skin.id !== 'pearl') this.flameColor.lerp(new THREE.Color(this.skin.glow), 0.35 * (1 - p.orange));
+    if (this.skin.id !== 'pearl') this.flameColor.lerp(this.glowC.setHex(this.skin.glow), 0.35 * (1 - p.orange));
     if (this.locked) this.flameColor.multiplyScalar(0.1);
     const air = p.air;
     const wheel = 1 - air;

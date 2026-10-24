@@ -30,9 +30,6 @@ export function playerRank(expBest: number, exp2Best = 0): RankClass {
   return CLASSES[Math.max(a, b)];
 }
 
-/** EXP earned by a run of `distance` metres at a speed level */
-export const expFor = (distance: number, level: SpeedLevel) => Math.floor(Math.max(0, distance) * EXP.rate[level]);
-
 /** non-stop minutes to reach a rank at a speed level (design target) */
 export const rankMinutes = (c: RankClass, level: SpeedLevel) => EXP.hardMinutes[c] * EXP.timeMul[level];
 
@@ -53,13 +50,6 @@ export function classProgress(bolts: number, rank?: RankClass) {
 
 /** rivals on the sample boards: rank straight from their EXP */
 export const classForScore = (exp: number) => classFor(exp);
-
-/** how EXP works (rank guide) */
-export const EXP_RULES: { what: string; gain: string }[] = [
-  { what: 'Every metre you drive', gain: 'EXP' },
-  { what: 'Speed EASY / NORMAL / HARD', gain: `×${EXP.rate.easy / EXP.rate.easy} / ×${(EXP.rate.normal / EXP.rate.easy).toFixed(2).replace(/0$/, '')} / ×${EXP.rate.hard / EXP.rate.easy}` },
-  { what: 'Your EXP = your best single run', gain: 'best' },
-];
 
 /** the EXP badge: a small pill that literally reads "EXP" (owner: the shield icon was unclear) */
 export const XPT = `<svg viewBox="0 0 36 20" class="xpt" aria-label="EXP"><defs><linearGradient id="xpg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ee6ff"/><stop offset="1" stop-color="#8a4dff"/></linearGradient></defs><rect x="1" y="1" width="34" height="18" rx="6" fill="url(#xpg)" stroke="#1b1450" stroke-width="1.4"/><text x="18" y="14.6" text-anchor="middle" font-family="'Arial Black',Arial,sans-serif" font-weight="900" font-size="12.5" fill="#fff" letter-spacing=".3">EXP</text></svg>`;

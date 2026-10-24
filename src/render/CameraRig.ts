@@ -30,6 +30,8 @@ export class CameraRig {
     return this.presetOverride ?? (this.car3d ? CAMERA.presets[CAMERA.chase] : CAMERA.presets.high);
   }
   private pos = new THREE.Vector3(0, 3, 7);
+  private wantPos = new THREE.Vector3();
+  private wantLook = new THREE.Vector3();
   private look = new THREE.Vector3(0, 1.2, -8);
   /** current look-at point (read-only; reports / tests) */
   get lookTarget(): THREE.Vector3 {
@@ -97,8 +99,8 @@ export class CameraRig {
     const t = this.time;
     const px = p?.x ?? 0;
     const py = p?.y ?? 1;
-    const wantPos = new THREE.Vector3();
-    const wantLook = new THREE.Vector3();
+    const wantPos = this.wantPos; // v4.6 perf: reused every frame (no allocation)
+    const wantLook = this.wantLook;
     let fov = this.baseFov;
 
     switch (this.mode) {
