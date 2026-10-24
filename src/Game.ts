@@ -38,7 +38,7 @@ import { Ads, ADS } from './ads/Ads.ts';
 import { advancedScript, basicScript, boostScript, WORLD_LESSONS, type BoostKind, type TrainingScript, type TutorialStep } from './gameplay/Tutorial.ts';
 import { PASS_H, PASS_L, PASS_N } from './gameplay/types.ts';
 import { MAPS, TIER_NAME, type Tier } from './gameplay/Difficulty.ts';
-import { FAIRNESS, V2_POWERUPS, BONUS_SET, CLOUD, GRAPHICS, nextGraphics, type GraphicsQuality } from './config.ts';
+import { FAIRNESS, V2_POWERUPS, BONUS_SET, CLASS_REWARD, CLOUD, GRAPHICS, nextGraphics, type GraphicsQuality } from './config.ts';
 import { RANK_ORDER, rankDist, expRate, VARIANTS, type Variant } from './gameplay/Difficulty.ts';
 import type { Box, PickupKind, RowSpec } from './gameplay/types.ts';
 import { Meta, type EventResult, type RunSummary } from './meta/Meta.ts';
@@ -60,7 +60,7 @@ import { drawShareCard, shareImage, copyText } from './ui/ShareCard.ts';
 import { ITEM_PRICE, UNLOCK_BOOSTS, V1_ITEM_PRICE, SPECIALS, type SpecialKey } from './meta/Daily.ts';
 import { dayKey } from './core/Save.ts';
 
-const VERSION = 'v4.6.0';
+const VERSION = 'v4.6.1';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 /** welcome-back gift after this many hours away */
 const WELCOME_AFTER_H = 12;
@@ -540,7 +540,12 @@ export class Game {
     // v4.6 (owner): the game always opens on NORMAL (a level picked on Home lasts for this session)
     this.save.settings.speed = 'normal';
     // Step 06.5: classes reached before the celebration existed count as already celebrated (first-time only)
-    if (!this.save.classCelebrated) this.save.classCelebrated = CLASSES.slice(rankIdx('A'), rankIdx(this.rank) + 1).map(String);
+    if (!this.save.classCelebrated) this.save.classCelebrated = CLASSES.slice(rankIdx('C'), rankIdx(this.rank) + 1).map(String);
+    // v4.6.1: C / B joined the celebration (with a reward) — classes already passed are not paid again
+    if (!this.save.classLowSeen) {
+      for (const c of ['C', 'B'] as RankClass[]) if (rankIdx(this.rank) >= rankIdx(c) && !this.save.classCelebrated.includes(c)) this.save.classCelebrated.push(c);
+      this.save.classLowSeen = true;
+    }
     this.syncCarUnlocks();
     this.applySkin(this.save.vehicle);
 
@@ -2918,12 +2923,12 @@ export class Game {
   }
   lastSpecialSource: 'MANUAL' | 'AUTO_LAST_CHANCE' | null = null;
 
-  // ---- Step 06.5 first-time class promotion celebration (A, AA, AAA, S, SS, SSS)
+  // ---- first-time class promotion celebration (C, B, A since v4.6.1 with a reward; AA … SSS)
   private classQueue: RankClass[] = [];
-  /** after the run is over and saved: queue every class ≥ A reached for the first time */
+  /** after the run is over and saved: queue every class ≥ C reached for the first time */
   private queueClassCelebration() {
     const seen = new Set(this.save.classCelebrated ?? []);
-    for (let i = rankIdx('A'); i <= rankIdx(this.rank); i++) {
+    for (let i = rankIdx('C'); i <= rankIdx(this.rank); i++) {
       const c = CLASSES[i];
       if (!seen.has(c) && !this.classQueue.includes(c)) this.classQueue.push(c);
     }
@@ -2935,16 +2940,27 @@ export class Game {
     if (!c || this.state === 'run' || this.state === 'countdown' || this.state === 'paused' || this.state === 'dying' || this.state === 'respawn') return;
     // reward accuracy: the car this class REALLY unlocked (only AA has one; S+ only if configured + owned)
     const carId = SKINS.find((k) => !k.future && k.need === c && this.save.unlocked.includes(k.id))?.id ?? null;
-    const sub: Record<string, string> = { A: 'Top-class driving. Keep the streak going!', AA: 'Elite driver — a new XWAVE car is yours.', AAA: 'The highest Endless class. Mega Rush is open!', S: 'Mega Rush legend.', SS: 'Almost untouchable.', SSS: 'The very top of Sky Roadster.' };
+    const sub: Record<string, string> = { C: 'Nice start — the road is opening up!', B: 'Solid driving. Keep climbing!', A: 'Top-class driving. Keep the streak going!', AA: 'Elite driver — a new XWAVE car is yours.', AAA: 'The highest Endless class. Mega Rush is open!', S: 'Mega Rush legend.', SS: 'Almost untouchable.', SSS: 'The very top of Sky Roadster.' };
     this.audio.play('fanfare');
     this.vibrate([30, 40, 60]);
-    this.ui.classUp({ cls: c, color: CLASS_COLOR[c], sub: sub[c] ?? '', car: carId ? { id: carId, name: SKINS.find((k) => k.id === carId)!.name } : null });
+    const rw = CLASS_REWARD[c as 'C' | 'B' | 'A'];
+    this.ui.classUp({ cls: c, color: CLASS_COLOR[c], sub: sub[c] ?? '', car: carId ? { id: carId, name: SKINS.find((k) => k.id === carId)!.name } : null, reward: rw ?? null });
   }
   private classOk() {
     const c = this.classQueue.shift();
     if (c) {
       const list = (this.save.classCelebrated ??= []);
-      if (!list.includes(c)) list.push(c);
+      if (!list.includes(c)) {
+        list.push(c);
+        // v4.6.1: C / B / A reward, paid once together with the first celebration
+        const rw = CLASS_REWARD[c as 'C' | 'B' | 'A'];
+        if (rw) {
+          this.save.wallet += rw.coins;
+          this.save.items[rw.item] = (this.save.items[rw.item] ?? 0) + 1;
+          this.ui.refreshProfile(this.save);
+          this.audio.play('coin');
+        }
+      }
       this.persist();
     }
     this.audio.play('click');

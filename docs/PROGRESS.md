@@ -4,6 +4,21 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-24 — v4.6.1: owner decisions (same branch `feature/sky-roadster-v4.6-big-update`)
+
+**Decided by the owner**:
+- Zenith is now ice blue.
+- Rarity labels follow the unlock class.
+- C / B / A promotions give coins plus one special (`CLASS_REWARD`).
+- Step 07 FINAL is closed: the experimental premium / arcade cameras and the PBR pass were removed (`docs/3d-upgrade/step07-final/README.md`).
+- `feature/sky-roadster-3d-v4.1` is kept as it is (no reset).
+
+**Step 06.5**: the QA (`scripts/qa/step065.mjs`) was rerun on v4.6 with the v4.6 / v4.6.1 garage and promotion expectations. Results and evidence are in `docs/gameplay-upgrade/step06-5/`. The class matrix doc was updated.
+
+**Next**: the owner approves Step 06.5 (v4.6.1). Native / TikTok sync and the merge to `main` happen only after approval. Phone FPS is still not measured.
+
+---
+
 ## 2026-10-23 — v4.6.0 on NEW branch `feature/sky-roadster-v4.6-big-update` (owner requests)
 
 **Done**: 3D car 15 % taller (runtime Y scale, wheels compensated, GLB untouched — fingerprint test still green); home orbit kept inside the road (`CAMERA.home` yaw 0.24 ± 0.14); UI car pictures = renders of the 3D X1 per colourway (`src/assets/images/cars/*.webp`, `rear-*.webp`); ad revive adds no heart, shows only "REVIVED!"; Settings → Camera motion (default OFF: fixed view — lanes, jumps, dives never move / tilt the camera; Roadster / HYPER / SOS flights still lift it); flat-button rule no longer un-blackens locked car silhouettes. npm test 12 / 12. Shots: `docs/gameplay-upgrade/v4.6/`.

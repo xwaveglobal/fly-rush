@@ -41,7 +41,7 @@ export const carImage = (id: string) => CAR_IMG[id] ?? carZenith;
 /** transparent in-race rear render (share card); cars without one use their thumbnail */
 export const carRear = (id: string) => CAR_REAR[id] ?? rearZenith;
 export const logoImg = logoUrl;
-const RARITY_COLOR: Record<string, string> = { Common: '#4fb3ff', Rare: '#a77bff', Epic: '#ffc24a', Legendary: '#ff4a3c', Mythic: '#d04dff' };
+const RARITY_COLOR: Record<string, string> = { Common: '#4fb3ff', Rare: '#a77bff', Epic: '#ffc24a', Legendary: '#ff4a3c', Mythic: '#d04dff', Ultimate: '#7dfff2' };
 import { LEVELS } from '../config.ts';
 import type { Run } from '../gameplay/Run.ts';
 import type { PickupKind } from '../gameplay/types.ts';
@@ -725,6 +725,7 @@ export class UI {
         <div class="cu-sub" data-k="cusub"></div>
       </div>
       <div class="cu-car" data-k="cucar" hidden><img data-k="cucarimg" alt="" /><small>New car unlocked</small><b data-k="cucarname"></b></div>
+      <div class="cu-reward" data-k="cureward" hidden></div>
       <button class="btn big cu-ok" data-a="classok">Continue</button>
     </section>
 
@@ -1920,7 +1921,7 @@ export class UI {
   }
 
   /** Step 06.5 first-time class promotion (A and up): emblem, light sweep, particles; car showcase on AA */
-  classUp(o: { cls: string; color: string; sub: string; car: { id: string; name: string } | null }) {
+  classUp(o: { cls: string; color: string; sub: string; car: { id: string; name: string } | null; reward?: { coins: number; item: ItemKey } | null }) {
     const sc = this.screens.classup;
     if (!sc) return;
     sc.style.setProperty('--cc', o.color);
@@ -1930,6 +1931,10 @@ export class UI {
     const car = $(this.root, '[data-k="cucar"]');
     car.hidden = !o.car;
     sc.classList.toggle('withcar', !!o.car);
+    // v4.6.1: C / B / A reward (coins + one special), paid when the player taps Continue
+    const rw = $(this.root, '[data-k="cureward"]');
+    rw.hidden = !o.reward;
+    if (o.reward) rw.innerHTML = `<small>Promotion reward</small><span class="cu-rw"><span class="cu-rc">${coinFace(26)}<b>+${fmt(o.reward.coins)}</b></span><span class="cu-ri">${ITEM_ICON[o.reward.item]}<b>+1 ${ITEM_NAME[o.reward.item]}</b></span></span>`;
     if (o.car) {
       this.setAll('cucarname', o.car.name);
       $<HTMLImageElement>(this.root, '[data-k="cucarimg"]').src = carImage(o.car.id);

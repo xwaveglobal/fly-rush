@@ -2654,3 +2654,12 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 #runrank .rr-btns .btn { min-width: 0; }
 /* v4.6: no glowing rim on Play either (a calm solid edge) */
 #ui #start .menu-btns .mbtn[data-a="play"] { border: 2px solid rgba(140, 215, 255, .5) !important; }
+
+/* v4.6.1 — C / B / A promotion reward (coins + one special) */
+#classup .cu-reward { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+#classup.play .cu-reward { animation: cuIn .6s .5s both; }
+#classup .cu-reward small { font-size: 12px; font-weight: 800; letter-spacing: 2px; color: var(--cc); text-transform: uppercase; }
+#classup .cu-rw { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+#classup .cu-rc, #classup .cu-ri { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 14px;
+  background: rgba(10, 14, 40, .72); border: 1px solid rgba(255,255,255,.16); color: #fff; font-size: 17px; }
+#classup .cu-ri svg, #classup .cu-ri img { width: 26px; height: 26px; }

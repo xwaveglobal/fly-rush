@@ -18,6 +18,9 @@ export const LANGS: { code: Lang; name: string; flag: string }[] = [
 const T: [string, string, string, string, string, string][] = [
   ['Play', 'Jouer', 'プレイ', 'Jogar', 'Spielen', 'Jugar'],
   ['CLASS PROMOTION', 'PROMOTION DE CLASSE', 'クラス昇格', 'PROMOÇÃO DE CLASSE', 'KLASSENAUFSTIEG', 'ASCENSO DE CLASE'],
+  ['Promotion reward', 'Récompense de promotion', '昇格ボーナス', 'Recompensa de promoção', 'Aufstiegsbelohnung', 'Recompensa de ascenso'],
+  ['Nice start — the road is opening up!', 'Beau départ — la route s’ouvre !', 'いいスタート — 道が開けてきた！', 'Bom começo — a estrada está se abrindo!', 'Guter Start — die Straße öffnet sich!', '¡Buen comienzo — la carretera se abre!'],
+  ['Solid driving. Keep climbing!', 'Belle conduite. Continue de grimper !', '安定した走り。もっと上へ！', 'Boa pilotagem. Continue subindo!', 'Starke Fahrt. Weiter nach oben!', 'Buena conducción. ¡Sigue subiendo!'],
   ['New car unlocked', 'Nouvelle voiture débloquée', '新しい車をアンロック', 'Novo carro desbloqueado', 'Neues Auto freigeschaltet', 'Nuevo coche desbloqueado'],
   ['Continue', 'Continuer', '続ける', 'Continuar', 'Weiter', 'Continuar'],
   ['Garage', 'Garage', 'ガレージ', 'Garagem', 'Garage', 'Garaje'],

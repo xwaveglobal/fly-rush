@@ -31,9 +31,9 @@
    "msg": "impact SFX triggered 0.20 ms after the authoritative collision event (same frame, before the crash visuals); explosion layer on the audio clock (+60 ms, no timer)",
    "data": {
     "state": "dying",
-    "collisionT": 118641.40000000037,
-    "crashT": 118641.60000000056,
-    "explodeT": 118641.90000000037,
+    "collisionT": 91709,
+    "crashT": 91709.19999999995,
+    "explodeT": 91709.39999999997,
     "fresh": true
    }
   },
@@ -96,7 +96,7 @@
   },
   {
    "ok": true,
-   "msg": "Air Dash fires on pickup (lane 2)"
+   "msg": "Air Dash fires on pickup (lane 0)"
   },
   {
    "ok": true,
@@ -121,7 +121,28 @@
   },
   {
    "ok": true,
+   "msg": "Air Dash fires on pickup (lane 2)"
+  },
+  {
+   "ok": true,
+   "msg": "take-off: spoiler opening (k 0.61)"
+  },
+  {
+   "ok": true,
+   "msg": "roll 90\u00b0 / 180\u00b0 / 270\u00b0 / 360\u00b0 reached in order (100 / 184 / 281 / 360)"
+  },
+  {
+   "ok": true,
    "msg": "lands in the opposite outer lane 0 (x -2.6)"
+  },
+  {
+   "ok": true,
+   "msg": "after landing: upright, spoiler flush, normal driving",
+   "data": {
+    "roll": 0,
+    "spoiler": 0,
+    "state": "run"
+   }
   },
   {
    "ok": true,
@@ -239,8 +260,8 @@
     "parts": 3,
     "partsY": [
      0.04,
-     0.11,
-     0.36
+     0.12,
+     0.33
     ],
     "state": "dying"
    }
@@ -250,12 +271,12 @@
    "msg": "Pause (real tap): PAUSED state",
    "data": {
     "state": "paused",
-    "turbo": 2.6500000000000012,
-    "shieldT": 4.649999999999983,
-    "dist": 35.9925255511855,
-    "y": 3.067398621364449,
+    "turbo": 2.688199999999955,
+    "shieldT": 4.688199999999938,
+    "dist": 34.692766554943994,
+    "y": 3.058760410844954,
     "stateT": 0,
-    "time": 10.709266666667334
+    "time": 73.69126116662075
    }
   },
   {
@@ -263,11 +284,11 @@
    "msg": "10 s real time paused: still paused, world / Turbo / Shield / jump frozen",
    "data": {
     "state": "paused",
-    "turbo": 2.6500000000000012,
-    "shieldT": 4.649999999999983,
-    "dist": 35.9925255511855,
-    "y": 3.067398621364449,
-    "time": 10.709266666667334
+    "turbo": 2.688199999999955,
+    "shieldT": 4.688199999999938,
+    "dist": 34.692766554943994,
+    "y": 3.058760410844954,
+    "time": 73.69126116662075
    }
   },
   {
@@ -275,7 +296,7 @@
    "msg": "60 s real time paused: still paused",
    "data": {
     "state": "paused",
-    "dist": 35.9925255511855
+    "dist": 34.692766554943994
    }
   },
   {
@@ -283,9 +304,9 @@
    "msg": "5 min of frames paused: still paused, no Game Over",
    "data": {
     "state": "paused",
-    "dist": 35.9925255511855,
-    "turbo": 2.6500000000000012,
-    "shieldT": 4.649999999999983,
+    "dist": 34.692766554943994,
+    "turbo": 2.688199999999955,
+    "shieldT": 4.688199999999938,
     "gameover": false
    }
   },
@@ -299,9 +320,9 @@
    "msg": "Resume: continues from the saved state (one frame of movement, Turbo timer resumes where it stopped)",
    "data": {
     "state": "run",
-    "step": 0.576,
-    "turbo": 2.633,
-    "y": 3.071
+    "step": 0.563,
+    "turbo": 2.672,
+    "y": 3.063
    }
   },
   {
@@ -407,19 +428,46 @@
   },
   {
    "ok": true,
-   "msg": "AAA: no new car",
+   "msg": "AAA: exactly ONE new car (XWAVE Nexus, v4.6)",
    "data": [
-    "zenith",
-    "inferno"
+    "nexus"
    ]
   },
   {
    "ok": true,
-   "msg": "S: its configured future car (Vega) unlocks; Nexus stays a future silhouette",
+   "msg": "S: exactly ONE new car (XWAVE Vega)",
    "data": [
-    "zenith",
-    "inferno",
     "vega"
+   ]
+  },
+  {
+   "ok": true,
+   "msg": "every car not owned yet is a dark silhouette",
+   "data": [
+    [
+     "zenith",
+     false
+    ],
+    [
+     "inferno",
+     false
+    ],
+    [
+     "nexus",
+     true
+    ],
+    [
+     "vega",
+     true
+    ],
+    [
+     "volt",
+     true
+    ],
+    [
+     "phantom",
+     true
+    ]
    ]
   },
   {
@@ -443,21 +491,119 @@
   },
   {
    "ok": true,
-   "msg": "first-time Class A: celebration, no car",
+   "msg": "first-time Class C: celebration + reward shown (+300 coins, +1 Roadster Jump)",
+   "data": {
+    "shown": true,
+    "title": "Class C",
+    "car": null,
+    "reward": "Promotion reward\n    \n    \n    \n    +300+1 Roadster Jump",
+    "paid": {
+     "coins": 300,
+     "items": {
+      "super": 1
+     }
+    },
+    "again": {
+     "shown": false,
+     "saved": [
+      "B",
+      "A",
+      "AA",
+      "AAA",
+      "S",
+      "SS",
+      "SSS",
+      "C"
+     ],
+     "paidAgain": 0
+    }
+   }
+  },
+  {
+   "ok": true,
+   "msg": "Class C reward paid once on Continue",
+   "data": {
+    "coins": 300,
+    "items": {
+     "super": 1
+    }
+   }
+  },
+  {
+   "ok": true,
+   "msg": "Class C acknowledged: not shown or paid again",
+   "data": {
+    "shown": false,
+    "saved": [
+     "B",
+     "A",
+     "AA",
+     "AAA",
+     "S",
+     "SS",
+     "SSS",
+     "C"
+    ],
+    "paidAgain": 0
+   }
+  },
+  {
+   "ok": true,
+   "msg": "first-time Class B: +500 coins, +1 HYPER JUMP, once",
+   "data": {
+    "shown": true,
+    "title": "Class B",
+    "car": null,
+    "reward": "Promotion reward\n    \n    \n    \n    +500+1 HYPER JUMP",
+    "paid": {
+     "coins": 500,
+     "items": {
+      "hyper": 1
+     }
+    },
+    "again": {
+     "shown": false,
+     "saved": [
+      "C",
+      "A",
+      "AA",
+      "AAA",
+      "S",
+      "SS",
+      "SSS",
+      "B"
+     ],
+     "paidAgain": 0
+    }
+   }
+  },
+  {
+   "ok": true,
+   "msg": "first-time Class A: celebration, no car, +800 coins, +1 SOS",
    "data": {
     "shown": true,
     "title": "Class A",
     "car": null,
+    "reward": "Promotion reward\n    \n    \n    \n    +800+1 SOS Escape",
+    "paid": {
+     "coins": 800,
+     "items": {
+      "escape": 1
+     }
+    },
     "again": {
      "shown": false,
      "saved": [
+      "C",
+      "B",
       "AA",
       "AAA",
       "S",
       "SS",
       "SSS",
       "A"
-     ]
+     ],
+     "paidAgain": 0
     }
    }
   },
@@ -467,52 +613,71 @@
    "data": {
     "shown": false,
     "saved": [
+     "C",
+     "B",
      "AA",
      "AAA",
      "S",
      "SS",
      "SSS",
      "A"
-    ]
+    ],
+    "paidAgain": 0
    }
   },
   {
    "ok": true,
-   "msg": "first-time Class AA: celebration + the one unlocked car (XWAVE Inferno)",
+   "msg": "first-time Class AA: celebration + the one unlocked car (XWAVE Inferno), no coin reward",
    "data": {
     "shown": true,
     "title": "Class AA",
     "car": "XWAVE Inferno",
+    "reward": null,
+    "paid": {
+     "coins": 0,
+     "items": {}
+    },
     "again": {
      "shown": false,
      "saved": [
+      "C",
+      "B",
       "A",
       "AAA",
       "S",
       "SS",
       "SSS",
       "AA"
-     ]
+     ],
+     "paidAgain": 0
     }
    }
   },
   {
    "ok": true,
-   "msg": "first-time Class AAA: celebration, no new car",
+   "msg": "first-time Class AAA: celebration + the one unlocked car (XWAVE Nexus)",
    "data": {
     "shown": true,
     "title": "Class AAA",
-    "car": null,
+    "car": "XWAVE Nexus",
+    "reward": null,
+    "paid": {
+     "coins": 0,
+     "items": {}
+    },
     "again": {
      "shown": false,
      "saved": [
+      "C",
+      "B",
       "A",
       "AA",
       "S",
       "SS",
       "SSS",
       "AAA"
-     ]
+     ],
+     "paidAgain": 0
     }
    }
   },
@@ -523,16 +688,24 @@
     "shown": true,
     "title": "Class S",
     "car": "XWAVE Vega",
+    "reward": null,
+    "paid": {
+     "coins": 0,
+     "items": {}
+    },
     "again": {
      "shown": false,
      "saved": [
+      "C",
+      "B",
       "A",
       "AA",
       "AAA",
       "SS",
       "SSS",
       "S"
-     ]
+     ],
+     "paidAgain": 0
     }
    }
   },
@@ -561,6 +734,51 @@
    "msg": "no page errors (network-blocked font / geo lookups excluded)",
    "data": []
   }
+ ],
+ "shots": [
+  "15_spoiler_ground_closed.png",
+  "18_spoiler_turbo_ground_closed.png",
+  "16_spoiler_jump_open.png",
+  "19_spoiler_landing_closed.png",
+  "06_air_dash_pickup_left.png",
+  "07_air_dash_takeoff_left.png",
+  "08_air_dash_roll_90.png",
+  "09_air_dash_roll_180.png",
+  "10_air_dash_roll_270.png",
+  "11_air_dash_roll_360.png",
+  "12_air_dash_landing_right.png",
+  "13_air_dash_pickup_right.png",
+  "14_air_dash_landing_left.png",
+  "17_spoiler_air_dash_open.png",
+  "20_special_manual_activation.png",
+  "21_special_auto_roadster.png",
+  "22_special_auto_hyper.png",
+  "23_special_auto_sos.png",
+  "24_special_auto_notification.png",
+  "crash_01_breaks_and_falls.png",
+  "crash_02_on_the_road.png",
+  "patch02/01_pause_menu.png",
+  "patch02/02_pause_after_wait.png",
+  "patch02/03_resume_gameplay.png",
+  "patch02/04_magic_bag_auto_equipped.png",
+  "patch02/05_magic_bag_empty.png",
+  "33_item_selection_flat_buttons.png",
+  "01_garage_class_c.png",
+  "02_garage_class_b.png",
+  "03_garage_class_aa_unlocked.png",
+  "04_garage_class_aaa.png",
+  "05_garage_class_s_locked.png",
+  "24c_congratulations_class_c.png",
+  "24b_congratulations_class_b.png",
+  "25_congratulations_class_a.png",
+  "26_congratulations_class_aa.png",
+  "27_congratulations_class_aaa.png",
+  "28_congratulations_class_s.png",
+  "34_home_buttons_unchanged.png",
+  "29_garage_flat_buttons.png",
+  "30_settings_flat_buttons.png",
+  "31_pause_flat_buttons.png",
+  "32_game_over_flat_buttons.png"
  ],
  "audioLatency": {
   "collisionToTriggerMs": 0.2,
@@ -719,8 +937,8 @@
    "parts": 3,
    "partsY": [
     0.04,
-    0.11,
-    0.36
+    0.12,
+    0.33
    ],
    "state": "dying"
   }
@@ -741,91 +959,173 @@
   ],
   "AAA": [
    "zenith",
-   "inferno"
+   "inferno",
+   "nexus"
   ],
   "S": [
    "zenith",
    "inferno",
+   "nexus",
    "vega"
   ]
  },
  "congrats": {
+  "c": {
+   "shown": true,
+   "title": "Class C",
+   "car": null,
+   "reward": "Promotion reward\n    \n    \n    \n    +300+1 Roadster Jump",
+   "paid": {
+    "coins": 300,
+    "items": {
+     "super": 1
+    }
+   },
+   "again": {
+    "shown": false,
+    "saved": [
+     "B",
+     "A",
+     "AA",
+     "AAA",
+     "S",
+     "SS",
+     "SSS",
+     "C"
+    ],
+    "paidAgain": 0
+   }
+  },
+  "b": {
+   "shown": true,
+   "title": "Class B",
+   "car": null,
+   "reward": "Promotion reward\n    \n    \n    \n    +500+1 HYPER JUMP",
+   "paid": {
+    "coins": 500,
+    "items": {
+     "hyper": 1
+    }
+   },
+   "again": {
+    "shown": false,
+    "saved": [
+     "C",
+     "A",
+     "AA",
+     "AAA",
+     "S",
+     "SS",
+     "SSS",
+     "B"
+    ],
+    "paidAgain": 0
+   }
+  },
   "a": {
    "shown": true,
    "title": "Class A",
    "car": null,
+   "reward": "Promotion reward\n    \n    \n    \n    +800+1 SOS Escape",
+   "paid": {
+    "coins": 800,
+    "items": {
+     "escape": 1
+    }
+   },
    "again": {
     "shown": false,
     "saved": [
+     "C",
+     "B",
      "AA",
      "AAA",
      "S",
      "SS",
      "SSS",
      "A"
-    ]
+    ],
+    "paidAgain": 0
    }
   },
   "aa": {
    "shown": true,
    "title": "Class AA",
    "car": "XWAVE Inferno",
+   "reward": null,
+   "paid": {
+    "coins": 0,
+    "items": {}
+   },
    "again": {
     "shown": false,
     "saved": [
+     "C",
+     "B",
      "A",
      "AAA",
      "S",
      "SS",
      "SSS",
      "AA"
-    ]
+    ],
+    "paidAgain": 0
    }
   },
   "aaa": {
    "shown": true,
    "title": "Class AAA",
-   "car": null,
+   "car": "XWAVE Nexus",
+   "reward": null,
+   "paid": {
+    "coins": 0,
+    "items": {}
+   },
    "again": {
     "shown": false,
     "saved": [
+     "C",
+     "B",
      "A",
      "AA",
      "S",
      "SS",
      "SSS",
      "AAA"
-    ]
+    ],
+    "paidAgain": 0
    }
   },
   "s": {
    "shown": true,
    "title": "Class S",
    "car": "XWAVE Vega",
+   "reward": null,
+   "paid": {
+    "coins": 0,
+    "items": {}
+   },
    "again": {
     "shown": false,
     "saved": [
+     "C",
+     "B",
      "A",
      "AA",
      "AAA",
      "SS",
      "SSS",
      "S"
-    ]
+    ],
+    "paidAgain": 0
    }
   }
  },
  "homeButtonsSample": [
-  "rgba(0, 0, 0, 0.4) 0px 4px 14px 0px, rgba(255, 255, 255, 0.12) 0px 1px 0px 0px inset|linear-gradient(rgba(22, 34, 8",
-  "rgba(255, 194, 26, 0.35) 0px 0px 12px 0px, rgba(255, 255, 255, 0.12) 0px 1px 0px 0px inset|linear-gradient(rgba(30, 26, 7",
-  "rgba(0, 0, 0, 0.4) 0px 4px 12px 0px, rgba(255, 255, 255, 0.12) 0px 1px 0px 0px inset|linear-gradient(rgb(28, 42, 10",
-  "rgba(0, 0, 0, 0.4) 0px 4px 12px 0px, rgba(255, 255, 255, 0.12) 0px 1px 0px 0px inset|linear-gradient(rgb(28, 42, 10"
+  "none|linear-gradient(rgba(22, 34, 8",
+  "none|linear-gradient(rgba(30, 26, 7",
+  "none|linear-gradient(rgb(28, 42, 10",
+  "none|linear-gradient(rgb(28, 42, 10"
  ],
- "errors": [],
- "runs": [
-  "qa2",
-  "qa3",
-  "qa4",
-  "qa5"
- ]
+ "errors": []
 }

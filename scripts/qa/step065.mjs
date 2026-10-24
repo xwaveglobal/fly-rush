@@ -456,15 +456,18 @@ if (want('garage')) {
     const r = await setRank(cls);
     matrix[cls] = r.unlocked;
     if (file) {
-      await ev((cls) => { const G = window.__g; G.setState?.('menu'); G.openGarage(); const id = cls === 'S' ? 'volt' : 'inferno'; G.ui.garageIndex = cls === 'S' ? 3 : 1; G.ui.garageSync(G.save, id); G.previewSkin?.(id); }, cls);
+      await ev((cls) => { const G = window.__g; G.setState?.('menu'); G.openGarage(); const id = cls === 'S' ? 'volt' : cls === 'AAA' ? 'nexus' : 'inferno'; G.ui.garageIndex = cls === 'S' ? 4 : cls === 'AAA' ? 2 : 1; G.ui.garageSync(G.save, id); G.previewSkin?.(id); }, cls);
       await shot(file);
     }
   }
   const newAt = (a, b) => matrix[b].filter((x) => !matrix[a].includes(x));
   check(matrix.C.length === 1 && matrix.B.length === 1 && matrix.A.length === 1, 'C / B / A: no new car (only the starter)', { C: matrix.C, B: matrix.B, A: matrix.A });
   check(newAt('A', 'AA').length === 1 && newAt('A', 'AA')[0] === 'inferno', 'AA: exactly ONE new car (XWAVE Inferno)', newAt('A', 'AA'));
-  check(newAt('AA', 'AAA').length === 0, 'AAA: no new car', matrix.AAA);
-  check(matrix.S.includes('vega') && !matrix.S.includes('nexus'), 'S: its configured future car (Vega) unlocks; Nexus stays a future silhouette', matrix.S);
+  check(newAt('AA', 'AAA').length === 1 && newAt('AA', 'AAA')[0] === 'nexus', 'AAA: exactly ONE new car (XWAVE Nexus, v4.6)', newAt('AA', 'AAA'));
+  check(newAt('AAA', 'S').length === 1 && newAt('AAA', 'S')[0] === 'vega', 'S: exactly ONE new car (XWAVE Vega)', newAt('AAA', 'S'));
+  // v4.6: every car not owned yet is a black silhouette; v4.6.1 rarity follows the unlock class
+  const vis = await ev(() => { const G = window.__g; G.save.expBest = 26000; G.save.exp2Best = 0; G.save.unlocked = ['zenith']; G.syncCarUnlocks(); G.openGarage(); G.ui.garageSync(G.save, 'zenith'); return [...document.querySelectorAll('#garage .ccard[data-id]')].map((e) => [e.dataset.id, e.classList.contains('dark')]); });
+  check(vis.filter(([id, d]) => id !== 'zenith' && id !== 'inferno' && !d).length === 0, 'every car not owned yet is a dark silhouette', vis);
   // owned cars are kept (no downgrade), no duplicates
   const keep = await ev(() => { const G = window.__g; G.save.expBest = 3000; G.save.exp2Best = 0; G.save.unlocked = ['zenith', 'vega', 'volt', 'phantom', 'inferno']; G.syncCarUnlocks(); G.syncCarUnlocks(); return [...G.save.unlocked]; });
   check(keep.length === 5 && new Set(keep).size === 5, 'cars already owned stay owned, no duplicate unlocks', keep);
@@ -483,7 +486,8 @@ if (want('congrats')) {
       const G = window.__g;
       G.ui.hideOverlay('classup');
       G.classQueue.length = 0;
-      G.save.classCelebrated = ['A', 'AA', 'AAA', 'S', 'SS', 'SSS'].filter((c) => c !== cls);
+      G.save.classCelebrated = ['C', 'B', 'A', 'AA', 'AAA', 'S', 'SS', 'SSS'].filter((c) => c !== cls);
+      window.__before = { wallet: G.save.wallet, items: { ...G.save.items } };
       G.save.expBest = exp;
       G.save.exp2Best = exp2;
       G.syncCarUnlocks();
@@ -491,26 +495,34 @@ if (want('congrats')) {
       G.ui.show('gameover');
       G.queueClassCelebration();
       await new Promise((r) => setTimeout(r, 1300));
-      return { shown: document.querySelector('#classup')?.classList.contains('show'), title: document.querySelector('[data-k="cutitle"]')?.textContent, car: document.querySelector('[data-k="cucar"]')?.hidden ? null : document.querySelector('[data-k="cucarname"]')?.textContent };
+      return { shown: document.querySelector('#classup')?.classList.contains('show'), title: document.querySelector('[data-k="cutitle"]')?.textContent, car: document.querySelector('[data-k="cucar"]')?.hidden ? null : document.querySelector('[data-k="cucarname"]')?.textContent, reward: document.querySelector('[data-k="cureward"]')?.hidden ? null : document.querySelector('[data-k="cureward"]')?.textContent.trim() };
     }, [cls, exp, exp2]);
     await shot(file);
     // Continue (real tap) → acknowledged, never again
     const b = await ev(() => { const e = document.querySelector('#classup [data-a="classok"]'); const r = e.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
     await page.touchscreen.tap(b.x, b.y);
     await page.waitForTimeout(500);
-    const again = await ev(async () => { const G = window.__g; G.queueClassCelebration(); await new Promise((r) => setTimeout(r, 1300)); return { shown: document.querySelector('#classup')?.classList.contains('show'), saved: [...G.save.classCelebrated] }; });
-    return { ...r, again };
+    const paid = await ev(() => { const G = window.__g, b = window.__before; return { coins: G.save.wallet - b.wallet, items: Object.fromEntries(Object.keys(G.save.items).map((k) => [k, G.save.items[k] - b.items[k]]).filter(([, n]) => n)) }; });
+    const again = await ev(async () => { const G = window.__g; const w = G.save.wallet; G.queueClassCelebration(); await new Promise((r) => setTimeout(r, 1300)); return { shown: document.querySelector('#classup')?.classList.contains('show'), saved: [...G.save.classCelebrated], paidAgain: G.save.wallet - w }; });
+    return { ...r, paid, again };
   };
+  // v4.6.1: C / B / A — no car, a one-time reward (coins + one special) paid on Continue
+  const c = await cel('C', 3000, 0, '24c_congratulations_class_c');
+  check(c.shown && /Class C$/.test(c.title) && c.car === null && /\+300/.test(c.reward ?? ''), 'first-time Class C: celebration + reward shown (+300 coins, +1 Roadster Jump)', c);
+  check(c.paid.coins === 300 && c.paid.items.super === 1, 'Class C reward paid once on Continue', c.paid);
+  check(!c.again.shown && c.again.paidAgain === 0, 'Class C acknowledged: not shown or paid again', c.again);
+  const b = await cel('B', 8000, 0, '24b_congratulations_class_b');
+  check(b.shown && b.paid.coins === 500 && b.paid.items.hyper === 1 && !b.again.shown, 'first-time Class B: +500 coins, +1 HYPER JUMP, once', b);
   const a = await cel('A', 15000, 0, '25_congratulations_class_a');
-  check(a.shown && /Class A$/.test(a.title) && a.car === null, 'first-time Class A: celebration, no car', a);
-  check(!a.again.shown && a.again.saved.includes('A'), 'acknowledged: not shown again', a.again);
+  check(a.shown && /Class A$/.test(a.title) && a.car === null && a.paid.coins === 800 && a.paid.items.escape === 1, 'first-time Class A: celebration, no car, +800 coins, +1 SOS', a);
+  check(!a.again.shown && a.again.saved.includes('A') && a.again.paidAgain === 0, 'acknowledged: not shown again', a.again);
   const aa = await cel('AA', 26000, 0, '26_congratulations_class_aa');
-  check(aa.shown && aa.car === 'XWAVE Inferno', 'first-time Class AA: celebration + the one unlocked car (XWAVE Inferno)', aa);
+  check(aa.shown && aa.car === 'XWAVE Inferno' && aa.reward === null && aa.paid.coins === 0, 'first-time Class AA: celebration + the one unlocked car (XWAVE Inferno), no coin reward', aa);
   const aaa = await cel('AAA', 40000, 0, '27_congratulations_class_aaa');
-  check(aaa.shown && aaa.car === null, 'first-time Class AAA: celebration, no new car', aaa);
+  check(aaa.shown && aaa.car === 'XWAVE Nexus', 'first-time Class AAA: celebration + the one unlocked car (XWAVE Nexus)', aaa);
   const s = await cel('S', 40000, 65000, '28_congratulations_class_s');
   check(s.shown && /Class S$/.test(s.title), 'first-time Class S: celebration (only rewards really unlocked)', s);
-  R.congrats = { a, aa, aaa, s };
+  R.congrats = { c, b, a, aa, aaa, s };
   save();
 }
 
@@ -522,6 +534,7 @@ if (want('buttons')) {
     for (const sc of document.querySelectorAll('#ui .screen.show:not(#start)')) {
       for (const el of sc.querySelectorAll('button, .btn, [data-a]')) {
         if (!el.offsetParent) continue;
+        if (el.matches('#runrank .rr-me')) continue; // v4.6 owner request: the player's row on the post-race rank board glows
         const cs = getComputedStyle(el);
         const pb = getComputedStyle(el, '::before'), pa = getComputedStyle(el, '::after');
         const glowPseudo = [pb, pa].some((p) => p.content !== 'none' && p.display !== 'none' && (p.boxShadow !== 'none' || p.filter !== 'none' || /gradient/.test(p.backgroundImage)) && !el.matches('.rocketbtn, .sos'));

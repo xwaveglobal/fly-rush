@@ -187,6 +187,19 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v4.6.1 — owner decisions: Zenith ice blue, rarity by class, C / B / A rewards, Step 07 closed
+
+- **Zenith** (starter, class D) is painted ice blue, so it no longer looks like Vega's white. Its garage and share pictures were re-rendered from the 3D model.
+- **Rarity follows the unlock class**: Zenith Common (D) · Inferno Rare (AA) · Nexus Epic (AAA) · Vega Legendary (S) · Volt Mythic (SS) · Phantom Ultimate (SSS). Only the labels changed; the unlock order is the same.
+- **Classes C / B / A** unlock no car. Their first-time promotion screen now gives a reward, paid once when Continue is tapped (`CLASS_REWARD` in `config.ts`):
+  - C: +300 coins and 1 Roadster Jump.
+  - B: +500 coins and 1 HYPER JUMP.
+  - A: +800 coins and 1 SOS.
+
+  Classes already passed before this update are marked as seen, so there is no back-pay and no extra pop-up.
+- **Step 07 FINAL closed**: the approved v4.2.0 car (locked by a sha256 test), its runtime +15 % height and the v4.6 fixed camera are final. The experimental `?cam=premium|arcade` camera candidates and the `?pbr=1` material pass were removed (`docs/3d-upgrade/step07-final/README.md`).
+- **Step 06.5 QA** was rerun on v4.6 with the updated garage and promotion expectations (`docs/gameplay-upgrade/step06-5/`).
+
 ## v4.6.0 — taller 3D car, home camera inside the road, 3D car pictures, ad revive (owner requests)
 
 - Branch `feature/sky-roadster-v4.6-big-update` (owner: big update → own branch), built on v4.5.0.

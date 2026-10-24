@@ -188,14 +188,7 @@ export class MeshCar {
     if (tyre) tyre.map = tex(x1TreadCanvas());
     // v4.3 (Step 06 PBR): metallic flake in the base coat under the smooth clearcoat (UVs in metres)
     const paint = this.mats.get('X1_Paint');
-    // the flake needs real UVs: the approved GLB's paint UVs are all 0 (a normal map there only adds a
-    // texture fetch and derivative noise), so it is applied only to a model with paint UVs
-    let paintUv = false;
-    model.traverse((o) => {
-      const m = o as THREE.Mesh;
-      if (m.isMesh && (m.material as THREE.Material).name === 'X1_Paint') paintUv ||= !!m.geometry.getAttribute('uv')?.array.some((v) => v !== 0);
-    });
-    if (paint && (paintUv || !RENDER.pbr)) {
+    if (paint) {
       const ft = tex(x1FlakeCanvas(), false);
       ft.repeat.set(RENDER.paintFlakeRepeat, RENDER.paintFlakeRepeat);
       paint.normalMap = ft;
@@ -210,35 +203,6 @@ export class MeshCar {
     }
     const glass = this.mats.get('X1_Glass');
     if (glass) glass.envMapIntensity = 0.18; // dark tint, soft highlight (no glare blob from the sun)
-    // Step 07 FINAL: automotive PBR factors (materials only). The per-material env strength needs the
-    // environment bound to the material (three uses scene.environmentIntensity otherwise) — done on the
-    // first render, when the scene is known.
-    if (RENDER.pbr) {
-      const envK = new Map<THREE.MeshStandardMaterial, number>(); // material → env strength
-      for (const [name, f] of Object.entries(RENDER.x1Pbr)) {
-        const m = this.mats.get(name) as THREE.MeshPhysicalMaterial | undefined;
-        if (!m) continue;
-        if (f.metalness !== undefined) m.metalness = f.metalness;
-        if (f.roughness !== undefined) m.roughness = f.roughness;
-        if (m.isMeshPhysicalMaterial && f.clearcoat !== undefined) m.clearcoat = f.clearcoat;
-        if (m.isMeshPhysicalMaterial && f.clearcoatRoughness !== undefined) m.clearcoatRoughness = f.clearcoatRoughness;
-        if (f.opacity !== undefined && m.transparent) m.opacity = f.opacity;
-        if (f.env !== undefined) {
-          envK.set(m, f.env);
-          m.envMapIntensity = f.env;
-        }
-      }
-      const host = model.getObjectByName('Body_Paint') as THREE.Mesh | undefined;
-      if (host && envK.size)
-        host.onBeforeRender = (_r, scene) => {
-          if (!scene.environment) return;
-          for (const m of envK.keys()) {
-            m.envMap = scene.environment;
-            m.needsUpdate = true;
-          }
-          host.onBeforeRender = () => {};
-        };
-    }
     for (const [name, k] of [['X1_Headlight', RENDER.headGlow], ['X1_HeadlightCore', RENDER.headGlow]] as const) {
       const m = this.mats.get(name);
       if (m) {

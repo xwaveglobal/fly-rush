@@ -64,7 +64,8 @@ export interface VehicleSkin {
   accent: number;
   /** coins to unlock (after reaching `need`) */
   price: number;
-  rarity?: 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic';
+  /** v4.6.1: rarity follows the unlock class (D → AA → AAA → S → SS → SSS) */
+  rarity?: 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic' | 'Ultimate';
   /** rank class required before the car can be bought */
   need?: string;
   /** Step 06.5: a configured future car with no unlock condition yet — always a locked dark silhouette */
@@ -87,21 +88,22 @@ export interface VehicleSkin {
  * Cars a player already owns are never taken away (unlocks only ever add).
  */
 export const SKINS: VehicleSkin[] = [
-  { id: 'zenith', name: 'XWAVE Zenith', shape: 'gt', cls: 'Common · Balanced for every run', rarity: 'Common', need: 'D', price: 0, bonus: 0, tintAmt: 0,
-    body: 0xf3f5fa, trim: 0xb9c2d3, glass: 0x0a0d16, glow: 0x39b6ff, accent: 0x1c64ff, stats: [7, 7, 8, 7],
+  { id: 'zenith', name: 'XWAVE Zenith', shape: 'gt', cls: 'Common · Balanced for every run', rarity: 'Common', need: 'D', price: 0, bonus: 0, tintAmt: 1,
+    // v4.6.1: ice-blue paint (owner choice) so Zenith no longer looks like Vega's white
+    body: 0x7cc0ec, trim: 0x9fb6cc, glass: 0x0a0d16, glow: 0x39b6ff, accent: 0x1c64ff, stats: [7, 7, 8, 7],
     skills: [{ name: 'Turbo Boost', desc: 'Short burst of high speed.' }, { name: 'Stable Flight', desc: 'Easier to control.' }] },
-  { id: 'inferno', name: 'XWAVE Inferno', shape: 'gt', cls: 'Legendary · Burn through everything', rarity: 'Legendary', need: 'AA', price: 0, bonus: 0, tintAmt: 0.92,
+  { id: 'inferno', name: 'XWAVE Inferno', shape: 'gt', cls: 'Rare · Burn through everything', rarity: 'Rare', need: 'AA', price: 0, bonus: 0, tintAmt: 0.92,
     body: 0xc4121f, trim: 0x1a1a1a, glass: 0x0a0202, glow: 0xff3b2a, accent: 0xff6a2a, stats: [10, 9, 8, 8],
     skills: [{ name: 'Fire Trail', desc: 'Destroys all obstacles in its path.' }, { name: 'Speed Rush', desc: 'Extreme speed boost for 8 seconds.' }] },
-  { id: 'nexus', name: 'XWAVE Nexus', shape: 'gt', cls: 'Mythic · The ultimate evolution', rarity: 'Mythic', need: 'AAA', price: 0, bonus: 0, tintAmt: 0.35,
+  { id: 'nexus', name: 'XWAVE Nexus', shape: 'gt', cls: 'Epic · The next evolution', rarity: 'Epic', need: 'AAA', price: 0, bonus: 0, tintAmt: 0.35,
     body: 0xdfe8ff, trim: 0xc9d2e6, glass: 0x0b1830, glow: 0x3cf2ff, accent: 0xd04dff, stats: [10, 10, 10, 10],
     skills: [{ name: 'Gravity Control', desc: 'Switches flight height freely for 5 seconds.' }, { name: 'Dimension Dash', desc: 'Teleports forward a short distance.' }] },
-  { id: 'vega', name: 'XWAVE Vega', shape: 'gt', cls: 'Uncommon · Red-line racer', rarity: 'Rare', need: 'S', price: 0, bonus: 0, tintAmt: 0, rear: vegaBack,
+  { id: 'vega', name: 'XWAVE Vega', shape: 'gt', cls: 'Legendary · Red-line racer', rarity: 'Legendary', need: 'S', price: 0, bonus: 0, tintAmt: 0, rear: vegaBack,
     body: 0xf3f5fa, trim: 0xb9c2d3, glass: 0x0a0d16, glow: 0xff3b4e, accent: 0xff3b4e, stats: [8, 7, 8, 7] },
-  { id: 'volt', name: 'XWAVE Volt', shape: 'gt', cls: 'Rare · Speed beyond limits', rarity: 'Rare', need: 'SS', price: 0, bonus: 0, tintAmt: 0.92,
+  { id: 'volt', name: 'XWAVE Volt', shape: 'gt', cls: 'Mythic · Speed beyond limits', rarity: 'Mythic', need: 'SS', price: 0, bonus: 0, tintAmt: 0.92,
     body: 0x6a3cf0, trim: 0x9aa6bd, glass: 0x05060a, glow: 0xb46bff, accent: 0x8a4dff, stats: [9, 9, 8, 8],
     skills: [{ name: 'Ion Burst', desc: 'Massive speed boost for 5 seconds.' }, { name: 'Shockwave', desc: 'Pushes nearby obstacles out of the way.' }] },
-  { id: 'phantom', name: 'XWAVE Phantom', shape: 'gt', cls: 'Epic · Invisible. Unstoppable.', rarity: 'Epic', need: 'SSS', price: 0, bonus: 0, tintAmt: 0.85,
+  { id: 'phantom', name: 'XWAVE Phantom', shape: 'gt', cls: 'Ultimate · Invisible. Unstoppable.', rarity: 'Ultimate', need: 'SSS', price: 0, bonus: 0, tintAmt: 0.85,
     body: 0xd4a548, trim: 0x2a2416, glass: 0x140c00, glow: 0xffc24a, accent: 0xffd23d, stats: [9, 8, 9, 9],
     skills: [{ name: 'Phase Shift', desc: 'Turns semi-invisible for 3 seconds.' }, { name: 'Auto Collect', desc: 'Automatically collects nearby coins.' }] },
 ];

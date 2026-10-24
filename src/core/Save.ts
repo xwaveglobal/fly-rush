@@ -63,6 +63,8 @@ export interface SaveData {
   pendingMissions: { text: string; reward: number }[];
   /** Step 06.5: classes (A and up) whose first-promotion celebration the player has acknowledged */
   classCelebrated?: string[];
+  /** v4.6.1: C / B celebrations added — classes already passed were marked as seen (no back-pay) */
+  classLowSeen?: boolean;
   /** consumable items (equipped on the track screen, used in a run) */
   items: { super: number; hyper: number; shield: number; escape: number; turbo: number; magnet: number; double: number; life: number };
   /** which owned items are equipped for the next run */
