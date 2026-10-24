@@ -208,6 +208,22 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v3.1.0 changes — new-main: v4.6 gameplay & UI on the v3 game (car, road and camera unchanged)
+
+Branch `new-main` = `main` (v3.0.11) + every change of `feature/sky-roadster-v4.6-big-update` **except the car, the road / environment and the camera** (those stay exactly as on `main`).
+
+Taken from v4.x:
+- **Gameplay**: Air Dash collectible (`gameplay/AirDash.ts`, Spawner / Player), last-chance special (an unused Roadster / HYPER / SOS fires by itself on the hit that would end the run), Magic Bag auto-equip, rewarded revive without a heart notice, the game always opens on NORMAL.
+- **Class unlock matrix + first-time class celebration** (A and up): AA = Inferno, AAA = Nexus, S / SS / SSS = Vega / Volt / Phantom; every car not owned is a black silhouette.
+- **Shop**: the coins → specials exchange at the top (also right after a coin purchase); item chips open the exchange.
+- **UI**: Restart instead of Retry, loading bar that always runs with "Loading… NN %", flat buttons everywhere except Home, Home buttons without shadows, the special button under the hearts (smaller), Graphics LO / MED / HI (renderer + particles; MEDIUM by default).
+- **Render (not car / road / camera)**: thin gold Ring Coins with a collect fade, truck pods inside the hitbox, particle density per preset, WebGL context-loss handling, post-processing leak fix, `?perf=1` recorder.
+- **Audio**: v4 start / impact fixes (prime on gesture, sample-accurate delays) on top of the native baked sound.
+
+Left out on purpose: the 3D X1 car (GLB, MeshCar, car FX, car pictures rendered from it), procedural road + night city (Track, Scenery, textures, readability), camera presets / Camera motion setting / home orbit / bigger fixed-view car.
+
+Native canvas UI got every new piece (class celebration, exchange panel, loading %, Restart, flat buttons, special under the hearts, LO / MED / HI).
+
 ## v3.0.11 changes — reward buttons · revive ad · launch hotfix · in-game log
 
 - **Reward buttons (Entry · Launch · Share)** show only while their reward can still be earned — decided from HSGame's reward config and claim state (`$limit`), never "claimed once = gone": Entry / Launch while the TikTok mission is not done, Share while `available('share')` (back the next day; a Share without a reward stays as the TikTok review button). Nothing shows until HSGame has settled (no flash of an exhausted reward). The visible ones stay centred on the right rail (3 · 2 · 1 · none) and glide to their new place in 200 ms. Pure logic + the 8 layout combinations in `src/meta/Perks.ts` / `tests/perks.test.ts`. Web rail: same rules, CSS centring + FLIP glide.
@@ -283,6 +299,106 @@ Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder M
 - HS SDK 1.1.2 (kit 3.2.3): device save in one profile, rewarded ads at revive / end bonus / free coins / head start + race-end ad, coin packs + Remove Ads for TikTok Beans, share, Entry / Launch Reward (TikTok review).
 - Cloud accounts of v2.3 are off in the native build (the HS profile is the save); the web build keeps them.
 - v2 web game kept on branch `v2`.
+
+## v4.6.0 — taller 3D car, home camera inside the road, 3D car pictures, ad revive (owner requests)
+
+- Branch `feature/sky-roadster-v4.6-big-update` (owner: big update → own branch), built on v4.5.0.
+- The 3D car is drawn **15 % taller** (body only, at runtime — the approved GLB file is unchanged, wheels stay round and on the road) so the DOWN dive reads more clearly. Visual only: hitboxes / timings unchanged (`RENDER.carHeightScale`).
+- **Home camera**: the slow orbit stays inside the road (it used to swing out past the right guard rail, so the barrier crossed the whole view).
+- **Car pictures** in every panel (Garage cards, celebration, share card, result screen, profile tips) are renders of the in-game 3D X1 in each car's colours (`scripts/car/thumbs-x1.mjs` + `thumbs-pack.py`); locked cars stay black silhouettes.
+- **Settings → Camera motion** (default OFF): OFF = a fixed view down the centre of the road — lane changes, jumps and dives never move or tilt the camera (it sits a little further back / higher so the car stays fully on screen in both outer lanes; only Roadster / HYPER / SOS flights still lift it so the car never leaves the screen). ON = the moving chase camera as before.
+- **Rewarded-ad revive** no longer adds a heart and shows no heart / life notice — only "REVIVED!" (the next hit still ends the run, as before).
+- Details: `docs/gameplay-upgrade/v4.6/`.
+
+## v4.5.0 — Step 06.5: Air Dash, airborne-only spoiler, audio + pause fixes, auto special, class unlocks
+
+- **Audio**: sound starts from the first real tap (Play / any button / the road) — Settings is no longer needed; the context is resumed on every tap until it runs (also from the iOS "interrupted" state) and suspended while the app is hidden. The crash sound fires at the collision itself (before any crash visuals; the explosion layer on the audio clock, no timer).
+- **Pause** stays paused forever (it used to share the revive countdown and ended the run); Resume continues from the exact state.
+- **Air Dash** road item (outer lanes only): fires on pickup — lift, spoiler up, one sideways 360° roll across exactly two lanes, lands in the opposite outer lane. Spawned only where the landing is safe; protected only during the move + 0.25 s.
+- **Spoiler** opens only in the air (jumps, Air Dash, Roadster / HYPER / SOS flights) and closes flush on the road — Turbo no longer opens it.
+- **Road items** rebalanced per speed level (`ITEM_BALANCE`): more Shields / hearts on EASY, fewer on HARD, Air Dash rarer than Turbo.
+- **Last-chance special**: when a hit would end the run and no revive is left, the pre-race Roadster / HYPER / SOS fires by itself through the button's own code (one charge, "… AUTO ACTIVATED!").
+- **Magic Bag** auto-equips one random special before a run when the slot is empty (never replaces a pick, never re-rolls, consumes nothing).
+- **Crash**: the car drops to the road (never floats) and on the run-ending crash a few real parts (splitter, spoiler, a wheel) break off.
+- **Classes**: only AA unlocks a new car (XWAVE Inferno); S / SS / SSS cars are dark silhouettes until earned (owned cars are kept). First-time Class A / AA / AAA / S+ promotion celebration.
+- **Buttons** outside Home are flat (no glow, shadows or pulsing). Details + screenshots: `docs/gameplay-upgrade/step06-5/`.
+
+## v4.4.1 — X1 model back to the v4.2.0 car (owner request)
+
+- The in-game 3D car is the v4.2.0 X1 again (the model in the Step 04 screenshots, the owner's favourite): `src/assets/models/xwave-x1.glb`, `scripts/car/x1-builder.ts` and `tests/car.test.ts` restored from `d222b92`.
+- Everything else from v4.2.1–v4.4.0 stays: Ring Coins, jump camera, VFX / particle presets, LOW road texture, city variety, `?perf=1`, preset-switch texture-leak fix, context-loss handling.
+- The Step 06 and Step 07 cars are kept: `assets-src/x1/rollback/` (GLBs) and git commit `d00b71c` (builder + tools).
+
+## v4.4.0 — shorter rear, gameplay-camera polish (3D upgrade Step 07)
+
+- The X1's rear overhang is 11 cm shorter (0.94 → 0.84 m), compressed only behind the rear wheel arch; wheelbase, cabin and front unchanged.
+- Seen from the chase camera: the glass roof is framed by white A-pillars / roof rails, the closed spoiler is body-coloured, the glass is black (nothing visible through it), the rear underside ramps up like a diffuser.
+- Smaller front intake with a fine grille; softer pearl sheen.
+- Step 06 car kept as rollback (`assets-src/x1/rollback/`). Details: `docs/3d-upgrade/step07/`.
+
+## v4.3.0 — X1 rebuilt against the original rear master (3D upgrade Step 06)
+
+- Cabin, haunches, wheel openings and lower rear reshaped to match the rear master image (silhouette match 0.921 → 0.946 at the same view); rounded C-pillars with a black window frame, roof spoiler, bolder light bar, diffuser fins, rear tyres visible.
+- Side / front refinements (roof line, side glass, fenders, raked nose, intake, side skirts, five twin-spoke wheels); mesh fixes (normals, winding, UVs); metallic-flake paint.
+- High-detail master model (`assets-src/x1/xwave-x1-master.glb`) from the same generator. Details: `docs/3d-upgrade/step06/`.
+
+## v4.2.1 — readability and performance (3D upgrade Step 05)
+
+- Ring Coins: thin gold ring with an open centre and a short collect animation (coins / mechanics unchanged).
+- Jumps: the chase camera rises with the car so the road ahead stays visible.
+- Smaller, fewer effect particles (LOW 50 %, MEDIUM 80 %); LOW uses a smaller road texture.
+- City: varied tower heights, roof crowns, per-building window patterns, less billboard repetition.
+- `?perf=1` on-screen FPS / frame-time readout; WebGL context-loss handling; fixed a GPU texture leak when switching graphics presets. Details: `docs/3d-upgrade/step05/`.
+
+## v4.2.0 — procedural road, night city, graphics presets, Turbo aura (3D upgrade Step 04)
+
+- New road surface: dark asphalt with fine grain and polished tyre tracks, dashed lane dividers, solid edge lines, reflective studs, sealed shoulders, expansion joints and soft light pools under the street lamps; seamless at any speed.
+- Future City at night: deep blue-violet sky, violet haze, neon edges on the buildings, XWAVE billboards and roadside signs, distant city lights; steel guard rails and LED street lamps that streak at speed and in Turbo.
+- Scenery no longer pops in at the horizon: recycled buildings, lamps and signs fade in from the haze.
+- Graphics setting is now LOW / MEDIUM / HIGH (new default MEDIUM; old HIGH saves move to MEDIUM once, LOW stays LOW).
+- Turbo wears a lime aura around the car, like the Shield (it smashes obstacles too).
+- Gameplay, lanes, speeds, obstacles and hitboxes unchanged. Details and screenshots: `docs/3d-upgrade/step04/`.
+
+## v4.1.3 — front end, pop-up spoiler, premium effects, dive pose (3D upgrade Step 03.2)
+
+- Front of the 3D X1 reworked: rounded nose, splitter tucked under the bumper (no plate sticking out), slim lower intake and corner air curtains, slim LED headlights in smoked housings, hood / bumper / door seams, pearl-white paint, darker glass.
+- Front wheels fixed: the body side used to fold back around the tyre (white flaps); the arch is now cut cleanly, with black wheel-well liners and a little more clearance.
+- Active spoiler is now a pop-up: it rises and tilts 22° on take-off, stays up in the air and during nitro, and closes smoothly after landing; clearly visible from the chase camera.
+- Shield: the grey cloud is gone; the 3D car gets a thin, glowing cyan shell that follows lane changes and jumps and fades out when the shield ends.
+- Nitro is a clean twin thrust; Phase Ghost is a translucent car with a cyan edge; power-up pickups send a short light sweep over the car.
+- Crashes: impact flash, body jolt and a few shards (white body, black aero, glass); the car stays visible; nothing left over after restart.
+- DOWN (dive): the 3D car presses down low and wide, with a glow and sparks underneath, so the dodge reads clearly.
+- The car no longer shakes during the start countdown.
+- Visual-only alignment: in the air the 3D car's underside never hangs below the hitbox, so jumped crates and barriers no longer cut through it; oncoming-traffic hover pods tucked inside their collision width.
+- Developer overlay `?debug=collision`: car and obstacle visual bounds vs collision boxes.
+- Gameplay, hitboxes, timings and UI unchanged. Details and screenshots: `docs/3d-upgrade/step03-2/`.
+
+## v4.1.2 — shorter, mirrorless X1; spoiler opens on jumps (3D upgrade Step 03.1)
+
+- Body 8 % shorter (4.60 → 4.25 m), taken from the front overhang and hood only; the rear design is unchanged.
+- Side mirrors removed from the model.
+- Active spoiler opens on take-off, stays up in the air and retracts after landing; it also stays up during nitro and through jump + nitro.
+- Crashes: the 3D nose now meets the obstacle face instead of sinking into it (visual only; collision unchanged).
+- Details, renders and frame sequences: `docs/3d-upgrade/step03-1/`.
+
+## v4.1.1 — integrated rear bumper, active spoiler, new cameras (3D upgrade Step 03)
+
+- Rear of the 3D X1 rebuilt: the rods, chrome rail, hanging fins and exposed nitro tubes are gone; one solid satin-black lower bumper with a recessed three-fin diffuser; nitro flames come out of the recess.
+- Active rear spoiler: flush deck flap, rises during nitro (Turbo / launch) and retracts after.
+- Cameras: Home has its own slow three-quarter orbit, clear of the difficulty panel; races use the BALANCED chase camera (`?cam=low|balanced|high` to compare; HIGH = the old camera).
+- The car no longer disappears on crash / Game Over; Phase Ghost makes it translucent.
+- Gameplay, hitboxes and UI unchanged. Details and screenshots: `docs/3d-upgrade/step03/`.
+
+## v4.1.0 — 3D XWAVE X1 (3D upgrade Step 02)
+
+- The player car is now a real 3D model (`src/assets/models/xwave-x1.glb`) instead of the studio rear image: spinning wheel assemblies, front-wheel steer, a sprung body that rolls on lane changes and dips on landing, emissive red LED blade / markers / XWAVE badge, nitro flames from the two rear sockets during Turbo and launch.
+- Model built by `npm run build:car` (scripts/car/), refined from the XWAVE_Car_3D_v1 blockout against the master rear image; v1 and the master are kept in `assets-src/x1/`.
+- Gameplay, hitboxes, camera, road and UI unchanged. `?car=sprite` shows the old rear image for comparison.
+- New test `npm run test:car`; preview shots with `npm run preview:car`. Details: `docs/3d-upgrade/05-step02-vehicle.md`.
+
+## v4.0.1 — start of v4 (3D upgrade)
+
+v4 is developed on branch `v4.0.1`, starting from the H5 web game v2.3.0 (same gameplay, UI, accounts and cloud save). Goal: much better 3D graphics. No gameplay changes in this version.
 
 ## v2.3.0 changes — accounts & cloud save
 

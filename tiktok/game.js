@@ -1,5 +1,5 @@
 (() => {
-    var _a, _b, _c, _d, _e, _f, _h, _j, _l, _m, _p, _r, _s, _u, _v, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11;
+    var _a, _b, _c, _d, _e, _f, _h, _j, _l, _m, _p, _r, _s, _u, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13;
     var __require = ((x) => typeof require < "u" ? require : typeof Proxy < "u" ? new Proxy(x, { get: (a, b) => (typeof require < "u" ? require : a)[b] }) : x)(function (x) { if (typeof require < "u")
         return require.apply(this, arguments); throw Error('Dynamic require of "' + x + '" is not supported'); });
     var LOG = [], errors = 0, logErrors = () => errors;
@@ -36,12 +36,12 @@ ${String(a.stack).split(`
             c.info = (...a) => { pushLog("log", a), oi(...a); };
         }
     }
-    catch (_12) { }
+    catch (_14) { }
     try {
         let prev = G.onerror;
         G.onerror = (m, src, line, col, err) => (pushLog("error", [err !== null && err !== void 0 ? err : m, src ? `@${String(src).split("/").pop()}:${line}:${col}` : ""]), typeof prev === "function" ? prev(m, src, line, col, err) : !1), (_a = G.addEventListener) === null || _a === void 0 ? void 0 : _a.call(G, "unhandledrejection", (e) => { var _a; return pushLog("error", ["Unhandled promise:", (_a = e === null || e === void 0 ? void 0 : e.reason) !== null && _a !== void 0 ? _a : e]); });
     }
-    catch (_13) { }
+    catch (_15) { }
     pushLog("log", ["log started"]);
     var G2 = typeof GameGlobal < "u" ? GameGlobal : globalThis, T = G2.tt, NATIVE = typeof G2.document > "u" || !G2.document.createElement, info = (() => { try {
         return T.getSystemInfoSync();
@@ -95,13 +95,13 @@ ${String(a.stack).split(`
         try {
             (_r = T.onHide) === null || _r === void 0 ? void 0 : _r.call(T, () => { document2.hidden = !0, document2.visibilityState = "hidden", emitWindow("visibilitychange"); }), (_s = T.onShow) === null || _s === void 0 ? void 0 : _s.call(T, () => { document2.hidden = !1, document2.visibilityState = "visible", emitWindow("visibilitychange"); }), (_u = T.onWindowResize) === null || _u === void 0 ? void 0 : _u.call(T, (r) => { viewW = r.windowWidth || viewW, viewH = r.windowHeight || viewH, win.innerWidth = viewW, win.innerHeight = viewH, emitWindow("resize"); });
         }
-        catch (_14) { }
+        catch (_16) { }
     }
     else
         try {
-            (_0 = (_v = G2.tt).onWindowResize) === null || _0 === void 0 ? void 0 : _0.call(_v, (r) => { viewW = r.windowWidth || viewW, viewH = r.windowHeight || viewH; });
+            (_1 = (_0 = G2.tt).onWindowResize) === null || _1 === void 0 ? void 0 : _1.call(_0, (r) => { viewW = r.windowWidth || viewW, viewH = r.windowHeight || viewH; });
         }
-        catch (_15) { }
+        catch (_17) { }
     function sizeScreen() { screenCanvas.width = Math.round(viewW * DPR), screenCanvas.height = Math.round(viewH * DPR); }
     sizeScreen();
     function perkVisible(kind, s) { if (!s.started)
@@ -145,7 +145,7 @@ ${String(a.stack).split(`
     var LEGACY_CAR = { pearl: "zenith", midnight: "volt", aurora: "volt", solar: "phantom", wedge: "phantom", muscle: "inferno", bubble: "inferno", cyber: "nexus", legend: "nexus" };
     function migrateCars(ids) { var _a; let out = new Set(["zenith"]); for (let id of ids)
         out.add((_a = LEGACY_CAR[id]) !== null && _a !== void 0 ? _a : id); return [...out]; }
-    var SETTINGS_REV = 3, KEY = "xwave-sky-rush-v1", defaults = () => ({ best: 0, bestDistance: 0, wallet: 0, totalRuns: 0, vehicle: "zenith", unlocked: ["zenith"], upgrades: { engine: 0, shield: 0, magnet: 0 }, missions: { active: [], completed: 0, rank: 1 }, settings: { sound: !0, music: !0, quality: "high", speed: "normal", assist: !0, comfort: !0, autoClaim: !0 }, settingsRev: SETTINGS_REV, track: "future-city", trackStars: {}, trackBest: {}, name: "", pid: Math.floor(Math.random() * 1e9), avatar: Math.floor(Math.random() * 32), country: "", countryAuto: !0, bolts: 0, expBest: 0, expWeek: 0, exp2Best: 0, v2: !0, special: "super", pendingMissions: [], items: { super: 1, hyper: 0, shield: 0, escape: 0, turbo: 0, magnet: 0, double: 0, life: 0 }, equip: { super: !1, hyper: !1, shield: !1, escape: !1, turbo: !1, magnet: !1, double: !1, life: !1 }, weekKey: "", weekBest: 0, checkDay: "", checkStreak: 0, dailyDay: "", dailyProg: {}, dailyClaimed: [], dailyPts: 0, dailyChests: [], events: {}, trophies: { gold: 0, silver: 0, bronze: 0 }, noAds: !1, starterBought: !1, passUntil: 0, passDay: "", purchases: 0, lastSeen: 0, giftDay: "", popDay: "", perks: {} }), backend = { read: () => kv.get(KEY), write: (json) => kv.set(KEY, json) };
+    var SETTINGS_REV = 3, KEY = "xwave-sky-rush-v1", defaults = () => ({ best: 0, bestDistance: 0, wallet: 0, totalRuns: 0, vehicle: "zenith", unlocked: ["zenith"], upgrades: { engine: 0, shield: 0, magnet: 0 }, missions: { active: [], completed: 0, rank: 1 }, settings: { sound: !0, music: !0, quality: "medium", gfx3: !0, speed: "normal", assist: !0, comfort: !0, autoClaim: !0 }, settingsRev: SETTINGS_REV, track: "future-city", trackStars: {}, trackBest: {}, name: "", pid: Math.floor(Math.random() * 1e9), avatar: Math.floor(Math.random() * 32), country: "", countryAuto: !0, bolts: 0, expBest: 0, expWeek: 0, exp2Best: 0, v2: !0, special: "super", pendingMissions: [], items: { super: 1, hyper: 0, shield: 0, escape: 0, turbo: 0, magnet: 0, double: 0, life: 0 }, equip: { super: !1, hyper: !1, shield: !1, escape: !1, turbo: !1, magnet: !1, double: !1, life: !1 }, weekKey: "", weekBest: 0, checkDay: "", checkStreak: 0, dailyDay: "", dailyProg: {}, dailyClaimed: [], dailyPts: 0, dailyChests: [], events: {}, trophies: { gold: 0, silver: 0, bronze: 0 }, noAds: !1, starterBought: !1, passUntil: 0, passDay: "", purchases: 0, lastSeen: 0, giftDay: "", popDay: "", perks: {} }), backend = { read: () => kv.get(KEY), write: (json) => kv.set(KEY, json) };
     function setSaveBackend(b) { backend = b; }
     function loadSave() { var _a; let s = loadSaveRaw(); try {
         (_a = backend.bind) === null || _a === void 0 ? void 0 : _a.call(backend, s);
@@ -160,6 +160,11 @@ ${String(a.stack).split(`
         let p = JSON.parse(raw);
         if (p.settingsRev !== SETTINGS_REV && p.settings)
             p.settings.quality = "high", p.settings.sound = !0, p.settings.music = !0;
+        if (p.settings && !p.settings.gfx3) {
+            if (p.settings.quality === "high")
+                p.settings.quality = "medium";
+            p.settings.gfx3 = !0;
+        }
         return Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({}, d), p), { upgrades: Object.assign(Object.assign({}, d.upgrades), (_a = p.upgrades) !== null && _a !== void 0 ? _a : {}), missions: Object.assign(Object.assign({}, d.missions), (_b = p.missions) !== null && _b !== void 0 ? _b : {}), settings: Object.assign(Object.assign({}, d.settings), (_c = p.settings) !== null && _c !== void 0 ? _c : {}), trackStars: Object.assign({}, (_d = p.trackStars) !== null && _d !== void 0 ? _d : {}), trackBest: Object.assign({}, (_e = p.trackBest) !== null && _e !== void 0 ? _e : {}), items: Object.assign(Object.assign({}, d.items), (_f = p.items) !== null && _f !== void 0 ? _f : {}), equip: Object.assign(Object.assign({}, d.equip), (_h = p.equip) !== null && _h !== void 0 ? _h : {}), events: Object.assign({}, (_j = p.events) !== null && _j !== void 0 ? _j : {}), perks: Object.assign({}, (_l = p.perks) !== null && _l !== void 0 ? _l : {}), trophies: Object.assign(Object.assign({}, d.trophies), (_m = p.trophies) !== null && _m !== void 0 ? _m : {}), dailyProg: Object.assign({}, (_p = p.dailyProg) !== null && _p !== void 0 ? _p : {}), dailyClaimed: Array.isArray(p.dailyClaimed) ? p.dailyClaimed : [], dailyChests: Array.isArray(p.dailyChests) ? p.dailyChests : [], unlocked: migrateCars(Array.isArray(p.unlocked) && p.unlocked.length ? p.unlocked : d.unlocked), vehicle: (_r = LEGACY_CAR[p.vehicle]) !== null && _r !== void 0 ? _r : (typeof p.vehicle === "string" ? p.vehicle : d.vehicle) }), p.settingsRev !== SETTINGS_REV ? { settingsRev: SETTINGS_REV } : {}), { v2: p.v2 === !0 });
     }
     catch (_s) {
@@ -11456,7 +11461,7 @@ void main() {
         return null;
     } }
     var LANES = [-2.6, 0, 2.6];
-    var HEIGHT = { LOW: 0.48, NORMAL: 1, HIGH: 3.05, SUPER: 5.6, HYPER: 7.4, ESCAPE: 9.6 }, CAR_HALF = { x: 0.7, y: 0.36, z: 1 }, CAR_HALF_Y_LOW = 0.28, TIMING = { laneChange: 0.22, laneBuffer: 0.12, upAntic: 0.06, upExec: 0.2, upHold: 0.52, upRecover: 0.3, downAntic: 0.05, downExec: 0.14, downHold: 0.52, downRecover: 0.24, verticalBuffer: 0.16, landBuffer: 0.34, jumpRest: 0.03, superAntic: 0.1, superExec: 0.36, superHold: 1, superRecover: 0.5, hyperExec: 0.42, hyperHold: 1.7, hyperRecover: 0.55, escExec: 0.7, escHold: 3.2, escRecover: 2.1, dashDur: 0.34 }, V2_POWERUPS = { engine: 2, shield: 2, magnet: 2 }, HEARTS = { everyExp: 1000, max: 3 }, GIFTS = { box: { coins: [20, 40, 80], w: { coins: 4, magnet: 1.5, shield: 1.2, turbo: 0.8, double: 1.3, life: 1 } }, ring: { coins: [5, 10, 15], w: { coins: 6, magnet: 1.2, shield: 0.8, turbo: 0.4, double: 1.2, life: 0.4 } }, boxChance: 0.15, boxGap: 600 }, BONUS_SET = { chance: 0.065, tunnelChance: 0.5, lead: 70, len: { super: 26, hyper: 48, escape: 26, wall: 42, rail: 70, ghost: 54 }, fire: { super: 0.55, hyper: 0.6, escape: 0.45, wall: 0.35, rail: 0.35, ghost: 0.35, tunnel: 0.3 }, tunnels: [0.24, 0.55, 0.83], tunnelLen: 150 }, COIN_LINES = { endless: { skip: 0.18, max: 8 }, bonus: { skip: 0.1, max: 8 }, course: { skip: 0.18, max: 8 } }, EXP = { rate: { easy: 0.184, normal: 0.19, hard: 0.318 }, rank: { D: 0, C: 3000, B: 8000, A: 15000, AA: 26000, AAA: 40000, S: 65000, SS: 85000, SSS: 110000 }, hardMinutes: { D: 0, C: 3, B: 7, A: 12, AA: 20, AAA: 30, S: 35, SS: 45, SSS: 58 }, track2: { rateMul: 1.25, phaseShift: 2, sSpeedStep: 0.03 }, timeMul: { easy: 3, normal: 2, hard: 1 } }, LEVELS = { easy: { label: "EASY", speed: 0.82, gap: 1.2, score: 0.8, reward: 1, desc: "Slower road · EXP ×1 (ranks take 3× longer)" }, normal: { label: "NORMAL", speed: 1.21, gap: 1, score: 1, reward: 1.25, desc: "Regular speed · EXP ×1.05 · coins ×1.25" }, hard: { label: "HARD", speed: 1.5, gap: 0.92, score: 1.3, reward: 1.6, desc: "Fast & tight · EXP ×1.7 · coins ×1.6" } }, TRACK_ITEM_BONUS = [{ minReward: 500, stars: 2, items: { super: 1 } }, { minReward: 800, stars: 2, items: { escape: 1 } }, { minReward: 900, stars: 3, items: { hyper: 1 } }, { minReward: 1200, stars: 3, items: { shield: 1 } }], LEFTOVER_POINTS = { super: 1500, hyper: 3000, escape: 1000 }, TYRE = { blocksPerMetre: 0.55, streaksPerMetre: 0.14, maxStep: 0.36, blurFrom: 18, blurFull: 50, spriteX: 0.43, spriteY: -0.48, sprayFrom: 22, sprayRate: 0, spraySize: 0.07, sprayLife: 0.3, sprayColor: 12175078, radius: 0.36, maskX: 0.17, maskY: 0.5, treadX0: 0.013671875, treadX1: 0.1328125, treadImgH: 588, treadTilePx: 120, treadTileM: 0.33, treadMaxStep: 0.4, treadGain: 1, treadTiers: [{ kmh: 0, blur: 0 }, { kmh: 60, blur: 0.06 }, { kmh: 150, blur: 0.22 }, { kmh: 250, blur: 0.45 }, { kmh: 400, blur: 0.7 }], treadTurboBlur: 0.3, susp: { k: 260, damp: 16, max: 0.03, bumpEvery: 0.35, bumpKick: 0.16, laneKick: 0.22, landKick: 0.55, pitchK: 0.0016, pitchMax: 0.012 }, effects: !1, hotFrom: 14, hotFull: 40, orbitSpeed: 0.35, glowX: 0.43, glowY: -0.26, glowD: 0.66, glowSquash: 0.5, boostImgH: 1.2891891891891891, boostAttack: 9, boostRelease: 3, sparkColor: 16747050 }, SPEED = { start: 21, max: 46, rampDistance: 3200, turboMul: 1.55 }, FAIRNESS = { laneStepTime: 0.27, verticalTime: 0.3, minRowTime: 0.5 }, SCORE = { perMeter: 1, coin: 10, nearMiss: 50, ringPass: 100, dodge: 5, comboStep: 10, comboMax: 4 }, SHIELD = { hits: 2, timeMul: 0.7 }, POWERUP_DURATION = { shield: 0, magnet: 8, turbo: 4, double: 10, coin2: 8 }, WORLD_LENGTH = 1000, DEBUG = typeof location < "u" && /[?&]debug/.test(location.search), AUTOPILOT = typeof location < "u" && /[?&]autopilot/.test(location.search), CLOUD = { api: "", syncDelay: 4000 };
+    var HEIGHT = { LOW: 0.48, NORMAL: 1, HIGH: 3.05, SUPER: 5.6, HYPER: 7.4, ESCAPE: 9.6 }, CAR_HALF = { x: 0.7, y: 0.36, z: 1 }, CAR_HALF_Y_LOW = 0.28, TIMING = { laneChange: 0.22, laneBuffer: 0.12, upAntic: 0.06, upExec: 0.2, upHold: 0.52, upRecover: 0.3, downAntic: 0.05, downExec: 0.14, downHold: 0.52, downRecover: 0.24, verticalBuffer: 0.16, landBuffer: 0.34, jumpRest: 0.03, superAntic: 0.1, superExec: 0.36, superHold: 1, superRecover: 0.5, hyperExec: 0.42, hyperHold: 1.7, hyperRecover: 0.55, escExec: 0.7, escHold: 3.2, escRecover: 2.1, dashDur: 0.34 }, ITEM_BALANCE = { weights: { magnet: 3, shield: 3, turbo: 0.7, mystery: 0.5, double: 2, dash: 0.45 }, level: { easy: { weights: { shield: 1.3, dash: 1.1 }, heartEvery: 0.8 }, normal: { weights: {}, heartEvery: 1 }, hard: { weights: { shield: 0.75, mystery: 0.8 }, heartEvery: 1.25 } } }, AIR_DASH = { exec: 0.26, hold: 0.5, recover: 0.3, lateralStart: 0.06, lateral: 0.62, maxExtend: 0.45, grace: 0.25, clearAhead: 0.6, clearBehind: 4 }, V2_POWERUPS = { engine: 2, shield: 2, magnet: 2 }, HEARTS = { everyExp: 1000, max: 3 }, GIFTS = { box: { coins: [20, 40, 80], w: { coins: 4, magnet: 1.5, shield: 1.2, turbo: 0.8, double: 1.3, life: 1 } }, ring: { coins: [5, 10, 15], w: { coins: 6, magnet: 1.2, shield: 0.8, turbo: 0.4, double: 1.2, life: 0.4 } }, boxChance: 0.15, boxGap: 600 }, BONUS_SET = { chance: 0.065, tunnelChance: 0.5, lead: 70, len: { super: 26, hyper: 48, escape: 26, wall: 42, rail: 70, ghost: 54 }, fire: { super: 0.55, hyper: 0.6, escape: 0.45, wall: 0.35, rail: 0.35, ghost: 0.35, tunnel: 0.3 }, tunnels: [0.24, 0.55, 0.83], tunnelLen: 150 }, COIN_LINES = { endless: { skip: 0.18, max: 8 }, bonus: { skip: 0.1, max: 8 }, course: { skip: 0.18, max: 8 } }, EXP = { rate: { easy: 0.184, normal: 0.19, hard: 0.318 }, rank: { D: 0, C: 3000, B: 8000, A: 15000, AA: 26000, AAA: 40000, S: 65000, SS: 85000, SSS: 110000 }, hardMinutes: { D: 0, C: 3, B: 7, A: 12, AA: 20, AAA: 30, S: 35, SS: 45, SSS: 58 }, track2: { rateMul: 1.25, phaseShift: 2, sSpeedStep: 0.03 }, timeMul: { easy: 3, normal: 2, hard: 1 } }, LEVELS = { easy: { label: "EASY", speed: 0.82, gap: 1.2, score: 0.8, reward: 1, desc: "Slower road · EXP ×1 (ranks take 3× longer)" }, normal: { label: "NORMAL", speed: 1.21, gap: 1, score: 1, reward: 1.25, desc: "Regular speed · EXP ×1.05 · coins ×1.25" }, hard: { label: "HARD", speed: 1.5, gap: 0.92, score: 1.3, reward: 1.6, desc: "Fast & tight · EXP ×1.7 · coins ×1.6" } }, TRACK_ITEM_BONUS = [{ minReward: 500, stars: 2, items: { super: 1 } }, { minReward: 800, stars: 2, items: { escape: 1 } }, { minReward: 900, stars: 3, items: { hyper: 1 } }, { minReward: 1200, stars: 3, items: { shield: 1 } }], LEFTOVER_POINTS = { super: 1500, hyper: 3000, escape: 1000 }, TYRE = { blocksPerMetre: 0.55, streaksPerMetre: 0.14, maxStep: 0.36, blurFrom: 18, blurFull: 50, spriteX: 0.43, spriteY: -0.48, sprayFrom: 22, sprayRate: 0, spraySize: 0.07, sprayLife: 0.3, sprayColor: 12175078, radius: 0.36, maskX: 0.17, maskY: 0.5, treadX0: 0.013671875, treadX1: 0.1328125, treadImgH: 588, treadTilePx: 120, treadTileM: 0.33, treadMaxStep: 0.4, treadGain: 1, treadTiers: [{ kmh: 0, blur: 0 }, { kmh: 60, blur: 0.06 }, { kmh: 150, blur: 0.22 }, { kmh: 250, blur: 0.45 }, { kmh: 400, blur: 0.7 }], treadTurboBlur: 0.3, susp: { k: 260, damp: 16, max: 0.03, bumpEvery: 0.35, bumpKick: 0.16, laneKick: 0.22, landKick: 0.55, pitchK: 0.0016, pitchMax: 0.012 }, effects: !1, hotFrom: 14, hotFull: 40, orbitSpeed: 0.35, glowX: 0.43, glowY: -0.26, glowD: 0.66, glowSquash: 0.5, boostImgH: 1.2891891891891891, boostAttack: 9, boostRelease: 3, sparkColor: 16747050 }, SPEED = { start: 21, max: 46, rampDistance: 3200, turboMul: 1.55 }, FAIRNESS = { laneStepTime: 0.27, verticalTime: 0.3, minRowTime: 0.5 }, SCORE = { perMeter: 1, coin: 10, nearMiss: 50, ringPass: 100, dodge: 5, comboStep: 10, comboMax: 4 }, SHIELD = { hits: 2, timeMul: 0.7 }, POWERUP_DURATION = { shield: 0, magnet: 8, turbo: 4, double: 10, coin2: 8 }, WORLD_LENGTH = 1000, DEBUG = typeof location < "u" && /[?&]debug/.test(location.search), PERF = typeof location < "u" && /[?&]perf/.test(location.search), AUTOPILOT = typeof location < "u" && /[?&]autopilot/.test(location.search), CLOUD = { api: "", syncDelay: 4000 }, RENDER = { car: typeof location < "u" && /[?&]car=sprite/.test(location.search) ? "sprite" : "mesh", carScale: 0.76, carScaleFixed: 0.82, carHeightScale: 1.15, pbr: typeof location < "u" && /[?&]pbr=1/.test(location.search), x1Pbr: { X1_Paint: { metalness: 0.12, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.03, env: 0.95 }, X1_Glass: { roughness: 0.06, metalness: 0.1, env: 0.55, opacity: 0.96 }, X1_GlossBlack: { roughness: 0.18, clearcoatRoughness: 0.05, env: 0.8 }, X1_SatinBlack: { roughness: 0.5, env: 0.45 }, X1_LightHousing: { env: 0.8 }, X1_LEDHousing: { env: 0.7 }, X1_Tyre: { roughness: 0.92, env: 0.25 }, X1_Rim: { metalness: 0.9, roughness: 0.28, env: 0.9 }, X1_Disc: { metalness: 0.9, roughness: 0.4, env: 0.7 }, X1_Brake: { metalness: 0.15, roughness: 0.3, env: 0.7 }, X1_Carbon: { roughness: 0.38, env: 0.6 }, X1_Interior: { env: 0.2 }, X1_WheelLiner: { env: 0.15 } }, paintFlake: 0.12, paintFlakeRepeat: 7, wheelMaxStep: 0.3, wheelBlurFrom: 8, wheelBlurFull: 30, steer: 0.2, bodyRoll: 0.045, landDip: 0.05, landPitch: 0.05, ledGlow: 3.6, markerGlow: 2.6, badgeGlow: 1.4, headGlow: 1.4, nitroLen: 2, bodyYaw: 0.02, spoilerAngle: 0.38, spoilerRise: 0.06, spoilerUp: 7, spoilerDown: 2, spoilerHold: 0, ghostOpacity: 0.35, ghostRim: 1.6, duck: { squash: 0.28, widen: 0.06, stretch: 0.03 }, airAlignRamp: 0.45, shield: { color: 8382207, rim: 1.25, pulse: 0.6, fadeIn: 9, fadeOut: 4 }, turboAura: { color: 9426463, rim: 1, pulse: 1.4, fadeIn: 12, fadeOut: 5, size: 1.07, name: "TurboAura" }, sweepTime: 0.5, crash: { fragments: 12, life: 1.4, flash: 0.2 }, crashFall: { gravity: 24, bounce: 0.25, tilt: 0.12, parts: ["Front_Splitter", "Spoiler_Pivot", "Wheel_FL"] } }, CAMERA = { presets: { low: { height: 1.6, back: 5.3, speedBack: 0.4, lookY: 1.05, lookZ: -16, followX: 0.8, lookX: 0.6, lift: 1.7, lookLift: 0.1, hDamp: 6, vDamp: 8, lookDamp: 6.5, fov: -3 }, balanced: { height: 2.25, back: 5.9, speedBack: 0.5, lookY: 1, lookZ: -13, followX: 0.76, lookX: 0.58, lift: 1.7, lookLift: 0.1, hDamp: 6.5, vDamp: 8, lookDamp: 7, fov: -1 }, high: { height: 3.25, back: 6.6, speedBack: 0.6, lookY: 1.15, lookZ: -9, followX: 0.72, lookX: 0.55, lift: 0.22, lookLift: 0.3, hDamp: 6.5, vDamp: 6, lookDamp: 7, fov: 0 }, premium: { height: 2.75, back: 8.4, speedBack: 0.6, lookY: 1.05, lookZ: -18, followX: 0.8, lookX: 0.6, lift: 1.5, lookLift: 0.12, hDamp: 6, vDamp: 7, lookDamp: 6.5, fov: -13, fovSpeed: 5, fovTurbo: 5 }, arcade: { height: 4, back: 8.4, speedBack: 0.5, lookY: 1.3, lookZ: -15, followX: 0.7, lookX: 0.5, lift: 1, lookLift: 0.25, hDamp: 6.5, vDamp: 7, lookDamp: 7, fov: -7, fovSpeed: 6, fovTurbo: 6 } }, chase: typeof location < "u" && ((_2 = /[?&]cam=(low|balanced|high|premium|arcade)/.exec(location.search)) === null || _2 === void 0 ? void 0 : _2[1]) || "balanced", fixed: { margin: 0.012, carHalfW: 0.8568999999999999, carRear: 1.8384399999999999, height: 0.5, lookY: 1.1, hopTop: 3.4 }, home: { yaw: 0.24, yawSwing: 0.14, speed: 0.22, height: 2.45, dist: 8.3, lookY: 0.98, lookZ: 0.2, fovScale: 0.82 } }, GRAPHICS = { low: { dprCap: 1.25, bloom: !1, speedBlur: !1, cityDensity: 0.55, cityExtras: !1, roadDetail: !1, anisotropy: 2, particles: 0.5, roadTex: 256 }, medium: { dprCap: 1.5, bloom: !0, speedBlur: !1, cityDensity: 0.8, cityExtras: !0, roadDetail: !0, anisotropy: 4, particles: 0.8, roadTex: 512 }, high: { dprCap: 2, bloom: !0, speedBlur: !0, cityDensity: 1, cityExtras: !0, roadDetail: !0, anisotropy: 8, particles: 1, roadTex: 512 } }, GRAPHICS_ORDER = ["low", "medium", "high"], nextGraphics = (q) => GRAPHICS_ORDER[(GRAPHICS_ORDER.indexOf(q) + 1) % GRAPHICS_ORDER.length], ROAD = { half: 4.3, tile: 12, dividerW: 0.12, dash: 3, edgeX: LANES[2] + 1.3 + 0.05, edgeW: 0.14, studEvery: 6, stud: 0.1, jointEvery: 48, jointW: 0.035, trackX: 0.78, trackW: 0.42 };
     var clamp2 = (v, a, b) => v < a ? a : v > b ? b : v, clamp01 = (v) => clamp2(v, 0, 1), lerp2 = (a, b, t) => a + (b - a) * t;
     var damp2 = (lambda, dt) => 1 - Math.exp(-lambda * dt), easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
     var easeInOutSine = (t) => -(Math.cos(Math.PI * t) - 1) / 2, easeOutQuad = (t) => 1 - (1 - t) * (1 - t);
@@ -11593,13 +11598,24 @@ void main() {
             this.isSuper = !1;
             this.isHyper = !1;
             this.isEscape = !1;
+            this.isAirDash = !1;
+            this.airDashDir = 1;
+            this.airDashT = 0;
+            this.airDashExtra = 0;
+            this.airDashFrom = 0;
+            this.airDashTo = 0;
+            this.airDashLaneDone = !1;
+            this.airDashPending = !1;
             this.jumpReadyAt = 0;
             this.landLane = 0;
             this.landLaneT = 0;
         }
-        reset(lane = 1) { this.lane = lane, this.x = this.laneFrom = LANES[lane], this.laneT = 1, this.y = HEIGHT.NORMAL, this.vx = 0, this.vmode = "none", this.vphase = "idle", this.buffer.length = 0, this.landLane = 0, this.pendingLane = 0, this.jumpReadyAt = 0, this.isSuper = !1, this.isHyper = !1, this.isEscape = !1, this.wings = this.thrusterTilt = this.engine = this.squash = this.orange = this.sideThrust = this.air = this.retract = 0, this.stats = { lanes: 0, ups: 0, downs: 0 }, this.frozen = !1; }
-        input(a) { if (this.frozen)
-            return; if (a === "left" || a === "right") {
+        reset(lane = 1) { this.lane = lane, this.x = this.laneFrom = LANES[lane], this.laneT = 1, this.y = HEIGHT.NORMAL, this.vx = 0, this.vmode = "none", this.vphase = "idle", this.buffer.length = 0, this.landLane = 0, this.pendingLane = 0, this.isAirDash = !1, this.airDashPending = !1, this.airDashT = 0, this.jumpReadyAt = 0, this.isSuper = !1, this.isHyper = !1, this.isEscape = !1, this.wings = this.thrusterTilt = this.engine = this.squash = this.orange = this.sideThrust = this.air = this.retract = 0, this.stats = { lanes: 0, ups: 0, downs: 0 }, this.frozen = !1; }
+        input(a) { var _a, _b; if (this.frozen)
+            return; if (this.isAirDash) {
+            (_b = (_a = this.events).dashAbsorbed) === null || _b === void 0 ? void 0 : _b.call(_a, a);
+            return;
+        } if (a === "left" || a === "right") {
             this.changeLane(a === "left" ? -1 : 1);
             return;
         } if (a === "up" && !this.canJump) {
@@ -11615,7 +11631,13 @@ void main() {
         get airLanesLeft() { if (this.vmode !== "up" || this.isEscape)
             return 1 / 0; return Math.max(0, 1 - this.airLaneUsed); }
         get timeToLand() { if (this.vmode !== "up")
-            return 0; let left = Math.max(0, this.phaseDur - this.phaseT), ex = this.isEscape ? TIMING.escExec : this.isHyper ? TIMING.hyperExec : this.isSuper ? TIMING.superExec : TIMING.upExec, ho = this.isEscape ? TIMING.escHold : this.isHyper ? TIMING.hyperHold : this.isSuper ? TIMING.superHold : TIMING.upHold, re = this.isEscape ? TIMING.escRecover : this.isHyper ? TIMING.hyperRecover : this.isSuper ? TIMING.superRecover : TIMING.upRecover; if (this.vphase === "antic")
+            return 0; let left = Math.max(0, this.phaseDur - this.phaseT); if (this.isAirDash) {
+            if (this.vphase === "exec")
+                return left + AIR_DASH.hold + AIR_DASH.recover;
+            if (this.vphase === "hold")
+                return left + AIR_DASH.recover;
+            return left;
+        } let ex = this.isEscape ? TIMING.escExec : this.isHyper ? TIMING.hyperExec : this.isSuper ? TIMING.superExec : TIMING.upExec, ho = this.isEscape ? TIMING.escHold : this.isHyper ? TIMING.hyperHold : this.isSuper ? TIMING.superHold : TIMING.upHold, re = this.isEscape ? TIMING.escRecover : this.isHyper ? TIMING.hyperRecover : this.isSuper ? TIMING.superRecover : TIMING.upRecover; if (this.vphase === "antic")
             return left + ex + ho + re; if (this.vphase === "exec")
             return left + ho + re; if (this.vphase === "hold")
             return left + re; return left; }
@@ -11643,6 +11665,17 @@ void main() {
         } this.lane = target, this.laneFrom = this.x, this.laneT = 0; let dist = Math.abs(LANES[target] - this.x) / (LANES[1] - LANES[0]); this.laneDur = TIMING.laneChange * clamp2(dist, 0.55, 1.6), this.stats.lanes++, (_j = (_h = this.events).lane) === null || _j === void 0 ? void 0 : _j.call(_h, dir); }
         startPhase(mode, phase, dur) { if (mode === "up" && this.vmode !== "up")
             this.airLaneUsed = 0, this.hopLane = this.lane; this.vmode = mode, this.vphase = phase, this.phaseT = 0, this.phaseDur = dur, this.yFrom = this.y; }
+        get airDashRoll() { if (!this.isAirDash)
+            return 0; return clamp01((this.airDashT - AIR_DASH.lateralStart) / AIR_DASH.lateral); }
+        get airDashLeft() { if (!this.isAirDash)
+            return 0; return this.timeToLand; }
+        airDash() { var _a, _b; if (this.frozen || this.isAirDash || this.isSuper || this.isEscape)
+            return !1; if (this.lane !== 0 && this.lane !== 2)
+            return !1; if (this.laneT < 1)
+            return this.airDashPending = !0, !0; let dir = this.lane === 0 ? 1 : -1; return this.isAirDash = !0, this.airDashDir = dir, this.airDashT = 0, this.airDashExtra = 0, this.airDashFrom = this.lane, this.airDashTo = 2 - this.lane, this.airDashLaneDone = !1, this.buffer.length = 0, this.pendingLane = 0, this.landLane = 0, this.stats.ups++, this.startPhase("up", "exec", AIR_DASH.exec * clamp2(Math.abs(HEIGHT.HIGH - this.y) / (HEIGHT.HIGH - HEIGHT.NORMAL), 0.4, 1.3)), this.airLaneUsed = 2, (_b = (_a = this.events).airDashStart) === null || _b === void 0 ? void 0 : _b.call(_a, dir), !0; }
+        extendAirDash(sec) { if (!this.isAirDash || this.vmode !== "up" || this.vphase !== "hold")
+            return 0; let add = Math.min(sec, AIR_DASH.maxExtend - this.airDashExtra); if (add <= 0)
+            return 0; return this.airDashExtra += add, this.phaseDur += add, add; }
         get canDash() { return this.vmode === "up" && this.vphase !== "antic" && this.vphase !== "recover" && this.y > HEIGHT.NORMAL + 0.5; }
         dash(dir) { var _a, _b; if (this.frozen || !this.canDash)
             return !1; let target = this.lane + dir * 2; if (target < 0 || target > 2)
@@ -11652,7 +11685,8 @@ void main() {
             return !1; return this.isSuper = !0, this.isHyper = !1, this.isEscape = !0, this.buffer.length = 0, this.stats.ups++, (_b = (_a = this.events).up) === null || _b === void 0 ? void 0 : _b.call(_a), this.startPhase("up", "exec", TIMING.escExec), !0; }
         superJump(hyper = !1) { var _a, _b; if (!this.canJump)
             return !1; return this.isSuper = !0, this.isHyper = hyper, this.stats.ups++, (_b = (_a = this.events).up) === null || _b === void 0 ? void 0 : _b.call(_a), this.startPhase("up", "antic", TIMING.superAntic), !0; }
-        get topY() { return this.isEscape ? HEIGHT.ESCAPE : this.isHyper ? HEIGHT.HYPER : this.isSuper ? HEIGHT.SUPER : HEIGHT.HIGH; }
+        get topY() { if (this.isAirDash)
+            return HEIGHT.HIGH; return this.isEscape ? HEIGHT.ESCAPE : this.isHyper ? HEIGHT.HYPER : this.isSuper ? HEIGHT.SUPER : HEIGHT.HIGH; }
         get canJump() { return this.vmode !== "up" && this.y <= HEIGHT.NORMAL + 0.12 && this.time >= this.jumpReadyAt; }
         get airTimeLeft() { if (this.vmode !== "up")
             return 0; let left = Math.max(0, this.phaseDur - this.phaseT); if (this.vphase === "antic")
@@ -11683,7 +11717,11 @@ void main() {
             let k = clamp2(Math.abs(this.y - HEIGHT.LOW) / (HEIGHT.NORMAL - HEIGHT.LOW), 0.35, 2.2);
             this.startPhase("down", "exec", Math.min(0.24, TIMING.downExec * k));
         } }
-        update(dt) { this.time += dt; let prevX = this.x; if (this.laneT < 1)
+        update(dt) { var _a, _b; if (this.time += dt, this.airDashPending && this.laneT >= 1)
+            this.airDashPending = !1, this.airDash(); if (this.isAirDash) {
+            if (this.airDashT += dt, !this.airDashLaneDone && this.airDashT >= AIR_DASH.lateralStart)
+                this.airDashLaneDone = !0, this.lane = this.airDashTo, this.laneFrom = this.x, this.laneT = 0, this.laneDur = AIR_DASH.lateral, this.stats.lanes += 2, (_b = (_a = this.events).lane) === null || _b === void 0 ? void 0 : _b.call(_a, this.airDashDir);
+        } let prevX = this.x; if (this.laneT < 1)
             this.laneT = Math.min(1, this.laneT + dt / this.laneDur), this.x = lerp2(this.laneFrom, LANES[this.lane], easeInOutCubic(this.laneT));
         else if (this.x = LANES[this.lane], this.pendingLane) {
             let d = this.pendingLane;
@@ -11758,21 +11796,59 @@ void main() {
                 this.startPhase(m, "exec", m === "up" ? this.isEscape ? TIMING.escExec : this.isHyper ? TIMING.hyperExec : this.isSuper ? TIMING.superExec : TIMING.upExec : TIMING.downExec);
                 break;
             case "exec":
+                if (m === "up" && this.isAirDash) {
+                    this.startPhase(m, "hold", AIR_DASH.hold);
+                    break;
+                }
                 this.startPhase(m, "hold", m === "up" ? this.isEscape ? TIMING.escHold : this.isHyper ? TIMING.hyperHold : this.isSuper ? TIMING.superHold : TIMING.upHold : TIMING.downHold);
                 break;
             case "hold":
+                if (m === "up" && this.isAirDash) {
+                    this.startPhase(m, "recover", AIR_DASH.recover);
+                    break;
+                }
                 this.startPhase(m, "recover", m === "up" ? this.isEscape ? TIMING.escRecover : this.isHyper ? TIMING.hyperRecover : this.isSuper ? TIMING.superRecover : TIMING.upRecover : TIMING.downRecover);
                 break;
             case "recover":
                 if (this.vmode = "none", this.vphase = "idle", this.y = HEIGHT.NORMAL, this.squash = 0, m === "up")
                     this.jumpReadyAt = this.time + TIMING.jumpRest;
-                this.isSuper = !1, this.isHyper = !1, this.isEscape = !1, (_b = (_a = this.events).land) === null || _b === void 0 ? void 0 : _b.call(_a, m);
+                this.isSuper = !1, this.isHyper = !1, this.isEscape = !1, this.isAirDash = !1, (_b = (_a = this.events).land) === null || _b === void 0 ? void 0 : _b.call(_a, m);
                 break;
         } }
         hitbox(out) { let low = clamp01((HEIGHT.NORMAL - this.y) / (HEIGHT.NORMAL - HEIGHT.LOW)), hy = lerp2(CAR_HALF.y, CAR_HALF_Y_LOW, low); return out.minX = this.x - CAR_HALF.x, out.maxX = this.x + CAR_HALF.x, out.minY = this.y - hy, out.maxY = this.y + hy, out.minZ = -CAR_HALF.z, out.maxZ = CAR_HALF.z, out; }
         get heightState() { if (this.y > (HEIGHT.NORMAL + HEIGHT.HIGH) / 2)
             return "HIGH"; if (this.y < (HEIGHT.NORMAL + HEIGHT.LOW) / 2 + 0.05)
             return "LOW"; return "NORMAL"; }
+    }
+    var airDashFlightTime = () => AIR_DASH.exec + AIR_DASH.hold + AIR_DASH.recover, airDashDest = (lane) => lane === 0 ? 2 : lane === 2 ? 0 : null;
+    function landingClear(obstacles, lane, tl, speed) { let v = Math.max(1, speed), x0 = LANES[lane] - CAR_HALF.x, x1 = LANES[lane] + CAR_HALF.x, y0 = HEIGHT.NORMAL - CAR_HALF.y, y1 = HEIGHT.NORMAL + CAR_HALF.y, t0 = tl - AIR_DASH.clearBehind / v, t1 = tl + AIR_DASH.clearAhead; for (let o of obstacles) {
+        if (o.smashed)
+            continue;
+        let moving = o.spec.lane2 !== void 0, lanes = moving ? [o.spec.lane, o.spec.lane2] : null;
+        for (let b of o.boxes) {
+            if (!(moving ? lanes.includes(lane) : b.maxX > x0 && b.minX < x1) || !(b.maxY > y0 && b.minY < y1))
+                continue;
+            let { minZ: za, maxZ: zb } = b, ta = (-CAR_HALF.z - zb) / v;
+            if ((CAR_HALF.z - za) / v >= t0 && ta <= t1)
+                return !1;
+        }
+    } return !0; }
+    class AirDashGuard {
+        constructor() {
+            this.active = !1;
+            this.grace = 0;
+            this.extended = 0;
+        }
+        reset() { this.active = !1, this.grace = 0, this.extended = 0; }
+        update(p, obstacles, speed, dt) { if (p.isAirDash) {
+            if (!this.active)
+                this.extended = 0;
+            if (this.active = !0, p.vphase === "hold" && !landingClear(obstacles, p.airDashTo, p.timeToLand, speed))
+                this.extended += p.extendAirDash(dt);
+            return !0;
+        } if (this.active)
+            this.active = !1, this.grace = AIR_DASH.grace; if (this.grace > 0)
+            return this.grace -= dt, this.grace >= -0.000000001; return !1; }
     }
     class Rng {
         constructor(seed = Date.now() >>> 0) { this.s = seed >>> 0; }
@@ -12007,14 +12083,34 @@ void main() {
             this.prevOccludes = !1;
             this.hardStreak = 0;
             this.rejectStats = {};
+            this.dashGuard = null;
             this.scripted = !1;
             this.rng = rng;
         }
-        reset(startDist = 0) { this.scripted = !1, this.setPieces = [], this.pendingSet = null, this.tunnelOffered.clear(), this.rows.length = 0, this.pickups.length = 0, this.reach = START_STATE, this.lastDist = startDist + 45, this.coinLane = 1, this.nextPowerAt = startDist + 300, this.nextHeartAt = startDist + HEARTS.everyExp / expRate(this.level, this.variant), this.nextBoxAt = startDist + 400, this.prevRecovery = 0, this.prevOccludes = !1, this.hardStreak = 0; }
+        reset(startDist = 0) { this.scripted = !1, this.setPieces = [], this.pendingSet = null, this.tunnelOffered.clear(), this.rows.length = 0, this.pickups.length = 0, this.reach = START_STATE, this.lastDist = startDist + 45, this.coinLane = 1, this.nextPowerAt = startDist + 300, this.nextHeartAt = startDist + this.heartGap(), this.nextBoxAt = startDist + 400, this.dashGuard = null, this.prevRecovery = 0, this.prevOccludes = !1, this.hardStreak = 0; }
         mapAt(d) { let world = this.worldAt(d); if (!this.course) {
             let cfg = this.phaseCfg(d, world);
             return { world, cfg, progress: 0.5, warmup: d < cfg.warmup };
         } let cfg = MAPS[world], c = this.course, local = c ? d : d % WORLD_LENGTH, progress = c ? d / c.length : local / WORLD_LENGTH; return { world, cfg, progress, warmup: local < cfg.warmup }; }
+        heartGap() { return HEARTS.everyExp * ITEM_BALANCE.level[this.level].heartEvery / expRate(this.level, this.variant); }
+        dashRowOk(d, masks, slack) { let g = this.dashGuard; if (!g || d < g.from)
+            return !0; if (d <= g.to)
+            return !!(masks[g.dest] & PASS_N); return step(g.reach, masks, Math.max(FAIRNESS.minRowTime, (d - g.lastD) / this.speed(d)), slack) !== 0; }
+        dashRowDone(d, masks, slack) { let g = this.dashGuard; if (!g || d < g.from)
+            return; if (d <= g.to) {
+            g.lastD = d;
+            return;
+        } if (g.reach = step(g.reach, masks, Math.max(FAIRNESS.minRowTime, (d - g.lastD) / this.speed(d)), slack), g.lastD = d, --g.rows <= 0 || !g.reach)
+            this.dashGuard = null; }
+        dashPlaceable(lane, dist, y, row) { let dest = airDashDest(lane); if (dest === null || y !== HEIGHT.NORMAL || this.dashGuard)
+            return !1; if (Math.abs(row.dist - dist) < 8)
+            return !1; let v = this.speed(dist), land = dist + v * airDashFlightTime(), from = land - AIR_DASH.clearBehind, to = land + v * (AIR_DASH.maxExtend + AIR_DASH.clearAhead), slack = Math.max(0, this.mapAt(row.dist).cfg.slack + LEVEL_RULES[this.level].slack), g = { dest, from, to, reach: stateBit(dest, MODE_N), lastD: to, rows: 3 }; if (row.dist >= from && row.dist <= to && !(row.masks[dest] & PASS_N))
+            return !1; if (row.dist > to) {
+            let n = step(g.reach, row.masks, Math.max(FAIRNESS.minRowTime, (row.dist - to) / v), slack);
+            if (!n)
+                return !1;
+            g.reach = n, g.lastD = row.dist, g.rows = 2;
+        } return this.dashGuard = g, !0; }
         resetReach(lane) { this.reach = stateBit(lane, 0) | stateBit(0, 0) | stateBit(1, 0) | stateBit(2, 0); }
         injectBlockade() { let d0 = this.lastDist + this.speed(this.lastDist) * 1.7, wall = (dist, v) => { let obstacles = [0, 1, 2].map((lane) => ({ type: "traffic", lane, variant: lane === (v ? 0 : 1) ? 4 : (v + lane) % 4 })); return { dist, dt: 1.7, masks: rowMasks(obstacles), obstacles }; }, rows = [wall(d0, 0), wall(d0 + 16, 1)]; return this.rows.push(...rows), this.lastDist = d0 + 16 + this.speed(d0) * 1.6, this.reach = stateBit(0, 0) | stateBit(1, 0) | stateBit(2, 0), rows; }
         tunnels() { let c = this.course; if (!(c === null || c === void 0 ? void 0 : c.bonus))
@@ -12072,7 +12168,7 @@ void main() {
             return; let r = this.rng, lv = LEVEL_RULES[this.level], map0 = this.mapAt(this.lastDist), base = Math.max(this.gapTime(this.lastDist), map0.cfg.minGap * lv.gap * this.gapMul) + this.prevRecovery, p0 = this.place(base), map = this.mapAt(p0.d), slack = Math.max(0, map.cfg.slack + lv.slack), c = this.course, density = (c ? p0.d > c.length - 40 ? 0 : (_b = sectionAt(c, p0.d).density) !== null && _b !== void 0 ? _b : 1 : 1) * map.cfg.density; if (density < 1 && this.rng.next() >= density) {
             let empty = { dist: p0.d, dt: p0.dt, masks: [PASS_ALL, PASS_ALL, PASS_ALL], obstacles: [], pid: "P00", tier: 0 }, next = step(this.reach, empty.masks, Math.max(p0.dt, FAIRNESS.minRowTime));
             if (density > 0)
-                this.rows.push(empty), this.placeCoins(this.lastDist, empty, next);
+                this.rows.push(empty), this.dashRowDone(empty.dist, empty.masks, slack), this.placeCoins(this.lastDist, empty, next);
             this.reach = next, this.lastDist = p0.d, this.prevRecovery = 0, this.prevOccludes = !1;
             return;
         } let maxTier = 4; if (this.prevOccludes || map.cfg.maxConsecutiveHard === 0 || this.hardStreak >= map.cfg.maxConsecutiveHard)
@@ -12094,6 +12190,10 @@ void main() {
                 this.reject("blockers");
                 continue;
             }
+            if (!this.dashRowOk(pl.d, masks, slack)) {
+                this.reject("airdash");
+                continue;
+            }
             let n = step(this.reach, masks, pl.dt, slack);
             if (n) {
                 obstacles = cand, next = n, chosen = pat, at = pl;
@@ -12101,11 +12201,15 @@ void main() {
             }
             this.reject("unreachable");
         } if (!obstacles) {
-            this.reject("fallback"), obstacles = [{ type: "crate", lane: r.int(0, 2), variant: r.int(0, 3) }];
+            this.reject("fallback");
+            let lane = r.int(0, 2);
+            if (!this.dashRowOk(p0.d, rowMasks([{ type: "crate", lane }]), 0))
+                lane = 1;
+            obstacles = [{ type: "crate", lane, variant: r.int(0, 3) }];
             let t = Math.max(p0.dt, FAIRNESS.minRowTime);
             if (next = step(this.reach, rowMasks(obstacles), t, slack) || step(this.reach, rowMasks(obstacles), t), !next)
                 obstacles = [], next = this.reach | START_STATE;
-        } let def = PATTERNS[(_c = chosen === null || chosen === void 0 ? void 0 : chosen.k) !== null && _c !== void 0 ? _c : "crate"], masks = rowMasks(obstacles), row = { dist: at.d, dt: at.dt, masks, obstacles, pid: def.id, tier: def.tier, occludes: def.occludes }; if (this.rows.push(row), this.generated++, this.placeCoins(this.lastDist, row, next), this.reach = next, this.lastDist = at.d, this.prevOccludes = def.occludes, this.prevRecovery = def.recovery + (def.tier >= 3 ? map.cfg.recovery * (def.tier === 4 ? 1.6 : 1) : 0), masks.filter((m) => !(m & PASS_N)).length >= 2)
+        } let def = PATTERNS[(_c = chosen === null || chosen === void 0 ? void 0 : chosen.k) !== null && _c !== void 0 ? _c : "crate"], masks = rowMasks(obstacles), row = { dist: at.d, dt: at.dt, masks, obstacles, pid: def.id, tier: def.tier, occludes: def.occludes }; if (this.rows.push(row), this.generated++, this.dashRowDone(row.dist, masks, slack), this.placeCoins(this.lastDist, row, next), this.reach = next, this.lastDist = at.d, this.prevOccludes = def.occludes, this.prevRecovery = def.recovery + (def.tier >= 3 ? map.cfg.recovery * (def.tier === 4 ? 1.6 : 1) : 0), masks.filter((m) => !(m & PASS_N)).length >= 2)
             this.prevRecovery = Math.max(this.prevRecovery, VERTICAL_RECOVERY * lv.gap); this.hardStreak = def.tier >= 3 ? this.hardStreak + 1 : 0; }
         placeCoins(prevDist, row, reach) { var _a; let r = this.rng, lanes = lanesOf(reach); if (!lanes.length)
             return; if (!lanes.includes(this.coinLane) || r.chance(0.25))
@@ -12130,7 +12234,7 @@ void main() {
                 }
             }
             if (!this.course && dist >= this.nextHeartAt && i === Math.floor(n / 2)) {
-                this.nextHeartAt = dist + HEARTS.everyExp / expRate(this.level, this.variant), this.pickups.push({ kind: "life", lane, dist, y });
+                this.nextHeartAt = dist + this.heartGap(), this.pickups.push({ kind: "life", lane, dist, y });
                 continue;
             }
             if (dist >= this.nextPowerAt && i === Math.floor(n / 2)) {
@@ -12144,8 +12248,9 @@ void main() {
                         continue;
                     }
                 }
-                let v1 = !!this.course;
-                kind = r.weighted([{ w: 3, v: "magnet" }, { w: 3, v: "shield" }, { w: v1 ? 2.2 : 0.7, v: "turbo" }, { w: v1 ? 0 : 0.5, v: "mystery" }, { w: 2, v: "double" }, { w: v1 && dist > 600 ? 1 : 0, v: "life" }, { w: v1 && dist > 250 ? 2 : 0, v: "super" }, { w: v1 && dist > 150 ? 2 : 0, v: "dash" }, { w: v1 && dist > 400 ? 1.2 : 0, v: "escape" }]), this.nextPowerAt = dist + (v1 ? r.range(260, 420) : r.range(220, 360));
+                let v1 = !!this.course, B = ITEM_BALANCE.weights, L = ITEM_BALANCE.level[this.level].weights, w = (k, base) => { var _a, _b; if (base === void 0) { base = (_a = B[k]) !== null && _a !== void 0 ? _a : 0; } return base * ((_b = L[k]) !== null && _b !== void 0 ? _b : 1); };
+                if (kind = r.weighted([{ w: w("magnet"), v: "magnet" }, { w: w("shield"), v: "shield" }, { w: v1 ? 2.2 : w("turbo"), v: "turbo" }, { w: v1 ? 0 : w("mystery"), v: "mystery" }, { w: w("double"), v: "double" }, { w: v1 && dist > 600 ? 1 : 0, v: "life" }, { w: v1 && dist > 250 ? 2 : 0, v: "super" }, { w: dist > 150 ? v1 ? 1.2 : w("dash") : 0, v: "dash" }, { w: v1 && dist > 400 ? 1.2 : 0, v: "escape" }]), this.nextPowerAt = dist + (v1 ? r.range(260, 420) : r.range(220, 360)), kind === "dash" && !this.dashPlaceable(lane, dist, y, row))
+                    kind = "coin", this.nextPowerAt = dist + 40, this.reject("airdash-deferred");
             }
             this.pickups.push({ kind, lane, dist, y });
         } }
@@ -12316,6 +12421,7 @@ void main() {
             this.invulnT = 0;
             this.feedback = [];
             this.expBonus = 0;
+            this.lastChance = null;
             this.rand = Math.random;
             this.up = up;
             this.scoreMul = scoreMul;
@@ -12340,7 +12446,7 @@ void main() {
         } }; if (tick("magnetT", "magnet"), tick("turboT", "turbo"), tick("doubleT", "double"), tick("shieldT", "shield"), this.coin2T > 0)
             this.coin2T = Math.max(0, this.coin2T - dt); if (this.invulnT > 0)
             this.invulnT = Math.max(0, this.invulnT - dt); }
-        handle(events) { let result = null; for (let e of events)
+        handle(events) { var _a; let result = null; for (let e of events)
             switch (e.type) {
                 case "pickup": {
                     let p = e.p;
@@ -12387,7 +12493,9 @@ void main() {
                         this.invulnT = 0.6, e.o.smashed = !0, this.feedback.push({ t: "shieldBreak" }), this.feedback.push({ t: "smash", x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2, z: e.o.z, type: e.o.spec.type });
                         break;
                     }
-                    this.combo = 0, this.lives--;
+                    if (this.lives <= 1 && ((_a = this.lastChance) === null || _a === void 0 ? void 0 : _a.call(this)))
+                        return this.feedback.push({ t: "rescued" }), null;
+                    this.combo = 0, this.lives = Math.max(0, this.lives - 1);
                     let final = this.lives <= 0;
                     return this.feedback.push({ t: "crash", final, x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2, z: e.o.z, type: e.o.spec.type }), result = final ? "gameover" : "crash", result;
                 }
@@ -12421,9 +12529,7 @@ void main() {
             case "super":
                 this.superJumps = Math.min(2, this.superJumps + 1);
                 break;
-            case "dash":
-                this.dashes = Math.min(3, this.dashes + 2);
-                break;
+            case "dash": break;
             case "escape":
                 this.escapes = Math.min(2, this.escapes + 1);
                 break;
@@ -12890,6 +12996,7 @@ void main() {
     }` }, OVERLAY_LAYER = 1;
     class Renderer {
         constructor(container, quality, camera, canvas) {
+            var _a, _b;
             this.scene = new Scene;
             this.composer = null;
             this.bloom = null;
@@ -12902,6 +13009,8 @@ void main() {
             this.bloomEnabled = !0;
             this.maxAniso = 4;
             this.uiPass = null;
+            this.lost = !1;
+            this.bloomStrength = 0.3;
             this.container = container;
             this.camera = camera;
             this.canvas = canvas;
@@ -12910,6 +13019,8 @@ void main() {
             this.maxAniso = Math.min(8, this.renderer.capabilities.getMaxAnisotropy());
             let pmrem = new PMREMGenerator(this.renderer);
             this.scene.environment = pmrem.fromScene(new RoomEnvironment, 0.04).texture, this.scene.environmentIntensity = 0.6, pmrem.dispose(), this.setQuality(quality);
+            let cv = this.renderer.domElement;
+            (_a = cv.addEventListener) === null || _a === void 0 ? void 0 : _a.call(cv, "webglcontextlost", (e) => { e.preventDefault(), this.lost = !0; }), (_b = cv.addEventListener) === null || _b === void 0 ? void 0 : _b.call(cv, "webglcontextrestored", () => { this.lost = !1, this.disposeComposer(), this.setQuality(this.quality); });
         }
         makeRenderer(_q) { let base = Object.assign({ alpha: !1, stencil: !1 }, this.canvas ? { canvas: this.canvas } : {}), tries = [Object.assign(Object.assign({}, base), { antialias: !0, powerPreference: "high-performance" }), Object.assign(Object.assign({}, base), { antialias: !1, powerPreference: "default" }), Object.assign(Object.assign({}, base), { antialias: !1, powerPreference: "low-power", failIfMajorPerformanceCaveat: !1 })], r = null, err = null; for (let p of tries)
             try {
@@ -12921,25 +13032,30 @@ void main() {
             } if (!r)
             throw err !== null && err !== void 0 ? err : Error("WebGL unavailable"); if (r.outputColorSpace = SRGBColorSpace, r.toneMapping = ACESFilmicToneMapping, r.toneMappingExposure = 1.05, this.canvas)
             return r; return r.domElement.style.display = "block", r.domElement.style.width = "100%", r.domElement.style.height = "100%", r; }
-        setQuality(q) { this.quality = q; let dpr = window.devicePixelRatio || 1; if (this.pixelRatio = q === "high" ? Math.min(dpr, this.scaleCap) : Math.min(dpr, 1.5), this.renderer.setPixelRatio(this.pixelRatio), q === "high" && this.bloomEnabled) {
-            if (!this.composer) {
-                let rt = new WebGLRenderTarget(1, 1, { type: HalfFloatType, samples: this.renderer.capabilities.isWebGL2 ? platform.android ? 2 : 4 : 0 });
-                this.composer = new EffectComposer(this.renderer, rt), this.renderPass = new RenderPass(this.scene, this.camera), this.composer.addPass(this.renderPass), this.bloom = new UnrealBloomPass(new Vector2(256, 256), 0.3, 0.22, 1), this.composer.addPass(this.bloom), this.speedBlur = new ShaderPass(SpeedBlurShader), this.composer.addPass(this.speedBlur), this.composer.addPass(new OutputPass);
-            }
-        }
-        else if (this.composer)
-            this.composer.dispose(), this.composer = null, this.bloom = null, this.speedBlur = null; this.resize(); }
+        disposeComposer() { var _a; if (!this.composer)
+            return; for (let p of this.composer.passes)
+            (_a = p.dispose) === null || _a === void 0 ? void 0 : _a.call(p); this.composer.dispose(), this.composer = null, this.bloom = null, this.speedBlur = null; }
+        setQuality(q) { this.quality = q; let pr = GRAPHICS[q], dpr = window.devicePixelRatio || 1; this.pixelRatio = Math.min(dpr, pr.dprCap, this.scaleCap), this.renderer.setPixelRatio(this.pixelRatio); let wantBloom = pr.bloom && this.bloomEnabled, wantBlur = pr.speedBlur, post = wantBloom || wantBlur; if (this.composer && (!post || !!this.bloom !== wantBloom || !!this.speedBlur !== wantBlur))
+            this.disposeComposer(); if (post && !this.composer) {
+            let rt = new WebGLRenderTarget(1, 1, { type: HalfFloatType, samples: this.renderer.capabilities.isWebGL2 ? platform.android ? 2 : 4 : 0 });
+            if (this.composer = new EffectComposer(this.renderer, rt), this.renderPass = new RenderPass(this.scene, this.camera), this.composer.addPass(this.renderPass), wantBloom)
+                this.bloom = new UnrealBloomPass(new Vector2(256, 256), this.bloomStrength, 0.22, 1), this.composer.addPass(this.bloom);
+            if (wantBlur)
+                this.speedBlur = new ShaderPass(SpeedBlurShader), this.composer.addPass(this.speedBlur);
+            this.composer.addPass(new OutputPass);
+        } this.resize(); }
         resize() { var _a; let w = Math.max(1, this.container.clientWidth), h = Math.max(1, this.container.clientHeight); if (this.width = w, this.height = h, this.renderer.setSize(w, h, !1), this.composer)
             this.composer.setPixelRatio(this.pixelRatio), this.composer.setSize(w, h), (_a = this.bloom) === null || _a === void 0 ? void 0 : _a.setSize(w * this.pixelRatio / 2, h * this.pixelRatio / 2); return w / h; }
-        degrade() { if (this.quality !== "high")
-            return !1; let dpr = window.devicePixelRatio || 1; if (this.scaleCap > 1.5 && dpr > 1.5)
-            return this.scaleCap = this.scaleCap > 1.75 ? 1.75 : 1.5, this.setQuality("high"), !0; if (this.bloomEnabled)
-            return this.bloomEnabled = !1, this.setQuality("high"), !0; return !1; }
+        degrade() { if (this.quality === "low")
+            return !1; let dpr = window.devicePixelRatio || 1, cap = GRAPHICS[this.quality].dprCap; if (this.scaleCap > 1.5 && dpr > 1.5 && cap > 1.5)
+            return this.scaleCap = this.scaleCap > 1.75 ? 1.75 : 1.5, this.setQuality(this.quality), !0; if (this.bloomEnabled && GRAPHICS[this.quality].bloom)
+            return this.bloomEnabled = !1, this.setQuality(this.quality), !0; return !1; }
         setSpeedBlur(strength) { if (this.speedBlur)
             this.speedBlur.uniforms.strength.value = strength; }
-        setBloom(strength) { if (this.bloom)
+        setBloom(strength) { if (this.bloomStrength = strength, this.bloom)
             this.bloom.strength = strength; }
-        render() { if (this.composer)
+        render() { if (this.lost)
+            return; if (this.renderer.info.autoReset = !1, this.renderer.info.reset(), this.composer)
             this.composer.render();
         else
             this.renderer.render(this.scene, this.camera); let r = this.renderer, auto = r.autoClear; r.setRenderTarget(null), r.autoClear = !1, r.clearDepth(); let bg = this.scene.background; if (this.scene.background = null, this.camera.layers.set(OVERLAY_LAYER), r.render(this.scene, this.camera), this.camera.layers.set(0), this.scene.background = bg, this.uiPass)
@@ -13312,9 +13428,10 @@ void main() {
         return _fx; return _fx = new TextureLoader().load(x1_tyrefx_default), _fx.colorSpace = NoColorSpace, _fx; }
     function treadTex() { if (_tread)
         return _tread; return _tread = new TextureLoader().load(x1_tread_default), _tread.colorSpace = NoColorSpace, _tread.wrapS = ClampToEdgeWrapping, _tread.wrapT = RepeatWrapping, _tread.anisotropy = 4, _tread; }
-    var X1_VIEWS = [{ url: car_x1_back_default, h: 1.12 }, { url: car_x1_backright_default, h: 1.22 }, { url: car_x1_right_default, h: 1.15 }, { url: car_x1_frontright_default, h: 1.22 }, { url: car_x1_front_default, h: 1.12 }, { url: car_x1_frontleft_default, h: 1.22 }, { url: car_x1_left_default, h: 1.15 }, { url: car_x1_backleft_default, h: 1.22 }], SKINS = [{ id: "zenith", name: "XWAVE Zenith", shape: "gt", cls: "Common · Balanced for every run", rarity: "Common", need: "D", price: 0, bonus: 0, tintAmt: 0, body: 15988218, trim: 12174035, glass: 658710, glow: 3782399, accent: 1860863, stats: [7, 7, 8, 7], skills: [{ name: "Turbo Boost", desc: "Short burst of high speed." }, { name: "Stable Flight", desc: "Easier to control." }] }, { id: "vega", name: "XWAVE Vega", shape: "gt", cls: "Uncommon · Red-line racer", rarity: "Rare", need: "C", price: 0, bonus: 0, tintAmt: 0, rear: car_vega_back_default, body: 15988218, trim: 12174035, glass: 658710, glow: 16726862, accent: 16726862, stats: [8, 7, 8, 7] }, { id: "volt", name: "XWAVE Volt", shape: "gt", cls: "Rare · Speed beyond limits", rarity: "Rare", need: "B", price: 0, bonus: 0, tintAmt: 0.92, body: 6962416, trim: 10135229, glass: 329226, glow: 11824127, accent: 9063935, stats: [9, 9, 8, 8], skills: [{ name: "Ion Burst", desc: "Massive speed boost for 5 seconds." }, { name: "Shockwave", desc: "Pushes nearby obstacles out of the way." }] }, { id: "phantom", name: "XWAVE Phantom", shape: "gt", cls: "Epic · Invisible. Unstoppable.", rarity: "Epic", need: "A", price: 0, bonus: 0, tintAmt: 0.85, body: 13935944, trim: 2761750, glass: 1313792, glow: 16761418, accent: 16765501, stats: [9, 8, 9, 9], skills: [{ name: "Phase Shift", desc: "Turns semi-invisible for 3 seconds." }, { name: "Auto Collect", desc: "Automatically collects nearby coins." }] }, { id: "inferno", name: "XWAVE Inferno", shape: "gt", cls: "Legendary · Burn through everything", rarity: "Legendary", need: "AA", price: 0, bonus: 0, tintAmt: 0.92, body: 12849695, trim: 1710618, glass: 655874, glow: 16726826, accent: 16738858, stats: [10, 9, 8, 8], skills: [{ name: "Fire Trail", desc: "Destroys all obstacles in its path." }, { name: "Speed Rush", desc: "Extreme speed boost for 8 seconds." }] }, { id: "nexus", name: "XWAVE Nexus", shape: "gt", cls: "Mythic · The ultimate evolution", rarity: "Mythic", need: "AAA", price: 0, bonus: 0, tintAmt: 0.35, body: 14674175, trim: 13226726, glass: 727088, glow: 3994367, accent: 13651455, stats: [10, 10, 10, 10], skills: [{ name: "Gravity Control", desc: "Switches flight height freely for 5 seconds." }, { name: "Dimension Dash", desc: "Teleports forward a short distance." }] }];
+    var X1_VIEWS = [{ url: car_x1_back_default, h: 1.12 }, { url: car_x1_backright_default, h: 1.22 }, { url: car_x1_right_default, h: 1.15 }, { url: car_x1_frontright_default, h: 1.22 }, { url: car_x1_front_default, h: 1.12 }, { url: car_x1_frontleft_default, h: 1.22 }, { url: car_x1_left_default, h: 1.15 }, { url: car_x1_backleft_default, h: 1.22 }], SKINS = [{ id: "zenith", name: "XWAVE Zenith", shape: "gt", cls: "Common · Balanced for every run", rarity: "Common", need: "D", price: 0, bonus: 0, tintAmt: 0, body: 15988218, trim: 12174035, glass: 658710, glow: 3782399, accent: 1860863, stats: [7, 7, 8, 7], skills: [{ name: "Turbo Boost", desc: "Short burst of high speed." }, { name: "Stable Flight", desc: "Easier to control." }] }, { id: "inferno", name: "XWAVE Inferno", shape: "gt", cls: "Legendary · Burn through everything", rarity: "Legendary", need: "AA", price: 0, bonus: 0, tintAmt: 0.92, body: 12849695, trim: 1710618, glass: 655874, glow: 16726826, accent: 16738858, stats: [10, 9, 8, 8], skills: [{ name: "Fire Trail", desc: "Destroys all obstacles in its path." }, { name: "Speed Rush", desc: "Extreme speed boost for 8 seconds." }] }, { id: "nexus", name: "XWAVE Nexus", shape: "gt", cls: "Mythic · The ultimate evolution", rarity: "Mythic", need: "AAA", price: 0, bonus: 0, tintAmt: 0.35, body: 14674175, trim: 13226726, glass: 727088, glow: 3994367, accent: 13651455, stats: [10, 10, 10, 10], skills: [{ name: "Gravity Control", desc: "Switches flight height freely for 5 seconds." }, { name: "Dimension Dash", desc: "Teleports forward a short distance." }] }, { id: "vega", name: "XWAVE Vega", shape: "gt", cls: "Uncommon · Red-line racer", rarity: "Rare", need: "S", price: 0, bonus: 0, tintAmt: 0, rear: car_vega_back_default, body: 15988218, trim: 12174035, glass: 658710, glow: 16726862, accent: 16726862, stats: [8, 7, 8, 7] }, { id: "volt", name: "XWAVE Volt", shape: "gt", cls: "Rare · Speed beyond limits", rarity: "Rare", need: "SS", price: 0, bonus: 0, tintAmt: 0.92, body: 6962416, trim: 10135229, glass: 329226, glow: 11824127, accent: 9063935, stats: [9, 9, 8, 8], skills: [{ name: "Ion Burst", desc: "Massive speed boost for 5 seconds." }, { name: "Shockwave", desc: "Pushes nearby obstacles out of the way." }] }, { id: "phantom", name: "XWAVE Phantom", shape: "gt", cls: "Epic · Invisible. Unstoppable.", rarity: "Epic", need: "SSS", price: 0, bonus: 0, tintAmt: 0.85, body: 13935944, trim: 2761750, glass: 1313792, glow: 16761418, accent: 16765501, stats: [9, 8, 9, 9], skills: [{ name: "Phase Shift", desc: "Turns semi-invisible for 3 seconds." }, { name: "Auto Collect", desc: "Automatically collects nearby coins." }] }];
     function carVisibility(unlocked, id) { if (unlocked.includes(id))
-        return "own"; let next = SKINS.find((k) => !unlocked.includes(k.id)); return (next === null || next === void 0 ? void 0 : next.id) === id && next.need === "C" ? "next" : "dark"; }
+        return "own"; return "dark"; }
+    function carsForRank(rankAtLeast) { return SKINS.filter((k) => { var _a; return !k.future && rankAtLeast((_a = k.need) !== null && _a !== void 0 ? _a : "D"); }).map((k) => k.id); }
     var BLUE = new Color(3782399), xwaveTex = null;
     function xwaveGlowText() { if (xwaveTex)
         return xwaveTex; let c = document.createElement("canvas"); c.width = 512, c.height = 128; let g = c.getContext("2d"); return g.font = 'italic 900 80px "Arial Black", Arial, sans-serif', g.textAlign = "center", g.textBaseline = "middle", g.shadowColor = "#3aa8ff", g.shadowBlur = 22, g.fillStyle = "#7fd0ff", g.fillText("XWAVE", 256, 66), g.shadowBlur = 0, g.fillStyle = "#e8f6ff", g.fillText("XWAVE", 256, 66), xwaveTex = new CanvasTexture(c), xwaveTex.colorSpace = SRGBColorSpace, xwaveTex.anisotropy = 8, xwaveTex; }
@@ -14596,8 +14713,8 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         glowCache.set(key, m = makeGlow(color, opacity)); return m; }, makeGlow = (color, opacity) => new SpriteMaterial({ map: glowTexture(), color, transparent: !0, opacity, blending: AdditiveBlending, depthWrite: !1, toneMapped: !1 }), crate = [16722493, 16747039, 3782399, 16765501].map((c) => { let hex = "#" + c.toString(16).padStart(6, "0"); return new MeshStandardMaterial({ map: crateTexture(hex), emissive: 16777215, emissiveMap: crateTexture(hex), emissiveIntensity: 0.12, roughness: 0.5, metalness: 0.5 }); }), rock = new MeshStandardMaterial({ color: 5917764, roughness: 0.95, metalness: 0.05, flatShading: !0, emissive: 16734736, emissiveIntensity: 0 }), traffic = [14212584, 16731501, 2832999, 16756782].map((c) => new MeshPhysicalMaterial({ color: c, roughness: 0.25, metalness: 0.4, clearcoat: 1 })), glass = new MeshStandardMaterial({ color: 724762, roughness: 0.1, metalness: 0.7 }); return { metal, darkMetal, white, hazard, red, redHot, orange, blue, green, yellow, field, glow, crate, rock, traffic, glass }; })();
     function setObstacleContrast(edge, opacity, lift) { EDGE.color.setHex(edge), EDGE.opacity = opacity; for (let m of [M.metal, M.darkMetal])
         m.emissive.setHex(4870758), m.emissiveIntensity = lift * 0.6; M.rock.emissive.setHex(3811872), M.rock.emissiveIntensity = 0.2 + lift; }
-    var OBSTACLE_FX = { pulse: 1 }, G3 = { crate: new RoundedBoxGeometry(1.7, 1.7, 1.7, 2, 0.08), post: new BoxGeometry(0.22, 1.5, 0.3), bar: new BoxGeometry(2.7, 0.12, 0.12), laserBeam: new CylinderGeometry(0.045, 0.045, 2.6, 8), laserPylon: new BoxGeometry(0.3, 6.2, 0.4), ring: new TorusGeometry(1.3, 0.15, 14, 48), ringOuter: new TorusGeometry(1.55, 0.06, 6, 48, Math.PI * 0.5) };
-    function build(type) { var _a; let group = new Group, update = () => { }, setup = () => { }, keep = null; switch (type) {
+    var OBSTACLE_FX = { pulse: 1 }, G3 = { crate: new RoundedBoxGeometry(1.7, 1.7, 1.7, 2, 0.08), post: new BoxGeometry(0.22, 1.5, 0.3), bar: new BoxGeometry(2.7, 0.12, 0.12), laserBeam: new CylinderGeometry(0.045, 0.045, 2.6, 8), laserPylon: new BoxGeometry(0.3, 6.2, 0.4), ring: new TorusGeometry(1.3, 0.055, 10, 72), ringInner: new TorusGeometry(1.17, 0.016, 6, 72), ringOuter: new TorusGeometry(1.5, 0.026, 6, 48, Math.PI * 0.42) };
+    function build(type) { var _a; let group = new Group, update = () => { }, setup = () => { }, collect = void 0, keep = null; switch (type) {
         case "crate": {
             let mesh = new Mesh(G3.crate, M.crate[0]);
             mesh.position.y = 0.85, group.add(mesh);
@@ -14712,9 +14829,9 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
                 glow.scale.setScalar(1.6), glow.position.set(0.5 * s, 1.15, 1.95), carG.add(glow);
                 for (let z of [-1.1, 1.1]) {
                     let pod = new Mesh(new CylinderGeometry(0.28, 0.3, 0.18, 16), M.darkMetal);
-                    pod.position.set(0.95 * s, 0.55, z), carG.add(pod);
+                    pod.position.set(0.58 * s, 0.55, z), carG.add(pod);
                     let pg = new Sprite(M.glow(16747039, 0.7));
-                    pg.scale.setScalar(0.9), pg.position.set(0.95 * s, 0.38, z), carG.add(pg);
+                    pg.scale.setScalar(0.9), pg.position.set(0.58 * s, 0.38, z), carG.add(pg);
                 }
             }
             let stripe = new Mesh(new BoxGeometry(1.72, 0.08, 3.4), M.orange);
@@ -14746,19 +14863,23 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             break;
         }
         case "ring": {
-            let mat = new MeshBasicMaterial({ color: 3115728 }), ring = new Mesh(G3.ring, mat);
-            ring.position.y = 1.25, group.add(ring);
+            let mat = new MeshBasicMaterial({ color: 16763210, transparent: !0, toneMapped: !1 }), fine = new MeshBasicMaterial({ color: 16773572, transparent: !0, opacity: 0.7, toneMapped: !1 }), body = new Group;
+            body.position.y = 1.25, group.add(body), body.add(new Mesh(G3.ring, mat), new Mesh(G3.ringInner, fine));
             let outer = new Group;
-            outer.position.y = 1.25;
+            body.add(outer);
             for (let i = 0; i < 3; i++) {
-                let seg = new Mesh(G3.ringOuter, M.white);
+                let seg = new Mesh(G3.ringOuter, fine);
                 seg.rotation.z = i * Math.PI * 2 / 3, outer.add(seg);
             }
-            group.add(outer);
-            let disc = new Mesh(new CircleGeometry(1.15, 32), new MeshBasicMaterial({ color: 3782399, transparent: !0, opacity: 0.1, blending: AdditiveBlending, depthWrite: !1, side: DoubleSide }));
-            disc.position.y = 1.25, group.add(disc);
-            let glow = new Sprite(M.glow(3782399, 0.5));
-            glow.scale.setScalar(4.4), glow.position.y = 1.25, group.add(glow), keep = [outer, ring], update = (_o, _t, dt) => { outer.rotation.z += dt * 2.2, mat.color.setHSL(0.56, 0.6, 0.45); };
+            let got = -1;
+            setup = () => { got = -1, body.scale.setScalar(1), body.visible = !0, mat.opacity = 1, fine.opacity = 0.7; }, collect = () => { if (got < 0)
+                got = 0; }, keep = [body], update = (_o, t, dt) => { if (outer.rotation.z += dt * 1.6, got >= 0) {
+                got += dt;
+                let k = Math.min(1, got / 0.35);
+                body.scale.setScalar(1 + 0.45 * k * (2 - k)), mat.opacity = 1 - k, fine.opacity = 0.7 * (1 - k), body.visible = k < 1;
+            }
+            else
+                mat.color.setHex(16763210).multiplyScalar(0.92 + 0.08 * Math.sin(t * 5)); };
             break;
         }
         case "asteroid": {
@@ -14837,7 +14958,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
     } let sprites = []; group.traverse((o) => { if (o.isSprite)
         sprites.push(o); }); for (let sp of sprites)
         (_a = sp.parent) === null || _a === void 0 ? void 0 : _a.remove(sp); if (keep)
-        mergeByMaterial(group, new Set(keep)); return { type, group, update, setup }; }
+        mergeByMaterial(group, new Set(keep)); return { type, group, update, setup, collect }; }
     var PROP_THEMES = ["desert", "forest", "country", "sea", "harbor", "solar", "canyon", "belt", "storm", "volcano", "ice"], BONUS_PROPS = ["desert", "forest", "country", "sea"], themedTypes = (th) => BONUS_PROPS.includes(th) ? ["crate", "barrier", "beam", "traffic"] : ["crate", "barrier", "beam"], PM = (() => { let m = (color, extra = {}) => new MeshStandardMaterial(Object.assign({ color, roughness: 0.8, metalness: 0.05, flatShading: !0 }, extra)); return { rock: m(11037252), rockDark: m(8014384), barrel: m(12597547, { metalness: 0.4, roughness: 0.5 }), barrelBand: m(2763306), cactus: m(4165450), wood: m(9067058), woodDark: m(5913120), leaf: m(3107636), bark: m(6965806), sign: m(15911244), hay: m(14729312), fence: m(15921126), barnRed: m(12071978), tractorGreen: m(3836474), tractorRed: m(12597547), buoyRed: m(14694954), white: m(16053492), rope: m(13150320), hullBlue: m(2779824), sand: m(14855530), tyre: m(1710618), glass: m(2109504, { metalness: 0.6, roughness: 0.2 }), truckSand: m(14267002), truckWhite: m(15263976), contRed: m(14169146, { metalness: 0.5, roughness: 0.45 }), contBlue: m(2779864, { metalness: 0.5, roughness: 0.45 }), steel: m(9082022, { metalness: 0.8, roughness: 0.35 }), bollard: m(2764344, { metalness: 0.7 }), chain: m(13685980, { metalness: 0.9, roughness: 0.3 }), panel: m(1718922, { metalness: 0.7, roughness: 0.25 }), battery: m(3134315, { metalness: 0.4 }), crystal: new MeshStandardMaterial({ color: 6219519, emissive: 2792191, emissiveIntensity: 0.8, roughness: 0.2, flatShading: !0 }), crystalPink: new MeshStandardMaterial({ color: 16743144, emissive: 13122224, emissiveIntensity: 0.8, roughness: 0.2, flatShading: !0 }), canyonRock: m(6961770), debris: m(5922410, { metalness: 0.7, roughness: 0.4 }), sandbag: m(12099696), billboard: m(1711918, { metalness: 0.6 }), basalt: m(2759190), lava: new MeshBasicMaterial({ color: 16738842, toneMapped: !1 }), ice: new MeshStandardMaterial({ color: 12577023, roughness: 0.1, metalness: 0.1, transparent: !0, opacity: 0.85, flatShading: !0 }), snow: m(16055295) }; })();
     function buildThemed(type, theme) { let group = new Group, add = (geo, mat, x, y, z = 0, rx = 0, ry = 0, rz = 0) => { let mesh = new Mesh(geo, mat); return mesh.position.set(x, y, z), mesh.rotation.set(rx, ry, rz), group.add(mesh), mesh; }, edge = (mesh) => group.add(outline(mesh)), vehicle = (body, cab, load) => { let ch = add(new BoxGeometry(2, 0.9, 4.2), body, 0, 0.75); edge(ch), add(new BoxGeometry(1.9, 1, 1.5), cab, 0, 1.6, 1.2), add(new BoxGeometry(1.7, 0.5, 0.05), PM.glass, 0, 1.75, 1.96); for (let sx of [-1, 1])
         for (let sz of [-1.3, 1.3])
@@ -15033,6 +15154,8 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         spawn(o) { let v = this.pool(o.spec.type, this.theme).acquire(); v.setup(o), v.group.visible = !0, this.parent.add(v.group), this.active.set(o.id, v), this.place(o, v), this.guides.spawn(o); }
         despawn(o) { this.guides.despawn(o); let v = this.active.get(o.id); if (!v)
             return; this.parent.remove(v.group), this.active.delete(o.id), this.poolOf(v).release(v); }
+        collect(o) { var _a, _b; (_b = (_a = this.active.get(o.id)) === null || _a === void 0 ? void 0 : _a.collect) === null || _b === void 0 ? void 0 : _b.call(_a); }
+        viewOf(id) { var _a; return (_a = this.active.get(id)) === null || _a === void 0 ? void 0 : _a.group; }
         hide(o) { let v = this.active.get(o.id); if (v)
             v.group.visible = !1; }
         place(o, v) { let t = o.spec.type, x = t === "drone" || t === "platform" ? o.sx : t === "laser" || t === "gate" ? 0 : LANES[o.spec.lane]; if (v.group.position.set(x, 0, o.z), t === "traffic")
@@ -15184,6 +15307,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.grav = new Float32Array(MAX);
             this.locked = new Uint8Array(MAX);
             this.head = 0;
+            this.density = 1;
             this.geo = new BufferGeometry, this.geo.setAttribute("position", new BufferAttribute(this.pos, 3).setUsage(DynamicDrawUsage)), this.geo.setAttribute("color", new BufferAttribute(this.col, 3).setUsage(DynamicDrawUsage)), this.geo.setAttribute("size", new BufferAttribute(this.size, 1).setUsage(DynamicDrawUsage)), this.geo.setAttribute("alpha", new BufferAttribute(this.alpha, 1).setUsage(DynamicDrawUsage));
             let mat = new ShaderMaterial({ uniforms: { map: { value: glowTexture() }, scale: { value: 420 * pixelRatio } }, vertexShader: `attribute float size; attribute float alpha; attribute vec3 color; varying vec3 vColor; varying float vAlpha;
         uniform float scale;
@@ -15195,7 +15319,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         }
         setPixelRatio(pr) { this.points.material.uniforms.scale.value = 420 * pr; }
         emit(x, y, z, vx, vy, vz, color, size, life, opts = {}) { var _a, _b, _c; let i = this.head; this.head = (this.head + 1) % MAX; let i3 = i * 3; this.pos[i3] = x, this.pos[i3 + 1] = y, this.pos[i3 + 2] = z, this.vel[i3] = vx, this.vel[i3 + 1] = vy, this.vel[i3 + 2] = vz; let c = typeof color === "number" ? tmpC.setHex(color) : color; this.col[i3] = c.r, this.col[i3 + 1] = c.g, this.col[i3 + 2] = c.b, this.baseSize[i] = size, this.life[i] = life, this.maxLife[i] = life, this.drag[i] = (_a = opts.drag) !== null && _a !== void 0 ? _a : 1.5, this.grav[i] = (_b = opts.grav) !== null && _b !== void 0 ? _b : 0, this.locked[i] = opts.locked ? 1 : 0, this.grow[i] = (_c = opts.grow) !== null && _c !== void 0 ? _c : 0; }
-        burst(x, y, z, n, color, speed, size, life, opts = {}) { var _a, _b; for (let k = 0; k < n; k++) {
+        burst(x, y, z, n, color, speed, size, life, opts = {}) { var _a, _b; n = Math.max(1, Math.round(n * this.density)); for (let k = 0; k < n; k++) {
             let th = rng.next() * Math.PI * 2, ph = Math.acos(rng.range(-1, 1)), s = speed * rng.range(0.4, 1);
             this.emit(x, y, z, Math.sin(ph) * Math.cos(th) * s, Math.cos(ph) * s + ((_a = opts.up) !== null && _a !== void 0 ? _a : 0), Math.sin(ph) * Math.sin(th) * s, color, size * rng.range(0.6, 1.2), life * rng.range(0.6, 1.1), { grav: opts.grav, locked: opts.locked, drag: (_b = opts.drag) !== null && _b !== void 0 ? _b : 2.5 });
         } }
@@ -15250,32 +15374,6 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.col.set([tmpC.r, tmpC.g, tmpC.b, 0, 0, 0], i * 6);
         } this.lines.geometry.attributes.position.needsUpdate = !0, this.lines.geometry.attributes.color.needsUpdate = !0; }
     }
-    function makeShield() {
-        let pos = new Float32Array(360), seed = new Float32Array(120), r = new Rng(7), hx = 0.98, hy0 = -0.42, hy1 = 0.6, hz = 1.86;
-        for (let i = 0; i < 120; i++) {
-            let x = r.range(-1, 1), y = r.range(-1, 1), z = r.range(-1, 1), m = Math.max(Math.abs(x), Math.abs(y), Math.abs(z)) || 1;
-            x /= m, y /= m, z /= m;
-            let k = 0.82 + 0.18 * (1 - Math.abs(x * y * z));
-            pos[i * 3] = x * 0.98 * k, pos[i * 3 + 1] = (y < 0 ? -y * -0.42 : y * 0.6) * k, pos[i * 3 + 2] = z * 1.86 * k, seed[i] = r.range(0, 6.283);
-        }
-        let geo = new BufferGeometry;
-        geo.setAttribute("position", new BufferAttribute(pos, 3)), geo.setAttribute("seed", new BufferAttribute(seed, 1));
-        let mat = new ShaderMaterial({ uniforms: { color: { value: new Color(9427199) }, time: { value: 0 }, strength: { value: 1 }, scale: { value: Math.min(2, window.devicePixelRatio || 1) } }, vertexShader: `attribute float seed; uniform float time; uniform float scale; varying float vA;
-      void main(){
-        vec3 p = position;
-        // slow drift along the envelope (no blinking: alpha stays constant)
-        float a = time * 0.6 + seed;
-        p += normalize(position + 1e-4) * 0.05 * sin(a);
-        p.z += 0.08 * sin(a * 0.7 + seed * 2.0);
-        vec4 mv = modelViewMatrix * vec4(p, 1.0);
-        gl_PointSize = (9.0 + 4.0 * fract(seed)) * scale * (10.0 / -mv.z);
-        vA = 0.55 + 0.25 * fract(seed * 3.7);
-        gl_Position = projectionMatrix * mv; }`, fragmentShader: `uniform vec3 color; uniform float strength; varying float vA;
-      void main(){ vec2 c = gl_PointCoord - 0.5; float d = dot(c, c); if (d > 0.25) discard;
-        float soft = smoothstep(0.25, 0.0, d);
-        gl_FragColor = vec4(color, soft * soft * vA * 0.42 * strength); }`, transparent: !0, depthWrite: !1, blending: NormalBlending }), mesh = new Points(geo, mat);
-        return mesh.frustumCulled = !1, mesh.visible = !1, { mesh, mat };
-    }
     class RingPulses {
         constructor() {
             this.group = new Group;
@@ -15329,6 +15427,67 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         let s = new Mesh(new BoxGeometry(1.6, 0.5, 0.6), ringMat), a = i / 6 * Math.PI * 2;
         s.position.set(Math.cos(a) * 8.3, Math.sin(a) * 8.3, 0), s.rotation.z = a, segs.add(s);
     } return g.add(segs), g.visible = !1, { group: g, setColor(c) { ringMat.color.copy(c), inner.material.color.copy(c); }, update(dt) { segs.rotation.z += dt * 0.8, ring.rotation.z -= dt * 0.3; } }; }
+    var COLLISION_DEBUG = (() => { try {
+        return new URLSearchParams(location.search).get("debug") === "collision";
+    }
+    catch (_a) {
+        return !1;
+    } })(), COL = { car: 2741247, hit: 2285658, obVis: 16765501, obCol: 16726586 }, _v = new Vector3;
+    function solidBounds(obj, out, parts) { out.makeEmpty(); let tmp = new Box3; obj.updateWorldMatrix(!0, !0); let walk = (o) => { var _a, _b; if (!o.visible)
+        return; let m = o; if (m.isMesh && !o.isPoints) {
+        let mat = Array.isArray(m.material) ? m.material[0] : m.material;
+        if (!(mat.blending === AdditiveBlending || mat.transparent && mat.opacity < 0.5)) {
+            let pos = m.geometry.getAttribute("position");
+            tmp.makeEmpty();
+            for (let i = 0; i < pos.count; i++)
+                tmp.expandByPoint(_v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld));
+            out.union(tmp), parts === null || parts === void 0 ? void 0 : parts.push({ name: m.name || ((_a = mat.name) !== null && _a !== void 0 ? _a : "") || ((_b = m.parent) === null || _b === void 0 ? void 0 : _b.name) || "?", box: tmp.clone() });
+        }
+    } for (let c of o.children)
+        walk(c); }; return walk(obj), out; }
+    class DebugCollision {
+        constructor() {
+            this.group = new Group;
+            this.mats = new Map;
+            this.boxes = [];
+            this.used = 0;
+            this.tmp = new Box3;
+            this.geo = new EdgesGeometry(new BoxGeometry(1, 1, 1)), this.group.renderOrder = 50;
+        }
+        mat(c) { let m = this.mats.get(c); if (!m)
+            this.mats.set(c, m = new LineBasicMaterial({ color: c, depthTest: !1, transparent: !0, toneMapped: !1 })); return m; }
+        draw(minX, minY, minZ, maxX, maxY, maxZ, c) { let l = this.boxes[this.used]; if (!l)
+            l = new LineSegments(this.geo, this.mat(c)), l.renderOrder = 50, l.frustumCulled = !1, this.boxes.push(l), this.group.add(l); this.used++, l.material = this.mat(c), l.visible = !0, l.position.set((minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2), l.scale.set(Math.max(0.001, maxX - minX), Math.max(0.001, maxY - minY), Math.max(0.001, maxZ - minZ)); }
+        update(hit, car, obstacles) { if (this.used = 0, this.draw(hit.minX, hit.minY, hit.minZ, hit.maxX, hit.maxY, hit.maxZ, COL.hit), car) {
+            let b = solidBounds(car, this.tmp);
+            if (!b.isEmpty())
+                this.draw(b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z, COL.car);
+        } for (let o of obstacles) {
+            if (o.view && o.view.visible) {
+                let b = solidBounds(o.view, this.tmp);
+                if (!b.isEmpty())
+                    this.draw(b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z, COL.obVis);
+            }
+            for (let h of o.boxes)
+                this.draw(h.minX, h.minY, h.minZ, h.maxX, h.maxY, h.maxZ, COL.obCol);
+        } for (let i = this.used; i < this.boxes.length; i++)
+            this.boxes[i].visible = !1; }
+    }
+    var pct = (sorted, p) => sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor((sorted.length - 1) * p))] : 0, r1 = (n) => Math.round(n * 10) / 10;
+    class PerfRecorder {
+        constructor(capacity = 3600) {
+            this.n = 0;
+            this.head = 0;
+            this.capacity = capacity;
+            this.frame = new Float32Array(capacity), this.js = new Float32Array(capacity), this.render = new Float32Array(capacity);
+        }
+        add(s) { this.frame[this.head] = s.frame, this.js[this.head] = s.js, this.render[this.head] = s.render, this.head = (this.head + 1) % this.capacity, this.n = Math.min(this.capacity, this.n + 1); }
+        reset() { this.n = 0, this.head = 0; }
+        report(last = this.n) { var _a; let k = Math.min(last, this.n), f = [], j = [], r = []; for (let i = 0; i < k; i++) {
+            let idx = (this.head - 1 - i + this.capacity * 2) % this.capacity;
+            f.push(this.frame[idx]), j.push(this.js[idx]), r.push(this.render[idx]);
+        } let sum = f.reduce((a, b) => a + b, 0), avg = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0; return f.sort((a, b) => a - b), j.sort((a, b) => a - b), r.sort((a, b) => a - b), { frames: k, seconds: r1(sum / 1000), fps: r1(k && sum ? 1000 * k / sum : 0), frame: { p50: r1(pct(f, 0.5)), p95: r1(pct(f, 0.95)), p99: r1(pct(f, 0.99)), max: r1((_a = f[f.length - 1]) !== null && _a !== void 0 ? _a : 0) }, js: { avg: r1(avg(j)), p95: r1(pct(j, 0.95)) }, render: { avg: r1(avg(r)), p95: r1(pct(r, 0.95)) }, slow: f.filter((x) => x > 33.4).length }; }
+    }
     function compat(c) { let fixParam = (p) => { if (!p || typeof p !== "object")
         return p; let at = (t, fn) => { var _a; let ms = Math.max(0, (t - ((_a = c.currentTime) !== null && _a !== void 0 ? _a : 0)) * 1000); if (ms < 4)
         fn();
@@ -15389,31 +15548,59 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.loopLevel = -1;
             this.loopStart = 0;
             this.loopTimer = null;
+            this.onRunning = null;
+            this.lastPlayed = {};
             this.loopJobs = new Set;
         }
+        get running() { var _a; return ((_a = this.ctx) === null || _a === void 0 ? void 0 : _a.state) === "running"; }
         unlock() { try {
             this.unlockInner();
         }
         catch (e) {
             console.warn("[audio] off:", e), this.ctx = null;
         } }
-        unlockInner() { var _a, _b, _c; if (this.ctx) {
-            if (this.ctx.state === "suspended")
-                (_b = (_a = this.ctx).resume) === null || _b === void 0 ? void 0 : _b.call(_a);
+        unlockInner() { var _a, _b, _c, _d, _e, _f, _h, _j; if (this.ctx) {
+            if (this.ctx.state !== "running") {
+                try {
+                    (_d = (_c = (_b = (_a = this.ctx).resume) === null || _b === void 0 ? void 0 : _b.call(_a)) === null || _c === void 0 ? void 0 : _c.catch) === null || _d === void 0 ? void 0 : _d.call(_c, () => { return; });
+                }
+                catch (_l) { }
+                this.prime();
+            }
             return;
         } let AC = window.AudioContext || window.webkitAudioContext; if (!AC)
-            return; this.ctx = new AC; let c = this.ctx; try {
+            return; this.ctx = new AC({ latencyHint: "interactive" }); let c = this.ctx; try {
+            (_e = c.addEventListener) === null || _e === void 0 ? void 0 : _e.call(c, "statechange", () => { var _a; if (c.state === "running")
+                (_a = this.onRunning) === null || _a === void 0 ? void 0 : _a.call(this); });
+        }
+        catch (_m) { } try {
             compat(c);
         }
         catch (e) {
             console.warn("[audio] compat", e);
         } if (c.state !== "running")
-            (_c = c.resume) === null || _c === void 0 ? void 0 : _c.call(c); if (this.baked) {
+            try {
+                (_j = (_h = (_f = c.resume) === null || _f === void 0 ? void 0 : _f.call(c)) === null || _h === void 0 ? void 0 : _h.catch) === null || _j === void 0 ? void 0 : _j.call(_h, () => { return; });
+            }
+            catch (_p) { } if (this.baked) {
             this.rtSr = c.sampleRate || 44100, this.master = c.createGain(), this.master.gain.value = 0.8, this.master.connect(c.destination), this.sfxBus = c.createGain(), this.sfxBus.gain.value = this.sfxOn ? 0.9 : 0, this.sfxBus.connect(this.master), this.musicBus = c.createGain(), this.musicBus.gain.value = this.musicOn ? 0.32 : 0, this.musicBus.connect(this.master), this.prebakeSfx();
             return;
         } this.master = c.createGain(), this.master.gain.value = 0.8; let comp = c.createDynamicsCompressor(); comp.threshold.value = -14, comp.ratio.value = 4, this.master.connect(comp), comp.connect(c.destination), this.sfxBus = c.createGain(), this.sfxBus.gain.value = this.sfxOn ? 0.9 : 0, this.sfxBus.connect(this.master), this.musicBus = c.createGain(), this.musicBus.gain.value = this.musicOn ? 0.32 : 0, this.musicBus.connect(this.master), this.musicTone = c.createBiquadFilter(), this.musicTone.type = "lowpass", this.musicTone.frequency.value = 2600, this.musicTone.Q.value = 0.5, this.musicTone.connect(this.musicBus), this.echo = c.createGain(), this.echo.gain.value = 0.55; let dl = c.createDelay(1); dl.delayTime.value = 60 / this.bpm * 0.75; let fb = c.createGain(); fb.gain.value = 0.32; let damp = c.createBiquadFilter(); damp.type = "lowpass", damp.frequency.value = 1800, this.echo.connect(dl), dl.connect(damp), damp.connect(fb), fb.connect(dl), damp.connect(this.musicTone), this.noiseBuf = c.createBuffer(1, c.sampleRate, c.sampleRate); let d = this.noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++)
             d[i] = Math.random() * 2 - 1; for (let [n, u] of this.pendingOverrides)
-            this.loadOverride(n, u); this.pendingOverrides.length = 0; }
+            this.loadOverride(n, u); if (this.pendingOverrides.length = 0, this.prime(), c.state === "running")
+            queueMicrotask(() => { var _a; return (_a = this.onRunning) === null || _a === void 0 ? void 0 : _a.call(this); }); }
+        prime() { let c = this.ctx; if (!c)
+            return; let b = c.createBuffer(1, 1, 22050), s = c.createBufferSource(); s.buffer = b, s.connect(c.destination), s.start(0); }
+        setHidden(hidden) { var _a, _b, _c, _d, _e, _f; let c = this.ctx; if (!c)
+            return; try {
+            if (hidden) {
+                if (c.state === "running")
+                    (_c = (_b = (_a = c.suspend) === null || _a === void 0 ? void 0 : _a.call(c)) === null || _b === void 0 ? void 0 : _b.catch) === null || _c === void 0 ? void 0 : _c.call(_b, () => { return; });
+            }
+            else if (c.state !== "running")
+                (_f = (_e = (_d = c.resume) === null || _d === void 0 ? void 0 : _d.call(c)) === null || _e === void 0 ? void 0 : _e.catch) === null || _f === void 0 ? void 0 : _f.call(_e, () => { return; });
+        }
+        catch (_h) { } }
         async loadOverride(name, url) { if (!this.ctx) {
             this.pendingOverrides.push([name, url]);
             return;
@@ -15442,23 +15629,26 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             let p = c.createStereoPanner();
             p.pan.value = pan, g.connect(p), out = p;
         } out.connect(bus !== null && bus !== void 0 ? bus : this.sfxBus), s.start(t0, Math.random() * 0.5), s.stop(t0 + dur + 0.02); }
-        play(name, opt = {}) { if (!this.ctx || !this.sfxOn)
+        play(name, opt = {}) { var _a; if (this.lastPlayed[name] = performance.now(), !this.ctx || !this.sfxOn)
             return; try {
             if (this.baked)
-                return this.playBaked(name);
+                return this.playBaked(name, (_a = opt.delay) !== null && _a !== void 0 ? _a : 0);
             this.playInner(name, opt);
         }
         catch (e) {
             console.warn("[audio] play", name, e);
         } }
-        playBaked(name) { let c = this.ctx; if (this.overrides.has(name))
+        playBaked(name, delay = 0) { let c = this.ctx; if (this.overrides.has(name))
             return this.playInner(name, {}); if (name === "coin") {
             let now = performance.now() / 1000;
             if (now - this.coinPitchT > 0.6)
                 this.coinPitch = 0;
             this.coinPitchT = now;
         } let buf = this.bakeSfx(name, name === "coin" ? Math.min(this.coinPitch, 12) : -1); if (name === "coin")
-            this.coinPitch++; let s = c.createBufferSource(); s.buffer = buf, s.connect(this.sfxBus), s.start(); }
+            this.coinPitch++; let s = c.createBufferSource(); if (s.buffer = buf, s.connect(this.sfxBus), delay > 0)
+            s.start(c.currentTime + delay);
+        else
+            s.start(); }
         bakeSfx(name, pitch) { let key = name === "coin" ? `coin${pitch}` : name, buf = this.sfxCache.get(key); if (!buf) {
             let pcm = this.bake(1.6, () => this.playInner(name, {}, Math.max(0, pitch)));
             buf = this.toBuffer(trimTail(pcm)), this.sfxCache.set(key, buf);
@@ -15471,12 +15661,12 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         } return pcm; }
         toBuffer(pcm, sr = this.rtSr) { let b = this.ctx.createBuffer(1, Math.max(1, pcm.length), sr), d = b.getChannelData(0); for (let i = 0; i < pcm.length; i++)
             d[i] = softClip(pcm[i]); return b; }
-        playInner(name, opt, bakedPitch = -1) { var _a; if (!this.ctx)
-            return; let c = this.ctx, t = this.rt ? 0 : c.currentTime, ov = this.overrides.get(name); if (ov) {
+        playInner(name, opt, bakedPitch = -1) { var _a, _b; if (!this.ctx)
+            return; let c = this.ctx, t = this.rt ? 0 : c.currentTime + ((_a = opt.delay) !== null && _a !== void 0 ? _a : 0), ov = this.overrides.get(name); if (ov) {
             let s = c.createBufferSource();
-            s.buffer = ov, s.connect(this.sfxBus), s.start();
+            s.buffer = ov, s.connect(this.sfxBus), s.start(t);
             return;
-        } let pan = (_a = opt.pan) !== null && _a !== void 0 ? _a : 0; switch (name) {
+        } let pan = (_b = opt.pan) !== null && _b !== void 0 ? _b : 0; switch (name) {
             case "coin": {
                 if (bakedPitch < 0) {
                     if (t - this.coinPitchT > 0.6)
@@ -15530,6 +15720,9 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
                 break;
             case "go":
                 this.osc("square", 1320, 1320, t, 0.3, 0.09), this.osc("sawtooth", 660, 1320, t, 0.3, 0.05);
+                break;
+            case "fanfare":
+                this.noise(t, 0.9, 0.12, 200, 2400, 0.5), [0, 7, 12].forEach((n) => this.osc("sawtooth", 220 * Math.pow(2, n / 12), 220 * Math.pow(2, n / 12), t + 0.05, 1.2, 0.05)), [0, 4, 7, 12].forEach((n, i) => this.osc("square", 523 * Math.pow(2, n / 12), 523 * Math.pow(2, n / 12), t + 0.25 + i * 0.09, 0.5, 0.05)), this.osc("triangle", 2093, 2637, t + 0.7, 0.6, 0.05);
                 break;
             case "mission":
                 [0, 4, 7, 12, 16].forEach((n, i) => this.osc("square", 660 * Math.pow(2, n / 12), 660 * Math.pow(2, n / 12), t + i * 0.08, 0.22, 0.06));
@@ -15747,7 +15940,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         } }
         model(id) { let m = this.models.get(id); return m ? m.clone(!0) : null; }
     }
-    var LANGS = [{ code: "en", name: "English", flag: "\uD83C\uDDEC\uD83C\uDDE7" }, { code: "fr", name: "Français", flag: "\uD83C\uDDEB\uD83C\uDDF7" }, { code: "ja", name: "日本語", flag: "\uD83C\uDDEF\uD83C\uDDF5" }, { code: "pt", name: "Português (BR)", flag: "\uD83C\uDDE7\uD83C\uDDF7" }, { code: "de", name: "Deutsch", flag: "\uD83C\uDDE9\uD83C\uDDEA" }, { code: "es", name: "Español", flag: "\uD83C\uDDEA\uD83C\uDDF8" }], T2 = [["Play", "Jouer", "プレイ", "Jogar", "Spielen", "Jugar"], ["Garage", "Garage", "ガレージ", "Garagem", "Garage", "Garaje"], ["Shop", "Boutique", "ショップ", "Loja", "Shop", "Tienda"], ["Missions", "Missions", "ミッション", "Missões", "Missionen", "Misiones"], ["Daily", "Jour", "デイリー", "Diário", "Täglich", "Diario"], ["Cups", "Coupes", "カップ", "Copas", "Pokale", "Copas"], ["Ranks", "Rangs", "ランク", "Ranking", "Ränge", "Ranking"], ["Share", "Partager", "シェア", "Compartilhar", "Teilen", "Compartir"], ["Entry", "Entrée", "初回", "Entrada", "Start", "Entrada"], ["Launch", "Lancer", "起動", "Abrir", "Starten", "Abrir"], ["SETTINGS", "PARAMÈTRES", "設定", "AJUSTES", "EINSTELLUNGEN", "AJUSTES"], ["Sound", "Son", "サウンド", "Som", "Sound", "Sonido"], ["Music", "Musique", "音楽", "Música", "Musik", "Música"], ["Vibration", "Vibration", "振動", "Vibração", "Vibration", "Vibración"], ["Hint arrows", "Flèches", "ヒント", "Setas", "Pfeile", "Flechas"], ["Comfort", "Confort", "目に優しい", "Conforto", "Komfort", "Confort"], ["Buy items", "Acheter", "アイテム購入", "Comprar itens", "Items kaufen", "Comprar objetos"], ["Race without a special", "Courir sans spécial", "スペシャルなしで走る", "Correr sem especial", "Ohne Spezial fahren", "Correr sin especial"], ["Back to the bag", "Retour au sac", "バッグに戻る", "Voltar à bolsa", "Zurück zur Tasche", "Volver a la bolsa"], ["In your bag", "Dans ton sac", "バッグの中", "Na sua bolsa", "In deiner Tasche", "En tu bolsa"], ["Take it", "Prendre", "持っていく", "Levar", "Mitnehmen", "Llevar"], ["Cancel", "Annuler", "キャンセル", "Cancelar", "Abbrechen", "Cancelar"], ["Share my rank", "Partager mon rang", "ランクをシェア", "Compartilhar rank", "Rang teilen", "Compartir rango"], ["Save image", "Enregistrer", "画像を保存", "Salvar imagem", "Bild speichern", "Guardar imagen"], ["Copy text", "Copier", "テキストをコピー", "Copiar texto", "Text kopieren", "Copiar texto"], ["Unlocks", "Débloque", "解放", "Desbloqueia", "Schaltet frei", "Desbloquea"], ["Ready to claim", "À récupérer", "受け取り可能", "Pronto para coletar", "Bereit", "Listo para cobrar"], ["Claim all", "Tout récupérer", "すべて受け取る", "Coletar tudo", "Alle abholen", "Cobrar todo"], ["Account", "Compte", "アカウント", "Conta", "Konto", "Cuenta"], ["Continue with Google", "Continuer avec Google", "Googleで続ける", "Continuar com Google", "Weiter mit Google", "Continuar con Google"], ["Continue with Apple", "Continuer avec Apple", "Appleで続ける", "Continuar com Apple", "Weiter mit Apple", "Continuar con Apple"], ["Send code", "Envoyer le code", "コードを送信", "Enviar código", "Code senden", "Enviar código"], ["Sign in", "Se connecter", "サインイン", "Entrar", "Anmelden", "Iniciar sesión"], ["Sign out", "Se déconnecter", "サインアウト", "Sair", "Abmelden", "Cerrar sesión"], ["Sync now", "Synchroniser", "今すぐ同期", "Sincronizar", "Jetzt synchronisieren", "Sincronizar"], ["Keep this", "Garder", "これを残す", "Manter", "Behalten", "Conservar"], ["Eye comfort", "Confort visuel", "目に優しい", "Conforto visual", "Augenschonend", "Confort visual"], ["Graphics", "Graphisme", "画質", "Gráficos", "Grafik", "Gráficos"], ["Language", "Langue", "言語", "Idioma", "Sprache", "Idioma"], ["Profile", "Profil", "プロフィール", "Perfil", "Profil", "Perfil"], ["How to play", "Comment jouer", "遊び方", "Como jogar", "Anleitung", "Cómo jugar"], ["Jump guide", "Guide du saut", "ジャンプガイド", "Guia do salto", "Sprung-Guide", "Guía de salto"], ["Restore", "Restaurer", "復元", "Restaurar", "Wiederherstellen", "Restaurar"], ["Paused", "Pause", "一時停止", "Pausado", "Pausiert", "En pausa"], ["Resume", "Reprendre", "再開", "Continuar", "Weiter", "Reanudar"], ["Retry", "Rejouer", "リトライ", "De novo", "Nochmal", "Reintentar"], ["Home", "Accueil", "ホーム", "Início", "Start", "Inicio"], ["Tracks", "Circuits", "コース", "Pistas", "Strecken", "Pistas"], ["Next track", "Circuit suivant", "次のコース", "Próxima pista", "Nächste Strecke", "Siguiente pista"], ["GAME OVER", "PERDU", "ゲームオーバー", "FIM DE JOGO", "GAME OVER", "FIN DEL JUEGO"], ["NEW BEST!", "RECORD !", "自己ベスト!", "NOVO RECORDE!", "NEUER REKORD!", "¡NUEVO RÉCORD!"], ["Best", "Record", "ベスト", "Recorde", "Rekord", "Récord"], ["Distance", "Distance", "距離", "Distância", "Distanz", "Distancia"], ["Coins", "Pièces", "コイン", "Moedas", "Münzen", "Monedas"], ["Near miss", "Frôlé", "ニアミス", "Por um triz", "Knapp", "Roce"], ["Time", "Temps", "タイム", "Tempo", "Zeit", "Tiempo"], ["Lives lost", "Vies perdues", "失ったライフ", "Vidas perdidas", "Verlorene Leben", "Vidas perdidas"], ["Unused boosts", "Bonus inutilisés", "未使用ブースト", "Boosts não usados", "Ungenutzte Boosts", "Potenciadores sin usar"], ["TAP!", "TAPE !", "タップ!", "TOQUE!", "TIPPEN!", "¡TOCA!"], ["Reward", "Récompense", "報酬", "Prêmio", "Belohnung", "Premio"], ["Rewards", "Récompenses", "報酬", "Prêmios", "Belohnungen", "Premios"], ["REVIVE?", "REVIVRE ?", "復活する？", "REVIVER?", "WIEDERBELEBEN?", "¿REVIVIR?"], ["Watch ad · Revive", "Pub · Revivre", "広告で復活", "Anúncio · Reviver", "Werbung · Weiter", "Anuncio · Revivir"], ["No thanks · end race", "Non merci · fin", "やめる · 終了", "Não · terminar", "Nein · beenden", "No · terminar"], ["SPECIAL", "SPÉCIAL", "スペシャル", "ESPECIAL", "SPEZIAL", "ESPECIAL"], ["No special", "Aucun spécial", "スペシャルなし", "Sem especial", "Kein Spezial", "Sin especial"], ["Pure skill run", "Pur talent", "実力勝負", "Só habilidade", "Nur Können", "Solo habilidad"], ["GO", "GO", "GO", "VAI", "LOS", "YA"], ["RANK GATE", "PORTE DE RANG", "ランクゲート", "PORTÃO DE RANK", "RANG-TOR", "PUERTA DE RANGO"], ["Bonus", "Bonus", "ボーナス", "Bônus", "Bonus", "Bonus"], ["BONUS", "BONUS", "ボーナス", "BÔNUS", "BONUS", "BONUS"], ["Training", "Entraînement", "トレーニング", "Treino", "Training", "Entrenamiento"], ["Replay freely", "Rejouable à volonté", "何度でもプレイ可", "Jogue à vontade", "Beliebig oft", "Repite cuanto quieras"], ["Every hour", "Chaque heure", "毎時", "Toda hora", "Jede Stunde", "Cada hora"], ["Race the Bonus", "Courir le Bonus", "ボーナスに挑戦", "Correr o Bônus", "Bonus fahren", "Correr el Bonus"], ["Coming soon", "Bientôt", "近日公開", "Em breve", "Bald", "Próximamente"], ["Race Endless", "Courir Endless", "エンドレスへ", "Correr Endless", "Endless fahren", "Correr Endless"], ["Free coins", "Pièces gratuites", "無料コイン", "Moedas grátis", "Gratis-Münzen", "Monedas gratis"], ["Race", "Course", "レース", "Correr", "Rennen", "Carrera"], ["How EXP works", "Comment marche l’EXP", "EXPの仕組み", "Como funciona o EXP", "So funktioniert EXP", "Cómo funciona el EXP"], ["Best EXP", "Meilleur EXP", "ベストEXP", "Melhor EXP", "Bester EXP", "Mejor EXP"], ["NEW BEST EXP!", "NOUVEAU RECORD EXP !", "EXP新記録！", "NOVO RECORDE DE EXP!", "NEUER EXP-REKORD!", "¡NUEVO RÉCORD DE EXP!"], ["How rank works", "Comment marche le rang", "ランクの仕組み", "Como funciona o rank", "So funktioniert der Rang", "Cómo funciona el rango"], ["Score", "Score", "スコア", "Pontos", "Punkte", "Puntos"], ["CONTINUE?", "CONTINUER ?", "コンティニュー?", "CONTINUAR?", "WEITER?", "¿CONTINUAR?"], ["No thanks", "Non merci", "結構です", "Não, obrigado", "Nein danke", "No, gracias"], ["SELECT TRACK", "CHOISIR UN CIRCUIT", "コース選択", "ESCOLHER PISTA", "STRECKE WÄHLEN", "ELEGIR PISTA"], ["Endless", "Infini", "エンドレス", "Infinito", "Endlos", "Infinito"], ["GARAGE", "GARAGE", "ガレージ", "GARAGEM", "GARAGE", "GARAJE"], ["Selected", "Sélectionnée", "選択中", "Selecionado", "Ausgewählt", "Seleccionado"], ["Select", "Choisir", "選択", "Selecionar", "Wählen", "Elegir"], ["Upgrades", "Améliorations", "アップグレード", "Melhorias", "Upgrades", "Mejoras"], ["MISSIONS", "MISSIONS", "ミッション", "MISSÕES", "MISSIONEN", "MISIONES"], ["DAILY", "QUOTIDIEN", "デイリー", "DIÁRIO", "TÄGLICH", "DIARIO"], ["CUPS", "COUPES", "カップ", "COPAS", "POKALE", "COPAS"], ["SHOP", "BOUTIQUE", "ショップ", "LOJA", "SHOP", "TIENDA"], ["TOP PILOTS", "MEILLEURS PILOTES", "トップパイロット", "MELHORES PILOTOS", "TOP-PILOTEN", "MEJORES PILOTOS"], ["This week", "Cette semaine", "今週", "Esta semana", "Diese Woche", "Esta semana"], ["All time", "Toujours", "全期間", "Geral", "Allzeit", "Histórico"], ["Race now", "Courir", "レース開始", "Correr agora", "Jetzt fahren", "Correr ya"], ["Standings", "Classement", "順位", "Classificação", "Stand", "Clasificación"], ["Prizes", "Prix", "賞品", "Prêmios", "Preise", "Premios"], ["Divisions", "Divisions", "ディビジョン", "Divisões", "Divisionen", "Divisiones"], ["Upcoming", "À venir", "開催予定", "Próximas", "Demnächst", "Próximas"], ["CLAIM", "RÉCUPÉRER", "受け取る", "RESGATAR", "ABHOLEN", "RECLAMAR"], ["DAILY REWARD", "RÉCOMPENSE DU JOUR", "デイリー報酬", "PRÊMIO DIÁRIO", "TAGESBELOHNUNG", "PREMIO DIARIO"], ["ENTRY REWARD", "BONUS D’ENTRÉE", "初回報酬", "PRÊMIO DE ENTRADA", "START-BONUS", "PREMIO DE ENTRADA"], ["LAUNCH REWARD", "BONUS DE LANCEMENT", "起動報酬", "PRÊMIO DE ABERTURA", "START-BELOHNUNG", "PREMIO DE INICIO"], ["SHARE REWARDS", "BONUS DE PARTAGE", "シェア報酬", "PRÊMIO POR COMPARTILHAR", "TEILEN-BONUS", "PREMIO POR COMPARTIR"], ["INVITE FRIENDS", "INVITER DES AMIS", "友達を招待", "CONVIDAR AMIGOS", "FREUNDE EINLADEN", "INVITAR AMIGOS"], ["RATE US", "NOTEZ-NOUS", "評価する", "AVALIE-NOS", "BEWERTE UNS", "VALÓRANOS"], ["ADD TO SCREEN", "AJOUTER À L’ÉCRAN", "ホーム画面に追加", "ADICIONAR À TELA", "ZUM HOMESCREEN", "AÑADIR A INICIO"], ["NO CONNECTION", "PAS DE CONNEXION", "接続なし", "SEM CONEXÃO", "KEINE VERBINDUNG", "SIN CONEXIÓN"], ["WATCH AD REWARD", "PUB RÉCOMPENSÉE", "動画で報酬", "PRÊMIO POR ANÚNCIO", "WERBE-BELOHNUNG", "PREMIO POR ANUNCIO"], ["WELCOME BACK", "BON RETOUR", "おかえり", "BEM-VINDO DE VOLTA", "WILLKOMMEN ZURÜCK", "BIENVENIDO DE NUEVO"], ["SHARE", "PARTAGER", "シェア", "COMPARTILHAR", "TEILEN", "COMPARTIR"], ["RATE NOW", "NOTER", "評価する", "AVALIAR", "BEWERTEN", "VALORAR"], ["NOT NOW", "PLUS TARD", "後で", "AGORA NÃO", "SPÄTER", "AHORA NO"], ["GOT IT", "COMPRIS", "OK", "ENTENDI", "VERSTANDEN", "ENTENDIDO"], ["RETRY", "RÉESSAYER", "再試行", "TENTAR DE NOVO", "ERNEUT", "REINTENTAR"], ["OPEN PROFILE", "OUVRIR LE PROFIL", "プロフィールを開く", "ABRIR PERFIL", "PROFIL ÖFFNEN", "ABRIR PERFIL"], ["YOUR PROFILE", "TON PROFIL", "プロフィール", "SEU PERFIL", "DEIN PROFIL", "TU PERFIL"], ["PILOT", "PILOTE", "パイロット", "PILOTO", "PILOT", "PILOTO"], ["Leaderboard", "Classement", "ランキング", "Ranking", "Rangliste", "Clasificación"], ["Trophies", "Trophées", "トロフィー", "Troféus", "Trophäen", "Trofeos"], ["Runs", "Courses", "プレイ数", "Corridas", "Läufe", "Carreras"], ["Car", "Voiture", "車", "Carro", "Auto", "Coche"], ["Save", "Enregistrer", "保存", "Salvar", "Speichern", "Guardar"], ["Practice it", "S’entraîner", "練習する", "Praticar", "Üben", "Practicar"], ["PILOT TRAINING", "ENTRAÎNEMENT", "パイロット訓練", "TREINO DE PILOTO", "PILOTENTRAINING", "ENTRENAMIENTO"], ["Start training", "Commencer", "訓練開始", "Começar treino", "Training starten", "Empezar"], ["Skip", "Passer", "スキップ", "Pular", "Überspringen", "Saltar"], ["TRAINING COMPLETE", "ENTRAÎNEMENT TERMINÉ", "訓練完了", "TREINO CONCLUÍDO", "TRAINING FERTIG", "ENTRENAMIENTO COMPLETO"], ["Let's race", "C’est parti", "レース開始", "Vamos correr", "Los geht’s", "¡A correr!"], ["Collect", "Récupérer", "受け取る", "Coletar", "Einsammeln", "Recoger"], ["CUP RESULTS", "RÉSULTATS DE LA COUPE", "カップ結果", "RESULTADOS DA COPA", "POKALERGEBNISSE", "RESULTADOS DE LA COPA"], ["Speed", "Vitesse", "スピード", "Velocidade", "Tempo", "Velocidad"], ["Auto-collect rewards", "Récupération auto", "報酬を自動受取", "Coletar prêmios automaticamente", "Belohnungen automatisch", "Recoger premios automáticamente"], ["Boosts for this run", "Bonus pour cette course", "このレースのブースト", "Boosts desta corrida", "Boosts für diesen Lauf", "Potenciadores de esta carrera"], ["FINISH!", "ARRIVÉE !", "ゴール!", "CHEGADA!", "ZIEL!", "¡META!"]], IDX = { en: 0, fr: 1, ja: 2, pt: 3, de: 4, es: 5 }, MAP = new Map(T2.map((row) => [row[0].toLowerCase(), row])), current = "en";
+    var LANGS = [{ code: "en", name: "English", flag: "\uD83C\uDDEC\uD83C\uDDE7" }, { code: "fr", name: "Français", flag: "\uD83C\uDDEB\uD83C\uDDF7" }, { code: "ja", name: "日本語", flag: "\uD83C\uDDEF\uD83C\uDDF5" }, { code: "pt", name: "Português (BR)", flag: "\uD83C\uDDE7\uD83C\uDDF7" }, { code: "de", name: "Deutsch", flag: "\uD83C\uDDE9\uD83C\uDDEA" }, { code: "es", name: "Español", flag: "\uD83C\uDDEA\uD83C\uDDF8" }], T2 = [["Play", "Jouer", "プレイ", "Jogar", "Spielen", "Jugar"], ["CLASS PROMOTION", "PROMOTION DE CLASSE", "クラス昇格", "PROMOÇÃO DE CLASSE", "KLASSENAUFSTIEG", "ASCENSO DE CLASE"], ["New car unlocked", "Nouvelle voiture débloquée", "新しい車をアンロック", "Novo carro desbloqueado", "Neues Auto freigeschaltet", "Nuevo coche desbloqueado"], ["Continue", "Continuer", "続ける", "Continuar", "Weiter", "Continuar"], ["Garage", "Garage", "ガレージ", "Garagem", "Garage", "Garaje"], ["Shop", "Boutique", "ショップ", "Loja", "Shop", "Tienda"], ["Missions", "Missions", "ミッション", "Missões", "Missionen", "Misiones"], ["Daily", "Jour", "デイリー", "Diário", "Täglich", "Diario"], ["Cups", "Coupes", "カップ", "Copas", "Pokale", "Copas"], ["Ranks", "Rangs", "ランク", "Ranking", "Ränge", "Ranking"], ["Share", "Partager", "シェア", "Compartilhar", "Teilen", "Compartir"], ["Entry", "Entrée", "初回", "Entrada", "Start", "Entrada"], ["Launch", "Lancer", "起動", "Abrir", "Starten", "Abrir"], ["SETTINGS", "PARAMÈTRES", "設定", "AJUSTES", "EINSTELLUNGEN", "AJUSTES"], ["Sound", "Son", "サウンド", "Som", "Sound", "Sonido"], ["Music", "Musique", "音楽", "Música", "Musik", "Música"], ["Vibration", "Vibration", "振動", "Vibração", "Vibration", "Vibración"], ["Camera motion", "Caméra mobile", "カメラ追従", "Câmera em movimento", "Kamera-Bewegung", "Cámara en movimiento"], ["Hint arrows", "Flèches", "ヒント", "Setas", "Pfeile", "Flechas"], ["Comfort", "Confort", "目に優しい", "Conforto", "Komfort", "Confort"], ["Buy items", "Acheter", "アイテム購入", "Comprar itens", "Items kaufen", "Comprar objetos"], ["Race without a special", "Courir sans spécial", "スペシャルなしで走る", "Correr sem especial", "Ohne Spezial fahren", "Correr sin especial"], ["Back to the bag", "Retour au sac", "バッグに戻る", "Voltar à bolsa", "Zurück zur Tasche", "Volver a la bolsa"], ["In your bag", "Dans ton sac", "バッグの中", "Na sua bolsa", "In deiner Tasche", "En tu bolsa"], ["Take it", "Prendre", "持っていく", "Levar", "Mitnehmen", "Llevar"], ["Cancel", "Annuler", "キャンセル", "Cancelar", "Abbrechen", "Cancelar"], ["Share my rank", "Partager mon rang", "ランクをシェア", "Compartilhar rank", "Rang teilen", "Compartir rango"], ["Save image", "Enregistrer", "画像を保存", "Salvar imagem", "Bild speichern", "Guardar imagen"], ["Copy text", "Copier", "テキストをコピー", "Copiar texto", "Text kopieren", "Copiar texto"], ["Unlocks", "Débloque", "解放", "Desbloqueia", "Schaltet frei", "Desbloquea"], ["Ready to claim", "À récupérer", "受け取り可能", "Pronto para coletar", "Bereit", "Listo para cobrar"], ["Claim all", "Tout récupérer", "すべて受け取る", "Coletar tudo", "Alle abholen", "Cobrar todo"], ["Account", "Compte", "アカウント", "Conta", "Konto", "Cuenta"], ["Continue with Google", "Continuer avec Google", "Googleで続ける", "Continuar com Google", "Weiter mit Google", "Continuar con Google"], ["Continue with Apple", "Continuer avec Apple", "Appleで続ける", "Continuar com Apple", "Weiter mit Apple", "Continuar con Apple"], ["Send code", "Envoyer le code", "コードを送信", "Enviar código", "Code senden", "Enviar código"], ["Sign in", "Se connecter", "サインイン", "Entrar", "Anmelden", "Iniciar sesión"], ["Sign out", "Se déconnecter", "サインアウト", "Sair", "Abmelden", "Cerrar sesión"], ["Sync now", "Synchroniser", "今すぐ同期", "Sincronizar", "Jetzt synchronisieren", "Sincronizar"], ["Keep this", "Garder", "これを残す", "Manter", "Behalten", "Conservar"], ["Eye comfort", "Confort visuel", "目に優しい", "Conforto visual", "Augenschonend", "Confort visual"], ["Graphics", "Graphisme", "画質", "Gráficos", "Grafik", "Gráficos"], ["Language", "Langue", "言語", "Idioma", "Sprache", "Idioma"], ["Profile", "Profil", "プロフィール", "Perfil", "Profil", "Perfil"], ["How to play", "Comment jouer", "遊び方", "Como jogar", "Anleitung", "Cómo jugar"], ["Jump guide", "Guide du saut", "ジャンプガイド", "Guia do salto", "Sprung-Guide", "Guía de salto"], ["Restore", "Restaurer", "復元", "Restaurar", "Wiederherstellen", "Restaurar"], ["Paused", "Pause", "一時停止", "Pausado", "Pausiert", "En pausa"], ["Resume", "Reprendre", "再開", "Continuar", "Weiter", "Reanudar"], ["Retry", "Rejouer", "リトライ", "De novo", "Nochmal", "Reintentar"], ["Restart", "Recommencer", "リスタート", "Reiniciar", "Neustart", "Reiniciar"], ["Home", "Accueil", "ホーム", "Início", "Start", "Inicio"], ["Tracks", "Circuits", "コース", "Pistas", "Strecken", "Pistas"], ["Next track", "Circuit suivant", "次のコース", "Próxima pista", "Nächste Strecke", "Siguiente pista"], ["GAME OVER", "PERDU", "ゲームオーバー", "FIM DE JOGO", "GAME OVER", "FIN DEL JUEGO"], ["NEW BEST!", "RECORD !", "自己ベスト!", "NOVO RECORDE!", "NEUER REKORD!", "¡NUEVO RÉCORD!"], ["Best", "Record", "ベスト", "Recorde", "Rekord", "Récord"], ["Distance", "Distance", "距離", "Distância", "Distanz", "Distancia"], ["Coins", "Pièces", "コイン", "Moedas", "Münzen", "Monedas"], ["Near miss", "Frôlé", "ニアミス", "Por um triz", "Knapp", "Roce"], ["Time", "Temps", "タイム", "Tempo", "Zeit", "Tiempo"], ["Lives lost", "Vies perdues", "失ったライフ", "Vidas perdidas", "Verlorene Leben", "Vidas perdidas"], ["Unused boosts", "Bonus inutilisés", "未使用ブースト", "Boosts não usados", "Ungenutzte Boosts", "Potenciadores sin usar"], ["TAP!", "TAPE !", "タップ!", "TOQUE!", "TIPPEN!", "¡TOCA!"], ["Reward", "Récompense", "報酬", "Prêmio", "Belohnung", "Premio"], ["Rewards", "Récompenses", "報酬", "Prêmios", "Belohnungen", "Premios"], ["REVIVE?", "REVIVRE ?", "復活する？", "REVIVER?", "WIEDERBELEBEN?", "¿REVIVIR?"], ["Watch ad · Revive", "Pub · Revivre", "広告で復活", "Anúncio · Reviver", "Werbung · Weiter", "Anuncio · Revivir"], ["No thanks · end race", "Non merci · fin", "やめる · 終了", "Não · terminar", "Nein · beenden", "No · terminar"], ["SPECIAL", "SPÉCIAL", "スペシャル", "ESPECIAL", "SPEZIAL", "ESPECIAL"], ["No special", "Aucun spécial", "スペシャルなし", "Sem especial", "Kein Spezial", "Sin especial"], ["Pure skill run", "Pur talent", "実力勝負", "Só habilidade", "Nur Können", "Solo habilidad"], ["GO", "GO", "GO", "VAI", "LOS", "YA"], ["RANK GATE", "PORTE DE RANG", "ランクゲート", "PORTÃO DE RANK", "RANG-TOR", "PUERTA DE RANGO"], ["Bonus", "Bonus", "ボーナス", "Bônus", "Bonus", "Bonus"], ["BONUS", "BONUS", "ボーナス", "BÔNUS", "BONUS", "BONUS"], ["Training", "Entraînement", "トレーニング", "Treino", "Training", "Entrenamiento"], ["Replay freely", "Rejouable à volonté", "何度でもプレイ可", "Jogue à vontade", "Beliebig oft", "Repite cuanto quieras"], ["Every hour", "Chaque heure", "毎時", "Toda hora", "Jede Stunde", "Cada hora"], ["Race the Bonus", "Courir le Bonus", "ボーナスに挑戦", "Correr o Bônus", "Bonus fahren", "Correr el Bonus"], ["Coming soon", "Bientôt", "近日公開", "Em breve", "Bald", "Próximamente"], ["Race Endless", "Courir Endless", "エンドレスへ", "Correr Endless", "Endless fahren", "Correr Endless"], ["Free coins", "Pièces gratuites", "無料コイン", "Moedas grátis", "Gratis-Münzen", "Monedas gratis"], ["Race", "Course", "レース", "Correr", "Rennen", "Carrera"], ["How EXP works", "Comment marche l’EXP", "EXPの仕組み", "Como funciona o EXP", "So funktioniert EXP", "Cómo funciona el EXP"], ["Best EXP", "Meilleur EXP", "ベストEXP", "Melhor EXP", "Bester EXP", "Mejor EXP"], ["NEW BEST EXP!", "NOUVEAU RECORD EXP !", "EXP新記録！", "NOVO RECORDE DE EXP!", "NEUER EXP-REKORD!", "¡NUEVO RÉCORD DE EXP!"], ["How rank works", "Comment marche le rang", "ランクの仕組み", "Como funciona o rank", "So funktioniert der Rang", "Cómo funciona el rango"], ["Score", "Score", "スコア", "Pontos", "Punkte", "Puntos"], ["CONTINUE?", "CONTINUER ?", "コンティニュー?", "CONTINUAR?", "WEITER?", "¿CONTINUAR?"], ["No thanks", "Non merci", "結構です", "Não, obrigado", "Nein danke", "No, gracias"], ["SELECT TRACK", "CHOISIR UN CIRCUIT", "コース選択", "ESCOLHER PISTA", "STRECKE WÄHLEN", "ELEGIR PISTA"], ["Endless", "Infini", "エンドレス", "Infinito", "Endlos", "Infinito"], ["GARAGE", "GARAGE", "ガレージ", "GARAGEM", "GARAGE", "GARAJE"], ["Selected", "Sélectionnée", "選択中", "Selecionado", "Ausgewählt", "Seleccionado"], ["Select", "Choisir", "選択", "Selecionar", "Wählen", "Elegir"], ["Upgrades", "Améliorations", "アップグレード", "Melhorias", "Upgrades", "Mejoras"], ["MISSIONS", "MISSIONS", "ミッション", "MISSÕES", "MISSIONEN", "MISIONES"], ["DAILY", "QUOTIDIEN", "デイリー", "DIÁRIO", "TÄGLICH", "DIARIO"], ["CUPS", "COUPES", "カップ", "COPAS", "POKALE", "COPAS"], ["SHOP", "BOUTIQUE", "ショップ", "LOJA", "SHOP", "TIENDA"], ["TOP PILOTS", "MEILLEURS PILOTES", "トップパイロット", "MELHORES PILOTOS", "TOP-PILOTEN", "MEJORES PILOTOS"], ["This week", "Cette semaine", "今週", "Esta semana", "Diese Woche", "Esta semana"], ["All time", "Toujours", "全期間", "Geral", "Allzeit", "Histórico"], ["Race now", "Courir", "レース開始", "Correr agora", "Jetzt fahren", "Correr ya"], ["Standings", "Classement", "順位", "Classificação", "Stand", "Clasificación"], ["Prizes", "Prix", "賞品", "Prêmios", "Preise", "Premios"], ["Divisions", "Divisions", "ディビジョン", "Divisões", "Divisionen", "Divisiones"], ["Upcoming", "À venir", "開催予定", "Próximas", "Demnächst", "Próximas"], ["CLAIM", "RÉCUPÉRER", "受け取る", "RESGATAR", "ABHOLEN", "RECLAMAR"], ["DAILY REWARD", "RÉCOMPENSE DU JOUR", "デイリー報酬", "PRÊMIO DIÁRIO", "TAGESBELOHNUNG", "PREMIO DIARIO"], ["ENTRY REWARD", "BONUS D’ENTRÉE", "初回報酬", "PRÊMIO DE ENTRADA", "START-BONUS", "PREMIO DE ENTRADA"], ["LAUNCH REWARD", "BONUS DE LANCEMENT", "起動報酬", "PRÊMIO DE ABERTURA", "START-BELOHNUNG", "PREMIO DE INICIO"], ["SHARE REWARDS", "BONUS DE PARTAGE", "シェア報酬", "PRÊMIO POR COMPARTILHAR", "TEILEN-BONUS", "PREMIO POR COMPARTIR"], ["INVITE FRIENDS", "INVITER DES AMIS", "友達を招待", "CONVIDAR AMIGOS", "FREUNDE EINLADEN", "INVITAR AMIGOS"], ["RATE US", "NOTEZ-NOUS", "評価する", "AVALIE-NOS", "BEWERTE UNS", "VALÓRANOS"], ["ADD TO SCREEN", "AJOUTER À L’ÉCRAN", "ホーム画面に追加", "ADICIONAR À TELA", "ZUM HOMESCREEN", "AÑADIR A INICIO"], ["NO CONNECTION", "PAS DE CONNEXION", "接続なし", "SEM CONEXÃO", "KEINE VERBINDUNG", "SIN CONEXIÓN"], ["WATCH AD REWARD", "PUB RÉCOMPENSÉE", "動画で報酬", "PRÊMIO POR ANÚNCIO", "WERBE-BELOHNUNG", "PREMIO POR ANUNCIO"], ["WELCOME BACK", "BON RETOUR", "おかえり", "BEM-VINDO DE VOLTA", "WILLKOMMEN ZURÜCK", "BIENVENIDO DE NUEVO"], ["SHARE", "PARTAGER", "シェア", "COMPARTILHAR", "TEILEN", "COMPARTIR"], ["RATE NOW", "NOTER", "評価する", "AVALIAR", "BEWERTEN", "VALORAR"], ["NOT NOW", "PLUS TARD", "後で", "AGORA NÃO", "SPÄTER", "AHORA NO"], ["GOT IT", "COMPRIS", "OK", "ENTENDI", "VERSTANDEN", "ENTENDIDO"], ["RETRY", "RÉESSAYER", "再試行", "TENTAR DE NOVO", "ERNEUT", "REINTENTAR"], ["OPEN PROFILE", "OUVRIR LE PROFIL", "プロフィールを開く", "ABRIR PERFIL", "PROFIL ÖFFNEN", "ABRIR PERFIL"], ["YOUR PROFILE", "TON PROFIL", "プロフィール", "SEU PERFIL", "DEIN PROFIL", "TU PERFIL"], ["PILOT", "PILOTE", "パイロット", "PILOTO", "PILOT", "PILOTO"], ["Leaderboard", "Classement", "ランキング", "Ranking", "Rangliste", "Clasificación"], ["Trophies", "Trophées", "トロフィー", "Troféus", "Trophäen", "Trofeos"], ["Runs", "Courses", "プレイ数", "Corridas", "Läufe", "Carreras"], ["Car", "Voiture", "車", "Carro", "Auto", "Coche"], ["Save", "Enregistrer", "保存", "Salvar", "Speichern", "Guardar"], ["Practice it", "S’entraîner", "練習する", "Praticar", "Üben", "Practicar"], ["PILOT TRAINING", "ENTRAÎNEMENT", "パイロット訓練", "TREINO DE PILOTO", "PILOTENTRAINING", "ENTRENAMIENTO"], ["Start training", "Commencer", "訓練開始", "Começar treino", "Training starten", "Empezar"], ["Skip", "Passer", "スキップ", "Pular", "Überspringen", "Saltar"], ["TRAINING COMPLETE", "ENTRAÎNEMENT TERMINÉ", "訓練完了", "TREINO CONCLUÍDO", "TRAINING FERTIG", "ENTRENAMIENTO COMPLETO"], ["Let's race", "C’est parti", "レース開始", "Vamos correr", "Los geht’s", "¡A correr!"], ["Collect", "Récupérer", "受け取る", "Coletar", "Einsammeln", "Recoger"], ["CUP RESULTS", "RÉSULTATS DE LA COUPE", "カップ結果", "RESULTADOS DA COPA", "POKALERGEBNISSE", "RESULTADOS DE LA COPA"], ["Speed", "Vitesse", "スピード", "Velocidade", "Tempo", "Velocidad"], ["Auto-collect rewards", "Récupération auto", "報酬を自動受取", "Coletar prêmios automaticamente", "Belohnungen automatisch", "Recoger premios automáticamente"], ["Boosts for this run", "Bonus pour cette course", "このレースのブースト", "Boosts desta corrida", "Boosts für diesen Lauf", "Potenciadores de esta carrera"], ["FINISH!", "ARRIVÉE !", "ゴール!", "CHEGADA!", "ZIEL!", "¡META!"]], IDX = { en: 0, fr: 1, ja: 2, pt: 3, de: 4, es: 5 }, MAP = new Map(T2.map((row) => [row[0].toLowerCase(), row])), current = "en";
     var getLang = () => current;
     function tr(en, lang = current) { let row = MAP.get(en.trim().toLowerCase()); return row ? row[IDX[lang]] : en; }
     function setLangCode(lang) { current = lang; }
@@ -16162,6 +16355,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.hits = [];
             this.scrolls = [];
             this.off = {};
+            this.flat = !0;
             this.pressed = "";
             this.time = 0;
             this.dry = 0;
@@ -16320,14 +16514,16 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
     function rankBadge(g, cls, x, y, h, col) { var _a; if (g.dry)
         return; let cc = (_a = col !== null && col !== void 0 ? col : CLASS_COLOR[cls]) !== null && _a !== void 0 ? _a : "#9fb3dd", w = rankBadgeW(g, cls, h), c = g.ctx, n = h * 0.28; c.beginPath(), c.moveTo(x + n, y), c.lineTo(x + w - n, y), c.lineTo(x + w, y + h / 2), c.lineTo(x + w - n, y + h), c.lineTo(x + n, y + h), c.lineTo(x, y + h / 2), c.closePath(), c.fillStyle = "#0b1020", c.fill(), c.strokeStyle = cc, c.lineWidth = Math.max(1.2, h * 0.09), c.stroke(), g.text(cls, x + w / 2, y + h / 2 + 0.5, { size: h * 0.62, color: cc, align: "center", shadow: null, noTr: !0 }); }
     var BTN = { blue: ["#3aa0ff", "#1f5fe0", "#ffffff"], gold: ["#ffd84a", "#ff9a1a", "#2a1600"], green: ["#3fe07c", "#13a04a", "#ffffff"], purple: ["#b06bff", "#6a2ee0", "#ffffff"], pink: ["#ff6bb0", "#e0247a", "#ffffff"], red: ["#ff6b6b", "#d81f3c", "#ffffff"], cyan: ["#5ee6ff", "#1a9fd8", "#06223a"], ghost: ["rgba(255,255,255,.10)", "rgba(255,255,255,.06)", "#ffffff"], dark: ["#25335f", "#151f44", "#ffffff"] };
+    function mix(a, b, k) { let hex = (c) => /^#[0-9a-f]{6}$/i.test(c) ? [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16)) : null, A = hex(a), B = hex(b); if (!A || !B)
+        return b; return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * k)).join(",")})`; }
     function button(g, key, x, y, w, h, label, fn, o = {}) { var _a, _b, _c, _d; let st = (_a = o.style) !== null && _a !== void 0 ? _a : "blue", [c1, c2, tc] = BTN[st], pr = g.isPressed(key) && !o.disabled, r = (_b = o.r) !== null && _b !== void 0 ? _b : Math.min(h / 2, 14); if (!g.dry) {
         if (g.ctx.save(), o.disabled)
             g.ctx.globalAlpha *= 0.45;
         if (pr)
             g.ctx.translate(x + w / 2, y + h / 2), g.ctx.scale(0.96, 0.96), g.ctx.translate(-(x + w / 2), -(y + h / 2));
-        if (st !== "ghost")
-            g.shadow("rgba(0,0,0,.45)", 6, 3), g.rr(x, y + 2, w, h, r, shade(c2, -0.35)), g.shadow(null);
-        if (g.rr(x, y, w, h, r, g.lin(0, y, 0, y + h, [[0, c1], [1, c2]]), st === "ghost" ? "rgba(255,255,255,.22)" : "rgba(255,255,255,.28)", 1), st !== "ghost")
+        if (g.flat)
+            g.rr(x, y, w, h, r, st === "ghost" ? c2 : mix(c1, c2, 0.55), st === "ghost" ? "rgba(255,255,255,.22)" : shade(c2, -0.3), 1);
+        else if (g.rr(x, y, w, h, r, g.lin(0, y, 0, y + h, [[0, c1], [1, c2]]), st === "ghost" ? "rgba(255,255,255,.22)" : "rgba(255,255,255,.28)", 1), st !== "ghost")
             g.rr(x + 3, y + 2, w - 6, h * 0.42, r * 0.8, "rgba(255,255,255,.16)");
         let size = (_c = o.size) !== null && _c !== void 0 ? _c : Math.min(18, h * 0.42), lab = o.icon ? `${o.icon} ${label}` : label;
         if (o.sub)
@@ -16510,7 +16706,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
     }
     else
         content(pad, headH + 8, pw - pad * 2); g.pop(); }
-    var OV = { finish: finishOv, gameover: gameoverOv, continue: continueOv, pause: pauseOv, tutdone: tutdoneOv, tutintro: tutintroOv, settings: settingsOv, logs: logsOv, guide: guideOv, eventres: eventresOv, profile: profileOv, bonus: bonusOv, specialpick: specialpickOv, bag: bagOv, bagbuy: bagbuyOv, boostinfo: boostinfoOv, spconfirm: spconfirmOv, rankguide: rankguideOv, needrocket: needrocketOv, account: accountOv, cloudpick: cloudpickOv, popup: popupOv };
+    var OV = { finish: finishOv, gameover: gameoverOv, continue: continueOv, pause: pauseOv, tutdone: tutdoneOv, tutintro: tutintroOv, settings: settingsOv, classup: classupOv, logs: logsOv, guide: guideOv, eventres: eventresOv, profile: profileOv, bonus: bonusOv, specialpick: specialpickOv, bag: bagOv, bagbuy: bagbuyOv, boostinfo: boostinfoOv, spconfirm: spconfirmOv, rankguide: rankguideOv, needrocket: needrocketOv, account: accountOv, cloudpick: cloudpickOv, popup: popupOv };
     function drawOverlay(ui, g, id) { var _a; (_a = OV[id]) === null || _a === void 0 ? void 0 : _a.call(OV, ui, g); }
     var tapAt = {}, shareBusy = !1, badge = (c) => `<span class="clsb" style="--cc:${CLASS_COLOR[c]}">${c}</span>`;
     function navRow(g, x, y, w, items) { let n = items.length, bw = (w - (n - 1) * 8) / n; return items.forEach(([key, icon, label, st, fn], i) => button(g, key, x + i * (bw + 8), y, bw, 54, label, fn, { style: st, size: 16, icon })), y + 60; }
@@ -16568,7 +16764,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             let sw = (w - 8) / 2;
             card(g, x, y, sw, 46, 10), card(g, x + sw + 8, y, sw, 46, 10), g.text("Distance", x + sw / 2, y + 13, { size: 9.5, align: "center", font: "b", color: C.muted }), g.rich(`${ICON.flag}<b>${o.length ? `${fmt(o.dist / o.length * 100)}%` : `${fmt(o.dist)} m`}</b>`, x, y + 22, sw, { size: 14, align: "center" }), g.text("Best", x + sw * 1.5 + 8, y + 13, { size: 9.5, align: "center", font: "b", color: C.muted }), g.text(fmt(o.best), x + sw * 1.5 + 8, y + 33, { size: 14, align: "center", noTr: !0 }), y += 54;
         }
-    } return y = rewards(ui, g, o.rewards, [{ label: "race", coins: o.coins }, { label: `${o.level} bonus`, coins: o.speedBonus }], x, y, w), y = adBtn(ui, g, "ad2x", x, y, w), button(g, "go-retry", x, y, w, 52, `${ICON.retry} Retry`, () => ui.h.retry(), { style: "blue", size: 20 }), y += 60, navRow(g, x, y, w, [["go-home", ICON.home, "Home", "blue", () => ui.h.home()], ["go-tracks", ICON.flag, "Tracks", "purple", () => ui.h.play()], ["go-garage", ICON.car, "Garage", "dark", () => ui.h.garage()]]); }); }
+    } return y = rewards(ui, g, o.rewards, [{ label: "race", coins: o.coins }, { label: `${o.level} bonus`, coins: o.speedBonus }], x, y, w), y = adBtn(ui, g, "ad2x", x, y, w), button(g, "go-retry", x, y, w, 52, `${ICON.retry} Restart`, () => ui.h.retry(), { style: "blue", size: 20 }), y += 60, navRow(g, x, y, w, [["go-home", ICON.home, "Home", "blue", () => ui.h.home()], ["go-tracks", ICON.flag, "Tracks", "purple", () => ui.h.play()], ["go-garage", ICON.car, "Garage", "dark", () => ui.h.garage()]]); }); }
     function finishOv(ui, g) { let o = ui.fin; if (!o)
         return; modal(ui, g, "finish", { close: "none" }, (x, y, w) => { var _a; if (iconBtn(g, "fi-x", x - 4, y - 4, 34, ICON.close, () => ui.h.home()), hs.hasShare())
         iconBtn(g, "fi-share", x + w - 30, y - 4, 34, ICON.share, () => ui.h.share()); if (g.img(logoImg, x + w / 2 - 60, y - 6, 120, 40, "contain"), y += 40, g.text("FINISH!", x + w / 2, y + 14, { size: 26, align: "center", italic: !0, color: C.gold }), g.text(o.track, x + w / 2, y + 36, { size: 11, align: "center", font: "b", color: C.muted, noTr: !0 }), y += 50, !o.bonus)
@@ -16579,7 +16775,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         let rule = (ok, t) => `<span style="color:${ok ? C.gold : C.muted}">${ok ? "★" : "☆"} ${t}</span>`;
         y += g.rich(`${rule(!0, "Finish")}   ${rule(o.lost === 0, "No lives lost")}   ${rule(o.coins >= o.coinTarget, `${o.coinTarget} coins`)}`, x, y, w, { size: 11, align: "center", font: "b" }) + 6;
     } if (y = rewards(ui, g, o.rewards, [{ label: "run", coins: o.coins }, { label: `${o.level} bonus`, coins: o.speedBonus }, { label: "track", coins: o.reward }], x, y, w), y = adBtn(ui, g, "ad2xf", x, y, w), o.hasNext)
-        button(g, "fi-next", x, y, w, 50, `${ICON.play} Next track`, () => ui.h.nextTrack(), { style: "blue", size: 18 }), y += 58; return navRow(g, x, y, w, [["fi-retry", ICON.retry, "Retry", "blue", () => ui.h.retry()], ["fi-tracks", ICON.flag, "Tracks", "purple", () => ui.h.play()], ["fi-home", ICON.home, "Home", "dark", () => ui.h.home()]]); }); }
+        button(g, "fi-next", x, y, w, 50, `${ICON.play} Next track`, () => ui.h.nextTrack(), { style: "blue", size: 18 }), y += 58; return navRow(g, x, y, w, [["fi-retry", ICON.retry, "Restart", "blue", () => ui.h.retry()], ["fi-tracks", ICON.flag, "Tracks", "purple", () => ui.h.play()], ["fi-home", ICON.home, "Home", "dark", () => ui.h.home()]]); }); }
     function continueOv(ui, g) { modal(ui, g, "continue", { close: "none", w: 320 }, (x, y, w) => { g.text("REVIVE?", x + w / 2, y + 14, { size: 26, align: "center", italic: !0 }), y += 36; let cx = x + w / 2, cy = y + 60; if (!g.dry) {
         g.circle(cx, cy, 52, "rgba(0,0,0,.3)", "rgba(255,255,255,.15)", 8);
         let c = g.ctx;
@@ -16588,7 +16784,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         button(g, "contad", x, y, w, 54, `${ICON.play} Watch ad · Revive`, () => ui.h.continueAd(), { style: "gold", size: 17 });
     else
         button(g, "contad", x, y, w, 54, hs.hasAds() ? `${ICON.clock} Ad loading…` : `${ICON.info} No ad available`, () => { }, { style: "ghost", disabled: !0, size: 15 }); return y += 62, button(g, "contno", x + 30, y, w - 60, 38, "No thanks · end race", () => ui.h.continueNo(), { style: "ghost", size: 13 }), y + 42; }); }
-    function pauseOv(ui, g) { let s = ui.save; modal(ui, g, "pause", { close: "none", w: 330 }, (x, y, w) => { var _a, _b; g.text("Paused", x + w / 2, y + 16, { size: 31, align: "center", italic: !0 }), y += 44; let tw = (w - 16) / 3; return [["p-sound", (s === null || s === void 0 ? void 0 : s.settings.sound) ? ICON.sound : ICON.soundOff, "SFX", () => ui.h.toggleSound(), !!(s === null || s === void 0 ? void 0 : s.settings.sound)], ["p-music", (s === null || s === void 0 ? void 0 : s.settings.music) ? ICON.music : ICON.musicOff, "MUSIC", () => ui.h.toggleMusic(), !!(s === null || s === void 0 ? void 0 : s.settings.music)], ["p-q", ICON.gear, ((_b = (_a = ui.liveQuality) !== null && _a !== void 0 ? _a : s === null || s === void 0 ? void 0 : s.settings.quality) !== null && _b !== void 0 ? _b : "high").toUpperCase(), () => ui.h.toggleQuality(), !0]].forEach(([k, ic, l, fn, on], i) => button(g, k, x + i * (tw + 8), y, tw, 46, l, fn, { style: on ? "dark" : "ghost", icon: ic, size: 15 })), y += 56, button(g, "resume", x, y, w, 60, `${ICON.play} Resume`, () => ui.h.resume(), { style: "gold", size: 24 }), y += 68, navRow(g, x, y, w, [["p-retry", ICON.retry, "Retry", "blue", () => ui.h.retry()], ["p-home", ICON.home, "Home", "dark", () => ui.h.home()]]); }); }
+    function pauseOv(ui, g) { let s = ui.save; modal(ui, g, "pause", { close: "none", w: 330 }, (x, y, w) => { var _a, _b, _c; g.text("Paused", x + w / 2, y + 16, { size: 31, align: "center", italic: !0 }), y += 44; let tw = (w - 16) / 3; return [["p-sound", (s === null || s === void 0 ? void 0 : s.settings.sound) ? ICON.sound : ICON.soundOff, "SFX", () => ui.h.toggleSound(), !!(s === null || s === void 0 ? void 0 : s.settings.sound)], ["p-music", (s === null || s === void 0 ? void 0 : s.settings.music) ? ICON.music : ICON.musicOff, "MUSIC", () => ui.h.toggleMusic(), !!(s === null || s === void 0 ? void 0 : s.settings.music)], ["p-q", ICON.gear, (_c = { low: "LO", medium: "MED", high: "HI" }[(_b = (_a = ui.liveQuality) !== null && _a !== void 0 ? _a : s === null || s === void 0 ? void 0 : s.settings.quality) !== null && _b !== void 0 ? _b : "high"]) !== null && _c !== void 0 ? _c : "HI", () => ui.h.toggleQuality(), !0]].forEach(([k, ic, l, fn, on], i) => button(g, k, x + i * (tw + 8), y, tw, 46, l, fn, { style: on ? "dark" : "ghost", icon: ic, size: 15 })), y += 56, button(g, "resume", x, y, w, 60, `${ICON.play} Resume`, () => ui.h.resume(), { style: "gold", size: 24 }), y += 68, navRow(g, x, y, w, [["p-retry", ICON.retry, "Restart", "blue", () => ui.h.retry()], ["p-home", ICON.home, "Home", "dark", () => ui.h.home()]]); }); }
     function tutdoneOv(ui, g) { var _a; let p = (_a = ui.tutDoneP) !== null && _a !== void 0 ? _a : null; modal(ui, g, "tutdone", { close: "none", w: 340 }, (x, y, w) => { if (g.circle(x + w / 2, y + 30, 28, C.green), g.icon(ICON.check, x + w / 2 - 18, y + 12, 36, "#fff"), y += 70, g.text(p ? `${SPECIAL_SHORT[p].toUpperCase()} PRACTICE DONE` : "TRAINING COMPLETE", x + w / 2, y, { size: 20, align: "center", italic: !0, maxW: w }), y += 18, y += g.rich(p ? "Nice! In a race, carry it in from your <b>Magic Bag</b> — 1 special per race." : "You're ready! <b>Distance = EXP</b>, and EXP is your rank. Every new rank is guarded by a hard <b>rank gate</b>.", x, y, w, { size: 12.5, align: "center", font: "b", color: "#cfe0ff" }) + 8, !p)
         y += g.rich(`${badge("D")} → ${badge("C")} <small>≈ 3 min on Hard</small>`, x, y, w, { size: 14, align: "center" }) + 8; button(g, "td-play", x, y, w, 54, `${ICON.play} ${p ? "Race" : "Race Endless"}`, () => ui.h.play(), { style: "gold", size: 19 }), y += 62; let bw = (w - 8) / 2; return button(g, "td-again", x, y, bw, 44, `${ICON.retry} ${p ? "Again" : "Replay"}`, () => ui.h.trainAgain(), { style: "ghost", size: 13 }), button(g, "td-home", x + bw + 8, y, bw, 44, `${ICON.home} Home`, () => ui.h.home(), { style: "ghost", size: 13 }), y + 48; }); }
     function tutintroOv(ui, g) { modal(ui, g, "tutintro", { title: "TUTORIAL", icon: TUT_ICON, close: "modal" }, (x, y, w) => { y += g.rich("Learn the moves and practise each special. You can't crash in training.", x, y, w, { size: 12, font: "b", color: "#cfe0ff", align: "center" }) + 8, g.text("1  Basics · first flight", x, y + 8, { size: 13, color: C.cyan }), y += 22; let tiles = [["← →", "Swipe left / right", "Exactly one lane per swipe"], ["↑", "Swipe up", "One hop over low obstacles"], ["↓", "Swipe down", "Slide under beams"], ["", "Your special", "Tap its button to jump a block"]], tw = (w - 8) / 2; tiles.forEach(([gl, b, s], i) => { let tx = x + i % 2 * (tw + 8), ty = y + Math.floor(i / 2) * 70; if (card(g, tx, ty, tw, 64, 10), gl)
@@ -16601,9 +16797,9 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
     else
         g.text(ic, tx + 19, ty + 24, { size: 16, align: "center", color: C.cyan, noTr: !0 }); g.text(l, tx + 36, ty + 24, { size: 11.5, maxW: tw - 92 }), toggle(g, `s-${k}`, tx + tw - 54, ty + 11, on, fn); }); {
         let tx = x + tw + 8, ty = y + 112;
-        card(g, tx, ty, tw, 48, 12), g.icon(ICON.gear, tx + 8, ty + 13, 22, C.cyan), g.text("Graphics", tx + 36, ty + 24, { size: 11.5, maxW: tw - 110 });
+        card(g, tx, ty, tw, 48, 12), g.icon(ICON.gear, tx + 8, ty + 13, 22, C.cyan), g.text("Graphics", tx + 34, ty + 24, { size: 11, maxW: tw - 132 });
         let q = (_a = ui.liveQuality) !== null && _a !== void 0 ? _a : s.settings.quality;
-        ["high", "low"].forEach((v, i) => { let bx = tx + tw - 76 + i * 34, on = q === v; g.rr(bx, ty + 12, 32, 24, 8, on ? C.blue : "rgba(255,255,255,.1)", "rgba(255,255,255,.25)"), g.text(v === "high" ? "HI" : "LO", bx + 16, ty + 24, { size: 11, align: "center", noTr: !0 }), g.hit(bx - 2, ty + 6, 36, 36, `q-${v}`, () => on ? void 0 : ui.h.toggleQuality()); });
+        ["low", "medium", "high"].forEach((v, i) => { let bx = tx + tw - 98 + i * 31, on = q === v; g.rr(bx, ty + 12, 29, 24, 8, on ? C.blue : "rgba(255,255,255,.1)", "rgba(255,255,255,.25)"), g.text(v === "high" ? "HI" : v === "medium" ? "MED" : "LO", bx + 14.5, ty + 24, { size: 9.5, align: "center", noTr: !0 }), g.hit(bx - 1, ty + 6, 31, 36, `q-${v}`, () => on ? void 0 : ui.h.toggleQuality(v)); });
     } y += 172, ((key, ic, label, val, fn) => { g.rr(x, y, w, 44, 12, g.isPressed(key) ? "rgba(79,195,255,.2)" : "rgba(10,20,52,.8)", "rgba(130,175,255,.2)"), g.text(ic, x + 18, y + 22, { size: 16, align: "center", noTr: !0 }), g.text(label, x + 38, y + 22, { size: 13 }), g.text(val, x + w - 30, y + 22, { size: 12, align: "right", font: "b", color: C.muted, maxW: w / 2, noTr: !0 }), g.icon(ICON.chevR, x + w - 24, y + 14, 16, "#fff"), g.hit(x, y, w, 44, key, fn), y += 52; })("s-lang", "\uD83C\uDF10", "Language", (_c = (_b = LANGS.find((l) => l.code === ui.lang)) === null || _b === void 0 ? void 0 : _b.name) !== null && _c !== void 0 ? _c : "English", () => ui.langPicker()); let bw = (w - 8) / 2; if (button(g, "s-prof", x, y, bw, 40, `${ICON.user} Profile`, () => ui.h.profile(), { style: "ghost", size: 12 }), button(g, "s-help", x + bw + 8, y, bw, 40, `${ICON.info} How to play`, () => ui.h.help(), { style: "ghost", size: 12 }), y += 50, g.text(`Sky Roadster ${ui.version}`, x + w / 2, y + 6, { size: 10, align: "center", font: "b", color: C.muted, noTr: !0 }), g.hit(x + w / 2 - 60, y - 6, 120, 24, "s-ver", () => { var _a; if (ui.verTaps = ((_a = ui.verTaps) !== null && _a !== void 0 ? _a : 0) + 1, ui.verTaps >= 5)
         ui.showDiag = !ui.showDiag; }), y += 16, ui.showDiag && ui.colorCtl)
         y += g.para(ui.colorCtl.line(), x, y, w, { size: 8.5, font: "b", color: C.muted, align: "center", noTr: !0 }); if (ui.showDiag)
@@ -16614,6 +16810,9 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         let tm = new Date(l.t), ts = `${String(tm.getHours()).padStart(2, "0")}:${String(tm.getMinutes()).padStart(2, "0")}:${String(tm.getSeconds()).padStart(2, "0")}`, col = l.lv === "error" ? "#ff8a8a" : l.lv === "warn" ? "#ffd27a" : "#c9d8f5";
         y += g.para(`${ts} ${l.msg}`, 10, y, W - 20, { size: 9.5, font: "b", color: col, noTr: !0 }) + 3;
     } }
+    function classupOv(ui, g) { let o = ui.classup; if (!o)
+        return; let k = Math.min(1, (g.time - o.t0) / 350); modal(ui, g, "classup", { close: "none", w: 320 }, (x, y, w) => { let bs = 84 * (0.6 + 0.4 * (1 - Math.pow(1 - k, 3))); if (g.shadow(o.color, 24, 0), rankBadge(g, o.cls, x + w / 2 - bs / 2, y + 4 + (84 - bs) / 2, bs), g.shadow(null), y += 98, g.text("NEW CLASS", x + w / 2, y, { size: 11, align: "center", color: C.muted, font: "b" }), g.text(`Class ${o.cls}`, x + w / 2, y + 28, { size: 28, align: "center", italic: !0, color: o.color, noTr: !0 }), y += 48, y += g.para(o.sub, x + 8, y, w - 16, { size: 12.5, font: "b", align: "center", color: "#dfe8ff" }) + 8, o.car)
+        g.rr(x, y, w, 96, 14, "rgba(10,20,52,.85)", `${o.color}88`, 1.4), g.img(carImage(o.car.id), x + 10, y + 6, w - 20, 64, "contain"), g.text(`${o.car.name} unlocked`, x + w / 2, y + 82, { size: 13, align: "center", noTr: !0 }), y += 106; return button(g, "cu-ok", x, y, w, 52, "OK", () => { var _a, _b; return (_b = (_a = ui.h).classOk) === null || _b === void 0 ? void 0 : _b.call(_a); }, { style: "gold", size: 20 }), y + 56; }); }
     function guideOv(ui, g) { modal(ui, g, "guide", { title: "ROADSTER JUMP", close: "modal" }, (x, y, w) => (y += g.rich("The rocket jump that clears <b>two rows</b> of obstacles and rolls 360° in the sky.", x, y, w, { size: 12, font: "b", color: "#cfe0ff", align: "center" }) + 8, [["Spot the purple rocket", "Appears after 250 m, floating in a lane. Swipe into its lane to grab it."], ["The ROADSTER button appears", "A purple ROADSTER button shows bottom-right with how many you hold."], ["Tap ROADSTER to launch", "Flies 5.6 m over cars blocking every lane, barrel roll at the top."]].forEach(([b, s], i) => { g.dry++; let hh = g.para(s, 0, 0, w - 60, { size: 11, font: "b" }); g.dry--, card(g, x, y, w, hh + 34, 12), g.circle(x + 20, y + 20, 12, C.purple), g.text(String(i + 1), x + 20, y + 20.5, { size: 12, align: "center", noTr: !0 }), g.text(b, x + 42, y + 18, { size: 13, maxW: w - 50 }), g.para(s, x + 42, y + 28, w - 54, { size: 11, font: "b", color: C.muted }), y += hh + 42; }), card(g, x, y, w, 64, 12, C.gold), g.icon(ICON.hyper, x + 10, y + 14, 34), g.text("Mythic HYPER JUMP", x + 52, y + 16, { size: 13, color: C.gold }), g.para("7.4 m high, double roll, golden trail. Fires from the same button (gold).", x + 52, y + 26, w - 60, { size: 10.5, font: "b", color: C.muted }), y += 72, button(g, "g-train", x, y, w, 48, `${ICON.play} Practice it`, () => ui.h.boostTrain("super"), { style: "blue", size: 16 }), y + 52)); }
     function eventresOv(ui, g) { modal(ui, g, "eventres", { close: "none" }, (x, y, w) => { g.icon(ICON.cup, x + w / 2 - 24, y, 48), y += 56, g.text("CUP RESULTS", x + w / 2, y + 8, { size: 20, align: "center", italic: !0 }), y += 26; for (let r of ui.eventRes)
         card(g, x, y, w, 80, 12, r.inst.cup.color), g.rich(`${badge(r.inst.division)} <b>${r.inst.cup.name}</b>`, x + 10, y + 8, w - 20, { size: 13 }), g.text(`#${fmt(r.rank)}`, x + w - 14, y + 20, { size: 22, align: "right", color: C.gold, noTr: !0 }), g.text(`Your best ${fmt(r.score)} · ${r.prize.label}`, x + 10, y + 42, { size: 10.5, font: "b", color: C.muted, maxW: w - 20, noTr: !0 }), g.rich(`${BOLT}${r.prize.bolts}  <span class="price">${ICON.coin}${fmt(r.prize.coins)}</span>${r.prize.hyper ? `  ${ICON.hyper}×${r.prize.hyper}` : ""}`, x + 10, y + 54, w - 20, { size: 12 }), y += 88; return button(g, "claimresults", x, y, w, 52, `${ICON.gift} Collect`, () => ui.h.claimResults(), { style: "gold", size: 18 }), y + 56; }); }
@@ -16692,7 +16891,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             button(g, "nr-buy", x, y, w, 46, `Buy 1 · <span class="price">${ICON.coin}${fmt(o.price)}</span>`, () => ui.h.rocketFix("buy"), { style: "gold", size: 15 });
         else
             button(g, "nr-shop", x, y, w, 46, `${ICON.bag} Get Roadster Jumps`, () => ui.h.rocketFix("shop"), { style: "pink", size: 15 });
-        y += 54, button(g, "nr-retry", x + 20, y, w - 40, 38, `${ICON.retry} Retry & collect the rocket`, () => ui.h.rocketFix("retry"), { style: "ghost", size: 12 }), y += 42;
+        y += 54, button(g, "nr-retry", x + 20, y, w - 40, 38, `${ICON.retry} Restart & collect the rocket`, () => ui.h.rocketFix("retry"), { style: "ghost", size: 12 }), y += 42;
     } return y; }); }
     function accountOv(ui, g) { modal(ui, g, "account", { title: "ACCOUNT" }, (x, y, w) => (g.text("☁️", x + w / 2, y + 26, { size: 40, align: "center", noTr: !0 }), y += 60, y += g.rich("Your progress is saved <b>on this device</b>.", x, y, w, { size: 13, align: "center", font: "b" }), y + 10)); }
     function cloudpickOv(ui, g) { let c = ui.cloudPick; if (!c)
@@ -16822,8 +17021,8 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
     function drawScreens(ui, g, ids, layer) { for (let id of ids) {
         if (!ui.shown.has(id))
             continue;
-        g.guard(id, () => { var _a; return layer === "base" ? (_a = SCREENS[id]) === null || _a === void 0 ? void 0 : _a.call(SCREENS, ui, g) : drawOverlay(ui, g, id); });
-    } if (layer === "base" && ui.tutHint && ui.shown.has("hud"))
+        g.flat = id !== "start", g.guard(id, () => { var _a; return layer === "base" ? (_a = SCREENS[id]) === null || _a === void 0 ? void 0 : _a.call(SCREENS, ui, g) : drawOverlay(ui, g, id); });
+    } if (g.flat = !0, layer === "base" && ui.tutHint && ui.shown.has("hud"))
         swipeHint(g); }
     function pageBg(g, a = 0.86) { g.rr(0, 0, g.W, g.H, 0, g.lin(0, 0, 0, g.H, [[0, `rgba(6,10,34,${a})`], [1, `rgba(3,6,22,${a + 0.06})`]])), g.block(0, 0, g.W, g.H); }
     function pageHead(ui, g, title, back = () => ui.h.home()) { let row = capRow(g), y = row.top + 2; iconBtn(g, "back", 12, y, 40, ICON.chevL, back); let ww = wallet(ui, g, row.right, y + 4), l = 60, r = row.right - ww - 8; return g.text(title, (l + r) / 2, y + 20, { size: 19, align: "center", italic: !0, maxW: Math.max(60, r - l) }), Math.max(y + 50, safeTop(g) + 4); }
@@ -16832,7 +17031,10 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         g.circle(x + s / 2, y + s / 2, s / 2 + 2.5, null, CLASS_COLOR[cls], 2.5); if (g.icon(avatarSvg(av), x, y, s), cls)
         rankBadge(g, cls, x + s - s * 0.38, y + s - s * 0.34, s * 0.36); }
     function scrollList(g, key, x, y, w, h, content) { g.dry++; let total = content(0); g.dry--; let off = g.scroll(x, y, w, h, key, total + 12); g.clip(x, y, w, h), content(y - off), g.unclip(); }
-    function loading(ui, g) { g.rr(0, 0, g.W, g.H, 0, "#04071a"), g.img(loading_default, 0, 0, g.W, g.H, "cover"), g.block(0, 0, g.W, g.H); let y = g.H - safeBottom(g) - 70, w = Math.min(280, g.W - 80); bar(g, (g.W - w) / 2, y, w, 8, ui.loading, g.lin(0, 0, g.W, 0, [[0, "#4fc3ff"], [1, "#ff4fd8"]]), "rgba(0,0,0,.5)"), g.text(ui.loadText, g.W / 2, y + 26, { size: 13, align: "center", font: "b" }); }
+    function loading(ui, g) { g.rr(0, 0, g.W, g.H, 0, "#04071a"), g.img(loading_default, 0, 0, g.W, g.H, "cover"), g.block(0, 0, g.W, g.H); let y = g.H - safeBottom(g) - 70, w = Math.min(280, g.W - 80), dt = Math.min(0.1, Math.max(0, (g.time - (ui.loadT || g.time)) / 1000)); ui.loadT = g.time; let gap = ui.loading - ui.loadShown; if (gap > 0.001)
+        ui.loadShown += Math.max(gap * Math.min(1, dt * 6), dt * 0.08);
+    else if (ui.loadShown < 0.99)
+        ui.loadShown += Math.max(0, Math.min(ui.loading + 0.09, 0.99) - ui.loadShown) * dt * 0.4; ui.loadShown = Math.min(ui.loadShown, 1), bar(g, (g.W - w) / 2, y, w, 8, ui.loadShown, g.lin(0, 0, g.W, 0, [[0, "#4fc3ff"], [1, "#ff4fd8"]]), "rgba(0,0,0,.5)"), g.text(`Loading… ${Math.floor(ui.loadShown * 100)}%`, g.W / 2, y + 26, { size: 13, align: "center", font: "b", noTr: !0 }); }
     function railY(ui, key, target, t) { let m = ui.railAnim[key]; if (!m)
         return ui.railAnim[key] = { from: target, to: target, t0: t }, target; if (Math.abs(m.to - target) > 0.5) {
         let k = Math.min(1, (t - m.t0) / 200), cur = m.from + (m.to - m.from) * (1 - Math.pow(1 - k, 3));
@@ -16842,14 +17044,14 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
     function start(ui, g) { var _a; let { save: s, home: o } = ui, W = g.W, row = capRow(g), top = row.top - 6, t = g.time; g.rr(0, 0, W, 150, 0, g.lin(0, 0, 0, 150, [[0, "rgba(3,6,22,.55)"], [1, "rgba(3,6,22,0)"]])), g.rr(0, g.H - 300, W, 300, 0, g.lin(0, g.H - 300, 0, g.H, [[0, "rgba(3,6,22,0)"], [1, "rgba(3,6,22,.8)"]])); let sq = (x, key, icon, fn) => { g.rr(x, top + 6, 44, 44, 12, g.isPressed(key) ? "rgba(79,195,255,.35)" : g.lin(0, top, 0, top + 44, [[0, "#1c3a8c"], [1, "#0d1d55"]]), "rgba(120,170,255,.5)", 1.2), g.icon(icon, x + 11, top + 17, 22, "#ffffff"), g.hit(x - 2, top + 2, 48, 52, key, fn); }, rx = row.right - (row.capped ? 0 : 6); if (sq(rx - 44, "settings", ICON.gear, () => ui.h.settings()), rx -= 50, !row.capped || rx - 50 - 150 > 168)
         sq(rx - 44, "help", TUT_ICON, () => ui.h.help()), rx -= 50; let wl = rx - wallet(ui, g, rx, top + 12, !0); if (o) {
         let content = Math.max(g.measure(o.name, { size: 13.5, font: "b" }), 24 + g.measure(fmt(o.bolts), { size: 12.5 }) + 34), cw = Math.max(110, Math.min(172, 54 + content + 14, wl - 14 - 18)), cc = CLASS_COLOR[ui.myClass];
-        g.rr(18, top + 6, cw, 44, 22, g.isPressed("profile") ? "rgba(79,195,255,.3)" : "rgba(12,24,70,.86)", "rgba(110,160,255,.45)", 1.2), g.shadow(cc, 10, 0), g.circle(40, top + 28, 22, cc), g.shadow(null), g.icon(avatarSvg(o.avatar), 20, top + 8, 40), g.text(o.name, 64, top + 18, { size: 13.5, maxW: cw - 54, noTr: !0, weight: 800, font: "b" }), shieldBadge(g, ui.myClass, 64, top + 27, 18), g.rich(`<b>${fmt(o.bolts)}</b> ${BOLT}`, 88, top + 27, cw - 72, { size: 12.5 });
+        g.rr(18, top + 6, cw, 44, 22, g.isPressed("profile") ? "rgba(79,195,255,.3)" : "rgba(12,24,70,.86)", "rgba(110,160,255,.45)", 1.2), g.circle(40, top + 28, 22, cc), g.icon(avatarSvg(o.avatar), 20, top + 8, 40), g.text(o.name, 64, top + 18, { size: 13.5, maxW: cw - 54, noTr: !0, weight: 800, font: "b" }), shieldBadge(g, ui.myClass, 64, top + 27, 18), g.rich(`<b>${fmt(o.bolts)}</b> ${BOLT}`, 88, top + 27, cw - 72, { size: 12.5 });
         let rk = o.allRank ? `#${o.allRank >= 1e4 ? `${Math.round(o.allRank / 1000)}K` : fmt(o.allRank)}` : "#—", rw = g.measure(rk, { size: 9 }) + 14;
         g.rr(40 - rw / 2, top + 44, rw, 15, 7.5, g.lin(0, top + 44, 0, top + 59, [[0, "#ffd84a"], [1, "#f0a800"]]), "#7a4a00", 1), g.text(rk, 40, top + 52, { size: 9, align: "center", color: "#2a1600", shadow: null, noTr: !0 }), g.hit(14, top, cw + 4, 62, "profile", () => ui.h.profile());
-    } let lw = Math.min(W * 0.86, 360), lh = lw * 0.4; g.img(logoImg, (W - lw) / 2, top + 58, lw, lh, "contain"); let tile = (x, y, key, icon, label, col, fn, badge = "") => { let pr = g.isPressed(key); if (g.shadow("rgba(0,0,0,.45)", 8, 3), g.rr(x, y, 50, 50, 13, g.lin(0, y, 0, y + 50, [[0, col[0]], [1, col[1]]]), "rgba(160,200,255,.28)", 1), g.shadow(null), pr)
+    } let lw = Math.min(W * 0.86, 360), lh = lw * 0.4; g.img(logoImg, (W - lw) / 2, top + 58, lw, lh, "contain"); let tile = (x, y, key, icon, label, col, fn, badge = "") => { let pr = g.isPressed(key); if (g.rr(x, y, 50, 50, 13, g.lin(0, y, 0, y + 50, [[0, col[0]], [1, col[1]]]), "rgba(160,200,255,.28)", 1), pr)
         g.rr(x, y, 50, 50, 13, "rgba(255,255,255,.18)"); if (g.icon(icon, x + 15, y + 7, 20, "#ffffff"), g.text(label.toUpperCase(), x + 25, y + 38, { size: 8.6, align: "center", maxW: 44, weight: 900, font: "b" }), badge)
         g.circle(x + 50 - 2, y + 2, 9, "#ff3b5c", "#fff", 1.5), g.text(badge, x + 50 - 2, y + 2.5, { size: 10, align: "center", shadow: null, noTr: !0 }); g.hit(x - 4, y - 4, 58, 58, key, fn); }, ry = top + 58 + lh - 2, navy = ["#1d3c90", "#0c1b52"]; tile(18, ry, "daily", ICON.calendar, "Daily", navy, () => ui.h.daily(), o && o.dailyBadge > 0 ? String(o.dailyBadge) : ""), tile(18, ry + 60, "events", ICON.gift, "Bonus", ["#d9802e", "#9a4a12"], () => ui.h.events()), tile(18, ry + 120, "ranks", ICON.podium, "Ranks", navy, () => ui.h.ranks()); let perks = [{ key: "pk-share", kind: "share", icon: ICON.share, label: "Share", col: ["#1aa79a", "#0b6a66"], badge: !1 }, { key: "pk-entry", kind: "entry", icon: ICON.gift, label: "Entry", col: ["#7b3fe0", "#4a1d9e"], badge: !0 }, { key: "pk-launch", kind: "launch", icon: ROCKET_W, label: "Launch", col: ["#5a3fe0", "#2c1d9e"], badge: !0 }], pst = hs.perkState(), lay = perkLayout(PERK_ORDER.filter((k) => perkVisible(k, pst)), ry, 60, 50); perks.forEach((p) => { let target = lay[p.kind]; if (target === null)
-        return; let y = railY(ui, p.key, target, g.time); tile(W - 68, y, p.key, p.icon, p.label, p.col, () => ui.h.perk(p.kind), p.badge ? "!" : ""); }); let col = column(g), sb = safeBottom(g), bx = col.x + 46, bw = col.w - 92, y = g.H - sb - 18, mh = 42; y -= mh; let mw = (bw - 16) / 3, mini = (i, key, icon, label, fn, c, ic = "#fff") => { let x = bx + i * (mw + 8); if (g.shadow("rgba(0,0,0,.4)", 6, 2), g.rr(x, y, mw, mh, 12, g.lin(0, y, 0, y + mh, [[0, c[0]], [1, c[1]]]), "rgba(255,255,255,.22)", 1), g.shadow(null), g.isPressed(key))
-        g.rr(x, y, mw, mh, 12, "rgba(255,255,255,.18)"); let lab = label.toUpperCase(), tw = Math.min(g.measure(lab, { size: 12, font: "b", weight: 900 }), mw - 40), cx = x + (mw - (tw + 24)) / 2; g.icon(icon, cx, y + mh / 2 - 9, 18, ic), g.text(lab, cx + 24, y + mh / 2 + 0.5, { size: 12, maxW: mw - 40, font: "b", weight: 900 }), g.hit(x, y - 2, mw, mh + 4, key, fn); }; mini(0, "garage", CAR_LINE, "Garage", () => ui.h.garage(), ["#1b2e6e", "#0d1a48"]), mini(1, "shop", ICON.bag, "Shop", () => ui.h.shop(), ["#7b3fe0", "#4d1fa8"]), mini(2, "missions", ICON.target, "Missions", () => ui.h.missions(), ["#c46a2a", "#8a4214"]); let ph = 66; y -= ph + 12; let pulse = 1 + 0.018 * Math.sin(t / 300), key = "play"; g.ctx.save(), g.ctx.translate(W / 2, y + ph / 2), g.ctx.scale(g.isPressed(key) ? 0.97 : pulse, g.isPressed(key) ? 0.97 : pulse), g.ctx.translate(-W / 2, -(y + ph / 2)), g.shadow("rgba(80,200,255,.75)", 16, 0), g.rr(bx, y, bw, ph, 20, g.lin(0, y, 0, y + ph, [[0, "#3c8cff"], [1, "#1640c8"]]), "#7fe6ff", 2.5), g.shadow(null), g.rr(bx + 4, y + 3, bw - 8, ph * 0.42, 16, "rgba(255,255,255,.14)"), g.rr(bx + 14, y + 9, 52, ph - 18, 12, "rgba(10,30,110,.55)", "rgba(150,210,255,.4)", 1), g.icon(ICON.play, bx + 26, y + ph / 2 - 14, 28, "#fff"), g.text("PLAY", bx + bw / 2 + 12, y + ph / 2 + 1, { size: 34, align: "center", italic: !0, weight: 900, maxW: bw - 150 }); let ch = (Math.sin(t / 220) + 1) / 2; g.alpha(0.6 + 0.4 * ch), g.icon(ICON.dash, bx + bw - 54, y + ph / 2 - 15, 30, "#7fe6ff"), g.alpha(1), g.ctx.restore(), g.hit(bx, y, bw, ph, key, () => ui.h.play()); let lv = (_a = s === null || s === void 0 ? void 0 : s.settings.speed) !== null && _a !== void 0 ? _a : "normal", sh = 52; y -= sh + 12, g.rr(bx, y, bw, sh, 16, "rgba(10,22,66,.88)", "rgba(110,160,255,.4)", 1.2); let sw = (bw - 12) / 3, SPD = { easy: "#2fd36b", normal: "#ffc21a", hard: "#ff3b5c" }; ["easy", "normal", "hard"].forEach((k, i) => { let x = bx + 6 + i * sw, on = k === lv, kk = `speed-${k}`; if (on)
+        return; let y = railY(ui, p.key, target, g.time); tile(W - 68, y, p.key, p.icon, p.label, p.col, () => ui.h.perk(p.kind), p.badge ? "!" : ""); }); let col = column(g), sb = safeBottom(g), bx = col.x + 46, bw = col.w - 92, y = g.H - sb - 18, mh = 42; y -= mh; let mw = (bw - 16) / 3, mini = (i, key, icon, label, fn, c, ic = "#fff") => { let x = bx + i * (mw + 8); if (g.rr(x, y, mw, mh, 12, g.lin(0, y, 0, y + mh, [[0, c[0]], [1, c[1]]]), "rgba(255,255,255,.22)", 1), g.isPressed(key))
+        g.rr(x, y, mw, mh, 12, "rgba(255,255,255,.18)"); let lab = label.toUpperCase(), tw = Math.min(g.measure(lab, { size: 12, font: "b", weight: 900 }), mw - 40), cx = x + (mw - (tw + 24)) / 2; g.icon(icon, cx, y + mh / 2 - 9, 18, ic), g.text(lab, cx + 24, y + mh / 2 + 0.5, { size: 12, maxW: mw - 40, font: "b", weight: 900 }), g.hit(x, y - 2, mw, mh + 4, key, fn); }; mini(0, "garage", CAR_LINE, "Garage", () => ui.h.garage(), ["#1b2e6e", "#0d1a48"]), mini(1, "shop", ICON.bag, "Shop", () => ui.h.shop(), ["#7b3fe0", "#4d1fa8"]), mini(2, "missions", ICON.target, "Missions", () => ui.h.missions(), ["#c46a2a", "#8a4214"]); let ph = 66; y -= ph + 12; let pulse = 1 + 0.018 * Math.sin(t / 300), key = "play"; g.ctx.save(), g.ctx.translate(W / 2, y + ph / 2), g.ctx.scale(g.isPressed(key) ? 0.97 : pulse, g.isPressed(key) ? 0.97 : pulse), g.ctx.translate(-W / 2, -(y + ph / 2)), g.rr(bx, y, bw, ph, 20, g.lin(0, y, 0, y + ph, [[0, "#3c8cff"], [1, "#1640c8"]]), "#7fe6ff", 2.5), g.rr(bx + 4, y + 3, bw - 8, ph * 0.42, 16, "rgba(255,255,255,.14)"), g.rr(bx + 14, y + 9, 52, ph - 18, 12, "rgba(10,30,110,.55)", "rgba(150,210,255,.4)", 1), g.icon(ICON.play, bx + 26, y + ph / 2 - 14, 28, "#fff"), g.text("PLAY", bx + bw / 2 + 12, y + ph / 2 + 1, { size: 34, align: "center", italic: !0, weight: 900, maxW: bw - 150 }); let ch = (Math.sin(t / 220) + 1) / 2; g.alpha(0.6 + 0.4 * ch), g.icon(ICON.dash, bx + bw - 54, y + ph / 2 - 15, 30, "#7fe6ff"), g.alpha(1), g.ctx.restore(), g.hit(bx, y, bw, ph, key, () => ui.h.play()); let lv = (_a = s === null || s === void 0 ? void 0 : s.settings.speed) !== null && _a !== void 0 ? _a : "normal", sh = 52; y -= sh + 12, g.rr(bx, y, bw, sh, 16, "rgba(10,22,66,.88)", "rgba(110,160,255,.4)", 1.2); let sw = (bw - 12) / 3, SPD = { easy: "#2fd36b", normal: "#ffc21a", hard: "#ff3b5c" }; ["easy", "normal", "hard"].forEach((k, i) => { let x = bx + 6 + i * sw, on = k === lv, kk = `speed-${k}`; if (on)
         g.rr(x, y + 5, sw, sh - 10, 12, g.lin(0, y, 0, y + sh, [[0, k === "normal" ? "#ffe07a" : k === "easy" ? "#7af0a4" : "#ff8a9a"], [1, k === "normal" ? "#e8a800" : k === "easy" ? "#1fa858" : "#d8203c"]])); g.text("★".repeat(i + 1), x + sw / 2, y + 12, { size: 8.5, align: "center", color: on ? "rgba(40,20,0,.75)" : SPD[k], shadow: null, noTr: !0 }), g.text(LEVELS[k].label.toUpperCase(), x + sw / 2, y + 26, { size: 13, align: "center", color: on ? "#3a2400" : "#dfe8ff", maxW: sw - 8, shadow: on ? null : void 0, font: "b", weight: 900 }), g.text(`EXP ×${["1.0", "1.05", "1.7"][i]}`, x + sw / 2, y + 40, { size: 10, align: "center", font: "b", weight: 800, color: on ? "rgba(58,36,0,.8)" : SPD[k], shadow: null, noTr: !0 }), g.hit(x, y, sw, sh, kk, () => ui.h.setSpeed(k)); }); }
     function shieldBadge(g, cls, x, y, h) { let cc = CLASS_COLOR[cls], w = h * 0.95, c = g.ctx; c.beginPath(), c.moveTo(x, y), c.lineTo(x + w, y), c.lineTo(x + w, y + h * 0.55), c.quadraticCurveTo(x + w, y + h * 0.85, x + w / 2, y + h), c.quadraticCurveTo(x, y + h * 0.85, x, y + h * 0.55), c.closePath(), c.fillStyle = g.lin(0, y, 0, y + h, [[0, "#e8eefc"], [1, cc]]), c.fill(), g.text(cls, x + w / 2, y + h * 0.45, { size: h * (cls.length > 2 ? 0.36 : 0.5), align: "center", color: "#0b1436", shadow: null, noTr: !0 }); }
     function tracks(ui, g) { pageBg(g, 0.55); let s = ui.save; if (!s)
@@ -16866,18 +17068,18 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         tcard("tr-t2", mega_city_default, "Mega Rush", "Harder road · ranks S+", `${ICON.lock} Reach rank <span class="clsb" style="--cc:${CLASS_COLOR.AAA}">AAA</span>`, ICON.lock, !1, !0, () => ui.rankGuide()); return ["S", "SS", "SSS"].forEach((r, i) => { let key = `soon-${r}`, h = 70; g.rr(x, y, w, 70, 16, "rgba(20,14,50,.85)", "rgba(167,123,255,.35)"), g.text("?", x + w - 70, y + 35 + 1, { size: 40, align: "center", color: "rgba(167,123,255,.35)", shadow: null }), g.text(["Ocean Drive", "Volcano Run", "Aurora Peak"][i], x + 16, y + 24, { size: 17, italic: !0, maxW: w - 120 }), g.rich(`${ICON.lock} Reach rank <span class="clsb" style="--cc:${CLASS_COLOR[r]}">${r}</span>`, x + 16, y + 38, w - 120, { size: 11, font: "b", color: C.muted }), g.circle(x + w - 24, y + 24, 14, "rgba(0,0,0,.5)", "rgba(255,255,255,.5)"), g.text(String(i + 3), x + w - 24, y + 24.5, { size: 13, align: "center", noTr: !0 }), g.hit(x, y, w, 70, key, () => ui.toast(`${ICON.lock} Reach rank ${r} on Mega Rush to open this track`, "#b7a6ff")), y += 80; }), y; }); }
     function garage(ui, g) { var _a, _b, _c, _d, _e; let s = ui.save; if (pageHead(ui, g, "GARAGE"), !s)
         return; let W = g.W, col = column(g), skin = SKINS[Math.max(0, ui.garageIndex)], vis = carVisibility(s.unlocked, skin.id), top = safeTop(g) + 64, rc = RARITY_COLOR[(_a = skin.rarity) !== null && _a !== void 0 ? _a : "Common"], ih = vis === "dark" ? 70 : 76; if (card(g, col.x + 12, top, col.w - 24, ih, 12, "rgba(130,175,255,.25)", "rgba(8,16,44,.82)"), vis === "dark")
-        g.text(`??? · ${(_b = skin.rarity) !== null && _b !== void 0 ? _b : ""}`, col.x + 24, top + 16, { size: 13, italic: !0, color: rc }), g.rich(`${ICON.lock} Reach rank <span class="clsb" style="--cc:${CLASS_COLOR[skin.need]}">${skin.need}</span> to reveal and unlock this car. Drive farther in one run to earn EXP.`, col.x + 24, top + 28, col.w - 48, { size: 11, font: "b", color: "#c9d8f5" });
+        g.text(`??? · ${(_b = skin.rarity) !== null && _b !== void 0 ? _b : ""}`, col.x + 24, top + 16, { size: 13, italic: !0, color: rc }), g.rich(skin.future ? `${ICON.lock} A future XWAVE car — its unlock is coming soon.` : `${ICON.lock} Reach rank <span class="clsb" style="--cc:${CLASS_COLOR[skin.need]}">${skin.need}</span> to reveal and unlock this car. Drive farther in one run to earn EXP.`, col.x + 24, top + 28, col.w - 48, { size: 11, font: "b", color: "#c9d8f5" });
     else
         g.text(`${skin.name} · ${(_c = skin.rarity) !== null && _c !== void 0 ? _c : ""}`, col.x + 24, top + 16, { size: 13, italic: !0, color: rc, maxW: col.w - 48 }), g.text((_e = (_d = skin.cls.split("·")[1]) === null || _d === void 0 ? void 0 : _d.trim()) !== null && _e !== void 0 ? _e : "", col.x + 24, top + 33, { size: 10, font: "b", color: "#c9d8f5", maxW: col.w - 48, noTr: !0 }), g.rich(`${ICON.lock} Unlocks at rank <span class="clsb" style="--cc:${CLASS_COLOR[skin.need]}">${skin.need}</span>`, col.x + 24, top + 42, col.w - 48, { size: 11, color: "#ffe08a" }), g.text("Every car drives the same — EXP stays fair. Cars show off your rank.", col.x + 24, top + 66, { size: 9.5, font: "b", color: C.muted, maxW: col.w - 48 }); if (vis !== "own") {
-        let lt = vis === "dark" ? `RANK ${skin.need} NEEDED` : "LOCKED", lw = g.measure(lt, { size: 13 }) + 52, ly = g.H * 0.34;
+        let lt = skin.future ? "COMING SOON" : vis === "dark" ? `RANK ${skin.need} NEEDED` : "LOCKED", lw = g.measure(lt, { size: 13 }) + 52, ly = g.H * 0.34;
         g.rr((W - lw) / 2, ly, lw, 36, 18, "rgba(0,0,0,.6)", "rgba(255,255,255,.35)"), g.icon(ICON.lock, (W - lw) / 2 + 14, ly + 9, 18, "#fff"), g.text(lt, (W - lw) / 2 + 38, ly + 18, { size: 13 });
     } let sb = safeBottom(g), y = g.H - sb - 12 - 50, owned = s.unlocked.includes(skin.id), myClass = playerRank(s.expBest, s.exp2Best); if (!owned)
-        button(g, "carbtn", col.x + 12, y, col.w - 24, 50, `${ICON.lock} Reach rank ${skin.need}`, () => ui.rankGuide(), { style: "purple" });
+        button(g, "carbtn", col.x + 12, y, col.w - 24, 50, skin.future ? `${ICON.lock} Coming soon` : `${ICON.lock} Reach rank ${skin.need}`, () => ui.rankGuide(), { style: "purple" });
     else if (s.vehicle === skin.id)
         button(g, "carbtn", col.x + 12, y, col.w - 24, 50, `${ICON.check} Selected`, () => ui.h.selectSkin(skin.id), { style: "ghost" });
     else
         button(g, "carbtn", col.x + 12, y, col.w - 24, 50, "Select", () => ui.h.selectSkin(skin.id), { style: "blue" }); y -= 72, card(g, col.x + 12, y, col.w - 24, 62, 14, "rgba(130,175,255,.3)", "rgba(8,16,44,.85)"), iconBtn(g, "prevcar", col.x + 22, y + 11, 40, ICON.chevL, () => { ui.garageIndex = (ui.garageIndex + SKINS.length - 1) % SKINS.length, ui.h.previewSkin(SKINS[ui.garageIndex].id); }), iconBtn(g, "nextcar", col.x + col.w - 62, y + 11, 40, ICON.chevR, () => { ui.garageIndex = (ui.garageIndex + 1) % SKINS.length, ui.h.previewSkin(SKINS[ui.garageIndex].id); }), g.text(vis === "dark" ? "???" : skin.name, W / 2, y + 20, { size: 18, align: "center", italic: !0, maxW: col.w - 140, noTr: !0 }), g.text(skin.cls.split("·")[0].trim(), W / 2, y + 38, { size: 10, align: "center", font: "b", color: C.muted, noTr: !0 }), SKINS.forEach((_, i) => g.circle(W / 2 - (SKINS.length - 1) * 6 + i * 12, y + 52, 3.5, i === ui.garageIndex ? C.cyan : "rgba(255,255,255,.25)")); let ch = 96, cw = 86; y -= ch + 10; let total = (SKINS.length + 1) * (cw + 8), off = g.scroll(0, y, W, ch, "carstrip", total + 24, !0); g.clip(0, y - 4, W, ch + 8), SKINS.forEach((k, i) => { var _a, _b; let x = 12 + i * (cw + 8) - off, v = carVisibility(s.unlocked, k.id), on = i === ui.garageIndex, key = `car-${k.id}`, rcol = RARITY_COLOR[(_a = k.rarity) !== null && _a !== void 0 ? _a : "Common"]; if (g.rr(x, y, cw, ch, 12, on ? `${rcol}40` : "rgba(10,22,60,.85)", on ? rcol : "rgba(255,255,255,.18)", on ? 2 : 1), g.alpha(v === "dark" ? 0.25 : 1), g.img(v === "dark" ? car_x1_back_default : carImage(k.id), x + 4, y + 6, cw - 8, 50, "contain"), g.alpha(1), v === "dark")
-        g.text("?", x + cw / 2, y + 30, { size: 26, align: "center", color: "#a9b8ff" }); g.text(v === "dark" ? "???" : k.name.replace("XWAVE ", ""), x + cw / 2, y + 66, { size: 11, align: "center", maxW: cw - 8, noTr: !0 }); let rankOk = CLASSES.indexOf(myClass) >= CLASSES.indexOf((_b = k.need) !== null && _b !== void 0 ? _b : "D"), label = v === "own" ? s.vehicle === k.id ? "In use" : "Owned" : v === "next" ? rankOk ? `${ICON.coin}${fmt(k.price)}` : `${ICON.lock} Rank ${k.need}` : `Rank ${k.need}`; g.rich(label, x + 4, y + 74, cw - 8, { size: 9.5, align: "center", font: "b", color: v === "own" ? C.green : C.muted }), g.hit(x, y, cw, ch, key, () => { ui.garageIndex = i, ui.h.previewSkin(k.id); }); }); {
+        g.text("?", x + cw / 2, y + 30, { size: 26, align: "center", color: "#a9b8ff" }); g.text(v === "dark" ? "???" : k.name.replace("XWAVE ", ""), x + cw / 2, y + 66, { size: 11, align: "center", maxW: cw - 8, noTr: !0 }); let rankOk = CLASSES.indexOf(myClass) >= CLASSES.indexOf((_b = k.need) !== null && _b !== void 0 ? _b : "D"), label = v === "own" ? s.vehicle === k.id ? "In use" : "Owned" : k.future ? "Coming soon" : v === "next" ? rankOk ? `${ICON.coin}${fmt(k.price)}` : `${ICON.lock} Rank ${k.need}` : `Rank ${k.need}`; g.rich(label, x + 4, y + 74, cw - 8, { size: 9.5, align: "center", font: "b", color: v === "own" ? C.green : C.muted }), g.hit(x, y, cw, ch, key, () => { ui.garageIndex = i, ui.h.previewSkin(k.id); }); }); {
         let x = 12 + SKINS.length * (cw + 8) - off;
         g.rr(x, y, cw, ch, 12, "rgba(10,22,60,.85)", "rgba(255,255,255,.18)"), g.text("+", x + cw / 2, y + 30, { size: 26, align: "center", color: "#a9b8ff" }), g.text("MORE", x + cw / 2, y + 62, { size: 11, align: "center" }), g.rich(["S", "SS", "SSS"].map((r) => `<span class="clsb" style="--cc:${CLASS_COLOR[r]}">${r}</span>`).join(""), x + 2, y + 70, cw - 4, { size: 9, align: "center" }), g.hit(x, y, cw, ch, "morecars", () => ui.toast(`${ICON.car} More cars unlock at rank S · SS · SSS on Mega Rush`, "#ff7a2e"));
     } g.unclip(); }
@@ -16915,7 +17117,12 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         button(g, "racecup", x + 14, y + 90, w - 28, 46, `${ICON.clock} Opens ${localTime(e.start)}`, () => { }, { style: "ghost", disabled: !0 }); y += 160; for (let p of o.prizes)
         card(g, x, y, w, 40, 10), g.text(p.label, x + 12, y + 20, { size: 12, noTr: !0 }), g.rich(`${BOLT}${p.bolts} ${p.hyper ? `${ICON.hyper}×${p.hyper}` : ""} <span class="price">${ICON.coin}${fmt(p.coins)}</span>`, x + w / 2, y + 11, w / 2 - 12, { size: 12, align: "right" }), y += 46; return y; }); }
     function shop(ui, g) { pageBg(g); let s = ui.save, top = pageHead(ui, g, "SHOP"); if (!s)
-        return; let col = column(g), x = col.x + 12, w = col.w - 24; scrollList(g, "shop", 0, top, g.W, g.H - top - safeBottom(g), (y) => { var _a, _b; let prods = hs.hasShop() ? ui.products : [], noAds = prods.filter((p) => { var _a; return !!((_a = p.items) === null || _a === void 0 ? void 0 : _a.no_ads); }), packs = prods.filter((p) => { var _a; return !((_a = p.items) === null || _a === void 0 ? void 0 : _a.no_ads); }).sort((a, b) => { var _a, _b, _c, _d, _e, _f; return ((_a = a.beans_cost) !== null && _a !== void 0 ? _a : 0) - ((_b = b.beans_cost) !== null && _b !== void 0 ? _b : 0) || ((_d = (_c = a.items) === null || _c === void 0 ? void 0 : _c.coins) !== null && _d !== void 0 ? _d : 0) - ((_f = (_e = b.items) === null || _e === void 0 ? void 0 : _e.coins) !== null && _f !== void 0 ? _f : 0); }), buy = (p) => void hs.buy(p.product_id).then((r) => { if (r.ok)
+        return; let col = column(g), x = col.x + 12, w = col.w - 24; scrollList(g, "shop", 0, top, g.W, g.H - top - safeBottom(g), (y) => { var _a, _b; {
+        let flash = Math.max(0, 1 - (g.time - ui.shopFlashT) / 900), h = 132;
+        card(g, x, y, w, 132, 16, flash > 0 ? `rgba(255,194,26,${0.4 + 0.6 * flash})` : "rgba(155,107,255,.5)"), g.text("Exchange coins → specials", x + 14, y + 20, { size: 13 }), g.rich(`${ICON.coin}<b>${fmt(s.wallet)}</b>`, x + w - 130, y + 11, 116, { size: 12.5, align: "right", noTr: !0 });
+        let bw = (w - 28 - 16) / 3;
+        SPECIALS.forEach((k, i) => { let bx = x + 14 + i * (bw + 8), by = y + 38, short = s.wallet < ITEM_PRICE[k], key = `xbuy-${k}`; g.rr(bx, by, bw, 82, 12, g.isPressed(key) ? "rgba(79,195,255,.25)" : "rgba(10,20,52,.9)", short ? "rgba(255,90,138,.5)" : "rgba(255,194,26,.6)", 1.2), g.icon(ITEM_ICON[k], bx + bw / 2 - 15, by + 8, 30), g.text(SPECIAL_SHORT[k], bx + bw / 2, by + 50, { size: 11, align: "center", maxW: bw - 6 }), g.rich(`${ICON.coin}${fmt(ITEM_PRICE[k])}`, bx, by + 60, bw, { size: 10.5, align: "center", color: short ? "#ff8ab0" : C.gold, noTr: !0 }), g.hit(bx, by, bw, 82, key, () => ui.h.buySpecial(k)); }), y += 144;
+    } let prods = hs.hasShop() ? ui.products : [], noAds = prods.filter((p) => { var _a; return !!((_a = p.items) === null || _a === void 0 ? void 0 : _a.no_ads); }), packs = prods.filter((p) => { var _a; return !((_a = p.items) === null || _a === void 0 ? void 0 : _a.no_ads); }).sort((a, b) => { var _a, _b, _c, _d, _e, _f; return ((_a = a.beans_cost) !== null && _a !== void 0 ? _a : 0) - ((_b = b.beans_cost) !== null && _b !== void 0 ? _b : 0) || ((_d = (_c = a.items) === null || _c === void 0 ? void 0 : _c.coins) !== null && _d !== void 0 ? _d : 0) - ((_f = (_e = b.items) === null || _e === void 0 ? void 0 : _e.coins) !== null && _f !== void 0 ? _f : 0); }), buy = (p) => void hs.buy(p.product_id).then((r) => { if (r.ok)
         ui.toast(r.delivered === !1 ? `${ICON.clock} ${p.name} · paid — it arrives next time you open the game` : `${ICON.check} ${p.name} · thank you!`, "var(--gold)");
     else if (r.error && !/cancel/i.test(r.error))
         ui.toast(`${ICON.info} ${r.error}`, "var(--red)"); ui.dirty = !0; }), badge = (text, bx, by, col = C.gold) => { let bw = g.measure(text, { size: 9 }) + 14; g.rr(bx - bw, by - 7, bw, 16, 8, col), g.text(text, bx - bw / 2, by + 1, { size: 9, align: "center", color: "#2a1600", shadow: null, noTr: !0 }); }; for (let p of noAds) {
@@ -16935,7 +17142,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
     }
     else if (!prods.length)
         g.para("Coin packs and Remove Ads open soon on this platform. Earn coins by racing, daily check-in and missions.", x + 10, y + 6, w - 20, { size: 12, font: "b", color: C.muted, align: "center" }), y += 60; card(g, x, y, w, 50, 14), g.text("Your items", x + 14, y + 25, { size: 12, font: "b", color: C.muted }); let ix = x + 100; for (let k of SPECIALS)
-        g.icon(ITEM_ICON[k], ix, y + 13, 24), g.text(`×${s.items[k]}`, ix + 27, y + 25, { size: 13, noTr: !0 }), ix += 70; return y += 58, button(g, "shop-bag", x, y, w, 46, `${ICON.coin} Buy items with coins`, () => { ui.buySync(s), ui.showOverlay("bagbuy"); }, { style: "purple" }), y + 56; }); }
+        g.icon(ITEM_ICON[k], ix, y + 13, 24), g.hit(ix - 4, y + 6, 64, 38, `chip-${k}`, () => { ui.buySync(s), ui.showOverlay("bagbuy"); }), g.text(`×${s.items[k]}`, ix + 27, y + 25, { size: 13, noTr: !0 }), ix += 70; return y += 58, button(g, "shop-bag", x, y, w, 46, `${ICON.coin} Buy items with coins`, () => { ui.buySync(s), ui.showOverlay("bagbuy"); }, { style: "purple" }), y + 56; }); }
     function countdown(ui, g) { let k = Math.min(1, (g.time - ui.countT) / 600), s = 1.6 - 0.6 * (1 - Math.pow(1 - k, 3)); g.alpha(1 - Math.max(0, (g.time - ui.countT - 700) / 400)), g.ctx.save(), g.ctx.translate(g.W / 2, g.H * 0.4), g.ctx.scale(s, s), g.text(ui.count, 0, 0, { size: 72, align: "center", italic: !0, color: ui.count === "GO!" ? C.gold : "#fff", stroke: "rgba(0,0,0,.5)", strokeW: 6 }), g.ctx.restore(), g.alpha(1); }
     function tutprompt(ui, g) { let st = ui.tut; if (!st)
         return; let W = g.W, shake = g.time - ui.tutWrongT < 400 ? Math.sin((g.time - ui.tutWrongT) / 30) * 6 : 0, w = Math.min(300, W - 40), x = (W - w) / 2 + shake, y = safeTop(g) + 150; g.rr(x, y, w, 150, 18, "rgba(8,16,44,.88)", C.cyan, 1.5), g.text(`STEP ${st.index + 1} / ${st.total}`, W / 2 + shake, y + 16, { size: 10, align: "center", color: C.cyan, noTr: !0 }); let rot = { right: 0, down: 90, left: 180, up: 270 }, t = g.time % 1200 / 1200; if (st.need in rot) {
@@ -16945,7 +17152,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
     else
         g.icon(st.need === "sos" ? ICON.sos : ICON.rocket, W / 2 - 20 + shake, y + 28, 40); g.text(st.title, W / 2 + shake, y + 92, { size: 20, align: "center", italic: !0, maxW: w - 20, noTr: !0 }), g.para(st.sub, x + 14, y + 106, w - 28, { size: 11.5, font: "b", color: "#cfe0ff", align: "center", noTr: !0 }); }
     function swipeHint(g) { let t = g.time % 1400 / 1400, y = g.H * 0.62; g.icon(ICON.hand, g.W / 2 - 20 + Math.sin(t * Math.PI * 2) * 50, y, 40), g.text("SWIPE TO DODGE", g.W / 2, y + 60, { size: 18, align: "center", italic: !0, stroke: "rgba(0,0,0,.5)", strokeW: 4 }), g.text("← → change lane · ↑ fly up · ↓ fly down", g.W / 2, y + 84, { size: 11, align: "center", font: "b" }); }
-    var CHIP_COL = { coin2: "#ffd24a", shield: "#3d9bff", magnet: "#ff3b4e", turbo: "#b6ff2e", double: "#ffc21a", super: "#9b6bff", hyper: "#ffc21a", dash: "#2ee6c8" }, CHIP_IC = { coin2: ICON.coin, shield: ICON.shield, magnet: ICON.magnet, turbo: ICON.bolt, double: ICON.x2, super: ICON.rocket, hyper: ICON.hyper, dash: ICON.dash }, hudPos = {};
+    var CHIP_COL = { coin2: "#ffd24a", shield: "#3d9bff", magnet: "#ff3b4e", turbo: "#b6ff2e", double: "#ffc21a", super: "#9b6bff", hyper: "#ffc21a", dash: "#2ee6c8" }, CHIP_IC = { coin2: ICON.coin, shield: ICON.shield, magnet: ICON.magnet, turbo: ICON.bolt, double: ICON.x2, super: ICON.rocket, hyper: ICON.hyper, dash: ICON.dash }, heartsBottom = 200, hudPos = {};
     function drawHud(ui, g) { var _a, _b, _c, _d; let run = ui.hud.run, W = g.W, row = capRow(g), top = row.top, t = g.time; {
         let pr = g.isPressed("pause");
         g.shadow("rgba(0,0,0,.45)", 6, 2), g.rr(12, top, 44, 44, 14, g.lin(0, top, 0, top + 44, [[0, pr ? "#2a3f8f" : "#3a55c0"], [1, "#18286a"]]), "rgba(170,200,255,.55)", 1.2), g.shadow(null), g.rr(15, top + 3, 38, 16, 10, "rgba(255,255,255,.14)"), g.icon(ICON.pause, 23, top + 11, 22, "#ffffff"), g.hit(8, top - 4, 52, 52, "pause", () => ui.h.pause());
@@ -16984,7 +17191,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             g.rr(mx - 1, by + 73, 2, 10, 1, "#ffffff");
         }
     } let r2 = Math.max(by + bh, ct + 76) + 12; g.text(`SPEED ${fmt(ui.hud.speed * 3.6)} KM/H`, 14, r2 + 6, { size: 11.5, font: "b", weight: 800, color: "#cfe0ff", noTr: !0 }), bar(g, 14, r2 + 15, 118, 6, ui.hud.speed / Math.max(1, ui.hud.maxSpeed), g.lin(14, 0, 132, 0, [[0, "#39b6ff"], [0.5, "#b6ff2e"], [1, "#ff8a1f"]])); for (let i = 0; i < run.maxLives; i++)
-        g.icon(i < run.lives ? ICON.heart : ICON.heartEmpty, W - 12 - (run.maxLives - i) * 25, r2 - 1, 23); hudPos.hearts = { x: W - 40, y: r2 + 10 }; let ly = r2 + 30; if (ui.hud.gate) {
+        g.icon(i < run.lives ? ICON.heart : ICON.heartEmpty, W - 12 - (run.maxLives - i) * 25, r2 - 1, 23); hudPos.hearts = { x: W - 40, y: r2 + 10 }, heartsBottom = r2 + 24; let ly = r2 + 30; if (ui.hud.gate) {
         let gx = (W - 220) / 2;
         g.rr(gx, ly, 220, 24, 12, "rgba(60,8,30,.82)", "#ff5a8a"), g.text("RANK GATE", gx + 10, ly + 12, { size: 10, color: "#ff8ab0" }), rankBadge(g, ui.hud.gate.next, gx + 82, ly + 5, 14), bar(g, gx + 116, ly + 9, 92, 6, ui.hud.gate.k, "#ff5a8a"), ly += 28;
     } let tr = ui.hud.track; if (tr) {
@@ -17017,14 +17224,14 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             g.circle(p[0], p[1], 26, "rgba(255,194,26,.25)", C.gold, 2), g.icon(CHEV(p[2]), p[0] - 18, p[1] - 18, 36, C.gold), g.text(dg.toUpperCase(), p[0], p[1] + 40, { size: 12, align: "center", color: C.gold });
         }
         g.alpha(1);
-    } let sb = safeBottom(g), rockets = run.hyperJumps + run.superJumps, bx2 = W - 16 - 76, byy = g.H - sb - 20 - 76; if (run.escapes > 0) {
-        let s = dg === "sos" ? 1 + 0.06 * Math.sin(t / 90) : 1;
-        roundBtn(g, "sos", bx2 + 8, byy + 12, 60 * s, "#ff5a3c", ICON.sos, "SOS", String(run.escapes), () => ui.h.sos()), hudPos.sos = { x: bx2 + 38, y: byy + 42 }, byy -= 86;
+    } let sb = safeBottom(g), rockets = run.hyperJumps + run.superJumps, SP = 58, bx2 = W - 12 - SP, byy = heartsBottom + 10; if (run.escapes > 0) {
+        let s = dg === "sos" ? 1 + 0.06 * Math.sin(t / 90) : 1, sx = rockets > 0 ? bx2 - SP - 8 : bx2;
+        roundBtn(g, "sos", sx, byy, SP * s, "#ff5a3c", ICON.sos, "SOS", String(run.escapes), () => ui.h.sos()), hudPos.sos = { x: sx + SP / 2, y: byy + SP / 2 };
     } if (rockets > 0) {
         let hyper = run.hyperJumps > 0, call = ((_d = ui.tut) === null || _d === void 0 ? void 0 : _d.need) === "rocket", ready = ui.rocketReady || call, wait = t - ui.hud.rocketWaitT < 600 ? Math.sin((t - ui.hud.rocketWaitT) / 40) * 4 : 0, s = ready ? 1 + 0.07 * Math.sin(t / 110) : 1;
         if (ready)
-            g.circle(bx2 + 38 + wait, byy + 38, 50, withAlpha(hyper ? "#ffc21a" : "#9b6bff", 0.25 + 0.15 * Math.sin(t / 110)));
-        roundBtn(g, "rocket", bx2 + wait, byy, 76 * s, hyper ? "#ffb31a" : "#8a4dff", hyper ? ICON.hyper : ICON.rocket, ready ? "TAP!" : hyper ? "HYPER" : "ROADSTER", String(rockets), () => ui.h.rocket(), hyper ? { c0: "#ffe07a", c1: "#e79a00", rim: "rgba(255,255,255,.8)", text: "#3a2000" } : { c0: "#2a1d5c", c1: "#120a33", rim: "#b48cff", text: "#e6dcff" }), hudPos.rocket = { x: bx2 + 38, y: byy + 38 };
+            g.circle(bx2 + SP / 2 + wait, byy + SP / 2, SP * 0.66, withAlpha(hyper ? "#ffc21a" : "#9b6bff", 0.25 + 0.15 * Math.sin(t / 110)));
+        roundBtn(g, "rocket", bx2 + wait, byy, SP * s, hyper ? "#ffb31a" : "#8a4dff", hyper ? ICON.hyper : ICON.rocket, ready ? "TAP!" : hyper ? "HYPER" : "ROADSTER", String(rockets), () => ui.h.rocket(), hyper ? { c0: "#ffe07a", c1: "#e79a00", rim: "rgba(255,255,255,.8)", text: "#3a2000" } : { c0: "#2a1d5c", c1: "#120a33", rim: "#b48cff", text: "#e6dcff" }), hudPos.rocket = { x: bx2 + SP / 2, y: byy + SP / 2 };
     } let m = ui.hud.mission; if (m) {
         let mw = Math.min(260, W - 130), my = g.H - sb - 16 - 40;
         g.rr(14, my, mw, 40, 10, "rgba(8,16,44,.75)", "rgba(120,180,255,.25)"), g.text(m.text, 24, my + 13, { size: 10, font: "b", maxW: mw - 70 }), g.text(`${fmt(m.progress)}/${fmt(m.target)}`, 14 + mw - 8, my + 13, { size: 10, align: "right", font: "b", color: C.muted }), bar(g, 24, my + 26, mw - 20, 5, m.progress / m.target, C.green);
@@ -17033,9 +17240,9 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         return 1; let p = (t - b) / 220; return p >= 1 ? 1 : 1 + 0.16 * Math.sin(p * Math.PI); }
     function pill(g, x, y, w, h, html, s = 1, rim = "rgba(79,195,255,.32)") { if (g.ctx.save(), s !== 1)
         g.ctx.translate(x + w / 2, y + h / 2), g.ctx.scale(s, s), g.ctx.translate(-(x + w / 2), -(y + h / 2)); g.rr(x, y, w, h, h / 2, "rgba(9,16,44,.86)", rim, 1.2), g.rich(html, x + 7, y + h / 2 - 10, w - 12, { size: 15, align: "left" }), g.ctx.restore(); }
-    function roundBtn(g, key, x, y, s, col, icon, label, n, fn, look) { var _a, _b; let cx = x + 38 * (s / 76) + (76 - s) / 2, cy = y + s / 2, r = s / 2, rr = g.isPressed(key) ? r * 0.92 : r; g.shadow("rgba(0,0,0,.5)", 8, 3), g.circle(cx, cy, rr, g.rad(cx, cy - rr * 0.3, rr * 0.1, rr * 1.15, look ? [[0, look.c0], [0.75, look.c1], [1, look.c1]] : [[0, shade(col, 0.35)], [1, shade(col, -0.25)]])), g.shadow(null), g.circle(cx, cy, rr - 1, null, (_a = look === null || look === void 0 ? void 0 : look.rim) !== null && _a !== void 0 ? _a : "rgba(255,255,255,.7)", 2), g.icon(icon, cx - rr * 0.38, cy - rr * 0.64, rr * 0.76), g.text(label, cx, cy + rr * 0.45, { size: Math.max(9, rr * 0.27), align: "center", maxW: rr * 1.7, color: (_b = look === null || look === void 0 ? void 0 : look.text) !== null && _b !== void 0 ? _b : "#fff", italic: !0 }), g.circle(cx + rr * 0.72, cy - rr * 0.72, 11, "#fff"), g.text(n, cx + rr * 0.72, cy - rr * 0.72 + 0.5, { size: 12, align: "center", color: "#1a1040", shadow: null, noTr: !0 }), g.hit(cx - r - 6, cy - r - 6, r * 2 + 12, r * 2 + 12, key, fn, !0); }
+    function roundBtn(g, key, x, y, s, col, icon, label, n, fn, look) { var _a, _b; let cx = x + 29, cy = y + 29, r = s / 2, rr = g.isPressed(key) ? r * 0.92 : r; g.circle(cx, cy, rr, g.rad(cx, cy - rr * 0.3, rr * 0.1, rr * 1.15, look ? [[0, look.c0], [0.75, look.c1], [1, look.c1]] : [[0, shade(col, 0.35)], [1, shade(col, -0.25)]])), g.circle(cx, cy, rr - 1, null, (_a = look === null || look === void 0 ? void 0 : look.rim) !== null && _a !== void 0 ? _a : "rgba(255,255,255,.7)", 2), g.icon(icon, cx - rr * 0.38, cy - rr * 0.64, rr * 0.76), g.text(label, cx, cy + rr * 0.45, { size: Math.max(9, rr * 0.27), align: "center", maxW: rr * 1.7, color: (_b = look === null || look === void 0 ? void 0 : look.text) !== null && _b !== void 0 ? _b : "#fff", italic: !0 }), g.circle(cx + rr * 0.72, cy - rr * 0.72, 11, "#fff"), g.text(n, cx + rr * 0.72, cy - rr * 0.72 + 0.5, { size: 12, align: "center", color: "#1a1040", shadow: null, noTr: !0 }), g.hit(cx - r - 6, cy - r - 6, r * 2 + 12, r * 2 + 12, key, fn, !0); }
     function drawNotices(ui, g) { var _a, _b; let { time: t, W } = g, inRun = ui.shown.has("hud"), n = ui.notice; if (n) {
-        let p = (t - n.t0) / n.ms, a = p < 0.08 ? p / 0.08 : p > 0.88 ? Math.max(0, (1 - p) / 0.12) : 1, y0 = inRun ? safeTop(g) + 150 : safeTop(g) + 64;
+        let p = (t - n.t0) / n.ms, a = p < 0.08 ? p / 0.08 : p > 0.88 ? Math.max(0, (1 - p) / 0.12) : 1, y0 = inRun ? Math.max(safeTop(g) + 150, heartsBottom + 80) : safeTop(g) + 64;
         if (g.alpha(a), n.kind === "banner")
             g.text(n.w, W / 2, y0 + 10, { size: 12, align: "center", color: C.cyan }), g.text(n.n, W / 2, y0 + 36, { size: 26, align: "center", italic: !0, stroke: "rgba(0,0,0,.5)", strokeW: 4 });
         else {
@@ -17083,8 +17290,9 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
     function shieldBadge2(g, cls, x, y, h) { var _a; if (g.dry)
         return; let cc = (_a = CLASS_COLOR[cls]) !== null && _a !== void 0 ? _a : "#9fb3dd", w = h * 0.92, c = g.ctx; c.beginPath(), c.moveTo(x, y + h * 0.12), c.quadraticCurveTo(x + w / 2, y - h * 0.04, x + w, y + h * 0.12), c.lineTo(x + w, y + h * 0.55), c.quadraticCurveTo(x + w, y + h * 0.86, x + w / 2, y + h), c.quadraticCurveTo(x, y + h * 0.86, x, y + h * 0.55), c.closePath(), c.fillStyle = g.lin(0, y, 0, y + h, [[0, "#f4f7ff"], [1, cc]]), c.fill(), c.strokeStyle = "rgba(0,0,0,.35)", c.lineWidth = 1, c.stroke(), g.text(cls, x + w / 2, y + h * 0.47, { size: h * (cls.length > 2 ? 0.34 : cls.length > 1 ? 0.42 : 0.55), align: "center", color: "#0b1436", shadow: null, noTr: !0, italic: !0 }); }
     function levelPill(g, x, y, label, bg, fg) { let w = g.measure(label, { size: 9, font: "b", weight: 900 }) + 14; return g.rr(x, y, w, 15, 5, bg), g.text(label, x + w / 2, y + 8, { size: 9, align: "center", color: fg, font: "b", weight: 900, shadow: null, noTr: !0 }), w + 6; }
-    var BASE3 = ["loading", "start", "tracks", "garage", "missions", "ranks", "daily", "events", "shop", "hud", "countdown", "tutprompt"], OVERLAYS = ["finish", "gameover", "continue", "pause", "tutdone", "tutintro", "settings", "guide", "eventres", "profile", "bonus", "specialpick", "bag", "bagbuy", "boostinfo", "spconfirm", "rankguide", "needrocket", "account", "cloudpick", "sharepv", "popup", "logs"];
+    var BASE3 = ["loading", "start", "tracks", "garage", "missions", "ranks", "daily", "events", "shop", "hud", "countdown", "tutprompt"], OVERLAYS = ["finish", "gameover", "continue", "pause", "tutdone", "tutintro", "settings", "guide", "eventres", "profile", "bonus", "specialpick", "bag", "bagbuy", "boostinfo", "spconfirm", "rankguide", "needrocket", "account", "cloudpick", "sharepv", "popup", "classup", "logs"];
     class UI {
+        shopToExchange() { this.g.off.shop = 0, this.shopFlashT = this.t(), this.dirty = !0; }
         constructor(_parent, h) {
             this.shown = new Set(["loading"]);
             this.dirty = !0;
@@ -17147,6 +17355,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.notices = [];
             this.railAnim = {};
             this.railMovingUntil = 0;
+            this.shopFlashT = -1e9;
             this.notice = null;
             this.pops = null;
             this.big = null;
@@ -17159,6 +17368,9 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.drag = null;
             this.passthrough = !1;
             this.errShown = new Set;
+            this.loadShown = 0;
+            this.loadT = 0;
+            this.classup = null;
             this.rowCache = [];
             this.lang = "en";
             this.h = h;
@@ -17239,7 +17451,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.dirty = !0; this.dirty = !0; }
         hideOverlay(id) { this.shown.delete(id), this.dirty = !0; }
         closePopup() { this.shown.delete("popup"), this.popView = "popup", this.dirty = !0; }
-        setLoading(k) { this.loading = k, this.dirty = !0; }
+        setLoading(k) { this.loading = Math.max(this.loading, Math.min(1, k)), this.dirty = !0; }
         setLoadingText(t) { this.loadText = t, this.dirty = !0; }
         refreshProfile(s, liveQuality) { if (liveQuality)
             this.liveQuality = liveQuality; this.save = s, this.dirty = !0; }
@@ -17264,6 +17476,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
                 ms = Math.min(ms, 1800);
         } this.notice = Object.assign(Object.assign({}, n), { t0: t, ms }); }
         toast(html, color = "var(--cyan)") { this.pushNotice({ kind: "toast", html, color }); }
+        classUp(o) { this.classup = Object.assign(Object.assign({}, o), { t0: this.t() }), this.showOverlay("classup"); }
         rewardClaimed(title, what) { this.toastNow(`<b>Reward Claimed!</b><br/>${title} · ${what}`, "var(--gold)"), this.dirty = !0; }
         toastNow(html, color = "var(--cyan)") { this.notices.length = 0, this.notice = null, this.pushNotice({ kind: "toast", html, color }); }
         banner(world, name) { this.pushNotice({ kind: "banner", w: world, n: name }); }
@@ -17666,7 +17879,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         if (/[0-9 _.\-]/.test(ch) || ch.toLowerCase() !== ch.toUpperCase() || cp >= 192 && cp < 592 || cp >= 1424 && cp < 4352 || cp >= 4352 && cp < 4608 || cp >= 12352 && cp < 12543 || cp >= 13312 && cp < 40960 || cp >= 44032 && cp < 55216)
             out += ch;
     } return out.trim().slice(0, 14); }
-    var VERSION = "v3.0.11", ROCKET_PRICE = 250, WELCOME_AFTER_H = 12, WELCOME_GIFT = { coins: 200, shield: 1 }, PERK = { entry: 300, launch: 300, share: 300, invite: 100 }, WORLD_NAMES = { city: "FUTURE CITY", tunnel: "NEON TUNNEL", cloud: "CLOUD CITY", space: "SPACE ZONE", mega: "XWAVE MEGACITY", desert: "DESERT HIGHWAY", forest: "PINE FOREST", country: "COUNTRY ROAD", sea: "OCEAN CAUSEWAY", harbor: "NEON HARBOR", solar: "SOLAR FARMS", canyon: "CRYSTAL CANYON", belt: "ASTEROID BELT", storm: "STORM FRONT", volcano: "VOLCANO CORE", ice: "AURORA ICE" }, POWER_LABEL = { shield: "SHIELD", magnet: "MAGNET", turbo: "TURBO BOOST", double: "DOUBLE EXP", life: "EXTRA LIFE", super: "ROADSTER JUMP", dash: "AIR DASH", escape: "SKY ESCAPE", hyper: "HYPER JUMP", ghost: "PHASE GHOST", wall: "WALL RUN", rail: "SKY RAIL", tunnel: "TUNNEL RIDER", mystery: "MYSTERY BOX" }, POWER_SUB = { shield: "", magnet: "coins fly to you", turbo: "smash through obstacles", double: "EXP ×2 for a while", life: "+1 heart", super: "tap ROADSTER to launch", dash: "flip across 2 lanes", escape: "tap SOS to fly up", hyper: "fires by itself", ghost: "through everything · AAA special", wall: "along the wall · AAA special", rail: "glide the sky rail · AAA special", tunnel: "ride the roof · AAA special", mystery: "a random reward" }, POWER_ICON = { shield: ICON.shield, magnet: ICON.magnet, turbo: ICON.bolt, double: ICON.x2, life: ICON.heart, super: ICON.rocket, dash: ICON.dash, escape: ICON.sos, hyper: ICON.hyper, ghost: ICON.shield, wall: ICON.dash, rail: ICON.rocket, tunnel: ICON.rocket, mystery: ICON.gift };
+    var VERSION = "v3.1.0", ROCKET_PRICE = 250, WELCOME_AFTER_H = 12, WELCOME_GIFT = { coins: 200, shield: 1 }, PERK = { entry: 300, launch: 300, share: 300, invite: 100 }, WORLD_NAMES = { city: "FUTURE CITY", tunnel: "NEON TUNNEL", cloud: "CLOUD CITY", space: "SPACE ZONE", mega: "XWAVE MEGACITY", desert: "DESERT HIGHWAY", forest: "PINE FOREST", country: "COUNTRY ROAD", sea: "OCEAN CAUSEWAY", harbor: "NEON HARBOR", solar: "SOLAR FARMS", canyon: "CRYSTAL CANYON", belt: "ASTEROID BELT", storm: "STORM FRONT", volcano: "VOLCANO CORE", ice: "AURORA ICE" }, POWER_LABEL = { shield: "SHIELD", magnet: "MAGNET", turbo: "TURBO BOOST", double: "DOUBLE EXP", life: "EXTRA LIFE", super: "ROADSTER JUMP", dash: "AIR DASH", escape: "SKY ESCAPE", hyper: "HYPER JUMP", ghost: "PHASE GHOST", wall: "WALL RUN", rail: "SKY RAIL", tunnel: "TUNNEL RIDER", mystery: "MYSTERY BOX" }, POWER_SUB = { shield: "", magnet: "coins fly to you", turbo: "smash through obstacles", double: "EXP ×2 for a while", life: "+1 heart", super: "tap ROADSTER to launch", dash: "flip across 2 lanes", escape: "tap SOS to fly up", hyper: "fires by itself", ghost: "through everything · AAA special", wall: "along the wall · AAA special", rail: "glide the sky rail · AAA special", tunnel: "ride the roof · AAA special", mystery: "a random reward" }, POWER_ICON = { shield: ICON.shield, magnet: ICON.magnet, turbo: ICON.bolt, double: ICON.x2, life: ICON.heart, super: ICON.rocket, dash: ICON.dash, escape: ICON.sos, hyper: ICON.hyper, ghost: ICON.shield, wall: ICON.dash, rail: ICON.rocket, tunnel: ICON.rocket, mystery: ICON.gift };
     class Game {
         turboMulNow(run, dt) { let want = run.turboT > 0 ? 1 : 0; if (this.turboK += (want - this.turboK) * (1 - Math.exp(-(want ? 9 : 5) * dt)), !want && this.turboK < 0.01)
             this.turboK = 0; return 1 + (SPEED.turboMul - 1) * this.turboK; }
@@ -17687,7 +17900,8 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.debris = new Debris;
             this.speedBlurS = 0;
             this.shatter = new CarShatter;
-            this.shield = makeShield();
+            this.debugCol = COLLISION_DEBUG ? new DebugCollision : null;
+            this.debugHit = { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 };
             this.portal = makePortal();
             this.autopilot = AUTOPILOT ? new Autopilot : null;
             this.course = null;
@@ -17762,10 +17976,19 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.variant = "endless";
             this.sprayAcc = 0;
             this.sprayPos = new Vector3;
+            this.diveAcc = 0;
             this.rocketQueuedT = -1;
             this.needRocketOpen = !1;
             this.manual = /[?&]manual/.test(location.search);
+            this.perfRec = new PerfRecorder;
+            this.perfEl = null;
+            this.perfT = 0;
             this.lastTip = null;
+            this.autoRescueUsed = !1;
+            this.lastSpecialSource = null;
+            this.classQueue = [];
+            this.airDashGuard = new AirDashGuard;
+            this.lastCrashEventT = 0;
             this.leftover = null;
             this.cloud = new Cloud;
             this.pushTimer = 0;
@@ -17780,10 +18003,10 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             let scene = this.renderer.scene;
             this.scenery = new Scenery(scene), scene.add(this.scenery.group, this.track.group, this.vehicle.root);
             let worldRoot = new Group;
-            scene.add(worldRoot), this.obstacleViews = new ObstacleViews(worldRoot), this.pickupViews = new PickupViews(worldRoot), this.particles = new Particles(this.renderer.pixelRatio), this.smoke = new Particles(this.renderer.pixelRatio, !1), this.renderer.scene.add(this.smoke.points), scene.add(this.bonusTunnels.group), scene.add(this.particles.points, this.speedLines.lines, this.rings.group, this.debris.group, this.shatter.group, this.shield.mesh, this.portal.group, this.startArch, this.finishArch), this.world.hooks = { spawnObstacle: (o) => this.obstacleViews.spawn(o), despawnObstacle: (o) => this.obstacleViews.despawn(o), spawnPickup: (p) => this.pickupViews.spawn(p), despawnPickup: (p) => this.pickupViews.despawn(p) }, this.wirePlayerEvents(), this.meta = new Meta(this.save), this.missions = new MissionTracker(this.save.missions.active, this.save.missions.completed), this.missions.onComplete = (m) => { if (this.save.settings.autoClaim !== !1)
+            if (scene.add(worldRoot), this.obstacleViews = new ObstacleViews(worldRoot), this.pickupViews = new PickupViews(worldRoot), this.particles = new Particles(this.renderer.pixelRatio), this.smoke = new Particles(this.renderer.pixelRatio, !1), this.particles.density = this.smoke.density = GRAPHICS[this.renderer.quality].particles, this.renderer.scene.add(this.smoke.points), scene.add(this.bonusTunnels.group), scene.add(this.particles.points, this.speedLines.lines, this.rings.group, this.debris.group, this.shatter.group, this.portal.group, this.startArch, this.finishArch), this.world.hooks = { spawnObstacle: (o) => this.obstacleViews.spawn(o), despawnObstacle: (o) => this.obstacleViews.despawn(o), spawnPickup: (p) => this.pickupViews.spawn(p), despawnPickup: (p) => this.pickupViews.despawn(p) }, this.wirePlayerEvents(), this.meta = new Meta(this.save), this.missions = new MissionTracker(this.save.missions.active, this.save.missions.completed), this.missions.onComplete = (m) => { if (this.save.settings.autoClaim !== !1)
                 this.save.wallet += m.reward;
             else
-                this.save.pendingMissions.push({ text: m.text, reward: m.reward }); this.save.missions.completed = this.missions.completed, this.runMissionsDone.push({ text: m.text, reward: m.reward }), this.ui.toast(`${ICON.check} MISSION COMPLETE · ${m.text} <span class="price">${ICON.coin}+${m.reward}</span>`, "var(--green)"), this.audio.play("mission"), this.persist(); }, this.input = new Input(container), this.input.onAction = (a) => this.onAction(a), this.input.onSpecial = () => this.useEscape(), this.input.onRocket = () => this.useRocket(), this.world.player.canAirDash = () => !!this.run && this.run.dashes > 0, this.input.onPause = () => this.state === "run" ? this.pause() : this.state === "paused" ? this.resume() : void 0, this.ui = new UI(container, { play: () => { this.returnTo = null, this.afterResults(() => this.save.tutorialDone ? this.openTracks() : this.openTutorialIntro()); }, help: () => this.openTutorialIntro(), startTutorial: () => this.startTutorial(), advTrain: (w) => this.startTutorial(w), skipTutorial: () => { if (this.save.tutorialDone = !0, this.persist(), this.tutorialMode)
+                this.save.pendingMissions.push({ text: m.text, reward: m.reward }); this.save.missions.completed = this.missions.completed, this.runMissionsDone.push({ text: m.text, reward: m.reward }), this.ui.toast(`${ICON.check} MISSION COMPLETE · ${m.text} <span class="price">${ICON.coin}+${m.reward}</span>`, "var(--green)"), this.audio.play("mission"), this.persist(); }, this.input = new Input(container), this.input.onAction = (a) => this.onAction(a), this.input.onSpecial = () => this.activateSpecial("MANUAL", "sos"), this.input.onRocket = () => this.activateSpecial("MANUAL", "rocket"), this.world.player.canAirDash = () => !!this.run && this.run.dashes > 0, this.input.onPause = () => this.state === "run" ? this.pause() : this.state === "paused" ? this.resume() : void 0, this.ui = new UI(container, { play: () => { this.returnTo = null, this.afterResults(() => this.save.tutorialDone ? this.openTracks() : this.openTutorialIntro()); }, help: () => this.openTutorialIntro(), startTutorial: () => this.startTutorial(), advTrain: (w) => this.startTutorial(w), skipTutorial: () => { if (this.save.tutorialDone = !0, this.persist(), this.tutorialMode)
                     this.ui.tutPrompt(null), this.timeScale = this.timeScaleTarget = 1, this.showHome(); this.ui.hideOverlay("tutintro"), this.openTracks(); }, startTrack: (id) => this.startTrack(id), pickTrack: (id) => this.openSpecialPick(id), chooseSpecial: (k) => this.chooseSpecial(k), buySpecial: (k) => this.buySpecial(k), goRace: () => this.goRace(), bagPick: () => { this.audio.play("click"), this.bagPickMode = !0, this.ui.bagSync(this.save, !0), this.ui.showOverlay("bag"); }, setSpeed: (lv) => this.setSpeed(lv), nextTrack: () => this.afterResults(() => this.nextTrack()), garage: () => this.openGarage(), missions: () => this.openMissions(), home: () => { let back = this.returnTo; if (this.returnTo = null, this.state === "paused" || this.state === "run" || this.state === "respawn" || this.state === "continue") {
                     if (this.tutorialMode)
                         return this.goHome();
@@ -17793,22 +18016,28 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
                     return back(); this.afterResults(() => this.goHome()); }, settings: () => this.openSettings(), closeModal: () => this.showHome(), daily: () => this.openDaily(), events: () => this.openBonus(), bonusGo: () => this.startBonus(), ranks: () => this.openRanks(), shop: () => this.openShop(), guide: () => { this.audio.play("click"), this.ui.show("start", "guide"); }, checkIn: () => this.doCheckIn(), claimQuest: (id) => this.claim(this.meta.claimQuest(id), "Quest reward", () => this.openDaily(!0)), claimChest: (i) => this.claim(this.meta.claimChest(i), "Chest opened", () => this.openDaily(!0)), claimPass: () => this.claim(this.meta.claimPass(), "XWAVE Pass", () => this.openDaily(!0)), raceCup: () => { let c = this.meta.myCup(); if (c)
                     this.startTrack(c.cup.track);
                 else
-                    this.ui.toast(`${ICON.clock} Next cup ${localTime(schedule().next.start)} · in ${fmtLeft(schedule().next.start - Date.now())}`); }, profile: () => this.openProfile(), viewPlayer: (i) => this.ui.showPlayer(i), boostInfo: (k) => this.openBoostInfo(k), bag: () => this.openBag(), boostTrain: (k) => this.startBoostTraining(k), cloud: (a, v) => void this.cloudAction(a, v), trainAgain: () => this.lastPractice ? this.startBoostTraining(this.lastPractice) : this.startTutorial(this.trainWorld), toggleAutoClaim: () => { this.save.settings.autoClaim = this.save.settings.autoClaim === !1, this.persist(), this.audio.play("click"), this.openMissions(); }, claimMission: (i) => this.claimMissions(i), cupBoard: () => { this.cupBoardOpen = !this.cupBoardOpen, this.openEvents(!0); }, buy: (sku) => void this.buy(sku), restore: () => { this.ui.toast(`${ICON.bag} Purchases restored (${this.save.purchases})`); }, setName: (n) => this.setName(n), equip: (k) => this.equip(k), rankTab: (t) => { this.rankTab = t, this.openRanks(!0); }, claimResults: () => this.claimResults(), share: () => void this.share(), sos: () => this.useEscape(), rocket: () => this.useRocket(), popAction: (a) => this.popAction(a), freePop: () => this.openAdPopup(), perk: (k) => this.openPerk(k, !0), buyBoost: (key) => { var _a; let k = key, u = UNLOCK_BOOSTS.find((x) => x.k === k); if (u && CLASSES.indexOf(this.rank) < CLASSES.indexOf(u.cls))
+                    this.ui.toast(`${ICON.clock} Next cup ${localTime(schedule().next.start)} · in ${fmtLeft(schedule().next.start - Date.now())}`); }, profile: () => this.openProfile(), viewPlayer: (i) => this.ui.showPlayer(i), boostInfo: (k) => this.openBoostInfo(k), bag: () => this.openBag(), boostTrain: (k) => this.startBoostTraining(k), cloud: (a, v) => void this.cloudAction(a, v), trainAgain: () => this.lastPractice ? this.startBoostTraining(this.lastPractice) : this.startTutorial(this.trainWorld), toggleAutoClaim: () => { this.save.settings.autoClaim = this.save.settings.autoClaim === !1, this.persist(), this.audio.play("click"), this.openMissions(); }, claimMission: (i) => this.claimMissions(i), cupBoard: () => { this.cupBoardOpen = !this.cupBoardOpen, this.openEvents(!0); }, buy: (sku) => void this.buy(sku), restore: () => { this.ui.toast(`${ICON.bag} Purchases restored (${this.save.purchases})`); }, setName: (n) => this.setName(n), equip: (k) => this.equip(k), rankTab: (t) => { this.rankTab = t, this.openRanks(!0); }, claimResults: () => this.claimResults(), share: () => void this.share(), classOk: () => this.classOk(), sos: () => this.activateSpecial("MANUAL", "sos"), rocket: () => this.activateSpecial("MANUAL", "rocket"), popAction: (a) => this.popAction(a), freePop: () => this.openAdPopup(), perk: (k) => this.openPerk(k, !0), buyBoost: (key) => { var _a; let k = key, u = UNLOCK_BOOSTS.find((x) => x.k === k); if (u && CLASSES.indexOf(this.rank) < CLASSES.indexOf(u.cls))
                     return; let price = ITEM_PRICE[k]; if (price === void 0 || this.save.wallet < price)
                     return; if (this.save.wallet -= price, this.save.items[k]++, this.persist(), this.audio.play("power"), this.ui.refreshProfile(this.save), this.ui.tracksSync(this.save, (_a = this.meta.myCup()) === null || _a === void 0 ? void 0 : _a.cup.track), this.ui.boostSync(k, this.save.items[k], this.save.equip[k], this.save.wallet), this.ui.isShown("bag"))
                     this.ui.bagSync(this.save); }, setLang: (code) => { this.save.settings.lang = code, this.persist(), this.audio.play("click"), this.ui.applyLang(code); }, dailyPop: () => { this.audio.play("click"), this.openDailyPopup(); }, rocketFix: (how) => this.resolveNeedRocket(how), setCountry: (code) => { this.save.country = code, this.save.countryAuto = !1, this.persist(), this.audio.play("click"), this.syncProfile(), this.ui.toast(`${flagOf(code)} Country set to ${countryName(code)}`); }, setAvatar: (i) => { this.save.avatar = i, this.save.perks.avatarPicked = !0, this.persist(), this.audio.play("click"), this.ui.settingsSync(this.save, this.meta.name, VERSION), this.syncProfile(); }, randomAvatar: () => { let i = this.save.avatar; while (i === this.save.avatar)
                     i = Math.floor(Math.random() * 24); this.save.avatar = i, this.save.perks.avatarPicked = !0, this.persist(), this.audio.play("power"), this.ui.settingsSync(this.save, this.meta.name, VERSION), this.syncProfile(); }, pause: () => this.pause(), resume: () => this.resume(), retry: () => this.afterResults(() => { var _a; if ((_a = this.course) === null || _a === void 0 ? void 0 : _a.bonus)
                     return this.startBonus(); if (!this.course && !this.tutorialMode)
-                    return this.openSpecialPick(this.variant === "track2" ? "track2" : "endless"); this.startRun(); }), continueAd: () => void this.continueByAd(), continueCoins: () => this.continueByCoins(), continueNo: () => this.gameOver(), adDouble: () => void this.adDouble(), adFreeCoins: () => void this.adFreeCoins(), adBoost: () => void this.adBoost(), selectSkin: (id) => this.selectSkin(id), buySkin: (id) => this.buySkin(id), upgrade: (k) => this.buyUpgrade(k), toggleSound: () => this.toggleSound(), toggleMusic: () => this.toggleMusic(), toggleQuality: () => this.toggleQuality(), toggleAssist: () => this.toggleAssist(), toggleComfort: () => this.toggleComfort(), toggleVibrate: () => { this.save.settings.vibrate = this.save.settings.vibrate === !1, this.persist(), this.audio.play("click"), this.vibrate(30), this.ui.refreshProfile(this.save); }, previewSkin: (id) => this.previewSkin(id) }), this.store = new DemoStore(container), this.ads = new Ads(container, { pause: () => this.audio.duck(!0), resume: () => this.audio.duck(!1) }), this.audio.setSfx(this.save.settings.sound), this.audio.setMusic(this.save.settings.music), this.migrateV2(), this.syncCarUnlocks(), this.applySkin(this.save.vehicle);
+                    return this.openSpecialPick(this.variant === "track2" ? "track2" : "endless"); this.startRun(); }), continueAd: () => void this.continueByAd(), continueCoins: () => this.continueByCoins(), continueNo: () => this.gameOver(), adDouble: () => void this.adDouble(), adFreeCoins: () => void this.adFreeCoins(), adBoost: () => void this.adBoost(), selectSkin: (id) => this.selectSkin(id), buySkin: (id) => this.buySkin(id), upgrade: (k) => this.buyUpgrade(k), toggleSound: () => this.toggleSound(), toggleMusic: () => this.toggleMusic(), toggleQuality: (v) => this.toggleQuality(v), toggleAssist: () => this.toggleAssist(), toggleComfort: () => this.toggleComfort(), toggleVibrate: () => { this.save.settings.vibrate = this.save.settings.vibrate === !1, this.persist(), this.audio.play("click"), this.vibrate(30), this.ui.refreshProfile(this.save); }, previewSkin: (id) => this.previewSkin(id) }), this.store = new DemoStore(container), this.ads = new Ads(container, { pause: () => this.audio.duck(!0), resume: () => this.audio.duck(!1) }), this.audio.setSfx(this.save.settings.sound), this.audio.setMusic(this.save.settings.music), this.migrateV2(), this.save.settings.speed = "normal", !this.save.classCelebrated)
+                this.save.classCelebrated = CLASSES.slice(rankIdx("A"), rankIdx(this.rank) + 1).map(String);
+            this.syncCarUnlocks(), this.applySkin(this.save.vehicle);
             let resize = () => this.onResize();
             if (window.addEventListener("resize", resize), (_a = window.visualViewport) === null || _a === void 0 ? void 0 : _a.addEventListener("resize", resize), document.addEventListener("visibilitychange", () => { if (document.hidden && this.state === "run")
-                this.pause(); if (document.hidden)
+                this.pause(); if (this.audio.setHidden(document.hidden), document.hidden)
                 this.pushSave();
             else if (this.cloud.enabled)
                 this.cloudSync(); }), this.cloud.onSignedIn = () => { this.ui.toast("☁️ Signed in", "#4fc3ff"), this.cloudSync(!0).then(() => this.ui.isShown("account") ? this.accountView() : void 0); }, this.cloud.listen(), this.cloud.enabled)
                 window.setTimeout(() => void this.cloudSync(), 1500);
-            let unlock = () => { this.audio.unlock(), this.audio.startMusic(); };
-            if (window.addEventListener("pointerdown", unlock, { once: !0 }), window.addEventListener("keydown", unlock, { once: !0 }), window.addEventListener("touchstart", unlock, { once: !0 }), DEBUG)
+            let unlock = () => { if (!this.audio.running)
+                this.audio.unlock(); };
+            for (let ev of ["pointerdown", "pointerup", "touchend", "click", "keydown"])
+                window.addEventListener(ev, unlock, { capture: !0, passive: !0 });
+            if (this.audio.onRunning = () => { if (this.save.settings.music)
+                this.audio.startMusic(); }, DEBUG)
                 this.makeDebugBoxes();
             this.onResize(), window.__xwave = this;
         }
@@ -17828,7 +18057,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
                 for (let o of hidden)
                     o.visible = !1;
             }
-        } this.ui.setLoading(1), this.ui.setLoadingText("Ready"), await new Promise((r) => window.setTimeout(r, Math.max(0, 2200 - performance.now()))), window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(), this.installPrompt = e; }), window.addEventListener("offline", () => { if (this.state === "menu")
+        } this.ui.setLoading(0.92), await new Promise((r) => window.setTimeout(r, Math.max(0, 2200 - performance.now()))), this.ui.setLoading(1), await new Promise((r) => window.setTimeout(r, 350)), window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(), this.installPrompt = e; }), window.addEventListener("offline", () => { if (this.state === "menu")
             this.openPerk("offline"); }), window.addEventListener("online", () => { if (this.ui.isShown("popup"))
             this.ui.closePopup(); }), this.ui.applyLang((_a = this.save.settings.lang) !== null && _a !== void 0 ? _a : "en"); let prevSeen = this.save.lastSeen; this.seedDb(), this.goHome(), window.setTimeout(() => this.launchPopups(prevSeen), 700), this.clock.start(), this.renderer.renderer.setAnimationLoop(() => this.frame()); }
         setState(s) { this.state = s, this.stateT = 0; }
@@ -17974,7 +18203,8 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             return; let g = p.grant; if (this.meta.grant(g), g.noAds)
             this.save.noAds = !0; if (g.starter)
             this.save.starterBought = !0; if (g.passDays)
-            this.save.passUntil = Math.max(Date.now(), this.save.passUntil) + g.passDays * 86400000; this.save.purchases++, this.persist(), this.audio.play("mission"), this.ui.toast(`${ICON.check} ${p.name} · thank you!`, "var(--gold)"), this.ui.shopSync(this.save), this.ui.refreshProfile(this.save); }
+            this.save.passUntil = Math.max(Date.now(), this.save.passUntil) + g.passDays * 86400000; if (this.save.purchases++, this.persist(), this.audio.play("mission"), this.ui.toast(`${ICON.check} ${p.name} · thank you!`, "var(--gold)"), this.ui.shopSync(this.save), p.kind === "coins")
+            this.ui.shopToExchange(); this.ui.refreshProfile(this.save); }
         setName(n) { let name = cleanName(n); this.save.name = name, this.persist(), this.ui.toast(`${ICON.user} Pilot name: ${this.meta.name}`), this.ui.settingsSync(this.save, this.meta.name, VERSION), this.syncProfile(); }
         syncProfile() { let prof = this.ui.isShown("profile"); if (this.ui.isShown("start"))
             this.showHome(); if (prof)
@@ -18054,7 +18284,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.ui.toast(`${ICON.info} No ad available right now — try again in a moment`, "#4fc3ff"); }
         continueByCoins() { if (this.state !== "continue")
             return; return; }
-        doContinue() { this.continuesUsed++, this.run.lives = 1, this.rig.mode = "run", this.ui.show("hud"), this.respawn(), this.run.invulnT = Math.max(this.run.invulnT, 3), this.ui.toast(`${ICON.heart} REVIVED · ${ADS.maxContinues - this.continuesUsed} revive${ADS.maxContinues - this.continuesUsed === 1 ? "" : "s"} left`, "var(--gold)"); }
+        doContinue() { this.continuesUsed++, this.run.lives = 0, this.rig.mode = "run", this.ui.show("hud"), this.respawn(!0), this.run.invulnT = Math.max(this.run.invulnT, 3), this.ui.toastNow(`${ICON.check} <b>REVIVED!</b>`, "var(--gold)"); }
         async adDouble() { if (this.lastResult.doubled)
             return; if (!await this.ads.rewarded("double_coins"))
             return; let extra = Math.max(1, Math.round((this.lastResult.coins + this.lastResult.reward) * ADS.endBonus)); this.lastResult.doubled = !0, this.save.wallet += extra, this.persist(), this.ui.adButton(this.state === "finish" ? "ad2xf" : "ad2x", "used", `+${extra} coins added`), this.ui.refreshProfile(this.save), this.audio.play("mission"); }
@@ -18089,8 +18319,8 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
                 this.save.special = "super";
             this.persist();
         } if (!this.save.carsRelocked) {
-            let V1_CAR_PRICE = { volt: 2500, phantom: 6000, inferno: 12000, nexus: 25000 }, r = this.rank, back = 0;
-            if (this.save.unlocked = this.save.unlocked.filter((id) => { var _a, _b; let k = SKINS.find((x) => x.id === id); if (!k || rankAtLeast(r, (_a = k.need) !== null && _a !== void 0 ? _a : "D"))
+            let V1_CAR_PRICE = { volt: 2500, phantom: 6000, inferno: 12000, nexus: 25000 }, r = this.rank, back = 0, V2_NEED = { zenith: "D", vega: "C", volt: "B", phantom: "A", inferno: "AA", nexus: "AAA" };
+            if (this.save.unlocked = this.save.unlocked.filter((id) => { var _a, _b; if (!SKINS.find((x) => x.id === id) || rankAtLeast(r, (_a = V2_NEED[id]) !== null && _a !== void 0 ? _a : "D"))
                 return !0; return back += (_b = V1_CAR_PRICE[id]) !== null && _b !== void 0 ? _b : 0, !1; }), !this.save.unlocked.includes(this.save.vehicle))
                 this.save.vehicle = "zenith";
             if (this.save.carsRelocked = !0, back > 0)
@@ -18112,7 +18342,10 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.ui.toast(`${ICON.lock} Reach rank AAA to unlock Mega Rush`, "#ff4fd8");
             return;
         } if (this.audio.play("click"), this.pickTrackId = trackId, this.save.special && this.save.items[this.save.special] <= 0)
-            this.save.special = null; this.ui.specialPick(this.save, this.pickLabel()); }
+            this.save.special = null; this.magicBagAutoEquip(), this.ui.specialPick(this.save, this.pickLabel()); }
+        magicBagAutoEquip(rand = Math.random) { if (this.save.special)
+            return null; let eligible = SPECIALS.filter((k) => this.save.items[k] > 0); if (!eligible.length)
+            return null; let k = eligible[Math.min(eligible.length - 1, Math.floor(rand() * eligible.length))]; this.save.special = k, this.persist(); let name = { super: "Roadster Jump", hyper: "HYPER JUMP", escape: "SOS" }[k]; return this.ui.toast(`${POWER_ICON[k]} <b>MAGIC BAG: ${name.toUpperCase()} EQUIPPED</b>`, "#c24dff"), k; }
         pickLabel() { return `${this.pickTrackId === "track2" ? "Mega Rush" : "Endless"} · ${LEVELS[this.save.settings.speed].label}`; }
         chooseSpecial(k) { let key = SPECIALS.includes(k) ? k : null; if (key && this.save.items[key] <= 0)
             return this.ui.buySync(this.save), this.ui.showOverlay("bagbuy"); if (this.save.special = key, this.persist(), this.audio.play("click"), this.bagPickMode)
@@ -18123,7 +18356,8 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             return this.ui.toast(`${ICON.coin} Need ${(price - this.save.wallet).toLocaleString("en-US")} more coins`, "#ffc21a"), this.ui.hideOverlay("specialpick"), this.ui.hideOverlay("bag"), this.openShop(); if (this.save.wallet -= price, this.save.items[key]++, this.bagPickMode || !this.save.special)
             this.save.special = key; if (this.persist(), this.audio.play("power"), this.ui.toast(`${ICON.bag} +1 ${{ super: "Roadster", hyper: "HYPER", escape: "SOS" }[key]} · in your bag`, "#9b6bff"), this.ui.hideOverlay("bagbuy"), this.ui.isShown("bag"))
             this.ui.bagSync(this.save, this.bagPickMode); if (this.ui.isShown("specialpick"))
-            this.ui.specialPick(this.save, this.pickLabel()); this.ui.refreshProfile(this.save); }
+            this.ui.specialPick(this.save, this.pickLabel()); if (this.ui.isShown("shop"))
+            this.ui.shopSync(this.save); this.ui.refreshProfile(this.save); }
         goRace() { this.ui.hideOverlay("specialpick"), this.startTrack(this.pickTrackId); }
         openBonus() { var _a, _b; this.audio.play("click"); let bs = bonusState(), now = Date.now(); this.ui.bonusSync({ live: !!bs.live, theme: ((_a = bs.live) !== null && _a !== void 0 ? _a : bs.next).theme, name: BONUS_NAME[((_b = bs.live) !== null && _b !== void 0 ? _b : bs.next).theme], left: bs.live ? fmtLeft(bs.live.end - now) : "", opens: bs.live ? "" : `${localTime(bs.next.start)} · in ${fmtLeft(bs.next.start - now)}`, opensAt: localTime(bs.next.start), next: bs.live ? `${BONUS_NAME[bs.next.theme]} · ${localTime(bs.next.start)}` : "", finish: Math.round(BONUS.finishCoins * LEVELS[this.save.settings.speed].reward), minutes: BONUS.raceMinutes, played: !1 }); }
         startBonus() { let bs = bonusState(); if (!bs.live) {
@@ -18169,9 +18403,9 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         questHud(run) { let q = this.hudQuest; if (!q)
             return null; let v = { runs: 0, coins: run.coins, distance: Math.floor(run.distance), near: run.nearMiss, powerups: run.powerups, jumps: run.superUsed, score: Math.floor(run.score), finish: 0, rings: run.rings, exp: run.exp, gates: this.runGates(run), worlds: this.runWorlds, hearts: this.runHearts, hard: 0, clean: this.cleanExp(run), far: Math.floor(run.distance) }[q.stat]; return { text: q.text, progress: Math.min(q.target, q.mode === "max" ? Math.max(q.base, v) : q.base + v), target: q.target }; }
         get rank() { return playerRank(this.save.expBest, this.save.exp2Best); }
-        syncCarUnlocks() { var _a; let r = this.rank, got = null; for (let k of SKINS)
-            if (!this.save.unlocked.includes(k.id) && rankAtLeast(r, (_a = k.need) !== null && _a !== void 0 ? _a : "D"))
-                this.save.unlocked.push(k.id), got = k.name; return got; }
+        syncCarUnlocks() { let r = this.rank, got = null; for (let id of carsForRank((need) => rankAtLeast(r, need)))
+            if (!this.save.unlocked.includes(id))
+                this.save.unlocked.push(id), got = SKINS.find((k) => k.id === id).name; return got; }
         startTrack(id) { if (this.tutorialMode = !1, id === "track2" && !rankAtLeast(this.rank, "AAA")) {
             this.ui.toast(`${ICON.lock} Reach rank AAA to unlock Mega Rush`, "#ff4fd8");
             return;
@@ -18185,7 +18419,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.openTracks();
         } }
         openMissions() { this.audio.play("click"), this.setState("missions"), this.rig.mode = "menu", this.settleMissions(), this.ui.missionsSync(this.save), this.ui.show("missions"); }
-        startRun() { var _a, _b, _c, _d, _e, _f, _h, _j, _l, _m, _p, _r, _s, _u, _v; this.returnTo = null, this.runStartT = this.time, this.audio.unlock(), this.audio.startMusic(), this.audio.play("click"), this.clearRunVisuals(); let level = this.runLevel, want = !this.course && !this.tutorialMode ? (_a = /[?&]rank=(C|B|A|AA|AAA|S|SS|SSS)\b/.exec(location.search)) === null || _a === void 0 ? void 0 : _a[1] : void 0, startDist = want ? Math.max(0, rankDist(RANK_ORDER.indexOf(want), level, this.variant) - 2600) : 0; this.debugStart = startDist > 0, this.world.reset(Math.floor(Math.random() * 1e9), this.course, level, startDist, this.course || this.tutorialMode ? "endless" : this.variant), this.bonusTunnels.set(((_b = this.course) === null || _b === void 0 ? void 0 : _b.bonus) ? this.world.spawner.tunnels() : [], ((_c = this.course) === null || _c === void 0 ? void 0 : _c.bonus) ? this.course.world : null), this.tutStep = 0, this.tutHint = 0, this.tutPrompting = !1, this.timeScale = this.timeScaleTarget = 1, this.ui.tutPrompt(null); let car = (_d = SKINS.find((x) => x.id === this.save.vehicle)) !== null && _d !== void 0 ? _d : SKINS[0]; if (this.run = new Run(Object.assign({}, V2_POWERUPS), LEVELS[level].score * (1 + ((_e = car.bonus) !== null && _e !== void 0 ? _e : 0) / 100)), this.run.expRate = this.course ? 0 : this.tutorialMode ? expRate("easy", "endless") : expRate(level, this.variant), this.run.distance = startDist, this.gateShown = "", this.runRank = "D", this.runBeatBest = (this.variant === "track2" ? this.save.exp2Best : this.save.expBest) <= 0, this.bestCheer = 0, this.ui.hudLevel = ((_f = this.course) === null || _f === void 0 ? void 0 : _f.bonus) || this.tutorialMode ? "" : LEVELS[level].label, this.ui.hudTop = this.variant === "track2" && !this.course ? "SSS" : "AAA", this.ui.hudMe = this.rank, this.ui.hudBest = this.course || this.tutorialMode ? 0 : this.variant === "track2" ? this.save.exp2Best : this.save.expBest, this.superFlight = !1, this.blockade = null, this.nextBlockadeAt = 420, this.nextBoost && !this.tutorialMode)
+        startRun() { var _a, _b, _c, _d, _e, _f, _h, _j, _l, _m, _p, _r, _s, _u, _0; this.returnTo = null, this.runStartT = this.time, this.audio.unlock(), this.audio.startMusic(), this.audio.play("click"), this.clearRunVisuals(); let level = this.runLevel, want = !this.course && !this.tutorialMode ? (_a = /[?&]rank=(C|B|A|AA|AAA|S|SS|SSS)\b/.exec(location.search)) === null || _a === void 0 ? void 0 : _a[1] : void 0, startDist = want ? Math.max(0, rankDist(RANK_ORDER.indexOf(want), level, this.variant) - 2600) : 0; this.debugStart = startDist > 0, this.world.reset(Math.floor(Math.random() * 1e9), this.course, level, startDist, this.course || this.tutorialMode ? "endless" : this.variant), this.bonusTunnels.set(((_b = this.course) === null || _b === void 0 ? void 0 : _b.bonus) ? this.world.spawner.tunnels() : [], ((_c = this.course) === null || _c === void 0 ? void 0 : _c.bonus) ? this.course.world : null), this.tutStep = 0, this.tutHint = 0, this.tutPrompting = !1, this.timeScale = this.timeScaleTarget = 1, this.ui.tutPrompt(null); let car = (_d = SKINS.find((x) => x.id === this.save.vehicle)) !== null && _d !== void 0 ? _d : SKINS[0]; if (this.run = new Run(Object.assign({}, V2_POWERUPS), LEVELS[level].score * (1 + ((_e = car.bonus) !== null && _e !== void 0 ? _e : 0) / 100)), this.run.lastChance = () => this.lastChance(), this.autoRescueUsed = !1, this.run.expRate = this.course ? 0 : this.tutorialMode ? expRate("easy", "endless") : expRate(level, this.variant), this.run.distance = startDist, this.gateShown = "", this.runRank = "D", this.runBeatBest = (this.variant === "track2" ? this.save.exp2Best : this.save.expBest) <= 0, this.bestCheer = 0, this.ui.hudLevel = ((_f = this.course) === null || _f === void 0 ? void 0 : _f.bonus) || this.tutorialMode ? "" : LEVELS[level].label, this.ui.hudTop = this.variant === "track2" && !this.course ? "SSS" : "AAA", this.ui.hudMe = this.rank, this.ui.hudBest = this.course || this.tutorialMode ? 0 : this.variant === "track2" ? this.save.exp2Best : this.save.expBest, this.superFlight = !1, this.blockade = null, this.nextBlockadeAt = 420, this.nextBoost && !this.tutorialMode)
             this.nextBoost = !1, this.run.shield = !0, this.run.shieldHits = SHIELD_HITS, this.run.shieldT = this.run.durations().shield, this.run.superJumps = 1, window.setTimeout(() => this.ui.toast(`${ICON.rocket} HEAD START · Shield + Roadster Jump`, "#9b6bff"), 2900); if (this.carried = null, this.showcaseK = null, this.setPiece = null, this.showcaseT = 0, this.ui.bonusHud = !!((_h = this.course) === null || _h === void 0 ? void 0 : _h.bonus), this.ui.trainHud = this.tutorialMode, this.ui.updateHud(this.run, this.world.speed, SPEED.max * SPEED.turboMul * LEVELS[level].speed, null), this.obstacleViews.theme = PROP_THEMES.includes(this.world.world) ? this.world.world : null, !this.tutorialMode && !((_j = this.course) === null || _j === void 0 ? void 0 : _j.bonus)) {
             let k = (_l = this.save.special) !== null && _l !== void 0 ? _l : null;
             if (k && this.save.items[k] > 0) {
@@ -18206,18 +18440,18 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             let script = this.tut, sp = this.world.spawner;
             sp.scripted = !0, sp.rows.push(...script.rows), sp.pickups.push(...script.pickups);
         } if (this.livesLost = 0, this.runWorlds = 1, this.runHearts = 0, this.firstLossExp = -1, this.continuesUsed = 0, this.finishShown = !1, this.runTime = 0, this.sectionName = "", this.missions.beginRun(), this.pickHudQuest(), !this.course && !this.tutorialMode && !this.debugStart)
-            this.noteWorld("city"); this.runMissionsDone = [], this.applySkin(this.save.vehicle), this.vehicle.resetPose(), this.vehicle.visibleBlink = !0, this.scenery.setWorld((_u = (_s = this.course) === null || _s === void 0 ? void 0 : _s.world) !== null && _u !== void 0 ? _u : (this.tutorialMode && this.trainWorld || "city"), !0), this.track.setAccent(new Color(this.scenery.accent)), this.applyReadability(), this.track.setOpenAir(this.scenery.openAir), this.startArch.visible = this.finishArch.visible = !!this.course, this.startArch.position.z = -14, this.finishArch.visible = !1, this.speedScale = 1, this.turboK = 0, this.setState("countdown"), this.countdownStep = -1, this.rig.mode = "run", this.input.enabled = !0, this.ui.resetHud(), this.ui.show("hud", "countdown"), this.ui.tutorial(!1), this.audio.intensity = 0; let c = this.course; if (this.ui.trackHud(c ? { section: c.sections[0].name, dist: 0, length: c.length, marks: c.sections.slice(1).map((s) => s.from) } : null), c)
+            this.noteWorld("city"); this.runMissionsDone = [], this.applySkin(this.save.vehicle), this.vehicle.resetPose(), this.airDashGuard.reset(), this.vehicle.visibleBlink = !0, this.scenery.setWorld((_u = (_s = this.course) === null || _s === void 0 ? void 0 : _s.world) !== null && _u !== void 0 ? _u : (this.tutorialMode && this.trainWorld || "city"), !0), this.track.setAccent(new Color(this.scenery.accent)), this.applyReadability(), this.track.setOpenAir(this.scenery.openAir), this.startArch.visible = this.finishArch.visible = !!this.course, this.startArch.position.z = -14, this.finishArch.visible = !1, this.speedScale = 1, this.turboK = 0, this.setState("countdown"), this.countdownStep = -1, this.rig.mode = "run", this.input.enabled = !0, this.ui.resetHud(), this.ui.show("hud", "countdown"), this.ui.tutorial(!1), this.audio.intensity = 0; let c = this.course; if (this.ui.trackHud(c ? { section: c.sections[0].name, dist: 0, length: c.length, marks: c.sections.slice(1).map((s) => s.from) } : null), c)
             this.ui.banner(`TRACK ${COURSES.indexOf(c) + 1} · ${(c.length / 1000).toFixed(1)} KM`, c.name.toUpperCase());
         else if (this.tutorialMode)
-            this.ui.banner(this.trainWorld ? "ADVANCED TRAINING" : this.tut.title ? "BOOST TRAINING" : "FIRST FLIGHT", this.trainWorld ? WORLD_LESSONS[this.trainWorld].name.toUpperCase() : (_v = this.tut.title) !== null && _v !== void 0 ? _v : "PILOT TRAINING"); }
+            this.ui.banner(this.trainWorld ? "ADVANCED TRAINING" : this.tut.title ? "BOOST TRAINING" : "FIRST FLIGHT", this.trainWorld ? WORLD_LESSONS[this.trainWorld].name.toUpperCase() : (_0 = this.tut.title) !== null && _0 !== void 0 ? _0 : "PILOT TRAINING"); }
         pause() { if (this.state !== "run")
             return; this.setState("paused"), this.ui.refreshProfile(this.save), this.ui.show("hud", "pause"), this.audio.play("click"); }
         resume() { if (this.state !== "paused")
-            return; if (this.audio.play("click"), this.state = "run", this.ui.show("hud"), this.tutorialMode && this.tutPrompting) {
+            return; if (this.audio.play("click"), this.clock.getDelta(), this.state = "run", this.ui.show("hud"), this.tutorialMode && this.tutPrompting) {
             let st = this.tut.steps[this.tutStep];
             this.ui.tutPrompt({ index: this.tutStep, total: this.tut.steps.length, need: st.need, title: st.title, sub: st.sub });
         } }
-        clearRunVisuals() { this.ui.gateHud(null), this.vehicle.resetFx(), this.shatter.clear(), this.particles.clear(), this.smoke.clear(), this.debris.clear(), this.shield.mesh.visible = !1, this.portal.group.visible = !1, this.startArch.visible = this.finishArch.visible = !1; }
+        clearRunVisuals() { this.ui.gateHud(null), this.vehicle.resetFx(), this.shatter.clear(), this.particles.clear(), this.smoke.clear(), this.debris.clear(), this.portal.group.visible = !1, this.startArch.visible = this.finishArch.visible = !1; }
         onAction(a) { var _a, _b; var _c; if (this.state !== "run")
             return; if (this.autopilot)
             return; if (this.dangerHint === a) {
@@ -18226,6 +18460,14 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         } if (this.tutorialMode && !this.tutPrompting && this.isBasicTraining)
             return; if (this.tutorialMode && this.tutPrompting && !this.tutAccept(a))
             return; this.world.player.input(a); }
+        diveSparks(dt) { let p = this.world.player; if (this.state !== "run" || this.vehicle.usesSprite || p.vmode !== "down" || p.vphase === "recover" || p.vphase === "antic") {
+            this.diveAcc = 0;
+            return;
+        } this.diveAcc += dt * 26; while (this.diveAcc >= 1) {
+            this.diveAcc -= 1;
+            let side = Math.random() < 0.5 ? -1 : 1, c = this.vehicle.root.position;
+            this.particles.emit(c.x + side * (0.45 + Math.random() * 0.2), 0.06, 1.2 + Math.random() * 0.3, side * (0.4 + Math.random()), 0.6 + Math.random() * 1.2, 2 + Math.random() * 3, Math.random() < 0.6 ? 16757575 : 16773577, 0.07 + Math.random() * 0.05, 0.22 + Math.random() * 0.15, { locked: !0, drag: 2, grav: 10 });
+        } }
         tyreSpray(dt, speed) { let p = this.world.player; if (this.state !== "run" || p.air > 0.08 || speed < TYRE.sprayFrom) {
             this.sprayAcc = 0;
             return;
@@ -18286,13 +18528,13 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             return; if (this.tutorialMode && !this.tutPrompting && this.isBasicTraining)
             return; if (!this.world.player.escape())
             return; this.run.escapes--, this.run.superUsed++, this.spendCarried("escape"), this.run.invulnT = Math.max(this.run.invulnT, TIMING.escExec + TIMING.escHold + TIMING.escRecover + 0.6), this.superFlight = !0, this.superRolled = !0, this.vibrate(35), this.audio.play("turbo"), this.audio.play("warp"), this.rig.shake(0.4), this.rig.fovKick += 10; let c = this.vehicle.root.position; for (let k = 0; k < 4; k++)
-            this.rings.spawn(this.tmpV.set(c.x, 0.1 + k * 0.6, 0), k % 2 ? 16777215 : 16734780, 2.4 + k * 1.2, 0.6, !0); this.particles.burst(c.x, c.y, 0, 80, 16734780, 10, 0.35, 0.7, { up: 3 }), this.ui.pop("SKY ESCAPE!", "#ff8a6a", "SAFE ABOVE THE ROAD", -12), this.ui.flash(); }
+            this.rings.spawn(this.tmpV.set(c.x, 0.1 + k * 0.6, 0), k % 2 ? 16777215 : 16734780, 2.4 + k * 1.2, 0.6, !0); this.particles.burst(c.x, c.y, 0, 50, 16734780, 10, 0.26, 0.6, { up: 3 }), this.ui.pop("SKY ESCAPE!", "#ff8a6a", "SAFE ABOVE THE ROAD", -12), this.ui.flash(); }
         launchSuperJump(hyper = !1) { if (!this.world.player.superJump(hyper))
             return; if (hyper)
             this.run.hyperJumps--;
         else
             this.run.superJumps--; this.spendCarried(hyper ? "hyper" : "super"), this.run.superUsed++, this.vehicle.boostKick(1); let flight = hyper ? TIMING.superAntic + TIMING.hyperExec + TIMING.hyperHold + TIMING.hyperRecover : TIMING.superAntic + TIMING.superExec + TIMING.superHold + TIMING.superRecover; this.run.invulnT = Math.max(this.run.invulnT, flight + 0.6), this.superRolled = !1, this.slowmoDone = !1, this.superFlight = !0, this.vibrate(hyper ? 45 : 35), this.audio.play("turbo"), this.rig.shake(hyper ? 0.45 : 0.3), this.rig.fovKick += hyper ? 12 : 8; let c = this.vehicle.root.position, col = hyper ? 16761370 : 10185727; for (let k = 0; k < (hyper ? 5 : 3); k++)
-            this.rings.spawn(this.tmpV.set(c.x, 0.08 + k * 0.5, 0), k ? col : hyper ? 16774048 : 5951999, 2.5 + k * 1.4, 0.55, !0); this.particles.burst(c.x, 0.3, 0, hyper ? 110 : 60, col, hyper ? 12 : 9, 0.35, 0.7, { up: 4 }), this.ui.pop(hyper ? "HYPER JUMP!" : "ROADSTER JUMP!", hyper ? "#ffd24a" : "#c8a8ff", hyper ? "MYTHIC" : "", -10); }
+            this.rings.spawn(this.tmpV.set(c.x, 0.08 + k * 0.5, 0), k ? col : hyper ? 16774048 : 5951999, 2.5 + k * 1.4, 0.55, !0); this.particles.burst(c.x, 0.3, 0, hyper ? 70 : 40, col, hyper ? 12 : 9, 0.26, 0.6, { up: 4 }), this.ui.pop(hyper ? "HYPER JUMP!" : "ROADSTER JUMP!", hyper ? "#ffd24a" : "#c8a8ff", hyper ? "MYTHIC" : "", -10); }
         wirePlayerEvents() { let p = this.world.player; p.events = { lane: (dir) => { this.audio.play("lane", { pan: dir * 0.5 }); let p = this.world.player; if (p.air > 0.5) {
                 let car = this.vehicle.root.position;
                 for (let i = 0; i < 12; i++)
@@ -18310,7 +18552,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
                 let big = this.superFlight, px = this.world.player.x;
                 for (let k = 0; k < (big ? 10 : 5); k++) {
                     let a = Math.random() * Math.PI * 2;
-                    this.smoke.emit(px + Math.cos(a) * 0.9, 0.12, 0.4 + Math.sin(a) * 0.8, Math.cos(a) * (big ? 2.4 : 1.5), 0.5 + Math.random() * 0.6, 1 + Math.random(), 13226720, big ? 0.5 : 0.32, big ? 0.6 : 0.42, { drag: 3, grow: 1.6, locked: !0 });
+                    this.smoke.emit(px + Math.cos(a) * 0.9, 0.12, 0.4 + Math.sin(a) * 0.8, Math.cos(a) * (big ? 2.4 : 1.5), 0.5 + Math.random() * 0.6, 1 + Math.random(), 13226720, big ? 0.34 : 0.22, big ? 0.5 : 0.36, { drag: 3, grow: 1.3, locked: !0 });
                 }
             } if (m === "up" && this.superFlight) {
                 this.superFlight = !1;
@@ -18329,18 +18571,34 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
                 r.dashes = Math.max(0, r.dashes - 1); if (r)
                 r.invulnT = Math.max(r.invulnT, TIMING.laneChange + 0.15); if (this.vehicle.barrelRoll(1, dir === -1 ? 1 : -1, 15), this.audio.play("ring"), r && this.state === "run")
                 r.score += 100 * r.scoreMul; this.ui.pop("AIR DASH FLIP!", "#7ff5e2", "", -8); let c = this.vehicle.root.position; for (let i = 0; i < 22; i++)
-                this.particles.emit(c.x, c.y + (Math.random() - 0.5) * 0.6, 0.3 + Math.random(), -dir * (8 + Math.random() * 6), (Math.random() - 0.5) * 2, 3, i % 2 ? 3073736 : 11075568, 0.22, 0.35, { drag: 3, locked: !0 }); }, airBlocked: (dir) => { if (this.audio.play("bump", { pan: dir * 0.4 }), this.state === "run" && !this.tutorialMode)
+                this.particles.emit(c.x, c.y + (Math.random() - 0.5) * 0.6, 0.3 + Math.random(), -dir * (8 + Math.random() * 6), (Math.random() - 0.5) * 2, 3, i % 2 ? 3073736 : 11075568, 0.22, 0.35, { drag: 3, locked: !0 }); }, airDashStart: (dir) => { this.vibrate(28), this.audio.play("up"), this.audio.play("ring", { delay: 0.08 }), this.vehicle.boostKick(0.6), this.rig.fovKick += 3, this.ui.pop("AIR DASH!", "#7ff5e2", "", -8); let c = this.vehicle.root.position; for (let i = 0; i < 18; i++)
+                this.particles.emit(c.x, c.y + (Math.random() - 0.5) * 0.4, 0.4 + Math.random(), -dir * (5 + Math.random() * 5), 1 + Math.random() * 2, 3, i % 2 ? 3073736 : 15269883, 0.2, 0.32, { drag: 3, locked: !0 }); if (this.run && this.state === "run")
+                this.run.score += 100 * this.run.scoreMul; }, dashAbsorbed: () => { }, airBlocked: (dir) => { if (this.audio.play("bump", { pan: dir * 0.4 }), this.state === "run" && !this.tutorialMode)
                 this.ui.pop("LAND FIRST", "#9fb3dd", "", 4); }, bump: (dir) => { this.audio.play("bump", { pan: dir * 0.6 }), this.rig.shake(0.18); } }; }
-        frame() { let rawDt = this.clock.getDelta(); if (!this.manual)
-            this.tick(Math.min(rawDt, 0.05), rawDt); if (this.renderer.render(), DEBUG)
+        frame() { let rawDt = this.clock.getDelta(), t0 = PERF ? performance.now() : 0; if (!this.manual)
+            this.tick(Math.min(rawDt, 0.05), rawDt); let t1 = PERF ? performance.now() : 0; if (this.renderer.render(), PERF)
+            this.perfFrame(rawDt * 1000, t1 - t0, performance.now() - t1); if (DEBUG)
             this.updateDebug(); }
+        perfFrame(frameMs, jsMs, renderMs) {
+            var _a;
+            if (this.perfRec.add({ frame: frameMs, js: jsMs, render: renderMs }), this.perfT += frameMs, this.perfT < 500)
+                return;
+            if (this.perfT = 0, !this.perfEl)
+                this.perfEl = document.createElement("div"), this.perfEl.style.cssText = "position:fixed;left:4px;bottom:4px;z-index:99999;pointer-events:none;font:600 10px/1.3 monospace;color:#9fffb0;background:rgba(0,0,0,.55);padding:3px 5px;border-radius:4px;white-space:pre", document.body.appendChild(this.perfEl);
+            let s = this.perfStats(120);
+            this.perfEl.textContent = `${s.fps} fps · p95 ${s.frame.p95} ms · JS ${s.js.avg} · draw ${s.render.avg} ms
+${s.calls} calls · ${Math.round(s.tris / 1000)}k tris · ${s.quality.toUpperCase()} @${s.dpr} · heap ${(_a = s.heapMB) !== null && _a !== void 0 ? _a : "—"} MB`;
+        }
+        perfStats(last) { let i = this.renderer.info, mem = performance.memory; return Object.assign(Object.assign({}, this.perfRec.report(last)), { calls: i.render.calls, tris: i.render.triangles, geometries: i.memory.geometries, textures: i.memory.textures, quality: this.renderer.quality, dpr: this.renderer.pixelRatio, heapMB: mem ? Math.round(mem.usedJSHeapSize / 1048576) : null }); }
+        perfReset() { this.perfRec.reset(); }
         advance(seconds, step = 0.016666666666666666) { for (let t = 0; t < seconds - 0.000000001; t += step)
             this.tick(step, step); }
         tick(dt, rawDt) { var _a; if ((_a = this.ads) === null || _a === void 0 ? void 0 : _a.showing)
+            return; if (this.state === "paused")
             return; if (this.slowmoT > 0) {
             if (this.slowmoT -= rawDt, this.slowmoT <= 0 && !this.tutPrompting)
                 this.timeScaleTarget = 1;
-        } if (this.tutorialMode && (this.state === "run" || this.state === "paused") || this.slowmoT > 0 || this.timeScale < 0.999) {
+        } if (this.tutorialMode && this.state === "run" || this.slowmoT > 0 || this.timeScale < 0.999) {
             if (this.timeScale += (this.timeScaleTarget - this.timeScale) * damp2(this.timeScaleTarget < 1 ? 10 : 6, rawDt), this.state !== "run" && !this.tutorialMode)
                 this.timeScale = this.timeScaleTarget = 1;
             dt *= this.timeScale;
@@ -18360,9 +18618,6 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             case "finish":
                 this.updateRun(dt);
                 break;
-            case "paused":
-                this.stateT -= dt;
-                break;
             case "continue": {
                 if (this.holdContinue) {
                     this.stateT -= dt;
@@ -18375,14 +18630,13 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             }
             case "gameover":
             case "loading": break;
-        } if (this.state !== "paused")
-            this.updateVisuals(this.state === "gameover" ? dt * 0.3 : dt); }
+        } this.updateVisuals(this.state === "gameover" ? dt * 0.3 : dt); }
         updateAmbient(dt) { this.menuDist += dt * 16; let p = this.world.player; p.update(dt), this.vehicle.update(p, dt, 32, 0), this.scenery.update(this.menuDist, this.time, dt), this.track.update(this.menuDist), this.rig.update(dt, p, 0, 0), this.audio.intensity = 0; }
         updateCountdown(dt) { let step = Math.floor(this.stateT / 0.7); if (step !== this.countdownStep && step <= 3) {
             this.countdownStep = step;
             let label = ["3", "2", "1", "GO!"][step];
             if (this.ui.countdown(label), this.audio.play(step === 3 ? "go" : "beep"), step === 3)
-                this.rig.shake(0.15), this.vehicle.boostKick(1), this.vibrate(25);
+                this.vehicle.boostKick(1), this.vibrate(25);
             else
                 this.vibrate(8);
         } let p = this.world.player; if (p.update(dt), this.vehicle.update(p, dt, 0, 0), this.scenery.update(this.world.dist, this.time, dt), this.track.update(this.world.dist), this.rig.update(dt, p, 0, 0), this.stateT > 2.6) {
@@ -18397,13 +18651,14 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.speedScale = Math.min(1, this.speedScale + dt * 0.8);
         else
             this.speedScale = 1; if (this.autopilot && this.state === "run")
-            this.autopilot.update(w, dt, (a) => p.input(a)); let steps = Math.max(1, Math.ceil(dt / 0.008333333333333333)), h = dt / steps, opts = { invulnerable: this.state !== "run" || run.invulnerable || this.tutorialMode && !this.tut.vulnerable, smash: run.turboT > 0 || !!this.showcaseK && this.showcaseK !== "ghost", magnet: run.magnetActive || !!this.showcaseK && this.showcaseK !== "ghost", magnetRadius: run.magnetRadius, speedMul: this.turboMulNow(run, dt) * this.speedScale }; for (let i = 0; i < steps; i++) {
+            this.autopilot.update(w, dt, (a) => p.input(a)); let steps = Math.max(1, Math.ceil(dt / 0.008333333333333333)), h = dt / steps, dashSafe = this.airDashGuard.update(p, w.obstacles, w.speed * this.speedScale, dt), opts = { invulnerable: this.state !== "run" || run.invulnerable || dashSafe || this.tutorialMode && !this.tut.vulnerable, smash: run.turboT > 0 || !!this.showcaseK && this.showcaseK !== "ghost", magnet: run.magnetActive || !!this.showcaseK && this.showcaseK !== "ghost", magnetRadius: run.magnetRadius, speedMul: this.turboMulNow(run, dt) * this.speedScale }; for (let i = 0; i < steps; i++) {
             let before = w.dist, ev = w.step(h, opts);
             if (this.state === "run" || this.state === "respawn")
                 run.update(h, w.dist - before);
             this.handleWorldEvents(ev);
             let crash = this.state === "run" ? run.handle(ev) : null;
             if (this.handleFeedback(), crash) {
+                this.lastCrashEventT = performance.now();
                 let hit = ev.find((e) => e.type === "hit"), pl = w.player;
                 this.lastTip = hit && hit.type === "hit" ? crashTip(hit.o, pl.lane, pl.vmode === "up", pl.vmode === "down" && pl.vphase !== "recover") : null, this.onCrash(crash === "gameover");
                 break;
@@ -18435,7 +18690,7 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
                 for (let k = 0; k < (climbing ? 4 : 1); k++)
                     this.particles.emit(c.x + (Math.random() - 0.5) * 1.6, c.y - 0.4, 0.4 + Math.random(), 0, climbing ? -10 - Math.random() * 6 : -2, 3, cols[k % 2], 0.3, 0.45, { drag: 1.5, locked: !0, grow: 0.8 });
             }
-        } let blink = run.invulnT > 0 && run.turboT <= 0 && this.state !== "dying" && !p.isSuper; if (this.vehicle.visibleBlink = this.state !== "dying", this.tutorialMode) {
+        } let blink = run.invulnT > 0 && run.turboT <= 0 && this.state !== "dying" && !p.isSuper; if (this.vehicle.visibleBlink = this.state !== "dying" || !this.vehicle.usesSprite, this.tutorialMode) {
             let st = this.tut.steps[this.tutStep];
             if (st && !this.tutPrompting && this.state === "run" && (st.dist - w.dist) / Math.max(1, w.speed) <= st.lead && this.aimStep(st)) {
                 if (this.tutPrompting = !0, this.timeScaleTarget = 0.035, this.ui.tutPrompt({ index: this.tutStep, total: this.tut.steps.length, need: st.need, title: st.title, sub: st.sub }), this.audio.play("beep"), st.need === "rocket" && run.superJumps <= 0 && run.hyperJumps <= 0)
@@ -18533,6 +18788,8 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
                 this.onWorldChange(e.world);
             if (e.type === "smash")
                 this.obstacleViews.hide(e.o);
+            if (e.type === "ring")
+                this.obstacleViews.collect(e.o);
             if (e.type === "hit") {
                 let p = this.world.player, m = e.o.row.masks[p.lane], need = m === 0 ? "lane change" : m & PASS_N ? "stay level" : m & PASS_H ? "fly UP" : "fly DOWN";
                 this.lastHit = `${e.o.spec.type} ${(_a = e.o.row.pid) !== null && _a !== void 0 ? _a : ""} T${(_b = e.o.row.tier) !== null && _b !== void 0 ? _b : "?"} · lane ${p.lane} ${p.heightState} · needed: ${need}`;
@@ -18564,8 +18821,8 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
                         this.runHearts++, this.ui.toast(`${POWER_ICON.life} EXTRA LIFE`, "var(--red)");
                     if (k === "super")
                         this.ui.toast(`${POWER_ICON.super} ROADSTER JUMP ready · tap the ROADSTER button`, "#9b6bff");
-                    if (k === "dash")
-                        this.ui.toast(`${POWER_ICON.dash} AIR DASH ×${this.run.dashes} · from an edge lane: jump, swipe twice → flip`, "#2ee6c8");
+                    if (k === "dash" && this.state === "run")
+                        this.world.player.airDash();
                     if (k === "escape")
                         this.ui.toast(`${POWER_ICON.escape} SKY ESCAPE ready · tap SOS (E) in an emergency`, "#ff5a3c");
                     break;
@@ -18584,19 +18841,23 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
                     break;
                 }
                 case "ring":
-                    this.audio.play("ring"), this.vibrate(8), this.ui.pop("RING", "#ffd24a", "COINS ×2", 2), this.rings.spawn(this.tmpV.copy(this.vehicle.root.position), 3782399, 3, 0.5);
+                    this.audio.play("ring"), this.vibrate(8), this.ui.pop("RING", "#ffd24a", "COINS ×2", 2);
+                    {
+                        let c = this.vehicle.root.position;
+                        this.particles.burst(c.x, c.y + 0.3, -0.4, 10, 16765514, 3.5, 0.1, 0.4, { grav: 2 });
+                    }
                     break;
                 case "combo":
                     this.audio.play("combo");
                     break;
                 case "shieldBreak": {
-                    this.audio.play("shieldBreak"), this.vehicle.shieldHit(), this.vibrate([30, 40, 30]), this.rig.shake(0.35), this.particles.burst(this.vehicle.root.position.x, this.vehicle.root.position.y, 0, 30, 4037631, 9, 0.3, 0.5);
+                    this.audio.play("shieldBreak"), this.vehicle.shieldHit(), this.vibrate([30, 40, 30]), this.rig.shake(0.35), this.particles.burst(this.vehicle.root.position.x, this.vehicle.root.position.y, 0, 18, 4037631, 8, 0.2, 0.45);
                     let left = this.run.shield ? this.run.shieldHits : 0;
                     this.ui.pop(left > 0 ? `SHIELD ×${left}` : "SHIELD GONE", left > 0 ? "#6fc8ff" : "#9fb3dd", "", -8);
                     break;
                 }
                 case "smash":
-                    this.audio.play("explode"), this.debris.explode(this.tmpV.set(f.x, f.y, f.z), 3817292, 5224703, !0), this.particles.burst(f.x, f.y, f.z, 46, 16747039, 13, 0.4, 0.75, { locked: !0, grav: 7, up: 3 }), this.particles.burst(f.x, f.y, f.z, 24, 6079231, 10, 0.3, 0.5, { locked: !0, grav: 4 }), this.smoke.emit(f.x, f.y, f.z, 0, 1.2, 0, 10134453, 0.6, 0.55, { drag: 2, grow: 2, locked: !0 }), this.rig.shake(0.32), this.vibrate(25);
+                    this.audio.play("explode"), this.debris.explode(this.tmpV.set(f.x, f.y, f.z), 3817292, 5224703, !0), this.particles.burst(f.x, f.y, f.z, 30, 16747039, 12, 0.28, 0.6, { locked: !0, grav: 7, up: 3 }), this.particles.burst(f.x, f.y, f.z, 14, 6079231, 9, 0.22, 0.45, { locked: !0, grav: 4 }), this.smoke.emit(f.x, f.y, f.z, 0, 1.2, 0, 10134453, 0.38, 0.45, { drag: 2, grow: 1.4, locked: !0 }), this.rig.shake(0.32), this.vibrate(25);
                     break;
                 case "crash": break;
                 case "expire":
@@ -18608,16 +18869,51 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             (_a = navigator.vibrate) === null || _a === void 0 ? void 0 : _a.call(navigator, ms);
         }
         catch (_b) { } }
-        onCrash(final) { var _a; if (this.lastTip && !final) {
+        lastChance() { let r = this.run; if (!r || this.state !== "run" || this.tutorialMode || this.autoRescueUsed)
+            return !1; if (this.continuesUsed < ADS.maxContinues)
+            return !1; let k = this.carried; if (!k)
+            return !1; let before = r.superJumps + r.hyperJumps + r.escapes; if (k === "escape") {
+            if (r.escapes <= 0)
+                return !1;
+            this.activateSpecial("AUTO_LAST_CHANCE");
+        }
+        else {
+            if (r.superJumps + r.hyperJumps <= 0 || !this.world.player.canJump)
+                return !1;
+            this.activateSpecial("AUTO_LAST_CHANCE");
+        } if (!(r.superJumps + r.hyperJumps + r.escapes === before - 1 && r.invulnT > 0))
+            return !1; this.autoRescueUsed = !0; let name = { super: "ROADSTER", hyper: "HYPER", escape: "SOS" }[k]; return this.ui.toastNow(`${k === "escape" ? ICON.sos : ICON.rocket} <b>${name} AUTO ACTIVATED!</b>`, k === "escape" ? "#ff5a3c" : k === "hyper" ? "#ffc21a" : "#9b6bff"), !0; }
+        activateSpecial(source, which) { this.lastSpecialSource = source; let r = this.run; if (!r)
+            return; if ((which !== null && which !== void 0 ? which : (this.carried === "escape" || r.escapes > 0 && r.superJumps + r.hyperJumps <= 0 ? "sos" : "rocket")) === "sos")
+            this.useEscape();
+        else
+            this.useRocket(); }
+        queueClassCelebration() { var _a; let seen = new Set((_a = this.save.classCelebrated) !== null && _a !== void 0 ? _a : []); for (let i = rankIdx("A"); i <= rankIdx(this.rank); i++) {
+            let c = CLASSES[i];
+            if (!seen.has(c) && !this.classQueue.includes(c))
+                this.classQueue.push(c);
+        } if (this.classQueue.length && !this.ui.isShown("classup"))
+            window.setTimeout(() => this.showNextClass(), 900); }
+        showNextClass() { var _a, _b, _c; let c = this.classQueue[0]; if (!c || this.state === "run" || this.state === "countdown" || this.state === "paused" || this.state === "dying" || this.state === "respawn")
+            return; let carId = (_b = (_a = SKINS.find((k) => !k.future && k.need === c && this.save.unlocked.includes(k.id))) === null || _a === void 0 ? void 0 : _a.id) !== null && _b !== void 0 ? _b : null, sub = { A: "Top-class driving. Keep the streak going!", AA: "Elite driver — a new XWAVE car is yours.", AAA: "The highest Endless class. Mega Rush is open!", S: "Mega Rush legend.", SS: "Almost untouchable.", SSS: "The very top of Sky Roadster." }; this.audio.play("fanfare"), this.vibrate([30, 40, 60]), this.ui.classUp({ cls: c, color: CLASS_COLOR[c], sub: (_c = sub[c]) !== null && _c !== void 0 ? _c : "", car: carId ? { id: carId, name: SKINS.find((k) => k.id === carId).name } : null }); }
+        classOk() { var _a; var _b; let c = this.classQueue.shift(); if (c) {
+            let list = (_a = (_b = this.save).classCelebrated) !== null && _a !== void 0 ? _a : (_b.classCelebrated = []);
+            if (!list.includes(c))
+                list.push(c);
+            this.persist();
+        } if (this.audio.play("click"), this.ui.hideOverlay("classup"), this.classQueue.length)
+            window.setTimeout(() => this.showNextClass(), 350); }
+        onCrash(final) { var _a; if (this.audio.play("crash"), this.audio.play("explode", { delay: 0.06 }), this.lastTip && !final) {
             let t = this.lastTip;
             window.setTimeout(() => this.ui.toast(`${ICON.info} <b>TIP</b> · ${t.text}`, "#4fc3ff"), 700);
         } this.dangerHint = null, this.ui.danger(null); let p = this.world.player; if (this.livesLost === 0 && this.run)
             this.firstLossExp = this.run.exp; this.livesLost++, this.setState("dying"), p.frozen = !0, this.input.enabled = !1; let pos = this.vehicle.root.position.clone(), skin = (_a = SKINS.find((s) => s.id === this.save.vehicle)) !== null && _a !== void 0 ? _a : SKINS[0]; if (!final)
-            this.debris.explode(pos, skin.body, skin.glow); if (this.particles.burst(pos.x, pos.y, pos.z, 36, 14185514, 10, 0.55, 0.8, { grav: 4 }), this.particles.burst(pos.x, pos.y, pos.z, 30, 5593702, 4, 1.2, 1.3, { drag: 1.5, up: 2 }), this.audio.play("crash"), window.setTimeout(() => this.audio.play("explode"), 60), this.rig.shake(final ? 0.7 : 0.45), this.vibrate(final ? [90, 40, 140, 50, 60] : [70]), final)
+            this.debris.explode(pos, skin.body, skin.glow); if (this.particles.burst(pos.x, pos.y, pos.z, 36, 14185514, 10, 0.55, 0.8, { grav: 4 }), this.particles.burst(pos.x, pos.y, pos.z, 30, 5593702, 4, 1.2, 1.3, { drag: 1.5, up: 2 }), this.rig.shake(final ? 0.7 : 0.45), this.vibrate(final ? [90, 40, 140, 50, 60] : [70]), final)
             this.shatter.burst(this.vehicle); if (this.ui.tutorial(!1), final)
             this.rig.mode = "crash"; this.audio.intensity = 0; }
-        respawn() { this.shatter.clear(); let w = this.world, p = w.player; this.setState("respawn"), w.clearAhead(70), p.reset(p.lane), p.frozen = !1, this.input.enabled = !0, this.run.invulnT = 2.4, this.vehicle.resetPose(), this.speedScale = 0.25; let c = this.tmpV.set(LANES[p.lane], HEIGHT.NORMAL, 0); for (let i = 0; i < 4; i++)
-            window.setTimeout(() => this.rings.spawn(c.clone(), 3782399, 2.5 + i * 0.6, 0.6, i % 2 === 0), i * 90); this.particles.burst(c.x, c.y, 0, 60, 7328511, 6, 0.35, 0.7), this.audio.play("respawn"), this.vibrate(20), this.vehicle.boostKick(0.8), this.ui.toast(`${ICON.heart} RESPAWN · ${this.run.lives} ${this.run.lives === 1 ? "life" : "lives"} left`, "var(--red)"); }
+        respawn(revived = !1) { this.shatter.clear(); let w = this.world, p = w.player; this.setState("respawn"), w.clearAhead(70), p.reset(p.lane), p.frozen = !1, this.input.enabled = !0, this.run.invulnT = 2.4, this.airDashGuard.reset(), this.vehicle.resetPose(), this.speedScale = 0.25; let c = this.tmpV.set(LANES[p.lane], HEIGHT.NORMAL, 0); for (let i = 0; i < 4; i++)
+            window.setTimeout(() => this.rings.spawn(c.clone(), 3782399, 2.5 + i * 0.6, 0.6, i % 2 === 0), i * 90); if (this.particles.burst(c.x, c.y, 0, 36, 7328511, 6, 0.25, 0.6), this.audio.play("respawn"), this.vibrate(20), this.vehicle.boostKick(0.8), !revived)
+            this.ui.toast(`${ICON.heart} RESPAWN · ${this.run.lives} ${this.run.lives === 1 ? "life" : "lives"} left`, "var(--red)"); }
         cashLeftovers() { this.leftover = null; let r = this.run, parts = [], pts = 0, add = (n, each, name) => { if (n <= 0)
             return; pts += n * each, parts.push(`${n}× ${name}`); }; if (add(r.superJumps, LEFTOVER_POINTS.super, "Roadster Jump"), add(r.hyperJumps, LEFTOVER_POINTS.hyper, "HYPER JUMP"), add(r.escapes, LEFTOVER_POINTS.escape, "Sky Escape"), pts <= 0)
             return; let total = Math.round(pts * r.scoreMul); r.score += total, r.superJumps = r.hyperJumps = r.escapes = 0, this.leftover = { pts: total, items: parts.join(" + ") }, window.setTimeout(() => { this.ui.pop(`+${total.toLocaleString("en-US")}`, "#c9a8ff", "UNUSED BOOSTS", -18), this.ui.toast(`${ICON.rocket} Unused boosts → points · ${parts.join(" + ")} = +${total.toLocaleString("en-US")}`, "#9b6bff"), this.audio.play("combo"); }, 900); }
@@ -18640,9 +18936,9 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             for (let [k, n] of Object.entries(rule.items))
                 this.save.items[k] += n !== null && n !== void 0 ? n : 0, bonusItems.push(`+${n} ${{ super: "Roadster Jump", hyper: "HYPER JUMP", escape: "Sky Escape", shield: "Start Shield" }[k]}`);
         } if (bonusItems.length)
-            window.setTimeout(() => this.ui.toast(`${ICON.bag} Track bonus → Magic Bag · ${bonusItems.join(" · ")}`, "#c24dff"), 1200); let rewards = this.recordMeta(!0); this.persist(), this.ui.finish({ rewards, track: c.name, stars, score, isBest, time: this.runTime, coins: run.coins, coinTarget: c.coinTarget, lost: this.livesLost, reward, speedBonus, level: lv.label, hasNext: COURSES.indexOf(c) < COURSES.length - 1, leftover: this.leftover, bonusItems }), this.ui.show("finish"), this.lastResult = { coins: run.coins, reward, doubled: !1 }, this.ui.adButton("ad2xf", "ready"), this.ads.runEnded(); }
+            window.setTimeout(() => this.ui.toast(`${ICON.bag} Track bonus → Magic Bag · ${bonusItems.join(" · ")}`, "#c24dff"), 1200); let rewards = this.recordMeta(!0); this.persist(), this.queueClassCelebration(), this.ui.finish({ rewards, track: c.name, stars, score, isBest, time: this.runTime, coins: run.coins, coinTarget: c.coinTarget, lost: this.livesLost, reward, speedBonus, level: lv.label, hasNext: COURSES.indexOf(c) < COURSES.length - 1, leftover: this.leftover, bonusItems }), this.ui.show("finish"), this.lastResult = { coins: run.coins, reward, doubled: !1 }, this.ui.adButton("ad2xf", "ready"), this.ads.runEnded(); }
         gameOver() { var _a, _b, _c, _d, _e; this.holdContinue = !1, this.returnTo = null; let run = this.run; this.setState("gameover"), this.input.enabled = !1, this.missions.endRun(); let score = Math.floor(run.score); if (score > this.save.best)
-            this.save.best = score; let tid = (_b = (_a = this.course) === null || _a === void 0 ? void 0 : _a.id) !== null && _b !== void 0 ? _b : "endless"; this.save.trackBest[tid] = Math.max(score, (_c = this.save.trackBest[tid]) !== null && _c !== void 0 ? _c : 0), this.save.bestDistance = Math.max(this.save.bestDistance, Math.floor(run.distance)); let lvg = LEVELS[this.runLevel], speedBonus = Math.round(run.coins * (lvg.reward - 1)); this.save.wallet += run.coins + speedBonus, this.save.totalRuns++; let rewards = this.recordMeta(!1); this.persist(); let isBonus = !!((_d = this.course) === null || _d === void 0 ? void 0 : _d.bonus), pos = ""; if (!isBonus && run.exp > 0) {
+            this.save.best = score; let tid = (_b = (_a = this.course) === null || _a === void 0 ? void 0 : _a.id) !== null && _b !== void 0 ? _b : "endless"; this.save.trackBest[tid] = Math.max(score, (_c = this.save.trackBest[tid]) !== null && _c !== void 0 ? _c : 0), this.save.bestDistance = Math.max(this.save.bestDistance, Math.floor(run.distance)); let lvg = LEVELS[this.runLevel], speedBonus = Math.round(run.coins * (lvg.reward - 1)); this.save.wallet += run.coins + speedBonus, this.save.totalRuns++; let rewards = this.recordMeta(!1); this.persist(), this.queueClassCelebration(); let isBonus = !!((_d = this.course) === null || _d === void 0 ? void 0 : _d.bonus), pos = ""; if (!isBonus && run.exp > 0) {
             let wb = this.meta.weekly(), r = wb.you.rank, pct = Math.max(1, Math.ceil(r / wb.total * 100));
             pos = r <= 999 ? `#${r.toLocaleString("en-US")} this week` : pct <= 50 ? `Top ${pct}% this week` : "";
         } if (this.ui.gameOver({ score: isBonus ? run.coins : run.exp, best: this.variant === "track2" ? this.save.exp2Best : this.save.expBest, isBest: !!rewards && rewards.exp > 0 && rewards.to > rewards.from, dist: run.distance, length: (_e = this.course) === null || _e === void 0 ? void 0 : _e.length, coins: run.coins, near: run.nearMiss, missions: this.runMissionsDone, rewards, speedBonus, level: lvg.label, tip: this.lastTip, runRank: isBonus || run.expRate <= 0 ? null : this.runRank, pos, car: this.save.vehicle, bonus: isBonus }), !isBonus)
@@ -18660,10 +18956,14 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
         } {
             let el = this.showcaseDur - this.showcaseT, e = this.showcaseK ? Math.min(1, el / 0.45, this.showcaseT / 0.45) : 0;
             this.vehicle.showcase = this.showcaseK ? { kind: this.showcaseK, e: e * e * (3 - 2 * e) } : null;
-        } if (this.state !== "dying" && this.state !== "gameover")
-            this.vehicle.update(p, dt, w.speed, turbo); this.tyreSpray(dt, w.speed), this.obstacleViews.update(w.obstacles, this.time, dt), this.pickupViews.update(w.pickups, this.time, this.rig.camera.quaternion); let scroll = this.state === "countdown" ? 0 : w.speed; this.particles.update(dt, scroll), this.smoke.update(dt, scroll), this.rings.update(dt, scroll), this.debris.update(dt, this.state === "run" ? this.world.speed : 0), this.shatter.update(dt), this.portal.update(dt); let comfortK = this.save.settings.comfort !== !1 ? 0.75 : 1, wantLines = (turbo ? 1 : this.state === "run" ? 0.18 + speedFactor * 0.55 : 0) * comfortK, blurWant = this.state === "run" ? (0.016 + speedFactor * 0.04 + turbo * 0.05) * comfortK : 0; this.speedBlurS += (blurWant - this.speedBlurS) * damp2(4, dt), this.renderer.setSpeedBlur(this.speedBlurS), this.rig.rumble = turbo && this.state === "run" ? 0.16 * comfortK : 0, this.speedLines.intensity += (wantLines - this.speedLines.intensity) * damp2(3, dt), this.speedLines.update(dt, w.speed, this.scenery.accent); let sh = this.shield; sh.mesh.visible = !!run && run.shield && this.state !== "dying" && !this.vehicle.usesSprite; let racing = !!run && (this.state === "run" || this.state === "respawn" || this.state === "countdown"); if (this.vehicle.auraTarget = racing && this.showcaseK === "ghost" ? 1 : 0, this.vehicle.shieldTarget = racing && run.shield ? 1 : 0, this.vehicle.boostTarget = run && this.state === "run" && (run.turboT > 0 || this.world.player.isSuper && this.world.player.vphase !== "recover") ? 1 : 0, sh.mesh.visible)
-            sh.mesh.position.copy(this.vehicle.root.position), sh.mesh.quaternion.copy(this.vehicle.root.quaternion), sh.mat.uniforms.time.value = this.time, sh.mat.uniforms.strength.value = run.shieldT > 0 && run.shieldT < 2 ? 0.35 + 0.325 * run.shieldT : 1; let rp = READABILITY[this.scenery.world], comfort = this.save.settings.comfort !== !1; if (this.renderer.setBloom(rp.bloom * COMFORT.bloomMul), this.state !== "dying" && this.state !== "gameover")
-            this.updateTrails(dt, w.speed, turbo); this.rig.update(dt, p, speedFactor, turbo); }
+        } if (this.state !== "countdown" && this.state !== "dying" && this.state !== "gameover")
+            this.vehicle.update(p, dt, w.speed, turbo); this.tyreSpray(dt, w.speed), this.diveSparks(dt), this.obstacleViews.update(w.obstacles, this.time, dt), this.pickupViews.update(w.pickups, this.time, this.rig.camera.quaternion); let scroll = this.state === "countdown" ? 0 : w.speed; this.particles.update(dt, scroll), this.smoke.update(dt, scroll), this.rings.update(dt, scroll), this.debris.update(dt, this.state === "run" ? this.world.speed : 0), this.shatter.update(dt), this.portal.update(dt); let comfortK = this.save.settings.comfort !== !1 ? 0.75 : 1, wantLines = (turbo ? 1 : this.state === "run" ? 0.18 + speedFactor * 0.55 : 0) * comfortK, blurWant = this.state === "run" ? (0.016 + speedFactor * 0.04 + turbo * 0.05) * comfortK : 0; this.speedBlurS += (blurWant - this.speedBlurS) * damp2(4, dt), this.renderer.setSpeedBlur(this.speedBlurS), this.rig.rumble = turbo && this.state === "run" ? 0.16 * comfortK : 0, this.speedLines.intensity += (wantLines - this.speedLines.intensity) * damp2(3, dt), this.speedLines.update(dt, w.speed, this.scenery.accent); let racing = !!run && (this.state === "run" || this.state === "respawn" || this.state === "countdown"); if (this.vehicle.auraTarget = racing && this.showcaseK === "ghost" ? 1 : 0, this.vehicle.shieldTarget = racing && run.shield ? run.shieldT > 0 && run.shieldT < 2 ? 0.35 + 0.325 * run.shieldT : 1 : 0, this.vehicle.boostTarget = run && this.state === "run" && (run.turboT > 0 || this.world.player.isSuper && this.world.player.vphase !== "recover") ? 1 : 0, this.debugCol) {
+            if (!this.debugCol.group.parent)
+                this.renderer.scene.add(this.debugCol.group);
+            p.hitbox(this.debugHit), this.debugCol.update(this.debugHit, this.vehicle.root, w.obstacles.map((o) => ({ boxes: o.boxes, view: this.obstacleViews.viewOf(o.id) })));
+        } let rp = READABILITY[this.scenery.world], comfort = this.save.settings.comfort !== !1; if (this.renderer.setBloom(rp.bloom * COMFORT.bloomMul), this.state !== "dying" && this.state !== "gameover")
+            this.updateTrails(dt, w.speed, turbo); if (this.state !== "countdown")
+            this.rig.update(dt, p, speedFactor, turbo); }
         toScreen(x, y, z) { let v = this.tmpV.set(x, y, z).project(this.rig.camera); if (v.z > 1)
             return null; let r = this.ui.root.getBoundingClientRect(); return { x: (v.x + 1) / 2 * r.width, y: (1 - v.y) / 2 * r.height }; }
         energyBurst(n, vy) { for (let i = 0; i < 2; i++)
@@ -18774,11 +19074,11 @@ varying float vSide;`).replace("#include <emissivemap_fragment>", "totalEmissive
             this.save.hintsLearned = {}; this.persist(), this.ui.refreshProfile(this.save), this.audio.play("click"); }
         applyReadability() { let rp = READABILITY[this.scenery.world]; this.track.applyReadability(rp), setObstacleContrast(rp.edge, rp.edgeOpacity, rp.hazardLift); let comfort = this.save.settings.comfort !== !1; OBSTACLE_FX.pulse = comfort ? COMFORT.pulse : 1, this.ui.setComfort(comfort); }
         toggleComfort() { this.save.settings.comfort = this.save.settings.comfort === !1, this.persist(), this.applyReadability(), this.ui.refreshProfile(this.save), this.audio.play("click"), this.ui.toast(this.save.settings.comfort !== !1 ? "◐ Eye comfort ON · fewer speed lines, less blur & shake, softer glows" : "◐ Eye comfort OFF · full speed effects", "#9fb3dd"); }
-        toggleQuality() { this.save.settings.quality = this.renderer.quality === "high" ? "low" : "high", this.applyQuality(this.save.settings.quality), this.persist(), this.audio.play("click"); }
-        applyQuality(q) { this.renderer.setQuality(q), this.particles.setPixelRatio(this.renderer.pixelRatio), this.smoke.setPixelRatio(this.renderer.pixelRatio), this.ui.refreshProfile(this.save, q); }
+        toggleQuality(v) { this.save.settings.quality = v === "low" || v === "medium" || v === "high" ? v : nextGraphics(this.renderer.quality), this.applyQuality(this.save.settings.quality), this.persist(), this.audio.play("click"); }
+        applyQuality(q) { this.renderer.setQuality(q), this.particles.density = this.smoke.density = GRAPHICS[q].particles, this.particles.setPixelRatio(this.renderer.pixelRatio), this.smoke.setPixelRatio(this.renderer.pixelRatio), this.ui.refreshProfile(this.save, q); }
         onResize() { let aspect = this.renderer.resize(); this.rig.resize(aspect); }
         trackPerformance(rawDt) { if (this.frameTimes.push(rawDt), this.frameTimes.length > 90)
-            this.frameTimes.shift(); let avg = this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length; if (this.fps = 1 / Math.max(0.0001, avg), this.qualityChecked += rawDt, this.state === "run" && this.qualityChecked > 4 && this.renderer.quality === "high" && this.fps < 42 && !DEBUG && !/[?&]noauto/.test(location.search)) {
+            this.frameTimes.shift(); let avg = this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length; if (this.fps = 1 / Math.max(0.0001, avg), this.qualityChecked += rawDt, this.state === "run" && this.qualityChecked > 4 && this.renderer.quality !== "low" && this.fps < 42 && !DEBUG && !/[?&]noauto/.test(location.search)) {
             if (this.qualityChecked = 0, this.frameTimes.length = 0, this.renderer.degrade()) {
                 this.particles.setPixelRatio(this.renderer.pixelRatio), this.smoke.setPixelRatio(this.renderer.pixelRatio);
                 return;
@@ -18831,9 +19131,9 @@ speed ${w.speed.toFixed(1)}  dist ${w.dist.toFixed(0)}  obst ${w.obstacles.lengt
     var G4 = typeof GameGlobal < "u" ? GameGlobal : globalThis, T3 = G4.tt;
     platform.native = !0;
     try {
-        platform.android = /android/i.test(String((_3 = (_2 = (_1 = T3 === null || T3 === void 0 ? void 0 : T3.getSystemInfoSync) === null || _1 === void 0 ? void 0 : _1.call(T3)) === null || _2 === void 0 ? void 0 : _2.platform) !== null && _3 !== void 0 ? _3 : ""));
+        platform.android = /android/i.test(String((_5 = (_4 = (_3 = T3 === null || T3 === void 0 ? void 0 : T3.getSystemInfoSync) === null || _3 === void 0 ? void 0 : _3.call(T3)) === null || _4 === void 0 ? void 0 : _4.platform) !== null && _5 !== void 0 ? _5 : ""));
     }
-    catch (_16) { }
+    catch (_18) { }
     platform.canvas = screenCanvas;
     platform.share = (text) => hs.share("Sky Roadster", text).then((r) => r === "shared");
     platform.buy = (sku) => hs.buy(sku);
@@ -18884,7 +19184,7 @@ speed ${w.speed.toFixed(1)}  dist ${w.dist.toFixed(0)}  obst ${w.obstacles.lengt
         }
         catch (_b) { }
     }
-    var uiCanvas = ((_4 = G4.document) === null || _4 === void 0 ? void 0 : _4.createElement) ? G4.document.createElement("canvas") : T3.createCanvas(), gfx = new Gfx(uiCanvas);
+    var uiCanvas = ((_6 = G4.document) === null || _6 === void 0 ? void 0 : _6.createElement) ? G4.document.createElement("canvas") : T3.createCanvas(), gfx = new Gfx(uiCanvas);
     gfx.makeImage = makeImage;
     var uiScale = Math.min(DPR, 2);
     gfx.resize(viewW, viewH, uiScale);
@@ -18903,7 +19203,7 @@ speed ${w.speed.toFixed(1)}  dist ${w.dist.toFixed(0)}  obst ${w.obstacles.lengt
             uiTex.needsUpdate = !0; mat.uniforms.decode.value = color.applied.surface ? 1 : 0, r.render(uiScene, uiCam), opaque(r); };
         let opaque = (r) => { let gl = r.getContext(); r.setRenderTarget(null), gl.colorMask(!1, !1, !1, !0), gl.clearColor(0, 0, 0, 1), gl.clear(gl.COLOR_BUFFER_BIT), gl.colorMask(!0, !0, !0, !0), r.resetState(); }, booted = !1, r3 = renderer.renderer, orig = r3.setAnimationLoop.bind(r3);
         r3.setAnimationLoop = (cb) => { booted = !0, orig(cb); };
-        let raf = (_5 = G4.requestAnimationFrame) !== null && _5 !== void 0 ? _5 : ((cb) => setTimeout(cb, 16)), pre = () => { if (booted)
+        let raf = (_7 = G4.requestAnimationFrame) !== null && _7 !== void 0 ? _7 : ((cb) => setTimeout(cb, 16)), pre = () => { if (booted)
             return; try {
             r3.setRenderTarget(null), r3.setClearColor(263962, 1), r3.clear(), renderer.uiPass(r3);
         }
@@ -18963,11 +19263,11 @@ speed ${w.speed.toFixed(1)}  dist ${w.dist.toFixed(0)}  obst ${w.obstacles.lengt
         ui === null || ui === void 0 ? void 0 : ui.touchEnd();
     else if (owner === "input")
         (_c = input()) === null || _c === void 0 ? void 0 : _c.touchEnd(); owner = null, touchId = null; }
-    (_6 = T3.onTouchStart) === null || _6 === void 0 ? void 0 : _6.call(T3, onStart);
-    (_7 = T3.onTouchMove) === null || _7 === void 0 ? void 0 : _7.call(T3, onMove);
-    (_8 = T3.onTouchEnd) === null || _8 === void 0 ? void 0 : _8.call(T3, onEnd);
-    (_9 = T3.onTouchCancel) === null || _9 === void 0 ? void 0 : _9.call(T3, onEnd);
-    (_10 = G4.addEventListener) === null || _10 === void 0 ? void 0 : _10.call(G4, "resize", () => { if (sizeScreen(), measureSafe(), gfx.resize(viewW, viewH, uiScale), ui)
+    (_8 = T3.onTouchStart) === null || _8 === void 0 ? void 0 : _8.call(T3, onStart);
+    (_9 = T3.onTouchMove) === null || _9 === void 0 ? void 0 : _9.call(T3, onMove);
+    (_10 = T3.onTouchEnd) === null || _10 === void 0 ? void 0 : _10.call(T3, onEnd);
+    (_11 = T3.onTouchCancel) === null || _11 === void 0 ? void 0 : _11.call(T3, onEnd);
+    (_12 = G4.addEventListener) === null || _12 === void 0 ? void 0 : _12.call(G4, "resize", () => { if (sizeScreen(), measureSafe(), gfx.resize(viewW, viewH, uiScale), ui)
         ui.dirty = !0; });
     hs.onPause(() => { var _a; let gm = game; if (!gm)
         return; if ((_a = gm.audio) === null || _a === void 0 ? void 0 : _a.duck(!0), gm.state === "run")
@@ -18989,5 +19289,5 @@ speed ${w.speed.toFixed(1)}  dist ${w.dist.toFixed(0)}  obst ${w.obstacles.lengt
         profile.on(k, () => { if (ui)
             ui.dirty = !0; });
     if (game)
-        (_11 = T3.setKeepScreenOn) === null || _11 === void 0 ? void 0 : _11.call(T3, { keepScreenOn: !0 }), game.boot().catch((e) => console.error("[sky-roadster] boot failed", e));
+        (_13 = T3.setKeepScreenOn) === null || _13 === void 0 ? void 0 : _13.call(T3, { keepScreenOn: !0 }), game.boot().catch((e) => console.error("[sky-roadster] boot failed", e));
 })();

@@ -84,7 +84,10 @@ export class Particles {
     this.grow[i] = opts.grow ?? 0;
   }
 
+  /** v4.2.1 share of burst particles drawn (graphics preset: LOW 0.5 · MEDIUM 0.8 · HIGH 1) */
+  density = 1;
   burst(x: number, y: number, z: number, n: number, color: number, speed: number, size: number, life: number, opts: { grav?: number; locked?: boolean; drag?: number; up?: number } = {}) {
+    n = Math.max(1, Math.round(n * this.density));
     for (let k = 0; k < n; k++) {
       const th = rng.next() * Math.PI * 2;
       const ph = Math.acos(rng.range(-1, 1));

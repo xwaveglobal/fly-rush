@@ -37,6 +37,14 @@ src/config.ts        ALL tuning numbers (lanes, heights, timings, speed, scoring
 src/Game.ts          state machine & orchestration (menu → countdown → run → crash → game over)
 src/gameplay/        PURE LOGIC, no Three.js, runs in Node (tests import it directly)
 src/render/          Three.js views — read-only consumers of gameplay state
+src/render/car/      v4 3D car: glbParse.ts (own GLB reader), MeshCar.ts (wheels, sprung body, pop-up spoiler, nitro, dive pose), CarFx.ts (shield aura, ghost / pickup edge light, crash shards), carMotion.ts (pure, tested), x1Textures.ts
+src/render/DebugCollision.ts  ?debug=collision overlay (visual bounds vs hitboxes; dev only)
+src/render/roadSurface.ts     v4.2 procedural road tile (pure data, tested in Node) → Track.ts DataTextures; envFx.ts: wrapZ + far fade (no popping)
+                     graphics presets LOW / MEDIUM / HIGH: GRAPHICS in config.ts (Renderer, Scenery.setQuality, Track.setQuality)
+                     cameras: CAMERA presets (low / balanced / high) + CAMERA.home in config.ts, used by render/CameraRig.ts
+scripts/car/         X1 model builder (build-x1.mjs [--detail=master] → src/assets/models/xwave-x1.glb / assets-src/x1/xwave-x1-master.glb), preview shots (preview-x1.mjs),
+                     studio + reference matching (studio-x1.mjs, compare/run.sh), real gameplay camera (game-camera.ts) and states (gameplay-states.mjs)
+src/core/perf.ts     ?perf=1 frame-time recorder (scripts/perf/profile.mjs = desktop/SwiftShader baseline)
 src/ui/              DOM overlay UI, ui.css, i18n.ts (EN/FR/JA/PT-BR/DE/ES), icons, avatars
 src/meta/            shop, rank, daily, events, leaderboard
 src/net/PlayerStore  local (default) or remote player store (?api=…)
@@ -69,10 +77,12 @@ builds/              prebuilt single-file HTML snapshots (playable by opening th
 
 ## Workflow
 
-- **Three versions live side by side:**
-  - `main` = **v3** — the native TikTok mini game (+ the web build of the same code).
-  - `v2` = the v2 web game frozen at v2.3.0 (accounts / cloud save, DOM UI). Fixes: check out `v2`, commit, push `v2`.
-  - `v1` = the old game, frozen at v1.19.1. It stays fully playable and can still get improvements: check out `v1`, commit there, push `v1`. Never merge `v1` into `main` or `main` into `v1` (cherry-pick a fix if both need it). The v1 single-file build is `builds/sky-roadster-v1.18.html` on the `v1` branch.
+- **Versions live side by side (one branch each):**
+  - `v4.0.1` = **v4** — the 3D upgrade (better 3D graphics). Started at v4.0.1 from the H5 web game v2.3.0 (DOM UI, accounts / cloud save), because the H5 code is the easiest base for 3D work. Work and push here; never merge `main` (v3 native) into it.
+  - `feat/v4-native` = **v4 on TikTok native**: the 3D branch with `main` merged in (native layer `src/native/`, HS SDK, build / check / pack scripts and every native fix). Re-merge the 3D branch and `main` into it to update; build with `npm run build:tiktok`.
+  - `main` = **v3** — the native TikTok mini game (+ the web build of the same code). Every push to `main` goes live on the owner's PC.
+  - `v2` = the v2 web game frozen at v2.3.0. Fixes: check out `v2`, commit, push `v2`.
+  - `v1` = the old game, frozen at v1.19.1. It stays fully playable and can still get improvements: check out `v1`, commit there, push `v1`. Never merge `v1` into another branch (cherry-pick a fix if both need it). The v1 single-file build is `builds/sky-roadster-v1.18.html` on the `v1` branch.
 - Branch `main` = always playable. Big or risky work → a branch (`feat/…`, `fix/…`), merge when it works.
 - Small, focused commits with clear messages (e.g. `feat: boss lane on Mega City`, `fix: shield timer reset on respawn`).
 - When you bump the version: update `VERSION` in `src/Game.ts`, add a changelog section to `README.md`.

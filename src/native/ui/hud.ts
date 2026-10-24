@@ -10,6 +10,9 @@ import { belowCap, capRow, safeTop, safeBottom } from './layout.ts';
 const CHIP_COL: Record<string, string> = { coin2: '#ffd24a', shield: '#3d9bff', magnet: '#ff3b4e', turbo: '#b6ff2e', double: '#ffc21a', super: '#9b6bff', hyper: '#ffc21a', dash: '#2ee6c8' };
 const CHIP_IC: Record<string, string> = { coin2: ICON.coin, shield: ICON.shield, magnet: ICON.magnet, turbo: ICON.bolt, double: ICON.x2, super: ICON.rocket, hyper: ICON.hyper, dash: ICON.dash };
 
+/** bottom of the hearts row (the special buttons sit under it) */
+let heartsBottom = 200;
+
 /** where HUD things are (flyers aim here) */
 export const hudPos: Record<string, { x: number; y: number }> = {};
 
@@ -137,6 +140,7 @@ export function drawHud(ui: UI, g: Gfx) {
   bar(g, 14, r2 + 15, 118, 6, ui.hud.speed / Math.max(1, ui.hud.maxSpeed), g.lin(14, 0, 132, 0, [[0, '#39b6ff'], [0.5, '#b6ff2e'], [1, '#ff8a1f']]));
   for (let i = 0; i < run.maxLives; i++) g.icon(i < run.lives ? ICON.heart : ICON.heartEmpty, W - 12 - (run.maxLives - i) * 25, r2 - 1, 23);
   hudPos.hearts = { x: W - 40, y: r2 + 10 };
+  heartsBottom = r2 + 24;
   let ly = r2 + 30;
 
   // ---- rank gate strip
@@ -210,17 +214,19 @@ export function drawHud(ui: UI, g: Gfx) {
     }
     g.alpha(1);
   }
-  // ---- ROADSTER / SOS (bottom right) — fire on touch-down
+  // ---- ROADSTER / SOS — v4.6 (owner): right under the hearts, a little smaller (58); both shown
+  // (training) → side by side. Fire on touch-down.
   const sb = safeBottom(g);
   const rockets = run.hyperJumps + run.superJumps;
-  const bx2 = W - 16 - 76;
-  let byy = g.H - sb - 20 - 76;
+  const SP = 58;
+  const bx2 = W - 12 - SP;
+  const byy = heartsBottom + 10;
   if (run.escapes > 0) {
     const urgent = dg === 'sos';
     const s = urgent ? 1 + 0.06 * Math.sin(t / 90) : 1;
-    roundBtn(g, 'sos', bx2 + 8, byy + 12, 60 * s, '#ff5a3c', ICON.sos, 'SOS', String(run.escapes), () => ui.h.sos());
-    hudPos.sos = { x: bx2 + 38, y: byy + 42 };
-    byy -= 86;
+    const sx = rockets > 0 ? bx2 - SP - 8 : bx2;
+    roundBtn(g, 'sos', sx, byy, SP * s, '#ff5a3c', ICON.sos, 'SOS', String(run.escapes), () => ui.h.sos());
+    hudPos.sos = { x: sx + SP / 2, y: byy + SP / 2 };
   }
   if (rockets > 0) {
     const hyper = run.hyperJumps > 0;
@@ -228,9 +234,9 @@ export function drawHud(ui: UI, g: Gfx) {
     const ready = ui.rocketReady || call;
     const wait = t - ui.hud.rocketWaitT < 600 ? Math.sin((t - ui.hud.rocketWaitT) / 40) * 4 : 0;
     const s = ready ? 1 + 0.07 * Math.sin(t / 110) : 1;
-    if (ready) g.circle(bx2 + 38 + wait, byy + 38, 50, withAlpha(hyper ? '#ffc21a' : '#9b6bff', 0.25 + 0.15 * Math.sin(t / 110)));
-    roundBtn(g, 'rocket', bx2 + wait, byy, 76 * s, hyper ? '#ffb31a' : '#8a4dff', hyper ? ICON.hyper : ICON.rocket, ready ? 'TAP!' : hyper ? 'HYPER' : 'ROADSTER', String(rockets), () => ui.h.rocket(), hyper ? { c0: '#ffe07a', c1: '#e79a00', rim: 'rgba(255,255,255,.8)', text: '#3a2000' } : { c0: '#2a1d5c', c1: '#120a33', rim: '#b48cff', text: '#e6dcff' });
-    hudPos.rocket = { x: bx2 + 38, y: byy + 38 };
+    if (ready) g.circle(bx2 + SP / 2 + wait, byy + SP / 2, SP * 0.66, withAlpha(hyper ? '#ffc21a' : '#9b6bff', 0.25 + 0.15 * Math.sin(t / 110)));
+    roundBtn(g, 'rocket', bx2 + wait, byy, SP * s, hyper ? '#ffb31a' : '#8a4dff', hyper ? ICON.hyper : ICON.rocket, ready ? 'TAP!' : hyper ? 'HYPER' : 'ROADSTER', String(rockets), () => ui.h.rocket(), hyper ? { c0: '#ffe07a', c1: '#e79a00', rim: 'rgba(255,255,255,.8)', text: '#3a2000' } : { c0: '#2a1d5c', c1: '#120a33', rim: '#b48cff', text: '#e6dcff' });
+    hudPos.rocket = { x: bx2 + SP / 2, y: byy + SP / 2 };
   }
   // ---- mission (bottom)
   const m = ui.hud.mission;
@@ -265,14 +271,12 @@ function pill(g: Gfx, x: number, y: number, w: number, h: number, html: string, 
 }
 
 function roundBtn(g: Gfx, key: string, x: number, y: number, s: number, col: string, icon: string, label: string, n: string, fn: () => void, look?: { c0: string; c1: string; rim: string; text: string }) {
-  const cx = x + 38 * (s / 76) + (76 - s) / 2,
-    cy = y + s / 2;
+  const cx = x + 29,
+    cy = y + 29; // v4.6: 58-unit slot (a pulse scales around its centre)
   const r = s / 2;
   const pr = g.isPressed(key);
   const rr = pr ? r * 0.92 : r;
-  g.shadow('rgba(0,0,0,.5)', 8, 3);
-  g.circle(cx, cy, rr, g.rad(cx, cy - rr * 0.3, rr * 0.1, rr * 1.15, look ? [[0, look.c0], [0.75, look.c1], [1, look.c1]] : [[0, shade(col, 0.35)], [1, shade(col, -0.25)]]));
-  g.shadow(null);
+  g.circle(cx, cy, rr, g.rad(cx, cy - rr * 0.3, rr * 0.1, rr * 1.15, look ? [[0, look.c0], [0.75, look.c1], [1, look.c1]] : [[0, shade(col, 0.35)], [1, shade(col, -0.25)]])); // v4.6: flat (no shadow)
   g.circle(cx, cy, rr - 1, null, look?.rim ?? 'rgba(255,255,255,.7)', 2);
   g.icon(icon, cx - rr * 0.38, cy - rr * 0.64, rr * 0.76);
   g.text(label, cx, cy + rr * 0.45, { size: Math.max(9, rr * 0.27), align: 'center', maxW: rr * 1.7, color: look?.text ?? '#fff', italic: true });
@@ -291,7 +295,8 @@ export function drawNotices(ui: UI, g: Gfx) {
   if (n) {
     const p = (t - n.t0) / n.ms;
     const a = p < 0.08 ? p / 0.08 : p > 0.88 ? Math.max(0, (1 - p) / 0.12) : 1;
-    const y0 = inRun ? safeTop(g) + 150 : safeTop(g) + 64;
+    // in a race the notices sit below the hearts + special button (v4.6 layout)
+    const y0 = inRun ? Math.max(safeTop(g) + 150, heartsBottom + 80) : safeTop(g) + 64;
     g.alpha(a);
     if (n.kind === 'banner') {
       g.text(n.w, W / 2, y0 + 10, { size: 12, align: 'center', color: C.cyan });

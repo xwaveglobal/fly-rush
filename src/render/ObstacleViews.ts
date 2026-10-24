@@ -97,6 +97,8 @@ export interface ObstacleView {
   group: THREE.Group;
   update(o: LiveObstacle, t: number, dt: number): void;
   setup(o: LiveObstacle): void;
+  /** v4.2.1: the car flew through (ring) — play the collect feedback */
+  collect?(): void;
 }
 
 const G = {
@@ -105,14 +107,17 @@ const G = {
   bar: new THREE.BoxGeometry(2.7, 0.12, 0.12),
   laserBeam: new THREE.CylinderGeometry(0.045, 0.045, 2.6, 8),
   laserPylon: new THREE.BoxGeometry(0.3, 6.2, 0.4),
-  ring: new THREE.TorusGeometry(1.3, 0.15, 14, 48),
-  ringOuter: new THREE.TorusGeometry(1.55, 0.06, 6, 48, Math.PI * 0.5),
+  // v4.2.1 Ring Coins: a thin luminous gold ring (was a thick blue tube + a glowing disc filling it)
+  ring: new THREE.TorusGeometry(1.3, 0.055, 10, 72),
+  ringInner: new THREE.TorusGeometry(1.17, 0.016, 6, 72),
+  ringOuter: new THREE.TorusGeometry(1.5, 0.026, 6, 48, Math.PI * 0.42),
 };
 
 function build(type: ObstacleType): ObstacleView {
   const group = new THREE.Group();
   let update: ObstacleView['update'] = () => {};
   let setup: ObstacleView['setup'] = () => {};
+  let collect: ObstacleView['collect'] = undefined;
   /** animated / toggled parts that must stay separate; null = don't merge */
   let keep: THREE.Object3D[] | null = null;
 
@@ -324,11 +329,13 @@ function build(type: ObstacleType): ObstacleView {
         carG.add(glow);
         for (const z of [-1.1, 1.1]) {
           const pod = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.3, 0.18, 16), M.darkMetal);
-          pod.position.set(0.95 * s, 0.55, z);
+          // v4.1.3: pods tucked under the body — at x 0.95 they reached 0.4 m past the 0.85 m collision
+          // half-width, so a car changing lanes beside a truck visibly clipped a pod without crashing
+          pod.position.set(0.58 * s, 0.55, z);
           carG.add(pod);
           const pg = new THREE.Sprite(M.glow(0xff8a1f, 0.7));
           pg.scale.setScalar(0.9);
-          pg.position.set(0.95 * s, 0.38, z);
+          pg.position.set(0.58 * s, 0.38, z);
           carG.add(pg);
         }
       }
@@ -395,32 +402,43 @@ function build(type: ObstacleType): ObstacleView {
       break;
     }
     case 'ring': {
-      const mat = new THREE.MeshBasicMaterial({ color: 0x2f8ad0 });
-      const ring = new THREE.Mesh(G.ring, mat);
-      ring.position.y = 1.25;
-      group.add(ring);
+      // gold = coins (Shield is cyan, Turbo lime). Open centre: the road, the obstacles ahead and the
+      // car stay visible through it. Flying through it plays a short collect animation (expand + fade).
+      const mat = new THREE.MeshBasicMaterial({ color: 0xffc94a, transparent: true, toneMapped: false });
+      const fine = new THREE.MeshBasicMaterial({ color: 0xfff1c4, transparent: true, opacity: 0.7, toneMapped: false });
+      const body = new THREE.Group();
+      body.position.y = 1.25;
+      group.add(body);
+      body.add(new THREE.Mesh(G.ring, mat), new THREE.Mesh(G.ringInner, fine));
       const outer = new THREE.Group();
-      outer.position.y = 1.25;
+      body.add(outer);
       for (let i = 0; i < 3; i++) {
-        const seg = new THREE.Mesh(G.ringOuter, M.white);
+        const seg = new THREE.Mesh(G.ringOuter, fine);
         seg.rotation.z = (i * Math.PI * 2) / 3;
         outer.add(seg);
       }
-      group.add(outer);
-      const disc = new THREE.Mesh(
-        new THREE.CircleGeometry(1.15, 32),
-        new THREE.MeshBasicMaterial({ color: 0x39b6ff, transparent: true, opacity: 0.1, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }),
-      );
-      disc.position.y = 1.25;
-      group.add(disc);
-      const glow = new THREE.Sprite(M.glow(0x39b6ff, 0.5));
-      glow.scale.setScalar(4.4);
-      glow.position.y = 1.25;
-      group.add(glow);
-      keep = [outer, ring];
-      update = (_o, _t, dt) => {
-        outer.rotation.z += dt * 2.2;
-        mat.color.setHSL(0.56, 0.6, 0.45);
+      let got = -1; // seconds since collected (−1 = not yet)
+      setup = () => {
+        got = -1;
+        body.scale.setScalar(1);
+        body.visible = true;
+        mat.opacity = 1;
+        fine.opacity = 0.7;
+      };
+      collect = () => {
+        if (got < 0) got = 0;
+      };
+      keep = [body];
+      update = (_o, t, dt) => {
+        outer.rotation.z += dt * 1.6;
+        if (got >= 0) {
+          got += dt;
+          const k = Math.min(1, got / 0.35);
+          body.scale.setScalar(1 + 0.45 * k * (2 - k));
+          mat.opacity = 1 - k;
+          fine.opacity = 0.7 * (1 - k);
+          body.visible = k < 1;
+        } else mat.color.setHex(0xffc94a).multiplyScalar(0.92 + 0.08 * Math.sin(t * 5));
       };
       break;
     }
@@ -589,7 +607,7 @@ function build(type: ObstacleType): ObstacleView {
   });
   for (const sp of sprites) sp.parent?.remove(sp);
   if (keep) mergeByMaterial(group, new Set(keep));
-  return { type, group, update, setup };
+  return { type, group, update, setup, collect };
 }
 
 // ------------------------------------------------------------------ v2 Bonus-road props
@@ -837,6 +855,16 @@ export class ObstacleViews {
     this.parent.remove(v.group);
     this.active.delete(o.id);
     this.poolOf(v).release(v);
+  }
+
+  /** v4.2.1: the car flew through a ring — its collect animation */
+  collect(o: LiveObstacle) {
+    this.active.get(o.id)?.collect?.();
+  }
+
+  /** the view object of a live obstacle (debug overlay) */
+  viewOf(id: number): THREE.Object3D | undefined {
+    return this.active.get(id)?.group;
   }
 
   hide(o: LiveObstacle) {

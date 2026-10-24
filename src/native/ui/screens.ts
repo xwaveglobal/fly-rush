@@ -12,7 +12,7 @@ import { LEVELS } from '../../config.ts';
 import { SKINS, carVisibility } from '../../render/Vehicle.ts';
 import { carImage, logoImg } from '../../ui/shared.ts';
 import { CHAINS, activeChains, pilotLevel } from '../../meta/Career.ts';
-import { CHECKIN, SPECIALS, type ItemKey } from '../../meta/Daily.ts';
+import { CHECKIN, ITEM_PRICE, SPECIALS, type ItemKey } from '../../meta/Daily.ts';
 import { fmtLeft, localTime } from '../../meta/Events.ts';
 import { hs } from '../hs.ts';
 import loadingUrl from '../../assets/images/loading.jpg';
@@ -38,8 +38,11 @@ export function drawScreens(ui: UI, g: Gfx, ids: string[], layer: 'base' | 'over
   for (const id of ids) {
     if (!ui.shown.has(id)) continue;
     // one screen failing to draw must never take the others (and their buttons) down with it
+    // v4.6: flat buttons everywhere except the Home screen (Home keeps its look, minus shadows)
+    g.flat = id !== 'start';
     g.guard(id, () => (layer === 'base' ? SCREENS[id]?.(ui, g) : drawOverlay(ui, g, id)));
   }
+  g.flat = true;
   if (layer === 'base' && ui.tutHint && ui.shown.has('hud')) swipeHint(g);
 }
 
@@ -106,8 +109,15 @@ function loading(ui: UI, g: Gfx) {
   g.block(0, 0, g.W, g.H);
   const y = g.H - safeBottom(g) - 70;
   const w = Math.min(280, g.W - 80);
-  bar(g, (g.W - w) / 2, y, w, 8, ui.loading, g.lin(0, 0, g.W, 0, [[0, '#4fc3ff'], [1, '#ff4fd8']]), 'rgba(0,0,0,.5)');
-  g.text(ui.loadText, g.W / 2, y + 26, { size: 13, align: 'center', font: 'b' });
+  // v4.6: glide toward the real progress; while a step takes long, creep toward the next 9 %
+  const dt = Math.min(0.1, Math.max(0, (g.time - (ui.loadT || g.time)) / 1000));
+  ui.loadT = g.time;
+  const gap = ui.loading - ui.loadShown;
+  if (gap > 0.001) ui.loadShown += Math.max(gap * Math.min(1, dt * 6), dt * 0.08);
+  else if (ui.loadShown < 0.99) ui.loadShown += Math.max(0, Math.min(ui.loading + 0.09, 0.99) - ui.loadShown) * dt * 0.4;
+  ui.loadShown = Math.min(ui.loadShown, 1);
+  bar(g, (g.W - w) / 2, y, w, 8, ui.loadShown, g.lin(0, 0, g.W, 0, [[0, '#4fc3ff'], [1, '#ff4fd8']]), 'rgba(0,0,0,.5)');
+  g.text(`Loading… ${Math.floor(ui.loadShown * 100)}%`, g.W / 2, y + 26, { size: 13, align: 'center', font: 'b', noTr: true });
 }
 
 // ------------------------------------------------------------------ home
@@ -161,9 +171,7 @@ function start(ui: UI, g: Gfx) {
     const cw = Math.max(110, Math.min(172, 54 + content + 14, wl - 14 - 18));
     const cc = CLASS_COLOR[ui.myClass];
     g.rr(18, top + 6, cw, 44, 22, g.isPressed(pk) ? 'rgba(79,195,255,.3)' : 'rgba(12,24,70,.86)', 'rgba(110,160,255,.45)', 1.2);
-    g.shadow(cc, 10, 0);
     g.circle(40, top + 28, 22, cc);
-    g.shadow(null);
     g.icon(avatarSvg(o.avatar), 20, top + 8, 40);
     g.text(o.name, 64, top + 18, { size: 13.5, maxW: cw - 54, noTr: true, weight: 800, font: 'b' });
     shieldBadge(g, ui.myClass, 64, top + 27, 18);
@@ -182,9 +190,7 @@ function start(ui: UI, g: Gfx) {
   const tile = (x: number, y: number, key: string, icon: string, label: string, col: [string, string], fn: () => void, badge = '') => {
     const s2 = 50;
     const pr = g.isPressed(key);
-    g.shadow('rgba(0,0,0,.45)', 8, 3);
     g.rr(x, y, s2, s2, 13, g.lin(0, y, 0, y + s2, [[0, col[0]], [1, col[1]]]), 'rgba(160,200,255,.28)', 1);
-    g.shadow(null);
     if (pr) g.rr(x, y, s2, s2, 13, 'rgba(255,255,255,.18)');
     g.icon(icon, x + 15, y + 7, 20, '#ffffff');
     g.text(label.toUpperCase(), x + s2 / 2, y + 38, { size: 8.6, align: 'center', maxW: s2 - 6, weight: 900, font: 'b' });
@@ -227,9 +233,7 @@ function start(ui: UI, g: Gfx) {
   const mw = (bw - 16) / 3;
   const mini = (i: number, key: string, icon: string, label: string, fn: () => void, c: [string, string], ic = '#fff') => {
     const x = bx + i * (mw + 8);
-    g.shadow('rgba(0,0,0,.4)', 6, 2);
     g.rr(x, y, mw, mh, 12, g.lin(0, y, 0, y + mh, [[0, c[0]], [1, c[1]]]), 'rgba(255,255,255,.22)', 1);
-    g.shadow(null);
     if (g.isPressed(key)) g.rr(x, y, mw, mh, 12, 'rgba(255,255,255,.18)');
     const lab = label.toUpperCase();
     const tw = Math.min(g.measure(lab, { size: 12, font: 'b', weight: 900 }), mw - 40);
@@ -250,9 +254,7 @@ function start(ui: UI, g: Gfx) {
   g.ctx.translate(W / 2, y + ph / 2);
   g.ctx.scale(g.isPressed(key) ? 0.97 : pulse, g.isPressed(key) ? 0.97 : pulse);
   g.ctx.translate(-W / 2, -(y + ph / 2));
-  g.shadow('rgba(80,200,255,.75)', 16, 0);
   g.rr(bx, y, bw, ph, 20, g.lin(0, y, 0, y + ph, [[0, '#3c8cff'], [1, '#1640c8']]), '#7fe6ff', 2.5);
-  g.shadow(null);
   g.rr(bx + 4, y + 3, bw - 8, ph * 0.42, 16, 'rgba(255,255,255,.14)');
   g.rr(bx + 14, y + 9, 52, ph - 18, 12, 'rgba(10,30,110,.55)', 'rgba(150,210,255,.4)', 1);
   g.icon(ICON.play, bx + 26, y + ph / 2 - 14, 28, '#fff');
@@ -381,7 +383,7 @@ function garage(ui: UI, g: Gfx) {
   card(g, col.x + 12, top, col.w - 24, ih, 12, 'rgba(130,175,255,.25)', 'rgba(8,16,44,.82)');
   if (vis === 'dark') {
     g.text(`??? · ${skin.rarity ?? ''}`, col.x + 24, top + 16, { size: 13, italic: true, color: rc });
-    g.rich(`${ICON.lock} Reach rank <span class="clsb" style="--cc:${CLASS_COLOR[skin.need as RankClass]}">${skin.need}</span> to reveal and unlock this car. Drive farther in one run to earn EXP.`, col.x + 24, top + 28, col.w - 48, { size: 11, font: 'b', color: '#c9d8f5' });
+    g.rich(skin.future ? `${ICON.lock} A future XWAVE car — its unlock is coming soon.` : `${ICON.lock} Reach rank <span class="clsb" style="--cc:${CLASS_COLOR[skin.need as RankClass]}">${skin.need}</span> to reveal and unlock this car. Drive farther in one run to earn EXP.`, col.x + 24, top + 28, col.w - 48, { size: 11, font: 'b', color: '#c9d8f5' });
   } else {
     g.text(`${skin.name} · ${skin.rarity ?? ''}`, col.x + 24, top + 16, { size: 13, italic: true, color: rc, maxW: col.w - 48 });
     g.text(skin.cls.split('·')[1]?.trim() ?? '', col.x + 24, top + 33, { size: 10, font: 'b', color: '#c9d8f5', maxW: col.w - 48, noTr: true });
@@ -389,7 +391,7 @@ function garage(ui: UI, g: Gfx) {
     g.text('Every car drives the same — EXP stays fair. Cars show off your rank.', col.x + 24, top + 66, { size: 9.5, font: 'b', color: C.muted, maxW: col.w - 48 });
   }
   if (vis !== 'own') {
-    const lt = vis === 'dark' ? `RANK ${skin.need} NEEDED` : 'LOCKED';
+    const lt = skin.future ? 'COMING SOON' : vis === 'dark' ? `RANK ${skin.need} NEEDED` : 'LOCKED';
     const lw = g.measure(lt, { size: 13 }) + 52;
     const ly = g.H * 0.34;
     g.rr((W - lw) / 2, ly, lw, 36, 18, 'rgba(0,0,0,.6)', 'rgba(255,255,255,.35)');
@@ -401,7 +403,7 @@ function garage(ui: UI, g: Gfx) {
   let y = g.H - sb - 12 - 50;
   const owned = s.unlocked.includes(skin.id);
   const myClass = playerRank(s.expBest, s.exp2Best);
-  if (!owned) button(g, 'carbtn', col.x + 12, y, col.w - 24, 50, `${ICON.lock} Reach rank ${skin.need}`, () => ui.rankGuide(), { style: 'purple' });
+  if (!owned) button(g, 'carbtn', col.x + 12, y, col.w - 24, 50, skin.future ? `${ICON.lock} Coming soon` : `${ICON.lock} Reach rank ${skin.need}`, () => ui.rankGuide(), { style: 'purple' });
   else if (s.vehicle === skin.id) button(g, 'carbtn', col.x + 12, y, col.w - 24, 50, `${ICON.check} Selected`, () => ui.h.selectSkin(skin.id), { style: 'ghost' });
   else button(g, 'carbtn', col.x + 12, y, col.w - 24, 50, 'Select', () => ui.h.selectSkin(skin.id), { style: 'blue' });
   y -= 72;
@@ -438,7 +440,7 @@ function garage(ui: UI, g: Gfx) {
     if (v === 'dark') g.text('?', x + cw / 2, y + 30, { size: 26, align: 'center', color: '#a9b8ff' });
     g.text(v === 'dark' ? '???' : k.name.replace('XWAVE ', ''), x + cw / 2, y + 66, { size: 11, align: 'center', maxW: cw - 8, noTr: true });
     const rankOk = CLASSES.indexOf(myClass) >= CLASSES.indexOf((k.need ?? 'D') as RankClass);
-    const label = v === 'own' ? (s.vehicle === k.id ? 'In use' : 'Owned') : v === 'next' ? (rankOk ? `${ICON.coin}${fmt(k.price)}` : `${ICON.lock} Rank ${k.need}`) : `Rank ${k.need}`;
+    const label = v === 'own' ? (s.vehicle === k.id ? 'In use' : 'Owned') : k.future ? 'Coming soon' : v === 'next' ? (rankOk ? `${ICON.coin}${fmt(k.price)}` : `${ICON.lock} Rank ${k.need}`) : `Rank ${k.need}`;
     g.rich(label, x + 4, y + 74, cw - 8, { size: 9.5, align: 'center', font: 'b', color: v === 'own' ? C.green : C.muted });
     g.hit(x, y, cw, ch, key, () => {
       ui.garageIndex = i;
@@ -684,6 +686,27 @@ function shop(ui: UI, g: Gfx) {
   const x = col.x + 12,
     w = col.w - 24;
   scrollList(g, 'shop', 0, top, g.W, g.H - top - safeBottom(g), (y) => {
+    // ---- v4.6: the top of the Shop is always the coins → specials exchange (flashes when opened from a coin buy)
+    {
+      const flash = Math.max(0, 1 - (g.time - ui.shopFlashT) / 900);
+      const h = 132;
+      card(g, x, y, w, h, 16, flash > 0 ? `rgba(255,194,26,${0.4 + 0.6 * flash})` : 'rgba(155,107,255,.5)');
+      g.text('Exchange coins → specials', x + 14, y + 20, { size: 13 });
+      g.rich(`${ICON.coin}<b>${fmt(s.wallet)}</b>`, x + w - 130, y + 11, 116, { size: 12.5, align: 'right', noTr: true });
+      const bw = (w - 28 - 16) / 3;
+      SPECIALS.forEach((k, i) => {
+        const bx = x + 14 + i * (bw + 8),
+          by = y + 38;
+        const short = s.wallet < ITEM_PRICE[k];
+        const key = `xbuy-${k}`;
+        g.rr(bx, by, bw, 82, 12, g.isPressed(key) ? 'rgba(79,195,255,.25)' : 'rgba(10,20,52,.9)', short ? 'rgba(255,90,138,.5)' : 'rgba(255,194,26,.6)', 1.2);
+        g.icon(ITEM_ICON[k], bx + bw / 2 - 15, by + 8, 30);
+        g.text(SPECIAL_SHORT[k], bx + bw / 2, by + 50, { size: 11, align: 'center', maxW: bw - 6 });
+        g.rich(`${ICON.coin}${fmt(ITEM_PRICE[k])}`, bx, by + 60, bw, { size: 10.5, align: 'center', color: short ? '#ff8ab0' : C.gold, noTr: true });
+        g.hit(bx, by, bw, 82, key, () => ui.h.buySpecial(k));
+      });
+      y += h + 12;
+    }
     // TikTok Beans products (HS dashboard) — shown only while the platform has a shop
     const prods = hs.hasShop() ? ui.products : [];
     const noAds = prods.filter((p) => !!p.items?.no_ads);
@@ -756,6 +779,10 @@ function shop(ui: UI, g: Gfx) {
     let ix = x + 100;
     for (const k of SPECIALS) {
       g.icon(ITEM_ICON[k], ix, y + 13, 24);
+      g.hit(ix - 4, y + 6, 64, 38, `chip-${k}`, () => {
+        ui.buySync(s);
+        ui.showOverlay('bagbuy');
+      });
       g.text(`×${s.items[k]}`, ix + 27, y + 25, { size: 13, noTr: true });
       ix += 70;
     }

@@ -21,7 +21,7 @@ const res = await build({
   sourcemap: false,
   write: false,
   outdir: out,
-  loader: { '.webp': 'dataurl', '.png': 'dataurl', '.jpg': 'dataurl' },
+  loader: { '.webp': 'dataurl', '.png': 'dataurl', '.jpg': 'dataurl', '.glb': 'dataurl' },
   plugins: single
     ? [
         {

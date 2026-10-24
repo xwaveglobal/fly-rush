@@ -78,6 +78,7 @@ const OV: Record<string, (ui: UI, g: Gfx) => void> = {
   tutdone: tutdoneOv,
   tutintro: tutintroOv,
   settings: settingsOv,
+  classup: classupOv,
   logs: logsOv,
   guide: guideOv,
   eventres: eventresOv,
@@ -236,7 +237,7 @@ function gameoverOv(ui: UI, g: Gfx) {
     }
     y = rewards(ui, g, o.rewards, [{ label: 'race', coins: o.coins }, { label: `${o.level} bonus`, coins: o.speedBonus }], x, y, w);
     y = adBtn(ui, g, 'ad2x', x, y, w);
-    button(g, 'go-retry', x, y, w, 52, `${ICON.retry} Retry`, () => ui.h.retry(), { style: 'blue', size: 20 });
+    button(g, 'go-retry', x, y, w, 52, `${ICON.retry} Restart`, () => ui.h.retry(), { style: 'blue', size: 20 });
     y += 60;
     return navRow(g, x, y, w, [
       ['go-home', ICON.home, 'Home', 'blue', () => ui.h.home()],
@@ -307,7 +308,7 @@ function finishOv(ui: UI, g: Gfx) {
       y += 58;
     }
     return navRow(g, x, y, w, [
-      ['fi-retry', ICON.retry, 'Retry', 'blue', () => ui.h.retry()],
+      ['fi-retry', ICON.retry, 'Restart', 'blue', () => ui.h.retry()],
       ['fi-tracks', ICON.flag, 'Tracks', 'purple', () => ui.h.play()],
       ['fi-home', ICON.home, 'Home', 'dark', () => ui.h.home()],
     ]);
@@ -353,14 +354,14 @@ function pauseOv(ui: UI, g: Gfx) {
     const items: [string, string, string, () => void, boolean][] = [
       ['p-sound', s?.settings.sound ? ICON.sound : ICON.soundOff, 'SFX', () => ui.h.toggleSound(), !!s?.settings.sound],
       ['p-music', s?.settings.music ? ICON.music : ICON.musicOff, 'MUSIC', () => ui.h.toggleMusic(), !!s?.settings.music],
-      ['p-q', ICON.gear, (ui.liveQuality ?? s?.settings.quality ?? 'high').toUpperCase(), () => ui.h.toggleQuality(), true],
+      ['p-q', ICON.gear, ({ low: 'LO', medium: 'MED', high: 'HI' } as Record<string, string>)[ui.liveQuality ?? s?.settings.quality ?? 'high'] ?? 'HI', () => ui.h.toggleQuality(), true],
     ];
     items.forEach(([k, ic, l, fn, on], i) => button(g, k, x + i * (tw + 8), y, tw, 46, l, fn, { style: on ? 'dark' : 'ghost', icon: ic, size: 15 }));
     y += 56;
     button(g, 'resume', x, y, w, 60, `${ICON.play} Resume`, () => ui.h.resume(), { style: 'gold', size: 24 });
     y += 68;
     return navRow(g, x, y, w, [
-      ['p-retry', ICON.retry, 'Retry', 'blue', () => ui.h.retry()],
+      ['p-retry', ICON.retry, 'Restart', 'blue', () => ui.h.retry()],
       ['p-home', ICON.home, 'Home', 'dark', () => ui.h.home()],
     ]);
   });
@@ -456,14 +457,15 @@ function settingsOv(ui: UI, g: Gfx) {
         ty = y + 112;
       card(g, tx, ty, tw, 48, 12);
       g.icon(ICON.gear, tx + 8, ty + 13, 22, C.cyan);
-      g.text('Graphics', tx + 36, ty + 24, { size: 11.5, maxW: tw - 110 });
+      g.text('Graphics', tx + 34, ty + 24, { size: 11, maxW: tw - 132 });
+      // v4: three presets LO / MED / HI (GRAPHICS in config.ts)
       const q = ui.liveQuality ?? s.settings.quality;
-      (['high', 'low'] as const).forEach((v, i) => {
-        const bx = tx + tw - 76 + i * 34;
+      (['low', 'medium', 'high'] as const).forEach((v, i) => {
+        const bx = tx + tw - 98 + i * 31;
         const on = q === v;
-        g.rr(bx, ty + 12, 32, 24, 8, on ? C.blue : 'rgba(255,255,255,.1)', 'rgba(255,255,255,.25)');
-        g.text(v === 'high' ? 'HI' : 'LO', bx + 16, ty + 24, { size: 11, align: 'center', noTr: true });
-        g.hit(bx - 2, ty + 6, 36, 36, `q-${v}`, () => (on ? undefined : ui.h.toggleQuality()));
+        g.rr(bx, ty + 12, 29, 24, 8, on ? C.blue : 'rgba(255,255,255,.1)', 'rgba(255,255,255,.25)');
+        g.text(v === 'high' ? 'HI' : v === 'medium' ? 'MED' : 'LO', bx + 14.5, ty + 24, { size: 9.5, align: 'center', noTr: true });
+        g.hit(bx - 1, ty + 6, 31, 36, `q-${v}`, () => (on ? undefined : ui.h.toggleQuality(v)));
       });
     }
     y += 172;
@@ -519,6 +521,33 @@ function logsOv(ui: UI, g: Gfx) {
     const col = l.lv === 'error' ? '#ff8a8a' : l.lv === 'warn' ? '#ffd27a' : '#c9d8f5';
     y += g.para(`${ts} ${l.msg}`, 10, y, W - 20, { size: 9.5, font: 'b', color: col, noTr: true }) + 3;
   }
+}
+
+/** v4 class celebration (native): pops in, rank badge, "Class X", line, the car it unlocked */
+function classupOv(ui: UI, g: Gfx) {
+  const o = ui.classup;
+  if (!o) return;
+  const k = Math.min(1, (g.time - o.t0) / 350);
+  modal(ui, g, 'classup', { close: 'none', w: 320 }, (x, y, w) => {
+    const s = 0.6 + 0.4 * (1 - Math.pow(1 - k, 3));
+    const bs = 84 * s;
+    g.shadow(o.color, 24, 0);
+    rankBadge(g, o.cls as RankClass, x + w / 2 - bs / 2, y + 4 + (84 - bs) / 2, bs);
+    g.shadow(null);
+    y += 98;
+    g.text('NEW CLASS', x + w / 2, y, { size: 11, align: 'center', color: C.muted, font: 'b' });
+    g.text(`Class ${o.cls}`, x + w / 2, y + 28, { size: 28, align: 'center', italic: true, color: o.color, noTr: true });
+    y += 48;
+    y += g.para(o.sub, x + 8, y, w - 16, { size: 12.5, font: 'b', align: 'center', color: '#dfe8ff' }) + 8;
+    if (o.car) {
+      g.rr(x, y, w, 96, 14, 'rgba(10,20,52,.85)', `${o.color}88`, 1.4);
+      g.img(carImage(o.car.id), x + 10, y + 6, w - 20, 64, 'contain');
+      g.text(`${o.car.name} unlocked`, x + w / 2, y + 82, { size: 13, align: 'center', noTr: true });
+      y += 106;
+    }
+    button(g, 'cu-ok', x, y, w, 52, 'OK', () => ui.h.classOk?.(), { style: 'gold', size: 20 });
+    return y + 56;
+  });
 }
 
 function guideOv(ui: UI, g: Gfx) {
@@ -929,7 +958,7 @@ function needrocketOv(ui: UI, g: Gfx) {
       if (o.wallet >= o.price) button(g, 'nr-buy', x, y, w, 46, `Buy 1 · <span class="price">${ICON.coin}${fmt(o.price)}</span>`, () => ui.h.rocketFix('buy'), { style: 'gold', size: 15 });
       else button(g, 'nr-shop', x, y, w, 46, `${ICON.bag} Get Roadster Jumps`, () => ui.h.rocketFix('shop'), { style: 'pink', size: 15 });
       y += 54;
-      button(g, 'nr-retry', x + 20, y, w - 40, 38, `${ICON.retry} Retry & collect the rocket`, () => ui.h.rocketFix('retry'), { style: 'ghost', size: 12 });
+      button(g, 'nr-retry', x + 20, y, w - 40, 38, `${ICON.retry} Restart & collect the rocket`, () => ui.h.rocketFix('retry'), { style: 'ghost', size: 12 });
       y += 42;
     }
     return y;

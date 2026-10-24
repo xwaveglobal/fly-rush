@@ -188,6 +188,8 @@ export class Gfx {
   scrolls: ScrollArea[] = [];
   /** scroll offsets by key */
   off: Record<string, number> = {};
+  /** v4.6: draw buttons flat (solid fill, 1 px border, no shadow / gloss) — everywhere but Home */
+  flat = true;
   pressed = '';
   time = 0;
   /** measuring pass: nothing is drawn, no hits registered */
@@ -638,6 +640,15 @@ export interface BtnOpts {
 }
 
 /** a game button; `label` may hold html (icons, prices) */
+/** blend two #rrggbb / rgba() colours (k = share of b); non-hex colours fall back to b */
+function mix(a: string, b: string, k: number) {
+  const hex = (c: string) => (/^#[0-9a-f]{6}$/i.test(c) ? [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16)) : null);
+  const A = hex(a),
+    B = hex(b);
+  if (!A || !B) return b;
+  return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * k)).join(',')})`;
+}
+
 export function button(g: Gfx, key: string, x: number, y: number, w: number, h: number, label: string, fn: () => void, o: BtnOpts = {}) {
   const st = o.style ?? 'blue';
   const [c1, c2, tc] = BTN[st];
@@ -651,13 +662,14 @@ export function button(g: Gfx, key: string, x: number, y: number, w: number, h: 
       g.ctx.scale(0.96, 0.96);
       g.ctx.translate(-(x + w / 2), -(y + h / 2));
     }
-    if (st !== 'ghost') {
-      g.shadow('rgba(0,0,0,.45)', 6, 3);
-      g.rr(x, y + 2, w, h, r, shade(c2, -0.35));
-      g.shadow(null);
+    if (g.flat) {
+      // v4.6 flat: one solid colour + a thin solid border; states by scale / opacity only
+      g.rr(x, y, w, h, r, st === 'ghost' ? c2 : mix(c1, c2, 0.55), st === 'ghost' ? 'rgba(255,255,255,.22)' : shade(c2, -0.3), 1);
+    } else {
+      // Home: gradient + gloss kept, no drop shadow (v4.6)
+      g.rr(x, y, w, h, r, g.lin(0, y, 0, y + h, [[0, c1], [1, c2]]), st === 'ghost' ? 'rgba(255,255,255,.22)' : 'rgba(255,255,255,.28)', 1);
+      if (st !== 'ghost') g.rr(x + 3, y + 2, w - 6, h * 0.42, r * 0.8, 'rgba(255,255,255,.16)');
     }
-    g.rr(x, y, w, h, r, g.lin(0, y, 0, y + h, [[0, c1], [1, c2]]), st === 'ghost' ? 'rgba(255,255,255,.22)' : 'rgba(255,255,255,.28)', 1);
-    if (st !== 'ghost') g.rr(x + 3, y + 2, w - 6, h * 0.42, r * 0.8, 'rgba(255,255,255,.16)');
     const size = o.size ?? Math.min(18, h * 0.42);
     const lab = o.icon ? `${o.icon} ${label}` : label;
     if (o.sub) {

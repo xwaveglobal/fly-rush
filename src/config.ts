@@ -57,6 +57,31 @@ export const TIMING = {
   dashDur: 0.34,
 };
 
+/**
+ * Step 06.5 AIR DASH (road collectible, fires the moment it is picked up): only on the two outer
+ * lanes; the car lifts to HIGH, opens the spoiler, rolls exactly once (360°, sideways around its
+ * length axis) while it crosses exactly two lanes to the opposite outer lane, then lands there.
+ * exec / hold / recover = vertical phases (s); lateralStart / lateral = when and how long the
+ * sideways move (and the roll) runs; maxExtend = most extra hover (s) when the landing spot is
+ * briefly blocked; grace = protection after touch-down (s); clearAhead / clearBehind = metres of the
+ * destination lane that must be free around the touch-down point (spawner + runtime check).
+ */
+/**
+ * Step 06.5 road-item balance (Endless / Track 2 power-up slot). `weights` = relative chance per slot;
+ * per speed level: `weights` multipliers (EASY: more survival help, HARD: less) and `heartEvery` × the
+ * heart spacing (HEARTS.everyExp: < 1 = hearts more often). Air Dash < Turbo, Life rare.
+ */
+export const ITEM_BALANCE = {
+  weights: { magnet: 3, shield: 3, turbo: 0.7, mystery: 0.5, double: 2, dash: 0.45 } as Record<string, number>,
+  level: {
+    easy: { weights: { shield: 1.3, dash: 1.1 } as Record<string, number>, heartEvery: 0.8 },
+    normal: { weights: {} as Record<string, number>, heartEvery: 1 },
+    hard: { weights: { shield: 0.75, mystery: 0.8 } as Record<string, number>, heartEvery: 1.25 },
+  },
+};
+
+export const AIR_DASH = { exec: 0.26, hold: 0.5, recover: 0.3, lateralStart: 0.06, lateral: 0.62, maxExtend: 0.45, grace: 0.25, clearAhead: 0.6, clearBehind: 4 };
+
 /** Player speed levels chosen on the home screen (3 audiences: new, regular, expert). */
 export type SpeedLevel = 'easy' | 'normal' | 'hard';
 
@@ -262,6 +287,8 @@ export const POWERUP_DURATION = {
 export const WORLD_LENGTH = 1000; // metres per themed world
 
 export const DEBUG = typeof location !== 'undefined' && /[?&]debug/.test(location.search);
+/** v4.2.1 `?perf=1`: frame-time recorder + small on-screen readout, `window.__perf()` / `window.__game` for scripted profiling */
+export const PERF = typeof location !== 'undefined' && /[?&]perf/.test(location.search);
 export const AUTOPILOT = typeof location !== 'undefined' && /[?&]autopilot/.test(location.search);
 
 /**
@@ -272,4 +299,239 @@ export const CLOUD = {
   api: '',
   /** ms after the last change before the save is pushed */
   syncDelay: 4000,
+};
+
+/**
+ * v4 render-only settings (no gameplay effect: hitboxes, lanes and timings above are unchanged).
+ * `car`: 'mesh' = the 3D XWAVE X1 (src/assets/models/xwave-x1.glb), 'sprite' = the v2 studio image.
+ * `?car=sprite` / `?car=mesh` in the page URL override it for comparison.
+ */
+export const RENDER = {
+  car: (typeof location !== 'undefined' && /[?&]car=sprite/.test(location.search) ? 'sprite' : 'mesh') as 'mesh' | 'sprite',
+  /** model (real-size metres) → game size. 0.76 ≈ 1.66 m wide: close to the 1.4 m hitbox, and the rear
+   *  reads about the same size on screen as the old rear image did from the unchanged chase camera */
+  carScale: 0.76,
+  /** v4.6 (owner): with Settings → Camera motion OFF (fixed view, the default) the car is drawn a little
+   *  bigger (visual only, hitbox unchanged; the moving chase camera keeps carScale for its readability) */
+  carScaleFixed: 0.82,
+  /**
+   * v4.6 (owner): the 3D car is drawn 15 % taller (height only, at runtime — the approved GLB file is
+   * unchanged) so the DOWN dive (height × (1 − duck.squash)) reads more clearly. Visual only: hitboxes,
+   * pass heights and timings are unchanged; at NORMAL the roof stays below the hitbox top.
+   */
+  carHeightScale: 1.15,
+  /**
+   * Step 07 FINAL: automotive PBR pass over the approved X1's materials (material factors only — the
+   * GLB and its geometry are never touched). `env` = per-material environment reflection strength
+   * (the scene environment is bound to each car material so this works; scene default is 0.6).
+   * PAUSED (owner switched to Step 06.5): opt-in with URL `?pbr=1`; default = the approved GLB's own factors.
+   */
+  pbr: typeof location !== 'undefined' && /[?&]pbr=1/.test(location.search),
+  x1Pbr: {
+    // pearl-white paint (colour unchanged): a touch less metal + smoother base under a glassy clearcoat,
+    // stronger env reflections so the curvature reads (white paint stays white, no chrome look)
+    X1_Paint: { metalness: 0.12, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.03, env: 0.95 },
+    // dark tinted glass: crisp but dim reflections, nothing seen through
+    X1_Glass: { roughness: 0.06, metalness: 0.1, env: 0.55, opacity: 0.96 },
+    X1_GlossBlack: { roughness: 0.18, clearcoatRoughness: 0.05, env: 0.8 },
+    X1_SatinBlack: { roughness: 0.5, env: 0.45 },
+    X1_LightHousing: { env: 0.8 },
+    X1_LEDHousing: { env: 0.7 },
+    // tyres: matte rubber; rims: dark satin metal; discs brushed steel; calipers glossy red
+    X1_Tyre: { roughness: 0.92, env: 0.25 },
+    X1_Rim: { metalness: 0.9, roughness: 0.28, env: 0.9 },
+    X1_Disc: { metalness: 0.9, roughness: 0.4, env: 0.7 },
+    X1_Brake: { metalness: 0.15, roughness: 0.3, env: 0.7 },
+    X1_Carbon: { roughness: 0.38, env: 0.6 },
+    X1_Interior: { env: 0.2 },
+    X1_WheelLiner: { env: 0.15 },
+  } as Record<string, Partial<Record<'metalness' | 'roughness' | 'clearcoat' | 'clearcoatRoughness' | 'env' | 'opacity', number>>>,
+  /** v4.3 (Step 06 PBR): paint metallic-flake normal map strength and tiles per metre (MeshCar) */
+  paintFlake: 0.12,
+  paintFlakeRepeat: 7,
+  /** wheels: max visible spin per frame (rad) — more would strobe (10 spokes); speed above it reads via the blur disc */
+  wheelMaxStep: 0.3,
+  /** speed (m/s) where the wheel blur disc starts / is full */
+  wheelBlurFrom: 8,
+  wheelBlurFull: 30,
+  /** front wheel steer (rad) per unit of lateral speed */
+  steer: 0.2,
+  /** sprung body: roll per unit of lateral speed, landing dip (m), landing pitch kick (rad) */
+  bodyRoll: 0.045,
+  landDip: 0.05,
+  landPitch: 0.05,
+  /** emissive strength of the rear LED / markers / badge in game (bloom picks up values above 1) */
+  ledGlow: 3.6,
+  markerGlow: 2.6,
+  badgeGlow: 1.4,
+  /** headlight LED emissive strength (slim signature, no blooming blob) */
+  headGlow: 1.4,
+  /** nitro flame length (m) at full boost */
+  nitroLen: 2.0,
+  /** sprung body yaw per unit of lateral speed (subtle nose-in on lane changes) */
+  bodyYaw: 0.02,
+  /** active rear spoiler (v4.1.3 pop-up): max angle (rad, trailing edge up, 0.38 ≈ 22°), how far the
+   *  flap rises off the deck at full deployment (model metres), raise / retract rates (1/s) */
+  spoilerAngle: 0.38,
+  spoilerRise: 0.06,
+  spoilerUp: 7,
+  spoilerDown: 2.0,
+  /** seconds the spoiler stays up after jump + nitro end (no flicker on landing) */
+  spoilerHold: 0, // Step 06.5: closing starts at ground contact
+  /** Bonus "Phase Ghost": opacity of the 3D car at full effect, cyan edge strength */
+  ghostOpacity: 0.35,
+  ghostRim: 1.6,
+  /**
+   * v4.1.3 DOWN (dive under a beam): the 3D car presses down toward the road — height × (1 − squash),
+   * width × (1 + widen), length × (1 + stretch) at full dive, with a small spring overshoot — plus a
+   * light pool under it and a few sparks. Visual only: the LOW hitbox and timings are unchanged.
+   */
+  duck: { squash: 0.28, widen: 0.06, stretch: 0.03 },
+  /**
+   * v4.1.3 airborne alignment: once the car leaves the road its visual underside is lifted to at least
+   * the hitbox underside within `ramp` metres of height (jumped obstacles no longer cut through the
+   * body while the hitbox already clears them). On the road nothing changes (wheels on the asphalt).
+   */
+  airAlignRamp: 0.45,
+  /** shield aura: colour, rim strength, pulse (Hz), fade in / out rates (1/s) */
+  shield: { color: 0x7fe6ff, rim: 1.25, pulse: 0.6, fadeIn: 9, fadeOut: 4 },
+  /** Turbo smashes obstacles like the shield blocks them → the same shell, in Turbo's lime, a little
+   *  larger (sits outside the shield when both run) and pulsing faster */
+  turboAura: { color: 0x8fd61f, rim: 1.0, pulse: 1.4, fadeIn: 12, fadeOut: 5, size: 1.07, name: 'TurboAura' },
+  /** pickup light sweep (turbo / rockets / power-ups): seconds front → back */
+  sweepTime: 0.5,
+  /** crash: debris fragments (pooled), their life (s), impact flash life (s) */
+  crash: { fragments: 12, life: 1.4, flash: 0.2 },
+  /**
+   * Step 06.5 (owner): the car never hangs in the air after a crash — it drops to the road (gravity m/s²,
+   * bounce = kept fraction of the landing speed, nose-down tilt in rad while falling). On the run-ending
+   * crash a few real parts of the approved car (no geometry change: the same meshes, moved) break off,
+   * tumble and lie on the road until the next run.
+   */
+  crashFall: { gravity: 24, bounce: 0.25, tilt: 0.12, parts: ['Front_Splitter', 'Spoiler_Pivot', 'Wheel_FL'] },
+};
+
+/** one chase-camera setup (metres relative to the car; damping rates 1/s) */
+export type ChaseName = 'low' | 'balanced' | 'high' | 'premium' | 'arcade';
+
+export interface ChasePreset {
+  /** camera height and distance behind the car; speedBack = extra pull-in at top speed */
+  height: number;
+  back: number;
+  speedBack: number;
+  /** look-at point: height and distance ahead */
+  lookY: number;
+  lookZ: number;
+  /** how much of the car's lane offset the camera / look point follow */
+  followX: number;
+  lookX: number;
+  /** how much the camera / look point rise with a normal hop */
+  lift: number;
+  lookLift: number;
+  /** damping: horizontal position, vertical position, look point */
+  hDamp: number;
+  vDamp: number;
+  lookDamp: number;
+  /** added to the base FOV (degrees) */
+  fov: number;
+  /** FOV widening (degrees) at top speed / during Turbo (default 7 / 9) */
+  fovSpeed?: number;
+  fovTurbo?: number;
+}
+
+/**
+ * v4 chase cameras (render-only). HIGH = the v1–v4.1.0 camera, kept for the old rear image.
+ * The 3D car uses `CAMERA.chase` (URL `?cam=low|balanced|high` to compare).
+ */
+export const CAMERA = {
+  presets: {
+    low: { height: 1.6, back: 5.3, speedBack: 0.4, lookY: 1.05, lookZ: -16, followX: 0.8, lookX: 0.6, lift: 1.7, lookLift: 0.1, hDamp: 6, vDamp: 8, lookDamp: 6.5, fov: -3 },
+    balanced: { height: 2.25, back: 5.9, speedBack: 0.5, lookY: 1.0, lookZ: -13, followX: 0.76, lookX: 0.58, lift: 1.7, lookLift: 0.1, hDamp: 6.5, vDamp: 8, lookDamp: 7, fov: -1 },
+    high: { height: 3.25, back: 6.6, speedBack: 0.6, lookY: 1.15, lookZ: -9, followX: 0.72, lookX: 0.55, lift: 0.22, lookLift: 0.3, hDamp: 6.5, vDamp: 6, lookDamp: 7, fov: 0 },
+    // Step 07 FINAL candidates (camera only — the approved car is untouched). B = premium rear, C = elevated arcade.
+    // B: further back + narrower FOV = less perspective stretch of the rear deck; calmer speed / Turbo FOV
+    premium: { height: 2.75, back: 8.4, speedBack: 0.6, lookY: 1.05, lookZ: -18, followX: 0.8, lookX: 0.6, lift: 1.5, lookLift: 0.12, hDamp: 6, vDamp: 7, lookDamp: 6.5, fov: -13, fovSpeed: 5, fovTurbo: 5 },
+    // C: higher, steeper view = more road and lane lines between the car and the obstacles ahead
+    arcade: { height: 4.0, back: 8.4, speedBack: 0.5, lookY: 1.3, lookZ: -15, followX: 0.7, lookX: 0.5, lift: 1.0, lookLift: 0.25, hDamp: 6.5, vDamp: 7, lookDamp: 7, fov: -7, fovSpeed: 6, fovTurbo: 6 },
+  } as Record<ChaseName, ChasePreset>,
+  chase: ((typeof location !== 'undefined' && /[?&]cam=(low|balanced|high|premium|arcade)/.exec(location.search)?.[1]) || 'balanced') as ChaseName,
+  /**
+   * Home screen with the 3D car: a slow three-quarter orbit behind the car at a constant distance
+   * (constant size), framed in the free band between the side buttons and the difficulty panel.
+   * yaw in radians (0 = straight behind), height / distance in metres, lookY / lookZ = aim point,
+   * fovScale × the base FOV.
+   */
+  // v4.5.1 (owner): the orbit stays INSIDE the road (camera x ≤ dist·sin(yaw+swing) ≈ 3.1 m, the guard rails
+  // are at ±4.3 m) — it used to swing out past the right rail, so the barrier crossed the whole view
+  /**
+   * v4.6 Settings "Camera motion" OFF (default): fixed view down the centre of the road. It never follows
+   * the lane, so it sits further back / higher than the chase preset (back / height added, metres) to
+   * keep the car fully on screen in both outer lanes on narrow portrait phones; `hopTop` = gameplay
+   * height above which (Roadster / HYPER / SOS flights only) it still climbs so the car stays framed.
+   */
+  // margin = gap kept between the car (outer lane) and the screen edge, fraction of the width;
+  // carHalfW / carRear = the 3D car's half width / rear end in game metres (2.09 × 4.22 m model × carScale)
+  fixed: { margin: 0.012, carHalfW: 1.045 * 0.82, carRear: 2.242 * 0.82, height: 0.5, lookY: 1.1, hopTop: 3.4 },
+  home: { yaw: 0.24, yawSwing: 0.14, speed: 0.22, height: 2.45, dist: 8.3, lookY: 0.98, lookZ: 0.2, fovScale: 0.82 },
+};
+
+/**
+ * v4.2 (3D upgrade Step 04) graphics presets. Render-only: the game logic, speeds and hitboxes are
+ * identical on every preset. MEDIUM is the starting preset until device benchmarks exist; a device
+ * that cannot hold ~42 fps steps down on its own (resolution → bloom → LOW, session only).
+ */
+export type GraphicsQuality = 'low' | 'medium' | 'high';
+export interface GraphicsPreset {
+  /** max device pixel ratio */
+  dprCap: number;
+  /** bloom (half-resolution) on lights / LEDs */
+  bloom: boolean;
+  /** edge speed blur post pass */
+  speedBlur: boolean;
+  /** share of the city buildings drawn (instance count) */
+  cityDensity: number;
+  /** far skyline lights, rooftop neon, roadside signs */
+  cityExtras: boolean;
+  /** road: light pools under the lamps, joints, polished tyre tracks (shader detail) */
+  roadDetail: boolean;
+  /** max anisotropic filtering on the road (sharp markings at grazing angles) */
+  anisotropy: number;
+  /** v4.2.1: share of burst particles (sparks, glints, dust) */
+  particles: number;
+  /** v4.2.1: road texture size (width; height = 2 ×) */
+  roadTex: number;
+}
+export const GRAPHICS: Record<GraphicsQuality, GraphicsPreset> = {
+  low: { dprCap: 1.25, bloom: false, speedBlur: false, cityDensity: 0.55, cityExtras: false, roadDetail: false, anisotropy: 2, particles: 0.5, roadTex: 256 },
+  medium: { dprCap: 1.5, bloom: true, speedBlur: false, cityDensity: 0.8, cityExtras: true, roadDetail: true, anisotropy: 4, particles: 0.8, roadTex: 512 },
+  high: { dprCap: 2, bloom: true, speedBlur: true, cityDensity: 1, cityExtras: true, roadDetail: true, anisotropy: 8, particles: 1, roadTex: 512 },
+};
+export const GRAPHICS_ORDER: GraphicsQuality[] = ['low', 'medium', 'high'];
+/** the next preset when the player taps the Graphics setting */
+export const nextGraphics = (q: GraphicsQuality): GraphicsQuality => GRAPHICS_ORDER[(GRAPHICS_ORDER.indexOf(q) + 1) % GRAPHICS_ORDER.length];
+
+/**
+ * v4.2 road surface (metres, road-local x: 0 = road centre). Marking positions are derived from the
+ * gameplay LANES so the paint always sits between / beside the real lanes.
+ */
+export const ROAD = {
+  /** half width of the road deck (the drivable plane) */
+  half: 4.3,
+  /** length covered by one road texture tile; every painted period below divides it */
+  tile: 12,
+  /** lane divider: width, dash length (of the tile) */
+  dividerW: 0.12,
+  dash: 3,
+  /** edge line: centre distance from the road centre, width */
+  edgeX: LANES[2] + LANE_WIDTH / 2 + 0.05,
+  edgeW: 0.14,
+  /** reflective studs: spacing along the lines, size */
+  studEvery: 6,
+  stud: 0.1,
+  /** expansion joints (shader): spacing, width */
+  jointEvery: 48,
+  jointW: 0.035,
+  /** polished tyre tracks: offset from each lane centre */
+  trackX: 0.78,
+  trackW: 0.42,
 };

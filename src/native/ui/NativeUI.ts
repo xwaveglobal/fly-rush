@@ -43,7 +43,7 @@ export interface HudState {
 
 const BASE = ['loading', 'start', 'tracks', 'garage', 'missions', 'ranks', 'daily', 'events', 'shop', 'hud', 'countdown', 'tutprompt'];
 /** overlay draw order (bottom → top) */
-export const OVERLAYS = ['finish', 'gameover', 'continue', 'pause', 'tutdone', 'tutintro', 'settings', 'guide', 'eventres', 'profile', 'bonus', 'specialpick', 'bag', 'bagbuy', 'boostinfo', 'spconfirm', 'rankguide', 'needrocket', 'account', 'cloudpick', 'sharepv', 'popup', 'logs'];
+export const OVERLAYS = ['finish', 'gameover', 'continue', 'pause', 'tutdone', 'tutintro', 'settings', 'guide', 'eventres', 'profile', 'bonus', 'specialpick', 'bag', 'bagbuy', 'boostinfo', 'spconfirm', 'rankguide', 'needrocket', 'account', 'cloudpick', 'sharepv', 'popup', 'classup', 'logs'];
 
 export class UI {
   /** Game uses root.getBoundingClientRect() to map 3D → screen */
@@ -58,7 +58,7 @@ export class UI {
   // ---------------------------------------------------------------- state from the game
   save: SaveData | null = null;
   lastSave: SaveData | null = null;
-  liveQuality: 'high' | 'low' | null = null;
+  liveQuality: 'high' | 'medium' | 'low' | null = null;
   loading = 0;
   loadText = 'Loading…';
   home: Parameters<UI['homeSync']>[0] | null = null;
@@ -121,6 +121,14 @@ export class UI {
   /** v3.0.11 home reward rail: per-tile glide state, and until when a glide is running */
   railAnim: Record<string, { from: number; to: number; t0: number }> = {};
   railMovingUntil = 0;
+  /** v4.6: when the Shop's exchange panel last flashed (opened right after a coin purchase) */
+  shopFlashT = -1e9;
+  /** scroll the Shop back to its top: the coins → specials exchange */
+  shopToExchange() {
+    this.g.off['shop'] = 0;
+    this.shopFlashT = this.t();
+    this.dirty = true;
+  }
   notice: (Notice & { t0: number; ms: number }) | null = null;
   pops: { text: string; color: string; sub: string; t0: number } | null = null;
   big: { label: string; color: string; icon: string; sub: string; t0: number } | null = null;
@@ -316,15 +324,18 @@ export class UI {
     this.popView = 'popup';
     this.dirty = true;
   }
+  /** v4.6: the bar always visibly runs — the shown value glides toward the real progress */
+  loadShown = 0;
+  loadT = 0;
   setLoading(k: number) {
-    this.loading = k;
+    this.loading = Math.max(this.loading, Math.min(1, k));
     this.dirty = true;
   }
   setLoadingText(t: string) {
     this.loadText = t;
     this.dirty = true;
   }
-  refreshProfile(s: SaveData, liveQuality?: 'high' | 'low') {
+  refreshProfile(s: SaveData, liveQuality?: 'high' | 'medium' | 'low') {
     if (liveQuality) this.liveQuality = liveQuality;
     this.save = s;
     this.dirty = true;
@@ -388,6 +399,12 @@ export class UI {
   }
   toast(html: string, color = 'var(--cyan)') {
     this.pushNotice({ kind: 'toast', html, color });
+  }
+  /** v4 class celebration (A and up, first time): rank badge, title, line, unlocked car */
+  classup: { cls: string; color: string; sub: string; car: { id: string; name: string } | null; t0: number } | null = null;
+  classUp(o: { cls: string; color: string; sub: string; car: { id: string; name: string } | null }) {
+    this.classup = { ...o, t0: this.t() };
+    this.showOverlay('classup');
   }
   /** v3.0.11: "Reward Claimed!" after an Entry / Launch / Share reward (shown even if its button is gone) */
   rewardClaimed(title: string, what: string) {

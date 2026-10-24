@@ -7,7 +7,7 @@ import { CLASSES, CLASS_COLOR, CLASS_MIN, XPT, classBadge, classFor as classOfBo
 import logoUrl from '../assets/images/sky-roadster-logo.webp';
 import appIcon from '../assets/images/app-icon.webp';
 import { amount, calendarGift, coinFace, coinPile, friends, giftBox, megaphone, phonePlus, shareNodes, starBig, tapMarks, wifiRobot } from './art.ts';
-import loadingUrl from '../assets/images/loading.jpg';
+import loadingUrl from '../assets/images/loading.webp';
 import thFuture from '../assets/images/tracks/future-city.jpg';
 import thTunnel from '../assets/images/tracks/neon-tunnel.jpg';
 import thCloud from '../assets/images/tracks/cloud-city.jpg';
@@ -52,6 +52,8 @@ import { SAMPLE_BOARD_NOTE } from './shared.ts';
 export { SAMPLE_BOARD_NOTE };
 
 export interface UIHandlers {
+  /** Step 06.5: the class promotion celebration was acknowledged (Continue) */
+  classOk?: () => void;
   play(): void;
   garage(): void;
   missions(): void;
@@ -64,7 +66,7 @@ export interface UIHandlers {
   upgrade(k: UpgradeKey): void;
   toggleSound(): void;
   toggleMusic(): void;
-  toggleQuality(): void;
+  toggleQuality(v?: string): void;
   previewSkin(id: string): void;
   /** start a run on a track ('endless' or a course id) */
   startTrack(id: string): void;
@@ -86,6 +88,7 @@ export interface UIHandlers {
   toggleAssist(): void;
   toggleComfort(): void;
   toggleVibrate(): void;
+  /** v4.6 setting: the race camera moves with the car (lanes, jumps, dives); off = fixed view */
   skipTutorial(): void;
   // ---- ads
   continueAd(): void;
@@ -365,7 +368,7 @@ export class UI {
         <button class="btn gold adbtn" data-a="ad2x" data-k="ad2xf">${ICON.play} Watch ad · +20% coins</button>
         <button class="btn big" data-a="nexttrack" data-k="fnext">${ICON.play} Next track</button>
         <div class="navrow">
-          <button class="btn nav blue" data-a="retry">${ICON.retry}<span>Retry</span></button>
+          <button class="btn nav blue" data-a="retry">${ICON.retry}<span>Restart</span></button>
           <button class="btn nav purple" data-a="tracks">${ICON.flag}<span>Tracks</span></button>
           <button class="btn nav dark" data-a="home">${ICON.home}<span>Home</span></button>
         </div>
@@ -424,7 +427,7 @@ export class UI {
           <div class="stile"><span class="si">≋</span><span class="sl">Vibration</span><button class="switch" data-a="vibrate" role="switch" aria-label="Vibration"><i></i></button></div>
           <div class="stile"><span class="si">${ICON.info}</span><span class="sl">Hint arrows</span><button class="switch" data-a="assist" role="switch" aria-label="Danger arrows"><i></i></button></div>
           <div class="stile"><span class="si">◐</span><span class="sl">Eye comfort</span><button class="switch" data-a="comfort" role="switch" aria-label="Comfort visuals"><i></i></button></div>
-          <div class="stile"><span class="si">${ICON.gear}</span><span class="sl">Graphics</span><div class="seg" data-k="qseg"><button data-a="quality" data-v="high">HI</button><button data-a="quality" data-v="low">LO</button></div></div>
+          <div class="stile wide"><span class="si">${ICON.gear}</span><span class="sl">Graphics</span><div class="seg" data-k="qseg"><button data-a="quality" data-v="low">LO</button><button data-a="quality" data-v="medium">MED</button><button data-a="quality" data-v="high">HI</button></div></div>
         </div>
         <button class="srow lang acct" data-a="account"><span class="si">☁️</span><span class="sl">Account</span><b data-k="acctline">Guest</b>${ICON.chevR}</button>
         <button class="srow lang" data-a="lang"><span class="si">🌐</span><span class="sl">Language</span><b data-k="langname">English</b>${ICON.chevR}</button>
@@ -698,10 +701,22 @@ export class UI {
         </div>
         <button class="btn big" data-a="resume">${ICON.play} Resume</button>
         <div class="navrow">
-          <button class="btn nav blue" data-a="retry">${ICON.retry}<span>Retry</span></button>
+          <button class="btn nav blue" data-a="retry">${ICON.retry}<span>Restart</span></button>
           <button class="btn nav dark" data-a="home">${ICON.home}<span>Home</span></button>
         </div>
       </div>
+    </section>
+
+    <section id="classup" class="screen overlay">
+      <div class="cu-bg" aria-hidden="true"><i class="cu-sweep"></i><span class="cu-dots">${'<b></b>'.repeat(14)}</span></div>
+      <div class="cu-top">
+        <div class="cu-kicker">CLASS PROMOTION</div>
+        <div class="cu-emblem" data-k="cuemblem"><span data-k="cucls">A</span></div>
+        <div class="cu-title" data-k="cutitle">Class A</div>
+        <div class="cu-sub" data-k="cusub"></div>
+      </div>
+      <div class="cu-car" data-k="cucar" hidden><img data-k="cucarimg" alt="" /><small>New car unlocked</small><b data-k="cucarname"></b></div>
+      <button class="btn big cu-ok" data-a="classok">Continue</button>
     </section>
 
     <section id="gameover" class="screen overlay">
@@ -718,7 +733,7 @@ export class UI {
         </div>
         <div class="rwd" data-k="grwd"></div>
         <button class="btn gold adbtn" data-a="ad2x" data-k="ad2x">${ICON.play} Watch ad · +20% coins</button>
-        <button class="btn big retry" data-a="retry">${ICON.retry} Retry</button>
+        <button class="btn big retry" data-a="retry">${ICON.retry} Restart</button>
         <div class="navrow">
           <button class="btn nav blue" data-a="home">${ICON.home}<span>Home</span></button>
           <button class="btn nav purple" data-a="tracks">${ICON.flag}<span>Tracks</span></button>
@@ -827,7 +842,7 @@ export class UI {
         case 'music': return this.h.toggleMusic();
         case 'quality':
           if (el.dataset.v && el.classList.contains('on')) return;
-          return this.h.toggleQuality();
+          return this.h.toggleQuality(el.dataset.v);
         case 'settings': return this.h.settings();
         case 'closemodal':
           this.root.querySelectorAll('.gstep.open').forEach((g) => g.classList.remove('open'));
@@ -902,6 +917,8 @@ export class UI {
         case 'closeov':
           this.screens[el.dataset.v!]?.classList.remove('show');
           return;
+        case 'classok':
+          return this.h.classOk?.();
         case 'savepname': return this.h.setName($<HTMLInputElement>(this.root, '[data-k="pnameinput"]').value);
         case 'pickcar':
           this.garageIndex = SKINS.findIndex((x) => x.id === el.dataset.id);
@@ -1005,8 +1022,30 @@ export class UI {
     return this.screens[id]?.classList.contains('show');
   }
 
+  /**
+   * v4.6 (owner): the loading bar always visibly runs — the shown value glides toward the real
+   * progress (and creeps on slowly while a step takes long), with "Loading… NN %" under it
+   */
+  private loadShown = 0;
+  private loadTarget = 0;
+  private loadRaf = 0;
   setLoading(k: number) {
-    $(this.root, '#loading .bar i').style.width = `${Math.round(k * 100)}%`;
+    this.loadTarget = Math.max(this.loadTarget, Math.min(1, k));
+    if (this.loadRaf) return;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+      const gap = this.loadTarget - this.loadShown;
+      // glide to the target; while waiting on a step, creep toward the next 9 % so it never stands still
+      if (gap > 0.001) this.loadShown += Math.max(gap * Math.min(1, dt * 6), dt * 0.08);
+      else if (this.loadShown < 0.99) this.loadShown += Math.max(0, Math.min(this.loadTarget + 0.09, 0.99) - this.loadShown) * dt * 0.4;
+      this.loadShown = Math.min(this.loadShown, 1);
+      $(this.root, '#loading .bar i').style.width = `${(this.loadShown * 100).toFixed(1)}%`;
+      this.setAll('loadtxt', `Loading… ${Math.floor(this.loadShown * 100)}%`);
+      this.loadRaf = this.loadShown >= 1 || !this.screens.loading?.classList.contains('show') ? 0 : requestAnimationFrame(tick);
+    };
+    this.loadRaf = requestAnimationFrame(tick);
   }
 
   private setAll(key: string, v: string) {
@@ -1014,9 +1053,9 @@ export class UI {
   }
 
   /** quality actually in use (may be a session-only LOW fallback) */
-  private liveQuality: 'high' | 'low' | null = null;
+  private liveQuality: 'high' | 'medium' | 'low' | null = null;
 
-  refreshProfile(s: SaveData, liveQuality?: 'high' | 'low') {
+  refreshProfile(s: SaveData, liveQuality?: 'high' | 'medium' | 'low') {
     if (liveQuality) this.liveQuality = liveQuality;
     this.setAll('wallet', fmt(s.wallet));
     // home top bar: compact amount (11.2K) so the profile chip keeps its room
@@ -1400,12 +1439,12 @@ export class UI {
     const vis = carVisibility(s.unlocked, skin.id);
     const rankOk = (k: (typeof SKINS)[number]) => CLASSES.indexOf(myClass) >= CLASSES.indexOf((k.need ?? 'D') as RankClass);
     $(this.root, '[data-k="lockbadge"]').hidden = vis === 'own';
-    this.setAll('locktxt', vis === 'dark' ? `RANK ${skin.need} NEEDED` : 'LOCKED');
+    this.setAll('locktxt', skin.future && vis !== 'own' ? 'COMING SOON' : vis === 'dark' ? `RANK ${skin.need} NEEDED` : 'LOCKED');
     const strip = $(this.root, '[data-k="carstrip"]');
     strip.innerHTML = SKINS.map((k, i) => {
       const v = carVisibility(s.unlocked, k.id);
       const img = v === 'dark' ? `<img class="cimg shadow" src="${carShadow}" alt="" />` : CAR_IMG[k.id] ? `<img class="cimg" src="${CAR_IMG[k.id]}" alt="" />` : carSvg(k.shape, k.body, k.glow);
-      const label = v === 'own' ? (s.vehicle === k.id ? 'In use' : 'Owned') : v === 'next' ? (rankOk(k) ? `${ICON.coin}${fmt(k.price)}` : `${ICON.lock} Rank ${k.need}`) : `Rank ${k.need}`;
+      const label = v === 'own' ? (s.vehicle === k.id ? 'In use' : 'Owned') : k.future ? 'Coming soon' : v === 'next' ? (rankOk(k) ? `${ICON.coin}${fmt(k.price)}` : `${ICON.lock} Rank ${k.need}`) : `Rank ${k.need}`;
       return `<button class="ccard ${v === 'own' ? '' : 'locked'} ${v} ${i === this.garageIndex ? 'on' : ''} ${s.vehicle === k.id ? 'cur' : ''}" data-a="pickcar" data-id="${k.id}" style="--rc:${RARITY_COLOR[k.rarity ?? 'Common']}">
         ${img}${v === 'dark' ? '<i class="q">?</i>' : ''}<b>${v === 'dark' ? '???' : k.name.replace('XWAVE ', '')}</b><small>${label}</small>${v === 'own' ? '' : `<i class="lk">${ICON.lock}</i>`}</button>`;
     }).join('') + `<button class="ccard locked dark more" data-a="morecars"><img class="cimg shadow" src="${carShadow}" alt="" /><i class="q">+</i><b>MORE</b><small>${classBadge('S')}${classBadge('SS')}${classBadge('SSS')}</small></button>`;
@@ -1413,7 +1452,7 @@ export class UI {
     const st = skin.stats ?? [7, 7, 7, 7];
     const bars = ['Speed', 'Acceleration', 'Handling', 'Energy'].map((n, i) => `<div class="cst"><span>${n}</span><i><b style="width:${st[i] * 10}%"></b></i><em>${vis === 'dark' ? '?' : st[i]}</em></div>`).join('');
     $(this.root, '[data-k="carinfo"]').innerHTML = vis === 'dark'
-      ? `<div class="crare" style="--rc:${RARITY_COLOR[skin.rarity ?? 'Common']}"><b class="cname">???</b>${skin.rarity ?? ''}</div><p class="cdark">${ICON.lock} Reach rank ${classBadge(skin.need as RankClass)} to reveal and unlock this car. Drive farther in one run to earn EXP.</p>`
+      ? `<div class="crare" style="--rc:${RARITY_COLOR[skin.rarity ?? 'Common']}"><b class="cname">???</b>${skin.rarity ?? ''}</div><p class="cdark">${ICON.lock} ${skin.future ? 'A future XWAVE car — its unlock is coming soon.' : `Reach rank ${classBadge(skin.need as RankClass)} to reveal and unlock this car. Drive farther in one run to earn EXP.`}</p>`
       : `<div class="crare" style="--rc:${RARITY_COLOR[skin.rarity ?? 'Common']}"><b class="cname">${skin.name}</b>${skin.rarity ?? ''}<small>${esc(skin.cls.split('·')[1]?.trim() ?? '')}</small></div>
          <div class="cbonus">${ICON.lock} Unlocks at rank ${classBadge(skin.need as RankClass)}</div>
          <p class="cfair">Every car drives the same — EXP stays fair. Cars show off your rank.</p>`;
@@ -1426,7 +1465,7 @@ export class UI {
     if (!owned) {
       btn.dataset.mode = 'rank';
       btn.className = 'btn purple';
-      btn.innerHTML = `${ICON.lock} Reach rank ${skin.need}`;
+      btn.innerHTML = skin.future ? `${ICON.lock} Coming soon` : `${ICON.lock} Reach rank ${skin.need}`;
       btn.removeAttribute('disabled');
     } else if (!owned) {
       btn.dataset.mode = 'buy';
@@ -1807,6 +1846,27 @@ export class UI {
     this.scheduleFit();
   }
 
+  /** Step 06.5 first-time class promotion (A and up): emblem, light sweep, particles; car showcase on AA */
+  classUp(o: { cls: string; color: string; sub: string; car: { id: string; name: string } | null }) {
+    const sc = this.screens.classup;
+    if (!sc) return;
+    sc.style.setProperty('--cc', o.color);
+    this.setAll('cucls', o.cls);
+    this.setAll('cutitle', `Class ${o.cls}`);
+    this.setAll('cusub', o.sub);
+    const car = $(this.root, '[data-k="cucar"]');
+    car.hidden = !o.car;
+    sc.classList.toggle('withcar', !!o.car);
+    if (o.car) {
+      this.setAll('cucarname', o.car.name);
+      $<HTMLImageElement>(this.root, '[data-k="cucarimg"]').src = carImage(o.car.id);
+    }
+    sc.classList.remove('play');
+    void sc.offsetWidth; // restart the entrance animation
+    sc.classList.add('play');
+    this.showOverlay('classup');
+  }
+
   showOverlay(id: string) {
     this.screens[id]?.classList.add('show');
     this.scheduleFit();
@@ -2053,14 +2113,25 @@ export class UI {
     };
     const specials = PRODUCTS.filter((p) => p.kind !== 'coins' && !(p.once && p.sku === 'starter_pack' && s.starterBought));
     const coins = PRODUCTS.filter((p) => p.kind === 'coins');
-    const inv = (SPECIALS as readonly ItemKey[]).map((k) => `<span class="rchip ${k}">${ITEM_ICON[k]}×${s.items[k]}</span>`).join('');
+    // v4.6 (owner): the top of the Shop is always the coins → specials exchange; tapping one of your
+    // special items opens the exchange popup too (also right after buying coins)
+    const inv = (SPECIALS as readonly ItemKey[]).map((k) => `<button class="rchip ${k}" data-a="bagbuy" aria-label="Exchange coins for ${SPECIAL_SHORT[k as SpecialKey]}">${ITEM_ICON[k]}×${s.items[k]}</button>`).join('');
+    const xchg = SPECIALS.map((k) => `<button class="xbtn ${k} ${s.wallet >= ITEM_PRICE[k] ? '' : 'short'}" data-a="sbuy" data-v="${k}"><span class="spi">${ITEM_ICON[k]}</span><b>${SPECIAL_SHORT[k]}</b><em>${ICON.coin}${fmt(ITEM_PRICE[k])}</em></button>`).join('');
     $(this.root, '[data-k="shoplist"]').innerHTML = `
       <div class="inv panel"><span class="label">Your items</span>${inv}</div>
+      <div class="xchg panel"><div class="xh"><b>Exchange coins → specials</b><span>${ICON.coin}${fmt(s.wallet)}</span></div><div class="xrow">${xchg}</div></div>
       ${specials.map(card).join('')}
       <div class="bhead out"><b>Coins</b></div>
       <div class="coingrid">${coins.map(card).join('')}</div>
       <div class="label shopnote">Demo store — purchases are simulated, no payment is taken.</div>`;
     this.setAll('wallet', fmt(s.wallet));
+  }
+
+  /** scroll the Shop back to its top: the coins → specials exchange */
+  shopToExchange() {
+    const list = $(this.root, '[data-k="shoplist"]');
+    list.scrollTo({ top: 0, behavior: 'smooth' });
+    $(this.root, '#shop .xchg')?.classList.add('flash');
   }
 
   private productArt(p: Product) {
@@ -2323,7 +2394,7 @@ export class UI {
     b.push(o.wallet >= o.price
       ? `<button class="btn gold" data-a="rocketfix" data-v="buy">Buy 1 · <span class="price">${ICON.coin}${fmt(o.price)}</span></button>`
       : `<button class="btn pink" data-a="rocketfix" data-v="shop">${ICON.bag} Get Roadster Jumps</button>`);
-    b.push(`<button class="btn ghost sm" data-a="rocketfix" data-v="retry">${ICON.retry} Retry & collect the rocket</button>`);
+    b.push(`<button class="btn ghost sm" data-a="rocketfix" data-v="retry">${ICON.retry} Restart & collect the rocket</button>`);
     $(this.root, '[data-k="nrbtns"]').innerHTML = b.join('');
   }
 

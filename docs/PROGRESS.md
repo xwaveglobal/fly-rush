@@ -1,5 +1,15 @@
 # Progress log
 
+## 2026-10-24 — new-main (v3.1.0): v4.6 changes on the v3 game, car / road / camera unchanged
+
+**Done**: branch `new-main` from `main`, merged `feature/sky-roadster-v4.6-big-update`, then restored to `main`'s version: `render/Vehicle.ts` (only the SKINS unlock matrix + `carsForRank` + all-dark `carVisibility` ported), `Track.ts`, `Scenery.ts`, `CameraRig.ts`, `textures.ts`, `Readability.ts`, car pictures, manifest; removed `render/car/`, `roadSurface.ts`, `envFx.ts`, the GLB, `scripts/car`, `scripts/env`, car / camera / env tests, the Camera motion setting. Game.ts: 3D-car calls removed (model ready, crash FX, pickup sweep, turbo aura, camera dynamic / car size, scenery / track quality). Audio / Renderer = the resolved versions from `feat/v4-native`. Native UI: classUp, exchange panel + shopToExchange, loading %, Restart, flat buttons (`g.flat`), Home without shadows, special under the hearts, LO / MED / HI, future-car labels.
+
+**Verified**: typecheck, 9/9 test suites, build:tiktok, check:tiktok 0 FAIL, ES2017 parse, simulator (see report). Web build not run here (vite not installed in this workspace).
+
+**Next**: owner reviews; if good, `new-main` can replace `main`.
+
+---
+
 Newest entry on top. Every AI session adds a short entry: what was done, what is unfinished, what's next.
 
 ---
@@ -124,6 +134,121 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 - v2.3 cloud accounts are off in native (profile is the save). Missions / daily quests / check-in stay game-side rewards (not HS claim keys yet).
 
 **Next**: owner gets App ID + HS Game ID / SDK key → put App ID in `tiktok/project.config.json`, keys in `src/native/hs.ts`, real ad unit ids + products in the HS dashboard, then `npm run pack:tiktok`. Possible: map daily check-in / missions to `HSGame.claim` keys so the dashboard can tune them.
+
+## 2026-10-23 — v4.6.0 on NEW branch `feature/sky-roadster-v4.6-big-update` (owner requests)
+
+**Done**: 3D car 15 % taller (runtime Y scale, wheels compensated, GLB untouched — fingerprint test still green); home orbit kept inside the road (`CAMERA.home` yaw 0.24 ± 0.14); UI car pictures = renders of the 3D X1 per colourway (`src/assets/images/cars/*.webp`, `rear-*.webp`); ad revive adds no heart, shows only "REVIVED!"; Settings → Camera motion (default OFF: fixed view — lanes, jumps, dives never move / tilt the camera; Roadster / HYPER / SOS flights still lift it); flat-button rule no longer un-blackens locked car silhouettes. npm test 12 / 12. Shots: `docs/gameplay-upgrade/v4.6/`.
+
+**Note**: `feature/sky-roadster-3d-v4.1` still holds v4.5.0 (Step 06.5) — this branch starts from it. Vega and Zenith render identically (same white paint; Vega's red only lived in the old 2-D picture).
+
+**Next**: owner review; Step 06.5 approval still pending. No merge to `main`.
+
+---
+
+## 2026-10-23 — v4.5.0: Step 06.5 + Patch 02 (H5 gameplay) — STOP, waiting for approval
+
+**Done** (details, screenshots, test results: `docs/gameplay-upgrade/step06-5/`):
+- Audio starts from the first real tap (no Settings needed), resumed on every tap until running, suspended in background; crash SFX at the collision event (trigger ≈ 0.4 ms after it on the main thread; audible device latency not measured).
+- Pause: one frozen state, never auto Game Over (root cause: `'paused'` shared the revive countdown in `tick`).
+- Air Dash road item (outer lanes, safe-landing spawner guard, runtime `AirDashGuard`), airborne-only spoiler, item balance per level (`ITEM_BALANCE`), last-chance auto Roadster / HYPER / SOS (`Run.lastChance` → `Game.activateSpecial('AUTO_LAST_CHANCE')`), Magic Bag auto-equip (fills an empty special slot only), class unlock matrix (AA = Inferno only; S / SS / SSS future cars), first-time class celebration (A+), flat non-Home buttons, crash: car falls to the road + 3 real parts break off on the final crash.
+- Tests: new `tests/airdash.test.ts`, spoiler matrix in `tests/carMotion.test.ts` (npm test 12 / 12); real-build QA `scripts/qa/step065.mjs` 59 / 59 (+ `h5.mjs`, `audio-startup.mjs`, `item-balance.ts`). Artifact "Sky Roadster v4" republished (Version 10).
+- Step 07 FINAL was paused by the owner before it finished: WIP commit `a9e1476` (approved GLB lock + fingerprint test, camera candidates `?cam=premium|arcade`, PBR pass opt-in `?pbr=1`); defaults unchanged.
+
+**Open decisions for the owner**: where the old C / B / A / AAA cars go (mapped by rarity to S / SS / SSS; Nexus = future car without a condition) — `SKINS` in `src/render/Vehicle.ts`.
+
+**Known**: no phone / Native test (H5 only, SwiftShader in the cloud); audible audio latency and real-device FPS not measured.
+
+**Next**: owner reviews Step 06.5 → approval. Do not start Step 07 / Native sync before that.
+
+---
+
+## 2026-10-23 — v4.4.1: X1 car model restored to v4.2.0 (owner request)
+
+**Done**: owner preferred the v4.2.0 car (Step 04 screenshots). Restored the game GLB, `scripts/car/x1-builder.ts` and `tests/car.test.ts` from `d222b92`; other v4.2.1–v4.4.0 work kept. Step 06 / 07 models saved in `assets-src/x1/rollback/` (+ masters); their builder lives in commit `d00b71c`. Step 05 finished: screenshots 01–13, no-DOM smoke 10/11 (context restore fails without canvas events — native open item), env self-test 6/6. The clean MEDIUM / HIGH re-profile was dropped by the owner ("bỏ đo hiệu năng step 05"); MEDIUM / HIGH timings stay marked invalid.
+
+**Known**: Step 06/07 reports describe the rolled-back car; the studio / compare tools now build the v4.2.0 car by default. Phone FPS still not measured; TikTok native not ported.
+
+**Next**: owner decides the next step.
+
+
+## 2026-10-23 — v4.4.0: 3D upgrade Steps 05 → 07 (readability / perf, X1 reconstruction, shorter rear)
+
+**Done**:
+- Step 05 (v4.2.1): thin gold Ring Coins + collect fade; airborne camera (BALANCED / LOW rise with the car); particle density per preset, LOW 256 road texture; city silhouettes / window variety; `?perf=1` (`src/core/perf.ts`); context-loss handling; `scripts/perf/profile.mjs`; no-DOM smoke test (`scripts/native/`); preset-switch texture leak fixed (`Renderer.disposeComposer`). Report: `docs/3d-upgrade/step05/` (MEDIUM / HIGH timings invalid — contended run).
+- Step 06 (v4.3.0): X1 matched to the rear master with studio renders + automated silhouette comparison (`scripts/car/x1-studio.ts`, `studio-x1.mjs`, `compare/*.py`); master model `--detail=master`; mesh fixes. Report: `docs/3d-upgrade/step06/reconstruction/`.
+- Step 07 (v4.4.0): rear overhang 0.94 → 0.84 m (`REAR_K`), roof frame, body-colour closed spoiler, black glass (owner), smaller intake, diffuser ramp; real gameplay camera (`scripts/car/game-camera.ts`), real-game state captures (`scripts/car/gameplay-states.mjs`). Rollback GLBs in `assets-src/x1/rollback/`. Report: `docs/3d-upgrade/step07/`.
+
+**Known**: rear-3/4 ≥ 0.85 is met through a re-calibrated camera, not geometry (documented); Step 05 MEDIUM / HIGH timings need a clean rerun; Step 05 screenshot set 01–12 not produced; TikTok native not tested (v4 not ported); no Blender in the cloud session.
+
+**Next**: owner reviews Step 07 → Step 08. Do not merge to `main` / submit to TikTok without approval.
+
+---
+
+## 2026-10-23 — v4.2.0: 3D upgrade Step 04 — procedural road, night city, graphics presets, Turbo aura
+
+**Done**: `roadSurface.ts` (pure, tested) → road DataTextures in `Track` (asphalt grain, tyre tracks, shoulders, dashed dividers / edge lines / studs from LANES; joints + lamp light pools in the road shader), steel rails, LED lamp streaks, roadside XWAVE signs, `envFx.addFarFade` (recycled props fade in from the haze — no popping). City: night palette, neon on the near buildings, XWAVE boards, distant city lights, shared billboard materials. Graphics LOW / MEDIUM / HIGH (`GRAPHICS` in config, default MEDIUM, save migration HIGH → MEDIUM once, Settings LO / MED / HI). Turbo aura (owner note). Tests: 11 suites / 217 checks; `test:envshots` 4/4, `test:vfx` 24/24 in real WebGL. Report: `docs/3d-upgrade/step04/README.md`.
+
+**Known**: phone FPS not measured; Home draws ~20–30 more calls on MEDIUM / HIGH (city extras); only Future City got the night palette; Vite + TikTok native not run here.
+
+**Next**: owner reviews Step 04 → Step 05. Do not start before approval.
+
+---
+
+## 2026-10-23 — v4.1.3: 3D upgrade Step 03.2 — front end, pop-up spoiler, premium VFX, dive pose
+
+**Done**: generator front rework (rounded nose, tucked splitter, intake + air curtains, LED headlights draped on the paint by ray cast, seams, pearl paint, darker glass) and the front-wheel fix (side profile cut at the arch line — it used to fold around the tyre; 0.34 m front tyre, elliptical arch, black liners). Pop-up spoiler (rise 6 cm + 22°, wedge skirt). `CarFx.ts`: shield aura shell (old grey mote cloud removed for the 3D car), ghost / pickup edge light compiled into the car materials, pooled crash shards + flash; `MeshCar`: soft 3-layer nitro, DOWN press-down pose, settle on game over, prewarm. `carMotion.carHeight`: in the air the 3D underside never hangs below the hitbox (visual only). Traffic hover pods tucked inside their collision width. Countdown shake fixed (car + camera were stepped twice per frame with two speeds). `?debug=collision` overlay. Tests: 10 suites / 190 checks; `npm run test:vfx` 21/21 in real WebGL. Report: `docs/3d-upgrade/step03-2/README.md`.
+
+**Known**: car still longer / wider than the hitbox (inherent, documented); thin seams can shimmer at distance on low-DPI screens; front nose fillet shows a faint shading crease (hidden under the bumper seam); FPS not measured on a phone; Vite + TikTok native not run here.
+
+**Next**: owner reviews Step 03.2 → Step 04. Do not start before approval.
+
+---
+
+## 2026-10-23 — v4.1.2: 3D upgrade Step 03.1 — shorter, mirrorless, jump spoiler
+
+**Done**: builder `LENGTH_CUT` 0.08 (front-half z-warp, arches kept round; `build-x1.mjs --cut=`), mirrors deleted, `spoilerUpdate()` (jumping = `Player.vmode === 'up'` ‖ nitro, 0.25 s hold), `Vehicle.crashRecoil()` (visual nose setback at crash). Tests: spoiler transitions with the real Player, mirror / length / wheelbase / rear-unchanged checks. 10 suites / 175 checks pass; esbuild builds pass. Report: `docs/3d-upgrade/step03-1/README.md`.
+
+**Known**: car (3.23 m) still longer than the 2 m hitbox — near-misses can visually brush; splitter shows a little ahead of the nose; Vite + TikTok not run here.
+
+**Next**: owner reviews Step 03.1 → Step 04. Do not start before approval.
+
+---
+
+## 2026-10-23 — v4.1.1: 3D upgrade Step 03 — rear bumper, active spoiler, cameras
+
+**Done**: builder rear rebuilt (solid `Rear_LowerBumper` + recessed `Diffuser`, `Spoiler_Pivot`/`Spoiler`, sockets in the recess, rail/rods/tubes deleted); `carMotion.ts` (pure, tested); `MeshCar` spoiler / yaw / ghost fade; `CAMERA` presets + `CAMERA.home` in `config.ts`, `CameraRig.car3d` / `presetOverride`; `Game.ts`: 3D car stays visible while dying, `rig.car3d` set on skin / model ready. New tests `test:camera`, `test:motion`; `test:car` extended. 10 suites / 155 checks pass; esbuild builds pass; Vite + TikTok not run. Report: `docs/3d-upgrade/step03/README.md`.
+
+**Known**: crash frame — car longer than hitbox, obstacle overlaps the hood; no 3D crash shatter / aura; glass still greyish in studio light.
+
+**Next**: owner reviews Step 03 → Step 04. Do not start before approval.
+
+---
+
+## 2026-10-23 — v4.1.0: 3D upgrade Step 02 — 3D XWAVE X1
+
+**Done**: refined X1 model (scripted builder `scripts/car/x1-builder.ts` → `src/assets/models/xwave-x1.glb`, 31.9k tris), own GLB reader `src/render/car/glbParse.ts` (no GLTFLoader / fetch / TextDecoder for bundled data), `src/render/car/MeshCar.ts` wired into `Vehicle.ts` (rear image = fallback until loaded, `?car=sprite` to compare), `RENDER` block in `config.ts`, `tests/car.test.ts`. Typecheck, 8 test suites, esbuild builds pass; Vite build and TikTok native not run here. Report + screenshots: `docs/3d-upgrade/05-step02-vehicle.md`, `docs/3d-upgrade/step02/`.
+
+**Half-done / known**: glass too light + seats barely visible, rear tyres partly hidden, diffuser too light, no Phase Ghost / aura / crash shatter for the 3D car, nose extends ~0.8 m past the hitbox (visual only), GLB 949 KB unoptimised. Tag `v4.0.1` still needs pushing from the PC.
+
+**Next**: owner reviews Step 02 → Step 03 (rear chase camera). Do not start before approval.
+
+---
+
+## 2026-10-23 — 3D upgrade Step 01: audit (no game code changed)
+
+**Done**: branch `feature/sky-roadster-3d-v4.1` (from `v4.0.1`), audit docs in `docs/3d-upgrade/` (01 source audit, 02 architecture, 03 roadmap, 04 baseline tests). Key finding: the car on screen is a 2D studio image (billboard in an overlay pass, `render/Vehicle.ts`), not a 3D model; a hidden procedural car and a GLB hook exist. `npm test` passes; typecheck/build could not run here (npm registry blocked in the cloud session).
+
+**Half-done**: tag `v4.0.1` exists only in the cloud clone (tag push refused) — create + push it from the PC (`04-baseline-test-results.md`).
+
+**Next**: owner approves the plan and chooses the X1 3D source (model file / model from images / AI image-to-3D) → Step 02 (3D vehicle). Do not start Step 02 before that.
+
+---
+
+## 2026-10-23 — v4.0.1: branch `v4.0.1` for the 3D upgrade
+
+**Done**: new branch `v4.0.1`, started from the H5 web game v2.3.0 (branch `v2`), not from `main` (v3 native) — owner chose H5 as the base because it is easier to upgrade to better 3D. VERSION → v4.0.1, AGENTS.md workflow lists all four branches.
+
+**Next**: the 3D upgrade itself (render/ — lighting, shadows, models, road, city, effects), keeping gameplay/fairness unchanged.
 
 ---
 

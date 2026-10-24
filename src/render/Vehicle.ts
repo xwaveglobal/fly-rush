@@ -74,6 +74,8 @@ export interface VehicleSkin {
   rarity?: 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic';
   /** rank class required before the car can be bought */
   need?: string;
+  /** v4.6 (Step 06.5): a configured future car with no unlock condition yet — always a locked dark silhouette */
+  future?: boolean;
   /** score bonus in % while driving this car */
   bonus?: number;
   /** how strongly the X1 render's body paint is recoloured (0 = original pearl) */
@@ -85,24 +87,31 @@ export interface VehicleSkin {
   rear?: string;
 }
 
+/**
+ * Class unlocks (v4.6 owner update): D = the starter car; C / B / A = no new car; AA = XWAVE
+ * Inferno; AAA = XWAVE Nexus; S / SS / SSS = Vega / Volt / Phantom. Every car not owned yet is a dark
+ * locked silhouette (AA and AAA included) until its rank is reached.
+ * Cars a player already owns are never taken away (unlocks only ever add).
+ */
 export const SKINS: VehicleSkin[] = [
   { id: 'zenith', name: 'XWAVE Zenith', shape: 'gt', cls: 'Common · Balanced for every run', rarity: 'Common', need: 'D', price: 0, bonus: 0, tintAmt: 0,
     body: 0xf3f5fa, trim: 0xb9c2d3, glass: 0x0a0d16, glow: 0x39b6ff, accent: 0x1c64ff, stats: [7, 7, 8, 7],
     skills: [{ name: 'Turbo Boost', desc: 'Short burst of high speed.' }, { name: 'Stable Flight', desc: 'Easier to control.' }] },
-  { id: 'vega', name: 'XWAVE Vega', shape: 'gt', cls: 'Uncommon · Red-line racer', rarity: 'Rare', need: 'C', price: 0, bonus: 0, tintAmt: 0, rear: vegaBack,
-    body: 0xf3f5fa, trim: 0xb9c2d3, glass: 0x0a0d16, glow: 0xff3b4e, accent: 0xff3b4e, stats: [8, 7, 8, 7] },
-  { id: 'volt', name: 'XWAVE Volt', shape: 'gt', cls: 'Rare · Speed beyond limits', rarity: 'Rare', need: 'B', price: 0, bonus: 0, tintAmt: 0.92,
-    body: 0x6a3cf0, trim: 0x9aa6bd, glass: 0x05060a, glow: 0xb46bff, accent: 0x8a4dff, stats: [9, 9, 8, 8],
-    skills: [{ name: 'Ion Burst', desc: 'Massive speed boost for 5 seconds.' }, { name: 'Shockwave', desc: 'Pushes nearby obstacles out of the way.' }] },
-  { id: 'phantom', name: 'XWAVE Phantom', shape: 'gt', cls: 'Epic · Invisible. Unstoppable.', rarity: 'Epic', need: 'A', price: 0, bonus: 0, tintAmt: 0.85,
-    body: 0xd4a548, trim: 0x2a2416, glass: 0x140c00, glow: 0xffc24a, accent: 0xffd23d, stats: [9, 8, 9, 9],
-    skills: [{ name: 'Phase Shift', desc: 'Turns semi-invisible for 3 seconds.' }, { name: 'Auto Collect', desc: 'Automatically collects nearby coins.' }] },
   { id: 'inferno', name: 'XWAVE Inferno', shape: 'gt', cls: 'Legendary · Burn through everything', rarity: 'Legendary', need: 'AA', price: 0, bonus: 0, tintAmt: 0.92,
     body: 0xc4121f, trim: 0x1a1a1a, glass: 0x0a0202, glow: 0xff3b2a, accent: 0xff6a2a, stats: [10, 9, 8, 8],
     skills: [{ name: 'Fire Trail', desc: 'Destroys all obstacles in its path.' }, { name: 'Speed Rush', desc: 'Extreme speed boost for 8 seconds.' }] },
   { id: 'nexus', name: 'XWAVE Nexus', shape: 'gt', cls: 'Mythic · The ultimate evolution', rarity: 'Mythic', need: 'AAA', price: 0, bonus: 0, tintAmt: 0.35,
     body: 0xdfe8ff, trim: 0xc9d2e6, glass: 0x0b1830, glow: 0x3cf2ff, accent: 0xd04dff, stats: [10, 10, 10, 10],
     skills: [{ name: 'Gravity Control', desc: 'Switches flight height freely for 5 seconds.' }, { name: 'Dimension Dash', desc: 'Teleports forward a short distance.' }] },
+
+  { id: 'vega', name: 'XWAVE Vega', shape: 'gt', cls: 'Uncommon · Red-line racer', rarity: 'Rare', need: 'S', price: 0, bonus: 0, tintAmt: 0, rear: vegaBack,
+    body: 0xf3f5fa, trim: 0xb9c2d3, glass: 0x0a0d16, glow: 0xff3b4e, accent: 0xff3b4e, stats: [8, 7, 8, 7] },
+  { id: 'volt', name: 'XWAVE Volt', shape: 'gt', cls: 'Rare · Speed beyond limits', rarity: 'Rare', need: 'SS', price: 0, bonus: 0, tintAmt: 0.92,
+    body: 0x6a3cf0, trim: 0x9aa6bd, glass: 0x05060a, glow: 0xb46bff, accent: 0x8a4dff, stats: [9, 9, 8, 8],
+    skills: [{ name: 'Ion Burst', desc: 'Massive speed boost for 5 seconds.' }, { name: 'Shockwave', desc: 'Pushes nearby obstacles out of the way.' }] },
+  { id: 'phantom', name: 'XWAVE Phantom', shape: 'gt', cls: 'Epic · Invisible. Unstoppable.', rarity: 'Epic', need: 'SSS', price: 0, bonus: 0, tintAmt: 0.85,
+    body: 0xd4a548, trim: 0x2a2416, glass: 0x140c00, glow: 0xffc24a, accent: 0xffd23d, stats: [9, 8, 9, 9],
+    skills: [{ name: 'Phase Shift', desc: 'Turns semi-invisible for 3 seconds.' }, { name: 'Auto Collect', desc: 'Automatically collects nearby coins.' }] },
 ];
 
 
@@ -112,9 +121,13 @@ export const SKINS: VehicleSkin[] = [
  */
 export function carVisibility(unlocked: string[], id: string): 'own' | 'next' | 'dark' {
   if (unlocked.includes(id)) return 'own';
-  // v2: only the rank-C car is shown before it is earned; rank B and up stay black silhouettes
-  const next = SKINS.find((k) => !unlocked.includes(k.id));
-  return next?.id === id && next.need === 'C' ? 'next' : 'dark';
+  // v4.6 (owner): every car not owned yet — AA and AAA included — is a black silhouette until it is unlocked
+  return 'dark';
+}
+
+/** cars a rank unlocks (v4.6 matrix): never a future car */
+export function carsForRank(rankAtLeast: (need: string) => boolean): string[] {
+  return SKINS.filter((k) => !k.future && rankAtLeast(k.need ?? 'D')).map((k) => k.id);
 }
 
 const BLUE = new THREE.Color(0x39b6ff);

@@ -21,7 +21,7 @@ export interface SaveData {
   unlocked: string[];
   upgrades: { engine: number; shield: number; magnet: number };
   missions: { active: { id: string; progress: number }[]; completed: number; rank: number };
-  settings: { sound: boolean; music: boolean; quality: 'high' | 'low'; speed: 'easy' | 'normal' | 'hard'; assist?: boolean; comfort?: boolean; autoClaim?: boolean; vibrate?: boolean; lang?: string };
+  settings: { sound: boolean; music: boolean; quality: 'high' | 'medium' | 'low'; gfx3?: boolean; speed: 'easy' | 'normal' | 'hard'; assist?: boolean; comfort?: boolean; autoClaim?: boolean; vibrate?: boolean; lang?: string; /** v4.6 "Camera motion": race camera moves with the car (default off = fixed view) */ camMotion?: boolean };
   /** rewarded "free coins": day key + how many claimed that day */
   adFreeDay?: string;
   adFreeCount?: number;
@@ -62,6 +62,8 @@ export interface SaveData {
   special?: 'super' | 'hyper' | 'escape' | null;
   /** mission rewards waiting for a manual claim (auto-claim off) */
   pendingMissions: { text: string; reward: number }[];
+  /** Step 06.5: classes (A and up) whose first-promotion celebration the player has acknowledged */
+  classCelebrated?: string[];
   /** consumable items (equipped on the track screen, used in a run) */
   items: { super: number; hyper: number; shield: number; escape: number; turbo: number; magnet: number; double: number; life: number };
   /** which owned items are equipped for the next run */
@@ -119,7 +121,8 @@ const defaults = (): SaveData => ({
   settings: {
     sound: true,
     music: true,
-    quality: 'high',
+    quality: 'medium', // v4.2: MEDIUM until device benchmarks exist (a slow device still steps down)
+    gfx3: true,
     speed: 'normal',
     assist: true,
     comfort: true,
@@ -203,6 +206,12 @@ function loadSaveRaw(): SaveData {
       p.settings.quality = 'high';
       p.settings.sound = true;
       p.settings.music = true;
+    }
+    // v4.2 three graphics presets: the old default HIGH becomes MEDIUM once (a stored LOW stays LOW);
+    // the player can pick HIGH again in Settings
+    if (p.settings && !p.settings.gfx3) {
+      if (p.settings.quality === 'high') p.settings.quality = 'medium';
+      p.settings.gfx3 = true;
     }
     return {
       ...d,

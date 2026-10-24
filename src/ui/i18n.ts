@@ -17,6 +17,9 @@ export const LANGS: { code: Lang; name: string; flag: string }[] = [
 // [en, fr, ja, pt, de, es]
 const T: [string, string, string, string, string, string][] = [
   ['Play', 'Jouer', 'プレイ', 'Jogar', 'Spielen', 'Jugar'],
+  ['CLASS PROMOTION', 'PROMOTION DE CLASSE', 'クラス昇格', 'PROMOÇÃO DE CLASSE', 'KLASSENAUFSTIEG', 'ASCENSO DE CLASE'],
+  ['New car unlocked', 'Nouvelle voiture débloquée', '新しい車をアンロック', 'Novo carro desbloqueado', 'Neues Auto freigeschaltet', 'Nuevo coche desbloqueado'],
+  ['Continue', 'Continuer', '続ける', 'Continuar', 'Weiter', 'Continuar'],
   ['Garage', 'Garage', 'ガレージ', 'Garagem', 'Garage', 'Garaje'],
   ['Shop', 'Boutique', 'ショップ', 'Loja', 'Shop', 'Tienda'],
   ['Missions', 'Missions', 'ミッション', 'Missões', 'Missionen', 'Misiones'],
@@ -30,6 +33,7 @@ const T: [string, string, string, string, string, string][] = [
   ['Sound', 'Son', 'サウンド', 'Som', 'Sound', 'Sonido'],
   ['Music', 'Musique', '音楽', 'Música', 'Musik', 'Música'],
   ['Vibration', 'Vibration', '振動', 'Vibração', 'Vibration', 'Vibración'],
+  ['Camera motion', 'Caméra mobile', 'カメラ追従', 'Câmera em movimento', 'Kamera-Bewegung', 'Cámara en movimiento'],
   ['Hint arrows', 'Flèches', 'ヒント', 'Setas', 'Pfeile', 'Flechas'],
   ['Comfort', 'Confort', '目に優しい', 'Conforto', 'Komfort', 'Confort'],
   ['Buy items', 'Acheter', 'アイテム購入', 'Comprar itens', 'Items kaufen', 'Comprar objetos'],
@@ -62,6 +66,7 @@ const T: [string, string, string, string, string, string][] = [
   ['Paused', 'Pause', '一時停止', 'Pausado', 'Pausiert', 'En pausa'],
   ['Resume', 'Reprendre', '再開', 'Continuar', 'Weiter', 'Reanudar'],
   ['Retry', 'Rejouer', 'リトライ', 'De novo', 'Nochmal', 'Reintentar'],
+  ['Restart', 'Recommencer', 'リスタート', 'Reiniciar', 'Neustart', 'Reiniciar'],
   ['Home', 'Accueil', 'ホーム', 'Início', 'Start', 'Inicio'],
   ['Tracks', 'Circuits', 'コース', 'Pistas', 'Strecken', 'Pistas'],
   ['Next track', 'Circuit suivant', '次のコース', 'Próxima pista', 'Nächste Strecke', 'Siguiente pista'],
