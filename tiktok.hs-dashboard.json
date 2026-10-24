@@ -1,0 +1,80 @@
+{
+  "iaa_config": {
+    "placements": [
+      {
+        "label": "rw_revive",
+        "ads": [
+          {
+            "id": "ad7698648409188239361"
+          }
+        ]
+      },
+      {
+        "label": "rw_end_bonus",
+        "ads": [
+          {
+            "id": "ad7698648440104470580"
+          }
+        ]
+      },
+      {
+        "label": "rw_free_coins",
+        "ads": [
+          {
+            "id": "ad7698650608001796097"
+          }
+        ]
+      },
+      {
+        "label": "rw_head_start",
+        "ads": [
+          {
+            "id": "ad7698658129030809601"
+          }
+        ]
+      },
+      {
+        "label": "int_race_end",
+        "ads": [
+          {
+            "id": "ad7698648500532201524"
+          }
+        ]
+      }
+    ],
+    "rewards": {
+      "share": {
+        "coins": 300,
+        "$limit": "daily"
+      },
+      "tiktok_profile": {
+        "coins": 300
+      },
+      "tiktok_shortcut": {
+        "coins": 300
+      }
+    },
+    "items": {
+      "coins": {
+        "category": "currency",
+        "name": "Coins"
+      },
+      "super": {
+        "category": "consumable",
+        "name": "Roadster Jump"
+      },
+      "hyper": {
+        "category": "consumable",
+        "name": "HYPER Jump"
+      },
+      "escape": {
+        "category": "consumable",
+        "name": "SOS Escape"
+      },
+      "no_ads": {
+        "category": "unlock",
+        "name": "No Ads"
+      }
+    }
+  }
+}
