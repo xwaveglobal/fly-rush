@@ -26,6 +26,18 @@ export function perkVisible(kind: PerkKind, s: PerkState): boolean {
   return kind === 'entry' ? !s.entryDone : !s.launchDone;
 }
 
+/**
+ * v5 (owner 2026-10-24: "Home must show all 6 buttons"): the Home rail always holds Share · Entry ·
+ * Launch where the platform has them — a claimed reward stays as a tile with a ✓ (its popup says
+ * "Reward claimed") instead of disappearing. Before HSGame has started, all three show (TikTok
+ * layout); after that, a platform without TikTok missions (the Android app) keeps only Share
+ * (HS kit rule 12). `perkVisible` still tells whether a reward can be earned now (the "!" badge).
+ */
+export function perkOnHome(kind: PerkKind, s: PerkState): boolean {
+  if (!s.started) return true;
+  return kind === 'share' ? s.hasShare : s.hasMissions;
+}
+
 /** rail order, top to bottom */
 export const PERK_ORDER: PerkKind[] = ['share', 'entry', 'launch'];
 

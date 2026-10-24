@@ -1,6 +1,6 @@
 /** v3 native UI — full screens (home, tracks, garage, missions, ranks, daily, shop…) */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { PERK_ORDER, perkLayout, perkVisible } from '../../meta/Perks.ts';
+import { PERK_ORDER, perkLayout, perkOnHome, perkVisible } from '../../meta/Perks.ts';
 import { C, Gfx, bar, button, card, fmt, iconBtn, panel, rankBadge, toggle } from './gfx.ts';
 import type { UI } from './NativeUI.ts';
 import { BAG_ICON, BOLT, CAR_LINE, ICON, ITEM_ICON, RARITY_COLOR, ROCKET_W, SPECIAL_SHORT, TUT_ICON } from './consts.ts';
@@ -208,21 +208,26 @@ function start(ui: UI, g: Gfx) {
   tile(18, ry, 'daily', ICON.calendar, 'Daily', navy, () => ui.h.daily(), o && o.dailyBadge > 0 ? String(o.dailyBadge) : '');
   tile(18, ry + 60, 'events', ICON.gift, 'Bonus', ['#d9802e', '#9a4a12'], () => ui.h.events());
   tile(18, ry + 120, 'ranks', ICON.podium, 'Ranks', navy, () => ui.h.ranks());
-  // right rail: Share · Entry · Launch (v3.0.11) — only the rewards that can still be earned are
-  // shown (hs.perkVisible: reward config + claim state). The visible tiles stay centred in the
-  // 3-slot block (3 · 2 · 1 · none) and glide to their new place in 200 ms when one disappears.
+  // right rail: Share · Entry · Launch — v5 (owner): always on Home where the platform has them, so
+  // Home has its 6 buttons; a claimed reward keeps its tile with a ✓ (hs.perkVisible → the "!" badge)
   const perks = [
     { key: 'pk-share', kind: 'share' as const, icon: ICON.share, label: 'Share', col: ['#1aa79a', '#0b6a66'] as [string, string], badge: false },
     { key: 'pk-entry', kind: 'entry' as const, icon: ICON.gift, label: 'Entry', col: ['#7b3fe0', '#4a1d9e'] as [string, string], badge: true },
     { key: 'pk-launch', kind: 'launch' as const, icon: ROCKET_W, label: 'Launch', col: ['#5a3fe0', '#2c1d9e'] as [string, string], badge: true },
   ];
   const pst = hs.perkState();
-  const lay = perkLayout(PERK_ORDER.filter((k) => perkVisible(k, pst)), ry, 60, 50);
+  const lay = perkLayout(PERK_ORDER.filter((k) => perkOnHome(k, pst)), ry, 60, 50);
   perks.forEach((p) => {
     const target = lay[p.kind];
     if (target === null) return;
     const y = railY(ui, p.key, target, g.time);
-    tile(W - 68, y, p.key, p.icon, p.label, p.col, () => ui.h.perk(p.kind), p.badge ? '!' : '');
+    const open = perkVisible(p.kind, pst);
+    tile(W - 68, y, p.key, p.icon, p.label, p.col, () => ui.h.perk(p.kind), p.badge && open ? '!' : '');
+    if (!open && pst.started && p.kind !== 'share') {
+      // claimed: a small green ✓ where the "!" was
+      g.circle(W - 68 + 48, y + 2, 9, '#2fd36b', '#fff', 1.5);
+      g.icon(ICON.check, W - 68 + 41, y - 5, 14, '#ffffff');
+    }
   });
   // ---- bottom menu
   const col = column(g);

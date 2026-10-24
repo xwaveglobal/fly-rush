@@ -200,7 +200,7 @@ for (const [label, aspect] of ASPECTS) {
     }
     return { move, ang, worstEdge };
   };
-  check(new CameraRig().dynamic === false, 'Camera motion is OFF by default');
+  check(new CameraRig().dynamic === true, 'Camera motion is ON by default (v5, owner)');
   for (const [label, aspect] of ASPECTS) {
     const off = trial(false, aspect), on = trial(true, aspect);
     check(off.move < 0.02 && off.ang < 0.05, `${label} Camera motion OFF: lanes / jumps / dives never move the camera (max ${(off.move * 100).toFixed(1)} cm, ${off.ang.toFixed(3)}°)`);

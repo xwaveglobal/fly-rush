@@ -217,6 +217,10 @@ Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder M
   - flat buttons, no shadows;
   - the running loading bar;
   - Restart labels.
+- **Owner fixes (2026-10-24, after the first test):**
+  - Home always shows its 6 buttons. Share, Entry and Launch stay after they are claimed (a ✓ replaces the "!"); `perkOnHome` in `src/meta/Perks.ts`.
+  - Settings → Camera motion is ON by default. A player who switched it off keeps it off.
+  - Big bug fixed: after a race, Home showed the wrecked car, with the parts that broke off in the final crash lying on the road. The car is now put back together whenever the game returns to the menus.
 - **Checks:**
   - `npm run check:tiktok`: 0 fail, 0 warn.
   - `scripts/qa/native.mjs`: 25 / 25 in TikTok mode and 25 / 25 in Android mode (HS fake-phone preview, real taps). Screens are in `docs/native-v5/`.

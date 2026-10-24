@@ -1415,6 +1415,10 @@ export class Vehicle {
     return this.crash.group.children;
   }
 
+  /** parts broken off by the final crash are still off the car */
+  get wrecked() {
+    return !!this.mesh?.partsBroken;
+  }
   resetPose() {
     this.recoilZ = 0;
     this.falling = false;

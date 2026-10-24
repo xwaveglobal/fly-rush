@@ -1082,7 +1082,7 @@ export class UI {
     this.root.querySelectorAll<HTMLElement>('.switch[data-a="sound"]').forEach((b) => b.setAttribute('aria-checked', String(s.settings.sound)));
     this.root.querySelectorAll<HTMLElement>('.switch[data-a="music"]').forEach((b) => b.setAttribute('aria-checked', String(s.settings.music)));
     this.root.querySelectorAll<HTMLElement>('.switch[data-a="comfort"]').forEach((b) => b.setAttribute('aria-checked', String(s.settings.comfort !== false)));
-    this.root.querySelectorAll<HTMLElement>('.switch[data-a="cammotion"]').forEach((b) => b.setAttribute('aria-checked', String(s.settings.camMotion === true)));
+    this.root.querySelectorAll<HTMLElement>('.switch[data-a="cammotion"]').forEach((b) => b.setAttribute('aria-checked', String(s.settings.camMotion !== false)));
     this.root.querySelectorAll<HTMLElement>('.switch[data-a="vibrate"]').forEach((b) => b.setAttribute('aria-checked', String(s.settings.vibrate !== false)));
     this.root.querySelectorAll<HTMLElement>('.switch[data-a="assist"]').forEach((b) => b.setAttribute('aria-checked', String(s.settings.assist !== false)));
     const q = this.liveQuality ?? s.settings.quality;
@@ -2390,9 +2390,8 @@ export class UI {
     for (const [k, st] of Object.entries(o)) {
       const b = this.root.querySelector<HTMLElement>(`[data-k="pk-${k}"]`);
       if (!b) continue;
-      // Entry stays after it is claimed (its popup then links to Daily / Shop / Garage / Tutorial / Race / Cups);
-      // Launch disappears once claimed; Share is daily
-      b.hidden = st === 'done' && k === 'launch';
+      // v5 (owner): Home always shows its 6 buttons — a claimed reward keeps its tile (marked done)
+      b.hidden = false;
       b.classList.toggle('done', st === 'done');
       const e = b.querySelector<HTMLElement>('.badge');
       if (e) e.hidden = st !== 'ready' || k === 'share'; // no '!' on Share

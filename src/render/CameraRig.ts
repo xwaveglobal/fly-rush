@@ -19,11 +19,11 @@ export class CameraRig {
   car3d = false;
   /**
    * v4.6 Settings "Camera motion": true = the race camera moves with the car as before (follows lane
-   * changes, lifts on jumps, drops on dives, sways and rolls); false (default) = a fixed view down the
+   * changes, lifts on jumps, drops on dives, sways and rolls) — v5: the default; false = a fixed view down the
    * centre of the road — lane changes, jumps and dives never change its position or angle. Only flights
    * far above a normal hop (Roadster / HYPER / SOS) still lift it, so the car never leaves the screen.
    */
-  dynamic = false;
+  dynamic = true;
   /** override the chase preset (previews / tests); null = CAMERA.chase */
   presetOverride: ChasePreset | null = null;
   get preset(): ChasePreset {

@@ -537,7 +537,7 @@ export class Game {
       toggleAssist: () => this.toggleAssist(),
       toggleComfort: () => this.toggleComfort(),
       toggleCamMotion: () => {
-        this.save.settings.camMotion = this.save.settings.camMotion !== true;
+        this.save.settings.camMotion = this.save.settings.camMotion === false; // v5: ON by default (undefined = on)
         this.rig.dynamic = this.save.settings.camMotion;
         this.vehicle.setCarSize(this.rig.dynamic ? 1 : RENDER.carScaleFixed / RENDER.carScale);
         this.persist();
@@ -562,7 +562,7 @@ export class Game {
 
     this.audio.setSfx(this.save.settings.sound);
     this.audio.setMusic(this.save.settings.music);
-    this.rig.dynamic = this.save.settings.camMotion === true; // v4.6 setting "Camera motion", default OFF
+    this.rig.dynamic = this.save.settings.camMotion !== false; // setting "Camera motion" — v5 (owner): default ON
     this.vehicle.setCarSize(this.rig.dynamic ? 1 : RENDER.carScaleFixed / RENDER.carScale); // fixed view: a bit bigger
     this.migrateV2();
     // v4.6 (owner): the game always opens on NORMAL (a level picked on Home lasts for this session)
@@ -683,6 +683,9 @@ export class Game {
 
   // =============================================================== states
   private setState(s: State) {
+    // v5 fix (owner screenshot): leaving a wrecked car (game over / finish) for the menus put it back
+    // together — the parts that broke off on the final crash stayed on the road next to it on Home
+    if (s === 'menu' && this.state !== 'menu') this.vehicle.resetPose();
     this.state = s;
     this.stateT = 0;
   }
@@ -715,6 +718,7 @@ export class Game {
   /** Home screen without resetting the world (closing a modal / page). */
   showHome() {
     this.vehicle.resetFx();
+    if (this.vehicle.wrecked) this.vehicle.resetPose(); // never a wrecked car on Home
     // never carry training / race overlays onto Home
     this.ui.tutorial(false);
     this.ui.tutPrompt(null);

@@ -133,10 +133,10 @@ try {
     console.log('B. settings');
     await tap('settings');
     await shot('02_settings');
-    const before = await ev(() => window.__xwave.save.settings.camMotion === true);
+    const before = await ev(() => window.__xwave.save.settings.camMotion !== false);
     await tap('s-cammotion');
-    const after = await ev(() => ({ save: window.__xwave.save.settings.camMotion === true, rig: window.__xwave.rig.dynamic }));
-    check(before === false && after.save === true && after.rig === true, 'Camera motion: default OFF, the switch turns it on (rig follows)', { before, after });
+    const after = await ev(() => ({ save: window.__xwave.save.settings.camMotion !== false, rig: window.__xwave.rig.dynamic }));
+    check(before === true && after.save === false && after.rig === false, 'Camera motion: default ON (v5), the switch turns it off (rig follows)', { before, after });
     await tap('s-cammotion');
     await tap('q-medium');
     const q = await ev(() => window.__xwave.save.settings.quality);
@@ -296,6 +296,13 @@ try {
     await shot('14_result_card');
     const rs = await ev(() => window.__xwave.ui.g.hits.some((x) => x.key === 'go-retry'));
     check(rs, 'result card has Restart', rs);
+    // v5 fix: back to Home after the final crash → the car is whole again (no broken parts on the road)
+    const wr0 = await ev(() => window.__xwave.vehicle.wrecked);
+    await tap('go-home');
+    await until(() => window.__xwave.ui.shown.has('start'), 8000);
+    const wr1 = await ev(() => window.__xwave.vehicle.wrecked);
+    check(wr0 === true && wr1 === false, 'after the race, Home shows the car whole (broken parts put back)', { atGameOver: wr0, onHome: wr1 });
+    await shot('14b_home_after_race');
   }
   // ------------------------------------------------------------------ class promotion (C reward)
   if (want('classup')) {

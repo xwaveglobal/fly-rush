@@ -567,7 +567,7 @@ function settingsOv(ui: UI, g: Gfx) {
       ['assist', ICON.info, 'Hint arrows', s.settings.assist !== false, () => ui.h.toggleAssist()],
       ['comfort', '◐', 'Eye comfort', s.settings.comfort !== false, () => ui.h.toggleComfort()],
       // v4.6: the race camera moves with the car (lanes, jumps, dives); off (default) = fixed view
-      ['cammotion', '🎥', 'Camera motion', s.settings.camMotion === true, () => ui.h.toggleCamMotion()],
+      ['cammotion', '🎥', 'Camera motion', s.settings.camMotion !== false, () => ui.h.toggleCamMotion()],
     ];
     const tw = (w - 8) / 2;
     tiles.forEach(([k, ic, l, on, fn], i) => {

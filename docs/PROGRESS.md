@@ -24,6 +24,11 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
   - `scripts/qa/native.mjs`: 25 / 25 in TikTok mode and 25 / 25 in Android mode (`docs/native-v5/`).
   - `npm test`: 13 / 13.
 
+**Owner fixes the same day**:
+- Home always has 6 buttons: claimed Share / Entry / Launch stay, with a ✓.
+- Camera motion is ON by default.
+- After a race, the wrecked car's broken parts were left on Home: `setState('menu')` / `showHome` now reset the car. A native QA check covers it.
+
 **Known**:
 - No real-phone test here (SwiftShader only, ~2–10 fps, so the QA fast-forwards game time with `Game.advance`).
 - `game.js` is 3.1 MB (1.4 MB is the GLB), and the package 3.6 MB of 4 MB: little room left. A next step could move the GLB to a subpackage.

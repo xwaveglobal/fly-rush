@@ -1,6 +1,6 @@
 /** v3.0.11 reward buttons: visibility from config + claim state, and the balanced rail layout. */
 declare const process: { exit(code: number): never };
-import { perkLayout, perkVisible, PERK_ORDER, type PerkKind, type PerkState } from '../src/meta/Perks.ts';
+import { perkLayout, perkOnHome, perkVisible, PERK_ORDER, type PerkKind, type PerkState } from '../src/meta/Perks.ts';
 
 let fails = 0;
 const check = (ok: boolean, msg: string) => {
@@ -52,6 +52,15 @@ check(perkVisible('share', { ...base, shareRewarded: false, shareAvailable: fals
 check(!perkVisible('share', { ...base, shareAvailable: false }), 'Share hides once today’s reward is claimed ($limit daily)…');
 check(perkVisible('share', { ...base, shareAvailable: true }), '…and comes back when it can be earned again (next day)');
 check(perkVisible('entry', { ...base, entryDone: false }), 'Entry shows again when its claim state allows (done() honours $limit)');
+
+// ---- v5: Home always keeps its 6 buttons (claimed rewards stay, with a ✓)
+{
+  const done: PerkState = { ...base, entryDone: true, launchDone: true, shareAvailable: false };
+  check(PERK_ORDER.every((k) => perkOnHome(k, done)), 'v5 TikTok: Share · Entry · Launch stay on Home after they are claimed');
+  check(PERK_ORDER.every((k) => perkOnHome(k, { ...done, started: false })), 'v5: all three show before HSGame has started');
+  const android: PerkState = { ...base, hasMissions: false };
+  check(perkOnHome('share', android) && !perkOnHome('entry', android) && !perkOnHome('launch', android), 'v5 Android app: Share only (no TikTok missions there, HS rule 12)');
+}
 
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED');
 if (fails) process.exit(1);
