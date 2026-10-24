@@ -152,7 +152,6 @@ export interface UIHandlers {
   toggleAutoClaim(): void;
   claimMission(i: number): void;
   rocket(): void;
-  rocketFix(how: string): void;
   popAction(a: string): void;
   freePop(): void;
   perk(k: string): void;
@@ -610,14 +609,6 @@ export class UI {
       </div>
     </section>
 
-    <section id="needrocket" class="screen overlay">
-      <div class="panel modal center needr">
-        <div class="nr-ic">${ICON.rocket}</div>
-        <h2>ROADSTER JUMP NEEDED</h2>
-        <p class="tut-lead">Cars block every lane — only a <b>Roadster Jump</b> gets you past. Collect the purple rocket on the road, or get one now.</p>
-        <div data-k="nrbtns" class="nrbtns"></div>
-      </div>
-    </section>
 
     <section id="hud" class="screen passthrough">
       <div class="row">
@@ -891,7 +882,6 @@ export class UI {
           // already fired on touch-down (see pointerdown below); a click alone (mouse / keyboard) still works
           if (performance.now() - this.fastTapT < 600) return;
           return a === 'sos' ? this.h.sos() : this.h.rocket();
-        case 'rocketfix': return this.h.rocketFix(el.dataset.v!);
         case 'avpick': return this.h.setAvatar(Number(el.dataset.i));
         case 'avrand': return this.h.randomAvatar();
         case 'profile': return this.h.profile();
@@ -2394,16 +2384,6 @@ export class UI {
 
   closePopup() {
     this.screens.popup.classList.remove('show');
-  }
-
-  needRocket(o: { owned: number; wallet: number; price: number }) {
-    const b: string[] = [];
-    if (o.owned > 0) b.push(`<button class="btn big" data-a="rocketfix" data-v="use">${ICON.rocket} Use one · you own ×${o.owned}</button>`);
-    b.push(o.wallet >= o.price
-      ? `<button class="btn gold" data-a="rocketfix" data-v="buy">Buy 1 · <span class="price">${ICON.coin}${fmt(o.price)}</span></button>`
-      : `<button class="btn pink" data-a="rocketfix" data-v="shop">${ICON.bag} Get Roadster Jumps</button>`);
-    b.push(`<button class="btn ghost sm" data-a="rocketfix" data-v="retry">${ICON.retry} Restart & collect the rocket</button>`);
-    $(this.root, '[data-k="nrbtns"]').innerHTML = b.join('');
   }
 
   /** danger-assist arrow (null hides) */

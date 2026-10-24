@@ -18,15 +18,24 @@ export interface TutorialStep {
   /** lane-change lessons: the lane the car must reach. The prompt direction is worked out from
    *  where the car actually is when the prompt shows (free control in advanced training). */
   target?: number;
+  /** v4.6: the lane the lesson starts from — the car is steered there by itself just before the
+   *  prompt (free control the rest of the time), e.g. the SWIPE LEFT lesson always starts in the middle */
+  from?: number;
 }
 
 export const TUTORIAL_LENGTH = 640;
 
+/** v4.6 "hop, then drop at once": a barrier and, right behind it, a beam (one lesson, two gestures) */
+export const COMBO_AT = 400;
+export const COMBO_GAP = 13;
+
 export const TUTORIAL_STEPS: TutorialStep[] = [
-  { dist: 80, need: 'left', title: 'SWIPE LEFT', sub: 'One swipe moves exactly one lane. Dodge the crates!', lead: 0.8 },
-  { dist: 160, need: 'right', title: 'SWIPE RIGHT', sub: 'Back to the middle lane.', lead: 0.8 },
-  { dist: 245, need: 'up', title: 'SWIPE UP', sub: 'Hop over the barriers. One hop, then the car lands by itself.', lead: 0.5 },
+  { dist: 80, need: 'left', title: 'SWIPE LEFT', sub: 'One swipe moves exactly one lane. Dodge the crates!', lead: 0.8, from: 1 },
+  { dist: 160, need: 'right', title: 'SWIPE RIGHT', sub: 'Back to the middle lane.', lead: 0.8, from: 0 },
+  { dist: 245, need: 'up', title: 'SWIPE UP', sub: 'Hop over the barriers. One hop, then the car lands by itself.', lead: 0.62 },
   { dist: 330, need: 'down', title: 'SWIPE DOWN', sub: 'Tuck the wheels in and slide under the beams.', lead: 0.42 },
+  { dist: COMBO_AT, need: 'up', title: 'HOP…', sub: 'Hop the barrier — a beam is right behind it!', lead: 0.62 },
+  { dist: COMBO_AT + COMBO_GAP, need: 'down', title: '…AND DROP AT ONCE!', sub: "Don't wait to land: swipe DOWN in the air to drop straight away and slide under the beam.", lead: 0.36 },
   { dist: 545, need: 'rocket', title: 'TAP ROADSTER!', sub: 'Your free special: a ROADSTER JUMP. Tap the purple button to rocket over the whole block!', lead: 0.6, super: true },
 ];
 
@@ -34,7 +43,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
 export const TUTORIAL_HINTS: { dist: number; text: string }[] = [
   { dist: 8, text: 'Drive as far as you can — distance is your EXP' },
   { dist: 352, text: 'Coins buy specials like the Roadster Jump' },
-  { dist: 404, text: 'Road power-ups like Magnet, Turbo and ×2 EXP work at once' },
+  { dist: 430, text: 'Road power-ups like Magnet, Turbo and ×2 EXP work at once' },
   { dist: 470, text: 'You carry 1 special per race — today: a free Roadster Jump' },
   { dist: 590, text: 'EXP gives your rank D → AAA. Hard rank gates guard every new rank!' },
 ];
@@ -48,13 +57,14 @@ export function tutorialScript(): { rows: RowSpec[]; pickups: PickupSpec[] } {
     row(160, [{ type: 'crate', lane: 0, variant: 2 }, { type: 'crate', lane: 2, variant: 3 }]),
     row(245, [0, 1, 2].map((lane) => ({ type: 'barrier' as const, lane, variant: 0 }))),
     row(330, [0, 1, 2].map((lane) => ({ type: 'beam' as const, lane, variant: 0 }))),
-    row(455, [{ type: 'crate', lane: 1, variant: 0 }, { type: 'crate', lane: 2, variant: 2 }]),
+    row(COMBO_AT, [0, 1, 2].map((lane) => ({ type: 'barrier' as const, lane, variant: 0 }))),
+    row(COMBO_AT + COMBO_GAP, [0, 1, 2].map((lane) => ({ type: 'beam' as const, lane, variant: 0 }))),
     // four walls of cars across the whole road, spaced to the Roadster jump: one rocket clears all four
-    ...[0, 1, 2, 3].map((k) => row(545 + k * 8, [0, 1, 2].map((lane) => ({ type: 'traffic' as const, lane, variant: lane === (k + 1) % 3 ? 4 : (lane + k) % 4 })))),
+    ...[0, 1, 2, 3].map((k) => row(545 + k * 6, [0, 1, 2].map((lane) => ({ type: 'traffic' as const, lane, variant: lane === (k + 1) % 3 ? 4 : (lane + k) % 4 })))),
   ];
   const pickups: PickupSpec[] = [];
   for (let d = 30; d <= 66; d += 6) pickups.push({ kind: 'coin', lane: 1, dist: d, y: HEIGHT.NORMAL });
-  for (let d = 360; d <= 396; d += 4) pickups.push({ kind: 'coin', lane: 1, dist: d, y: HEIGHT.NORMAL });
+  for (let d = 352; d <= 384; d += 4) pickups.push({ kind: 'coin', lane: 1, dist: d, y: HEIGHT.NORMAL });
   return { rows, pickups };
 }
 

@@ -62,7 +62,6 @@ import { dayKey } from './core/Save.ts';
 
 const VERSION = 'v4.6.0';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
-const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
 const WELCOME_AFTER_H = 12;
 const WELCOME_GIFT = { coins: 200, shield: 1 };
@@ -454,7 +453,6 @@ export class Game {
         this.audio.play('click');
         this.openDailyPopup();
       },
-      rocketFix: (how) => this.resolveNeedRocket(how),
       setCountry: (code) => {
         this.save.country = code;
         this.save.countryAuto = false;
@@ -2005,9 +2003,8 @@ export class Game {
       this.dangerHold = 0;
       this.ui.dangerOk();
     }
-    // first-flight training: the car only moves on a training prompt (no free swiping);
-    // world (advanced) and boost training: free 4-way control like a normal run
-    if (this.tutorialMode && !this.tutPrompting && this.isBasicTraining) return;
+    // v4.6 (owner): free control in every training (also the first one); each lesson puts the car in
+    // the lane it needs by itself (TutorialStep.from) and waits for its gesture
     if (this.tutorialMode && this.tutPrompting && !this.tutAccept(a)) return;
     // a swipe UP is always a normal hop — the Roadster / HYPER jump has its own button
     this.world.player.input(a);
@@ -2066,8 +2063,8 @@ export class Game {
     if (this.state !== 'run' || !this.run) return;
     const r = this.run;
     if (r.hyperJumps <= 0 && r.superJumps <= 0) {
-      if (this.tutorialMode) this.needRocket();
-      return;
+      if (this.tutorialMode) this.tutRegrant();
+      if (r.hyperJumps <= 0 && r.superJumps <= 0) return;
     }
     if (this.tutorialMode) {
       if (this.tutPrompting) {
@@ -2084,49 +2081,16 @@ export class Game {
     else this.rocketQueuedT = this.time; // still in the air: fire the moment the wheels touch down
   }
 
-  /** no rocket for a step that needs it: explain + offer to use one, buy one or retry */
-  private needRocketOpen = false;
-  private needRocket() {
-    if (this.needRocketOpen) return;
-    this.needRocketOpen = true;
-    this.state = 'paused';
-    this.ui.tutPrompt(null);
-    this.ui.needRocket({ owned: this.save.items.super, wallet: this.save.wallet, price: ROCKET_PRICE });
-    this.ui.show('hud', 'needrocket');
-    this.audio.play('beep');
-  }
-
-  private resolveNeedRocket(how: string) {
+  /** training: the lesson's special is missing (used earlier by mistake) → a free one, so the lesson can be passed */
+  private tutRegrant() {
+    const st = this.tut.steps[this.tutStep];
     const r = this.run;
-    let ok = false;
-    if (how === 'use' && this.save.items.super > 0) {
-      this.save.items.super--;
-      ok = true;
-    } else if (how === 'buy' && this.save.wallet >= ROCKET_PRICE) {
-      this.save.wallet -= ROCKET_PRICE;
-      ok = true;
-    } else if (how === 'shop') {
-      this.needRocketOpen = false;
-      this.returnTo = () => this.goHome();
-      this.openShop();
-      return;
-    } else if (how === 'retry') {
-      this.needRocketOpen = false;
-      this.startRun();
-      return;
-    }
-    if (!ok) return;
-    r.superJumps = Math.min(2, r.superJumps + 1);
-    this.persist();
-    this.needRocketOpen = false;
-    this.audio.play('power');
-    this.ui.toast(`${ICON.rocket} ROADSTER JUMP ready — tap the purple button!`, '#9b6bff');
-    this.state = 'run';
-    this.ui.show('hud');
-    if (this.tutorialMode && this.tutPrompting) {
-      const st = this.tut.steps[this.tutStep];
-      this.ui.tutPrompt({ index: this.tutStep, total: this.tut.steps.length, need: st.need, title: st.title, sub: st.sub });
-    }
+    if (!st || !r) return;
+    if (st.need === 'sos') r.escapes = Math.max(r.escapes, 1);
+    else if (this.tut.grant?.hyper) r.hyperJumps = Math.max(r.hyperJumps, 1);
+    else r.superJumps = Math.max(r.superJumps, 1);
+    this.ui.toast(`${st.need === 'sos' ? ICON.sos : ICON.rocket} Training: you get it back — try again!`, '#9b6bff');
+    this.ui.updateHud(r, this.world.speed, SPEED.max, null);
   }
 
   /**
@@ -2175,7 +2139,7 @@ export class Game {
   useEscape() {
     if (this.state !== 'run' || !this.run || this.run.escapes <= 0) return;
     if (this.tutorialMode && this.tutPrompting && !this.tutAccept('sos')) return;
-    if (this.tutorialMode && !this.tutPrompting && this.isBasicTraining) return;
+    if (this.tutorialMode && !this.tutPrompting && this.tut.steps.slice(this.tutStep).some((s) => s.need === 'sos')) return; // kept for its lesson
     const p = this.world.player;
     if (!p.escape()) return;
     this.run.escapes--;
@@ -2597,12 +2561,18 @@ export class Game {
     // ---- pilot training: wait for each gesture, captions, finish
     if (this.tutorialMode) {
       const st = this.tut.steps[this.tutStep];
+      // v4.6: steer the car into the lesson's start lane by itself shortly before its prompt
+      if (st && st.from !== undefined && !this.tutPrompting && this.state === 'run') {
+        const tLeft = (st.dist - w.dist) / Math.max(1, w.speed);
+        if (tLeft <= st.lead + 0.9 && tLeft > st.lead && p.lane !== st.from && !p.isAirDash) p.input(p.lane < st.from ? 'right' : 'left');
+      }
       if (st && !this.tutPrompting && this.state === 'run' && (st.dist - w.dist) / Math.max(1, w.speed) <= st.lead && this.aimStep(st)) {
         this.tutPrompting = true;
         this.timeScaleTarget = 0.035;
         this.ui.tutPrompt({ index: this.tutStep, total: this.tut.steps.length, need: st.need, title: st.title, sub: st.sub });
         this.audio.play('beep');
-        if (st.need === 'rocket' && run.superJumps <= 0 && run.hyperJumps <= 0) this.needRocket();
+        // v4.6 (owner): a special already used up earlier in the training comes back for its lesson
+        if ((st.need === 'rocket' && run.superJumps <= 0 && run.hyperJumps <= 0) || (st.need === 'sos' && run.escapes <= 0)) this.tutRegrant();
       }
     }
     // rocket button pressed mid-air: launch on touchdown
