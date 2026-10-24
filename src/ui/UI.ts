@@ -7,7 +7,7 @@ import { CLASSES, CLASS_COLOR, CLASS_MIN, XPT, classBadge, classFor as classOfBo
 import logoUrl from '../assets/images/sky-roadster-logo.webp';
 import appIcon from '../assets/images/app-icon.webp';
 import { amount, calendarGift, coinFace, coinPile, friends, giftBox, megaphone, phonePlus, shareNodes, starBig, tapMarks, wifiRobot } from './art.ts';
-import loadingUrl from '../assets/images/loading.jpg';
+import loadingUrl from '../assets/images/loading.webp';
 import thFuture from '../assets/images/tracks/future-city.jpg';
 import thTunnel from '../assets/images/tracks/neon-tunnel.jpg';
 import thCloud from '../assets/images/tracks/cloud-city.jpg';
@@ -1043,8 +1043,30 @@ export class UI {
     return this.screens[id]?.classList.contains('show');
   }
 
+  /**
+   * v4.6 (owner): the loading bar always visibly runs — the shown value glides toward the real
+   * progress (and creeps on slowly while a step takes long), with "Loading… NN %" under it
+   */
+  private loadShown = 0;
+  private loadTarget = 0;
+  private loadRaf = 0;
   setLoading(k: number) {
-    $(this.root, '#loading .bar i').style.width = `${Math.round(k * 100)}%`;
+    this.loadTarget = Math.max(this.loadTarget, Math.min(1, k));
+    if (this.loadRaf) return;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+      const gap = this.loadTarget - this.loadShown;
+      // glide to the target; while waiting on a step, creep toward the next 9 % so it never stands still
+      if (gap > 0.001) this.loadShown += Math.max(gap * Math.min(1, dt * 6), dt * 0.08);
+      else if (this.loadShown < 0.99) this.loadShown += Math.max(0, Math.min(this.loadTarget + 0.09, 0.99) - this.loadShown) * dt * 0.4;
+      this.loadShown = Math.min(this.loadShown, 1);
+      $(this.root, '#loading .bar i').style.width = `${(this.loadShown * 100).toFixed(1)}%`;
+      this.setAll('loadtxt', `Loading… ${Math.floor(this.loadShown * 100)}%`);
+      this.loadRaf = this.loadShown >= 1 || !this.screens.loading?.classList.contains('show') ? 0 : requestAnimationFrame(tick);
+    };
+    this.loadRaf = requestAnimationFrame(tick);
   }
 
   private setAll(key: string, v: string) {
@@ -2113,14 +2135,25 @@ export class UI {
     };
     const specials = PRODUCTS.filter((p) => p.kind !== 'coins' && !(p.once && p.sku === 'starter_pack' && s.starterBought));
     const coins = PRODUCTS.filter((p) => p.kind === 'coins');
-    const inv = (SPECIALS as readonly ItemKey[]).map((k) => `<span class="rchip ${k}">${ITEM_ICON[k]}×${s.items[k]}</span>`).join('');
+    // v4.6 (owner): the top of the Shop is always the coins → specials exchange; tapping one of your
+    // special items opens the exchange popup too (also right after buying coins)
+    const inv = (SPECIALS as readonly ItemKey[]).map((k) => `<button class="rchip ${k}" data-a="bagbuy" aria-label="Exchange coins for ${SPECIAL_SHORT[k as SpecialKey]}">${ITEM_ICON[k]}×${s.items[k]}</button>`).join('');
+    const xchg = SPECIALS.map((k) => `<button class="xbtn ${k} ${s.wallet >= ITEM_PRICE[k] ? '' : 'short'}" data-a="sbuy" data-v="${k}"><span class="spi">${ITEM_ICON[k]}</span><b>${SPECIAL_SHORT[k]}</b><em>${ICON.coin}${fmt(ITEM_PRICE[k])}</em></button>`).join('');
     $(this.root, '[data-k="shoplist"]').innerHTML = `
       <div class="inv panel"><span class="label">Your items</span>${inv}</div>
+      <div class="xchg panel"><div class="xh"><b>Exchange coins → specials</b><span>${ICON.coin}${fmt(s.wallet)}</span></div><div class="xrow">${xchg}</div></div>
       ${specials.map(card).join('')}
       <div class="bhead out"><b>Coins</b></div>
       <div class="coingrid">${coins.map(card).join('')}</div>
       <div class="label shopnote">Demo store — purchases are simulated, no payment is taken.</div>`;
     this.setAll('wallet', fmt(s.wallet));
+  }
+
+  /** scroll the Shop back to its top: the coins → specials exchange */
+  shopToExchange() {
+    const list = $(this.root, '[data-k="shoplist"]');
+    list.scrollTo({ top: 0, behavior: 'smooth' });
+    $(this.root, '#shop .xchg')?.classList.add('flash');
   }
 
   private productArt(p: Product) {

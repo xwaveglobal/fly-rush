@@ -608,10 +608,12 @@ export class Game {
     this.track.setAccent(this.scenery.accent);
     this.applyReadability();
     this.renderer.renderer.compile(this.renderer.scene, this.rig.camera);
-    this.ui.setLoading(1);
-    this.ui.setLoadingText('Ready');
-    // let the loading key art be seen (≥1.6 s from page start), never a blank flash
+    this.ui.setLoading(0.92);
+    // let the loading key art be seen (≥1.6 s from page start), never a blank flash; the bar keeps
+    // running and only reaches 100 % right before the menu (v4.6 owner: "Loading", never "Ready")
     await new Promise((r) => window.setTimeout(r, Math.max(0, 2200 - performance.now())));
+    this.ui.setLoading(1);
+    await new Promise((r) => window.setTimeout(r, 350));
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       this.installPrompt = e as unknown as { prompt(): Promise<void> };
@@ -1037,6 +1039,8 @@ export class Game {
     this.audio.play('mission');
     this.ui.toast(`${ICON.check} ${p.name} · thank you!`, 'var(--gold)');
     this.ui.shopSync(this.save);
+    // v4.6 (owner): after buying coins the Shop shows the coins → specials exchange at the top
+    if (p.kind === 'coins') this.ui.shopToExchange();
     this.ui.refreshProfile(this.save);
   }
 
@@ -1599,6 +1603,7 @@ export class Game {
     this.ui.hideOverlay('bagbuy'); // after buying: back to the bag
     if (this.ui.isShown('bag')) this.ui.bagSync(this.save, this.bagPickMode);
     if (this.ui.isShown('specialpick')) this.ui.specialPick(this.save, this.pickLabel());
+    if (this.ui.isShown('shop')) this.ui.shopSync(this.save);
     this.ui.refreshProfile(this.save);
   }
   private goRace() {

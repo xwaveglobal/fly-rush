@@ -2614,3 +2614,17 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 #hud .rocketbtn span, #hud .sos span { font-size: 9px; }
 #hud .rocketbtn:not([hidden]) ~ .sos { right: 78px; } /* both shown (training): side by side */
 #notices { top: calc(190px + var(--safe-t)) !important; }
+
+/* v4.6 Shop: coins → specials exchange at the top */
+#shop .inv .rchip { cursor: pointer; border: 1px solid rgba(255,255,255,.18); }
+#shop .xchg { padding: 10px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+#shop .xchg .xh { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+#shop .xchg .xh span { display: inline-flex; align-items: center; gap: 4px; font-weight: 800; color: #ffd24a; }
+#shop .xchg .xh svg, #shop .xbtn em svg { width: 14px; height: 14px; }
+#shop .xrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+#shop .xbtn { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 4px; border-radius: 12px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); color: #fff; font: inherit; }
+#shop .xbtn .spi svg { width: 26px; height: 26px; }
+#shop .xbtn b { font-size: 12px; }
+#shop .xbtn em { font-style: normal; font-size: 12px; font-weight: 800; color: #ffd24a; display: inline-flex; align-items: center; gap: 3px; }
+#shop .xbtn.short em { color: #ff8aa0; }
+#loading .bar i { transition: none !important; }
