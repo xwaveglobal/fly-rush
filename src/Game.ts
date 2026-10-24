@@ -1,6 +1,6 @@
 import { countryName, detectCountry, flagOf, guessCountry } from './meta/Country.ts';
 import * as THREE from 'three';
-import { AUTOPILOT, DEBUG, PERF, HEIGHT, LANES, LEVELS, LEFTOVER_POINTS, SPEED, TIMING, TRACK_ITEM_BONUS, TYRE, type SpeedLevel } from './config.ts';
+import { AUTOPILOT, DEBUG, PERF, HEIGHT, LANES, LEVELS, LEFTOVER_POINTS, SPEED, TIMING, TRACK_ITEM_BONUS, TYRE, RENDER, type SpeedLevel } from './config.ts';
 import { clamp, damp } from './core/math.ts';
 import { Input, type Action } from './core/Input.ts';
 import { loadSave, writeSave, type SaveData } from './core/Save.ts';
@@ -511,6 +511,7 @@ export class Game {
       toggleCamMotion: () => {
         this.save.settings.camMotion = this.save.settings.camMotion !== true;
         this.rig.dynamic = this.save.settings.camMotion;
+        this.vehicle.setCarSize(this.rig.dynamic ? 1 : RENDER.carScaleFixed / RENDER.carScale);
         this.persist();
         this.audio.play('click');
         this.ui.refreshProfile(this.save);
@@ -534,7 +535,10 @@ export class Game {
     this.audio.setSfx(this.save.settings.sound);
     this.audio.setMusic(this.save.settings.music);
     this.rig.dynamic = this.save.settings.camMotion === true; // v4.6 setting "Camera motion", default OFF
+    this.vehicle.setCarSize(this.rig.dynamic ? 1 : RENDER.carScaleFixed / RENDER.carScale); // fixed view: a bit bigger
     this.migrateV2();
+    // v4.6 (owner): the game always opens on NORMAL (a level picked on Home lasts for this session)
+    this.save.settings.speed = 'normal';
     // Step 06.5: classes reached before the celebration existed count as already celebrated (first-time only)
     if (!this.save.classCelebrated) this.save.classCelebrated = CLASSES.slice(rankIdx('A'), rankIdx(this.rank) + 1).map(String);
     this.syncCarUnlocks();

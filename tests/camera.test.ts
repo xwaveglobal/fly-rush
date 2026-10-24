@@ -188,7 +188,10 @@ for (const [label, aspect] of ASPECTS) {
       move = Math.max(move, rig.camera.position.distanceTo(pos0));
       ang = Math.max(ang, (rig.camera.quaternion.angleTo(q0) * 180) / Math.PI);
       const vy = carHeight(p.y, HEIGHT.LOW, HEIGHT.NORMAL, HEIGHT.HIGH, CAR_HALF.y, true) - 0.51;
-      const b = screenBox(rig.camera, car.clone().translate(new THREE.Vector3(p.x, Math.max(0, vy), 0)));
+      // fixed view draws the car RENDER.carScaleFixed / carScale bigger (and 15 % taller)
+      const k = dynamic ? 1 : RENDER.carScaleFixed / RENDER.carScale;
+      const big = new THREE.Box3(car.min.clone().multiply(new THREE.Vector3(k, k * RENDER.carHeightScale, k)), car.max.clone().multiply(new THREE.Vector3(k, k * RENDER.carHeightScale, k)));
+      const b = screenBox(rig.camera, big.translate(new THREE.Vector3(p.x, Math.max(0, vy), 0)));
       worstEdge = Math.min(worstEdge, b.x0, 1 - b.x1, b.y0, 1 - b.y1);
     };
     for (const a of ['left', 'up', 'down', 'right', 'right', 'up', 'down'] as const) {

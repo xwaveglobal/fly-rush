@@ -91,9 +91,9 @@ export interface VehicleSkin {
 }
 
 /**
- * Step 06.5 class unlocks: D = the starter car; C / B / A / AAA = no new car; AA = exactly ONE new car
- * (XWAVE Inferno — the car already configured for AA); S / SS / SSS = future cars, dark locked
- * silhouettes until their rank is reached (Nexus: future, no unlock condition configured yet).
+ * Class unlocks (Step 06.5, v4.6 owner update): D = the starter car; C / B / A = no new car; AA = XWAVE
+ * Inferno; AAA = XWAVE Nexus; S / SS / SSS = Vega / Volt / Phantom. Every car not owned yet is a dark
+ * locked silhouette (AA and AAA included) until its rank is reached.
  * Cars a player already owns are never taken away (unlocks only ever add).
  */
 export const SKINS: VehicleSkin[] = [
@@ -103,6 +103,9 @@ export const SKINS: VehicleSkin[] = [
   { id: 'inferno', name: 'XWAVE Inferno', shape: 'gt', cls: 'Legendary · Burn through everything', rarity: 'Legendary', need: 'AA', price: 0, bonus: 0, tintAmt: 0.92,
     body: 0xc4121f, trim: 0x1a1a1a, glass: 0x0a0202, glow: 0xff3b2a, accent: 0xff6a2a, stats: [10, 9, 8, 8],
     skills: [{ name: 'Fire Trail', desc: 'Destroys all obstacles in its path.' }, { name: 'Speed Rush', desc: 'Extreme speed boost for 8 seconds.' }] },
+  { id: 'nexus', name: 'XWAVE Nexus', shape: 'gt', cls: 'Mythic · The ultimate evolution', rarity: 'Mythic', need: 'AAA', price: 0, bonus: 0, tintAmt: 0.35,
+    body: 0xdfe8ff, trim: 0xc9d2e6, glass: 0x0b1830, glow: 0x3cf2ff, accent: 0xd04dff, stats: [10, 10, 10, 10],
+    skills: [{ name: 'Gravity Control', desc: 'Switches flight height freely for 5 seconds.' }, { name: 'Dimension Dash', desc: 'Teleports forward a short distance.' }] },
   { id: 'vega', name: 'XWAVE Vega', shape: 'gt', cls: 'Uncommon · Red-line racer', rarity: 'Rare', need: 'S', price: 0, bonus: 0, tintAmt: 0, rear: vegaBack,
     body: 0xf3f5fa, trim: 0xb9c2d3, glass: 0x0a0d16, glow: 0xff3b4e, accent: 0xff3b4e, stats: [8, 7, 8, 7] },
   { id: 'volt', name: 'XWAVE Volt', shape: 'gt', cls: 'Rare · Speed beyond limits', rarity: 'Rare', need: 'SS', price: 0, bonus: 0, tintAmt: 0.92,
@@ -111,9 +114,6 @@ export const SKINS: VehicleSkin[] = [
   { id: 'phantom', name: 'XWAVE Phantom', shape: 'gt', cls: 'Epic · Invisible. Unstoppable.', rarity: 'Epic', need: 'SSS', price: 0, bonus: 0, tintAmt: 0.85,
     body: 0xd4a548, trim: 0x2a2416, glass: 0x140c00, glow: 0xffc24a, accent: 0xffd23d, stats: [9, 8, 9, 9],
     skills: [{ name: 'Phase Shift', desc: 'Turns semi-invisible for 3 seconds.' }, { name: 'Auto Collect', desc: 'Automatically collects nearby coins.' }] },
-  { id: 'nexus', name: 'XWAVE Nexus', shape: 'gt', cls: 'Mythic · The ultimate evolution', rarity: 'Mythic', need: 'SSS', future: true, price: 0, bonus: 0, tintAmt: 0.35,
-    body: 0xdfe8ff, trim: 0xc9d2e6, glass: 0x0b1830, glow: 0x3cf2ff, accent: 0xd04dff, stats: [10, 10, 10, 10],
-    skills: [{ name: 'Gravity Control', desc: 'Switches flight height freely for 5 seconds.' }, { name: 'Dimension Dash', desc: 'Teleports forward a short distance.' }] },
 ];
 
 
@@ -123,10 +123,9 @@ export const SKINS: VehicleSkin[] = [
  */
 export function carVisibility(unlocked: string[], id: string): 'own' | 'next' | 'dark' {
   if (unlocked.includes(id)) return 'own';
-  // Step 06.5: the one class-AA car is shown (locked) before it is earned; every S+ / future car stays a
-  // black silhouette (no colours, no materials) until it is unlocked
-  const k = SKINS.find((x) => x.id === id);
-  return k && !k.future && k.need === 'AA' ? 'next' : 'dark';
+  // v4.6 (owner): every car not owned yet — AA and AAA included — is a black silhouette (no colours,
+  // no materials) until it is unlocked
+  return 'dark';
 }
 
 /** cars a rank unlocks (Step 06.5 matrix): never a future car */
@@ -1081,6 +1080,13 @@ export class Vehicle {
   }
 
   /** @param locked garage preview of a car not owned yet: dark silhouette */
+  /** v4.6: 3D car size multiplier (fixed camera view draws it a little bigger) — visual only */
+  private carK = 1;
+  setCarSize(k: number) {
+    this.carK = k;
+    this.mesh?.setScaleK(k);
+  }
+
   setSkin(skin: VehicleSkin, locked = false) {
     this.skin = skin;
     // restore every material, apply the colourway, then darken everything if locked
@@ -1103,6 +1109,7 @@ export class Vehicle {
       if (this.meshOn) {
         this.shapes.gt!.visible = false;
         this.mesh.applySkin(skin, locked);
+        this.mesh.setScaleK(this.carK);
       }
     }
     // the GT colourways are drawn from the X1 studio renders (pearl = original paint)

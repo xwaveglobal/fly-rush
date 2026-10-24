@@ -2599,3 +2599,18 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 #ui .screen:not(#start) .tcard.sel { border-width: 2px !important; }
 /* locked cars stay pure black silhouettes (concealment is content, not button lighting) */
 #ui .screen:not(#start) .ccard.dark .cimg.shadow { filter: brightness(0) !important; }
+
+/* v4.6 (owner): Home buttons (Play and the buttons around the screen) cast no shadow / glow any more —
+   their colours, gradients and gloss stay; only box / text / drop shadows and glow halos are removed */
+#ui #start :is(button, .btn, [data-a], .rbtn, .icon-btn, .mbtn),
+#ui #start :is(button, .btn, [data-a], .rbtn, .icon-btn, .mbtn) :is(*, svg, span, b, i, em, small),
+#ui #start :is(button, .btn, [data-a], .rbtn, .icon-btn, .mbtn)::before,
+#ui #start :is(button, .btn, [data-a], .rbtn, .icon-btn, .mbtn)::after { box-shadow: none !important; text-shadow: none !important; filter: none !important; }
+#ui #start .speedsel button.on { box-shadow: none !important; }
+
+/* v4.6 (owner): the special button (Roadster / HYPER / SOS) sits right under the hearts, a little smaller */
+#hud .rocketbtn, #hud .sos { top: calc(var(--safe-t) + var(--spTop, 118px)); bottom: auto !important; right: 12px; width: 58px; height: 58px; }
+#hud .rocketbtn svg, #hud .sos svg { width: 24px !important; height: 24px !important; }
+#hud .rocketbtn span, #hud .sos span { font-size: 9px; }
+#hud .rocketbtn:not([hidden]) ~ .sos { right: 78px; } /* both shown (training): side by side */
+#notices { top: calc(190px + var(--safe-t)) !important; }

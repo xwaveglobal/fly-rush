@@ -21,6 +21,8 @@ interface WheelRig {
   hub: THREE.Object3D;
   spin: THREE.Object3D;
   front: boolean;
+  /** tyre radius in model metres (r = r0 × the current scale) */
+  r0: number;
   /** wheel radius in game metres */
   r: number;
   blur: THREE.Mesh;
@@ -49,6 +51,17 @@ export class MeshCar {
   /** the X1 node (its origin is on the road, so scaling it squashes the car toward the asphalt) */
   private model: THREE.Object3D | null = null;
   private baseScale = 1;
+  /** v4.6 size multiplier (fixed camera view: RENDER.carScaleFixed / carScale) */
+  private scaleK = 1;
+  private get sc() {
+    return this.baseScale * this.scaleK;
+  }
+  /** draw the car k × its normal size (visual only) — e.g. bigger for the fixed camera view */
+  setScaleK(k: number) {
+    this.scaleK = k;
+    if (this.model) this.model.scale.set(this.sc, this.sc * RENDER.carHeightScale, this.sc);
+    for (const w of this.wheels) w.r = w.r0 * this.sc;
+  }
   /** DOWN: 0 = normal … 1 = pressed down (spring: a little overshoot in and out) */
   private duckS = new Spring(0, 320, 20);
   private hover: THREE.Mesh;
@@ -142,7 +155,7 @@ export class MeshCar {
   private build(scene: THREE.Group) {
     const s = RENDER.carScale;
     const model = scene.getObjectByName('X1') ?? scene;
-    model.scale.set(s, s * RENDER.carHeightScale, s);
+    model.scale.set(s * this.scaleK, s * RENDER.carHeightScale * this.scaleK, s * this.scaleK);
     this.model = model;
     this.baseScale = s;
     // materials by name: procedural textures + in-game glow levels (the GLB's images are not decoded)
@@ -274,7 +287,7 @@ export class MeshCar {
       blur.rotation.y = (side * Math.PI) / 2;
       blur.position.x = side * (w * 0.5 + 0.004);
       hub.add(blur);
-      this.wheels.push({ hub, spin, front: id[0] === 'F', r: r * s, blur });
+      this.wheels.push({ hub, spin, front: id[0] === 'F', r: r * s * this.scaleK, r0: r, blur });
     }
     // nitro sockets → flames
     for (const id of ['NitroSocket_L', 'NitroSocket_R']) {
@@ -354,7 +367,7 @@ export class MeshCar {
     this.duckS.target = locked ? 0 : clamp01(duck);
     this.duckS.update(dt);
     const e = Math.max(0, this.duckS.value);
-    if (this.model) this.model.scale.set(this.baseScale * (1 + D.widen * e), this.baseScale * RENDER.carHeightScale * (1 - D.squash * e), this.baseScale * (1 + D.stretch * e));
+    if (this.model) this.model.scale.set(this.sc * (1 + D.widen * e), this.sc * RENDER.carHeightScale * (1 - D.squash * e), this.sc * (1 + D.stretch * e));
     this.padMat.opacity = 0.8 * clamp01(e);
     this.hover.visible = e > 0.02;
     // ---- wheels: spin with the road (free-wheel and slow down in the air), capped against strobing
@@ -570,7 +583,7 @@ export class MeshCar {
     this.prevAir = 0;
     this.duckS.snap(0);
     this.duckS.velocity = 0;
-    if (this.model) this.model.scale.set(this.baseScale, this.baseScale * RENDER.carHeightScale, this.baseScale);
+    if (this.model) this.model.scale.set(this.sc, this.sc * RENDER.carHeightScale, this.sc);
     this.aura.reset();
     this.turboAura.reset();
     this.sweepT = 99;

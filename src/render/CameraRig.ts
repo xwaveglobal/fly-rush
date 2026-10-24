@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { clamp, damp, lerp } from '../core/math.ts';
 import type { Player } from '../gameplay/Player.ts';
-import { CAMERA, type ChasePreset } from '../config.ts';
+import { CAMERA, LANES, type ChasePreset } from '../config.ts';
 
 export type CamMode = 'menu' | 'garage' | 'run' | 'crash';
 
@@ -66,6 +66,22 @@ export class CameraRig {
     this.baseFov = v;
     this.camera.aspect = aspect;
     this.camera.updateProjectionMatrix();
+    this.aspect = aspect;
+  }
+  private aspect = 9 / 16;
+
+  /**
+   * v4.6 fixed view: how far back the camera must sit so the car's outer edge in an outer lane stays
+   * `CAMERA.fixed.margin` of the screen width inside the frame — computed for this screen's aspect, so
+   * the car is as large as the screen allows (wider phones / tablets: closer camera, bigger car).
+   */
+  private fixedBack(C: ChasePreset) {
+    const F = CAMERA.fixed;
+    const vfov = THREE.MathUtils.degToRad(this.baseFov + C.fov);
+    const tanH = Math.tan(vfov / 2) * this.aspect;
+    const edge = LANES[2] + F.carHalfW;
+    const need = edge / (tanH * (1 - 2 * F.margin)) + F.carRear; // camera z: that distance in front of the car's rear corner
+    return Math.max(0, need - (C.back + this.pushBack));
   }
 
   shake(amount: number) {
@@ -147,7 +163,7 @@ export class CameraRig {
         const dyn = this.dynamic;
         const sway = (dyn ? Math.sin(t * 0.55) * 0.18 : 0) + sk * 2.6;
         const F = CAMERA.fixed;
-        const back = C.back + this.pushBack - speedFactor * C.speedBack + (dyn ? 0 : F.back);
+        const back = C.back + this.pushBack - (dyn ? speedFactor * C.speedBack : 0) + (dyn ? 0 : this.fixedBack(C));
         // above the normal HIGH hop (Roadster / HYPER jumps) the camera climbs almost 1:1 so the car stays framed
         // a normal hop is seen rising clearly over the obstacle (camera follows only a little);
         // above it (Roadster / HYPER) the camera climbs almost 1:1 so the car stays framed

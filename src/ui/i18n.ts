@@ -66,6 +66,7 @@ const T: [string, string, string, string, string, string][] = [
   ['Paused', 'Pause', '一時停止', 'Pausado', 'Pausiert', 'En pausa'],
   ['Resume', 'Reprendre', '再開', 'Continuar', 'Weiter', 'Reanudar'],
   ['Retry', 'Rejouer', 'リトライ', 'De novo', 'Nochmal', 'Reintentar'],
+  ['Restart', 'Recommencer', 'リスタート', 'Reiniciar', 'Neustart', 'Reiniciar'],
   ['Home', 'Accueil', 'ホーム', 'Início', 'Start', 'Inicio'],
   ['Tracks', 'Circuits', 'コース', 'Pistas', 'Strecken', 'Pistas'],
   ['Next track', 'Circuit suivant', '次のコース', 'Próxima pista', 'Nächste Strecke', 'Siguiente pista'],

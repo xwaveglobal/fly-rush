@@ -387,7 +387,7 @@ export class UI {
         <button class="btn gold adbtn" data-a="ad2x" data-k="ad2xf">${ICON.play} Watch ad · +20% coins</button>
         <button class="btn big" data-a="nexttrack" data-k="fnext">${ICON.play} Next track</button>
         <div class="navrow">
-          <button class="btn nav blue" data-a="retry">${ICON.retry}<span>Retry</span></button>
+          <button class="btn nav blue" data-a="retry">${ICON.retry}<span>Restart</span></button>
           <button class="btn nav purple" data-a="tracks">${ICON.flag}<span>Tracks</span></button>
           <button class="btn nav dark" data-a="home">${ICON.home}<span>Home</span></button>
         </div>
@@ -721,7 +721,7 @@ export class UI {
         </div>
         <button class="btn big" data-a="resume">${ICON.play} Resume</button>
         <div class="navrow">
-          <button class="btn nav blue" data-a="retry">${ICON.retry}<span>Retry</span></button>
+          <button class="btn nav blue" data-a="retry">${ICON.retry}<span>Restart</span></button>
           <button class="btn nav dark" data-a="home">${ICON.home}<span>Home</span></button>
         </div>
       </div>
@@ -753,7 +753,7 @@ export class UI {
         </div>
         <div class="rwd" data-k="grwd"></div>
         <button class="btn gold adbtn" data-a="ad2x" data-k="ad2x">${ICON.play} Watch ad · +20% coins</button>
-        <button class="btn big retry" data-a="retry">${ICON.retry} Retry</button>
+        <button class="btn big retry" data-a="retry">${ICON.retry} Restart</button>
         <div class="navrow">
           <button class="btn nav blue" data-a="home">${ICON.home}<span>Home</span></button>
           <button class="btn nav purple" data-a="tracks">${ICON.flag}<span>Tracks</span></button>
@@ -2369,7 +2369,7 @@ export class UI {
     b.push(o.wallet >= o.price
       ? `<button class="btn gold" data-a="rocketfix" data-v="buy">Buy 1 · <span class="price">${ICON.coin}${fmt(o.price)}</span></button>`
       : `<button class="btn pink" data-a="rocketfix" data-v="shop">${ICON.bag} Get Roadster Jumps</button>`);
-    b.push(`<button class="btn ghost sm" data-a="rocketfix" data-v="retry">${ICON.retry} Retry & collect the rocket</button>`);
+    b.push(`<button class="btn ghost sm" data-a="rocketfix" data-v="retry">${ICON.retry} Restart & collect the rocket</button>`);
     $(this.root, '[data-k="nrbtns"]').innerHTML = b.join('');
   }
 

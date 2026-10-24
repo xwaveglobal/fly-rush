@@ -308,6 +308,9 @@ export const RENDER = {
   /** model (real-size metres) → game size. 0.76 ≈ 1.66 m wide: close to the 1.4 m hitbox, and the rear
    *  reads about the same size on screen as the old rear image did from the unchanged chase camera */
   carScale: 0.76,
+  /** v4.6 (owner): with Settings → Camera motion OFF (fixed view, the default) the car is drawn a little
+   *  bigger (visual only, hitbox unchanged; the moving chase camera keeps carScale for its readability) */
+  carScaleFixed: 0.82,
   /**
    * v4.6 (owner): the 3D car is drawn 15 % taller (height only, at runtime — the approved GLB file is
    * unchanged) so the DOWN dive (height × (1 − duck.squash)) reads more clearly. Visual only: hitboxes,
@@ -463,7 +466,9 @@ export const CAMERA = {
    * keep the car fully on screen in both outer lanes on narrow portrait phones; `hopTop` = gameplay
    * height above which (Roadster / HYPER / SOS flights only) it still climbs so the car stays framed.
    */
-  fixed: { back: 2.9, height: 0.75, lookY: 0.15, hopTop: 3.4 },
+  // margin = gap kept between the car (outer lane) and the screen edge, fraction of the width;
+  // carHalfW / carRear = the 3D car's half width / rear end in game metres (2.09 × 4.22 m model × carScale)
+  fixed: { margin: 0.012, carHalfW: 1.045 * 0.82, carRear: 2.242 * 0.82, height: 0.5, lookY: 1.1, hopTop: 3.4 },
   home: { yaw: 0.24, yawSwing: 0.14, speed: 0.22, height: 2.45, dist: 8.3, lookY: 0.98, lookZ: 0.2, fovScale: 0.82 },
 };
 
