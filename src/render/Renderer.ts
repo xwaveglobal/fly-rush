@@ -79,15 +79,19 @@ export class Renderer {
     // rendering while lost, rebuild the post-processing chain when the context comes back. Three.js
     // re-uploads geometries / textures by itself (our textures keep their pixel data).
     const cv = this.renderer.domElement as HTMLCanvasElement & { addEventListener?: HTMLCanvasElement['addEventListener'] };
-    cv.addEventListener?.('webglcontextlost', (e: Event) => {
-      e.preventDefault();
-      this.lost = true;
-    });
-    cv.addEventListener?.('webglcontextrestored', () => {
-      this.lost = false;
-      this.disposeComposer();
-      this.setQuality(this.quality);
-    });
+    try {
+      cv.addEventListener?.('webglcontextlost', (e: Event) => {
+        e?.preventDefault?.();
+        this.lost = true;
+      });
+      cv.addEventListener?.('webglcontextrestored', () => {
+        this.lost = false;
+        this.disposeComposer();
+        this.setQuality(this.quality);
+      });
+    } catch {
+      /* a mini-game canvas without DOM events: no context-loss handling there */
+    }
   }
   /** the WebGL context is lost (render calls are skipped until it is restored) */
   lost = false;

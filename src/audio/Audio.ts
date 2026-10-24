@@ -245,7 +245,7 @@ export class Audio {
     for (const [n, u] of this.pendingOverrides) void this.loadOverride(n, u);
     this.pendingOverrides.length = 0;
     this.prime();
-    if (c.state === 'running') queueMicrotask(() => this.onRunning?.());
+    if (c.state === 'running') void Promise.resolve().then(() => this.onRunning?.()); // (no queueMicrotask in some mini-game engines)
   }
 
   /** silent 1-sample buffer started from the current gesture (WebKit output unlock) */
