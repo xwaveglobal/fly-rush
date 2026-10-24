@@ -730,6 +730,20 @@ export class UI {
       <button class="btn big cu-ok" data-a="classok">Continue</button>
     </section>
 
+    <section id="runrank" class="screen overlay">
+      <div class="panel rr">
+        <div class="rr-top"><button class="icon-btn sm" data-a="rrback" aria-label="Back">${ICON.chevL}</button><b>WEEKLY RANKING</b><button class="icon-btn sm" data-a="home" aria-label="Close">${ICON.close}</button></div>
+        <div class="rr-congrats" data-k="rrcongrats" hidden></div>
+        <div class="rr-list" data-k="rrlist"></div>
+        <div class="rr-foot" data-k="rrfoot"></div>
+        <div class="rr-btns">
+          <button class="btn nav blue" data-a="share">${ICON.share}<span>Share</span></button>
+          <button class="btn nav purple" data-a="rrback">${ICON.info}<span>Details</span></button>
+          <button class="btn nav dark" data-a="home">${ICON.home}<span>Home</span></button>
+        </div>
+      </div>
+    </section>
+
     <section id="gameover" class="screen overlay">
       <div class="panel result">
         <div class="res-top"><button class="icon-btn sm" data-a="home" aria-label="Close">${ICON.close}</button><img class="res-logo" src="${logoUrl}" alt="" /><button class="icon-btn sm" data-a="share" aria-label="Share">${ICON.share}</button></div>
@@ -930,6 +944,10 @@ export class UI {
           return;
         case 'classok':
           return this.h.classOk?.();
+        case 'rrback':
+          // the race details (result card with Restart) are right under the rank board
+          this.hideOverlay('runrank');
+          return;
         case 'savepname': return this.h.setName($<HTMLInputElement>(this.root, '[data-k="pnameinput"]').value);
         case 'pickcar':
           this.garageIndex = SKINS.findIndex((x) => x.id === el.dataset.id);
@@ -1856,6 +1874,51 @@ export class UI {
       <button class="btn big spgo" data-a="sgo">${ICON.play} GO</button>`;
     this.screens.specialpick.classList.add('show');
     this.scheduleFit();
+  }
+
+  /**
+   * v4.6 post-race rank board (over the result card): the weekly rows around the player; when this race
+   * moved the player up, the player's row climbs from the old position to the new one with a glowing
+   * frame and a congratulation (class promotion included).
+   */
+  runRank(o: { before: number; board: Board; rows: LbRow[]; clsUp: RankClass | null }) {
+    this.rowCache = [];
+    const y = o.board.you;
+    const up = o.before > y.rank && y.score > 0;
+    const list = $(this.root, '[data-k="rrlist"]');
+    list.innerHTML = o.rows.map((r) => this.lbRow(r)).join('');
+    const me = list.querySelector<HTMLElement>('.lbrow.you');
+    const cg = $(this.root, '[data-k="rrcongrats"]');
+    cg.hidden = !up && !o.clsUp;
+    cg.innerHTML = `${o.clsUp ? `${classBadge(o.clsUp)} <b>CLASS ${o.clsUp}!</b> ` : ''}${up ? `${ICON.trophy} <b>RANK UP!</b> #${fmt(o.before)} → #${fmt(y.rank)}` : ''}`;
+    const pct = Math.max(0.1, (y.rank / o.board.total) * 100);
+    $(this.root, '[data-k="rrfoot"]').innerHTML = y.score <= 0 ? 'Drive a race to get ranked' : `Top ${pct < 1 ? pct.toFixed(1) : Math.ceil(pct)}% of ${fmt(o.board.total)} pilots${o.board.next ? ` · EXP <b>${fmt(o.board.next.score)}</b> for <b>#${fmt(o.board.next.rank)}</b>` : ''}`;
+    const sc = this.screens.runrank;
+    sc.classList.toggle('up', up);
+    this.showOverlay('runrank');
+    if (!me) return;
+    me.classList.add('rr-me');
+    if (!up) return;
+    // the climb: the row starts lower (old rank) and slides up while its number counts down
+    const rowsUp = Math.min(3, o.rows.length - 1 - o.rows.findIndex((r) => r.you));
+    const h = me.getBoundingClientRect().height + 6;
+    me.style.transform = `translateY(${Math.max(1, rowsUp) * h}px)`;
+    me.style.transition = 'none';
+    const num = me.querySelector('.lr b');
+    const t0 = performance.now();
+    const dur = 1600;
+    requestAnimationFrame(() => {
+      me.style.transition = `transform ${dur}ms cubic-bezier(.2,.8,.2,1)`;
+      me.style.transform = 'translateY(0)';
+    });
+    const tick = (now: number) => {
+      const k = Math.min(1, (now - t0) / dur);
+      const e = 1 - Math.pow(1 - k, 3);
+      if (num) num.textContent = `#${fmt(Math.round(o.before + (y.rank - o.before) * e))}`;
+      if (k < 1) requestAnimationFrame(tick);
+      else me.classList.add('rr-done');
+    };
+    requestAnimationFrame(tick);
   }
 
   /** Step 06.5 first-time class promotion (A and up): emblem, light sweep, particles; car showcase on AA */

@@ -2632,3 +2632,23 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 #hud .trskip { right: auto !important; left: 12px; top: calc(124px + var(--safe-t, 0px)) !important; }
 /* v4.6: training prompt card below the special button */
 #tutprompt, #hud:has(.trackbar:not([hidden])) ~ #tutprompt { padding-top: calc(190px + var(--safe-t)) !important; }
+
+/* v4.6 post-race rank board (over the result card) */
+#ui .screen.overlay#runrank { z-index: 22; }
+#runrank .rr { width: min(100%, 370px); gap: 10px; padding: 14px 14px 16px; }
+#runrank .rr-top { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+#runrank .rr-top b { font-size: 18px; font-style: italic; letter-spacing: 1px; }
+#runrank .rr-congrats { width: 100%; text-align: center; padding: 8px 10px; border-radius: 12px; font-size: 15px; color: #fff;
+  background: linear-gradient(90deg, rgba(255,194,26,.18), rgba(155,107,255,.22)); border: 1px solid rgba(255,210,74,.6); display: flex; gap: 6px; align-items: center; justify-content: center; flex-wrap: wrap; }
+#runrank .rr-congrats svg { width: 18px; height: 18px; }
+#runrank.up .rr-congrats { animation: rrPop .6s 1.5s both; }
+@keyframes rrPop { from { transform: scale(.8); opacity: 0; } to { transform: none; opacity: 1; } }
+#runrank .rr-list { width: 100%; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+#runrank .rr-list .lbrow { position: relative; }
+#ui #runrank .rr-list .lbrow.rr-me { z-index: 2; border: 2px solid #ffd24a !important; background: linear-gradient(90deg, rgba(255,210,74,.2), rgba(79,195,255,.14)) !important;
+  box-shadow: 0 0 18px rgba(255,210,74,.55), inset 0 0 12px rgba(255,210,74,.25) !important; }
+#ui #runrank .rr-list .lbrow.rr-me.rr-done { animation: rrGlow 1.6s ease-in-out 2; }
+@keyframes rrGlow { 50% { box-shadow: 0 0 30px rgba(255,210,74,.9), inset 0 0 18px rgba(255,210,74,.4); } }
+#runrank .rr-foot { font-size: 12px; color: rgba(255,255,255,.75); text-align: center; }
+#runrank .rr-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
+#runrank .rr-btns .btn { min-width: 0; }

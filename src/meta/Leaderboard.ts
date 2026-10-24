@@ -133,3 +133,29 @@ export function weeklyBoard(week: string, you: { name: string; score: number; co
   const curve: Curve = { top: 47000 * f, k: 1.05, total: Math.round(9000 + 31000 * f) };
   return rankBoard(sampleBoard(`xwave-exp-week-${week}`, curve), curve, you);
 }
+
+/**
+ * v4.6 post-race rank board: the rows right around the player (k above, k below). Inside the top 100 they
+ * are the board's own rows; further down, neighbours are filled in with demo rivals just above / below
+ * the player's EXP (the rival field is demo data until online ranking goes live).
+ */
+export function aroundYou(board: Board, k = 2): LbRow[] {
+  const y = board.you;
+  const i = board.rows.findIndex((r) => r.you);
+  if (i >= 0) {
+    const a = Math.max(0, Math.min(i - k, board.rows.length - (2 * k + 1)));
+    return board.rows.slice(a, a + 2 * k + 1);
+  }
+  const r = rng(hashStr(`around-${y.rank}`));
+  const out: LbRow[] = [];
+  for (let d = -k; d <= k; d++) {
+    if (d === 0) {
+      out.push(y);
+      continue;
+    }
+    const rank = y.rank + d;
+    if (rank < 1 || rank > board.total) continue;
+    out.push({ rank, name: NAMES[Math.floor(r() * NAMES.length)] + (d > 0 ? String(Math.floor(r() * 90 + 10)) : ''), flag: FLAGS[Math.floor(r() * FLAGS.length)], score: Math.max(0, y.score - d * Math.max(3, Math.round(y.score * 0.004))), color: COLORS[Math.floor(r() * COLORS.length)] });
+  }
+  return out;
+}

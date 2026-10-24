@@ -47,7 +47,7 @@ import { classFor, classProgress, CLASSES, BASE_CLASSES, CLASS_COLOR, CLASS_MIN,
 import type { RunRewards } from './ui/UI.ts';
 import { crashTip, type CrashTip } from './gameplay/CrashTip.ts';
 import { createStore, weekBoard, type PlayerStore } from './net/PlayerStore.ts';
-import { hashStr } from './meta/Leaderboard.ts';
+import { aroundYou, hashStr } from './meta/Leaderboard.ts';
 import { classForScore } from './meta/Rank.ts';
 import { avatarForName, avatarSvg } from './ui/avatars.ts';
 import { productBySku, DemoStore, type Store } from './meta/Shop.ts';
@@ -3163,6 +3163,8 @@ export class Game {
     const speedBonus = Math.round(run.coins * (lvg.reward - 1));
     this.save.wallet += run.coins + speedBonus;
     this.save.totalRuns++;
+    const isBonusRun = !!this.course?.bonus;
+    const wkBefore = isBonusRun || this.tutorialMode ? 0 : this.meta.weekly().you.rank;
     const rewards = this.recordMeta(false);
     this.persist();
     this.queueClassCelebration();
@@ -3182,6 +3184,13 @@ export class Game {
     this.ads.runEnded();
     this.ui.show('gameover');
     if (rewards && rewards.to > rewards.from) this.audio.play('mission');
+    // v4.6 (owner): EXP races open on the weekly rank board (the result card with Restart is under it)
+    if (!isBonusRun && !this.tutorialMode) {
+      const board = this.meta.weekly();
+      const clsUp = rewards && rewards.clsAfter !== rewards.clsBefore ? rewards.clsAfter : null;
+      this.ui.runRank({ before: wkBefore, board, rows: aroundYou(board, 2), clsUp });
+      if (board.you.rank < wkBefore) window.setTimeout(() => this.audio.play('combo'), 1500);
+    }
   }
 
   private onWorldChange(id: WorldId) {
