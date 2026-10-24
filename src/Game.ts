@@ -10,7 +10,7 @@ import { Run, type Feedback, SHIELD_HITS } from './gameplay/Run.ts';
 import { MissionTracker } from './gameplay/Missions.ts';
 import { Autopilot } from './gameplay/Autopilot.ts';
 import { Spawner, speedAt, ENDLESS_LADDER, type WorldId } from './gameplay/Spawner.ts';
-import { BONUS, BONUS_NAME, BONUS_SECTIONS, bonusState } from './meta/Bonus.ts';
+import { BONUS, BONUS_NAME, BONUS_SECTIONS, bonusPlaysUsed, bonusState } from './meta/Bonus.ts';
 
 /** Bonus roads start a little into the difficulty curve (friendly, but not empty) */
 const BONUS_DIFF_OFFSET = 900;
@@ -483,9 +483,11 @@ export class Game {
       resume: () => this.resume(),
       retry: () =>
         this.afterResults(() => {
-          // Bonus roads: one play per event
+          // Bonus roads: up to BONUS.maxPlays plays per event (Restart = another play while any are left)
           if (this.course?.bonus) {
-            this.ui.toast(`${ICON.check} Bonus played · next one ${localTime(bonusState().next.start)}`, '#ffc21a');
+            const bs = bonusState();
+            if (bs.live && bonusPlaysUsed(this.save.bonusPlays, bs.live.key) < BONUS.maxPlays) return this.startBonus();
+            this.ui.toast(`${ICON.check} Bonus plays used · next one ${localTime(bs.next.start)}`, '#ffc21a');
             return this.goHome();
           }
           // v2: every EXP race starts with the special choice (Retry too)
@@ -1624,28 +1626,34 @@ export class Game {
       next: bs.live ? `${BONUS_NAME[bs.next.theme]} · ${localTime(bs.next.start)}` : '',
       finish: Math.round(BONUS.finishCoins * LEVELS[this.save.settings.speed].reward),
       minutes: BONUS.raceMinutes,
-      played: !!bs.live && this.save.bonusPlayed === bs.live.key,
+      played: !!bs.live && bonusPlaysUsed(this.save.bonusPlays, bs.live.key) >= BONUS.maxPlays,
+      playsLeft: bs.live ? Math.max(0, BONUS.maxPlays - bonusPlaysUsed(this.save.bonusPlays, bs.live.key)) : BONUS.maxPlays,
+      maxPlays: BONUS.maxPlays,
+      openMinutes: BONUS.openMinutes,
+      everyHours: BONUS.everyHours,
     });
   }
 
-  /** a 30-minute Bonus road in today's place, with a FINISH line — coins only */
+  /** a 5-minute Bonus road in today's place, with a FINISH line — coins only (v4.6: up to 3 plays per hourly event) */
   startBonus() {
     const bs = bonusState();
     if (!bs.live) {
       this.ui.toast(`${ICON.clock} Next Bonus opens ${localTime(bs.next.start)}`, '#ffc21a');
       return;
     }
-    if (this.save.bonusPlayed === bs.live.key) {
-      this.ui.toast(`${ICON.check} Bonus played · next one ${localTime(bs.next.start)}`, '#ffc21a');
+    const used = bonusPlaysUsed(this.save.bonusPlays, bs.live.key);
+    if (used >= BONUS.maxPlays) {
+      this.ui.toast(`${ICON.check} ${BONUS.maxPlays} Bonus plays used · next one ${localTime(bs.next.start)}`, '#ffc21a');
       return;
     }
     this.ui.hideOverlay('bonus');
-    // one play per event: it counts as played from the start (revives still work inside the race)
+    // up to BONUS.maxPlays plays per event: a play counts from its start (revives still work inside the race)
+    this.save.bonusPlays = { key: bs.live.key, n: used + 1 };
     this.save.bonusPlayed = bs.live.key;
     this.persist();
     const level = this.save.settings.speed;
     const theme = bs.live.theme;
-    // the finish line sits where 30 minutes of non-stop driving end (no turbo)
+    // the finish line sits where BONUS.raceMinutes of non-stop driving end (no turbo)
     const sp = new Spawner();
     sp.level = level;
     sp.speedMul = LEVELS[level].speed;

@@ -97,6 +97,8 @@ export interface SaveData {
   perks: { profileSeen?: boolean; avatarPicked?: boolean; entry?: boolean; launch?: boolean; shareDay?: string; inviteDay?: string; invites?: number; rated?: boolean; rateAsked?: boolean; countryDetected?: boolean; kit2?: boolean };
   /** v2.2: key of the Bonus event already played (one play per event) */
   bonusPlayed?: string;
+  /** v4.6: plays used in the current Bonus event (key = event start) */
+  bonusPlays?: { key: string; n: number };
   /** v2.2 career missions: lifetime counters + tiers paid (src/meta/Career.ts) */
   career?: CareerStats;
   /** danger-hint gestures the player has answered (hint stops after 3) */
