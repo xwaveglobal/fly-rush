@@ -98,10 +98,3 @@ export function questsFor(day: string): Quest[] {
 /** v2: no points / chests any more (Daily pays coins per mission) */
 export const CHESTS: { pts: number; reward: Reward }[] = [];
 
-export const rewardText = (r: Reward) => {
-  const parts: string[] = [];
-  if (r.coins) parts.push(`${r.coins.toLocaleString('en-US')} coins`);
-  const names: Record<ItemKey, string> = { super: 'Roadster Jump', hyper: 'HYPER JUMP', shield: 'Start Shield', escape: 'Sky Escape', turbo: 'Turbo Start', magnet: 'Coin Magnet', double: 'Double EXP', life: 'Extra Life' };
-  for (const [k, n] of Object.entries(r.items ?? {})) if (n) parts.push(`${names[k as ItemKey]} ×${n}`);
-  return parts.join(' + ');
-};

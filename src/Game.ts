@@ -10,7 +10,7 @@ import { Run, type Feedback, SHIELD_HITS } from './gameplay/Run.ts';
 import { MissionTracker } from './gameplay/Missions.ts';
 import { Autopilot } from './gameplay/Autopilot.ts';
 import { Spawner, speedAt, ENDLESS_LADDER, type WorldId } from './gameplay/Spawner.ts';
-import { BONUS, BONUS_NAME, BONUS_SECTIONS, bonusState } from './meta/Bonus.ts';
+import { BONUS, BONUS_NAME, BONUS_SECTIONS, bonusPlaysUsed, bonusState } from './meta/Bonus.ts';
 
 /** Bonus roads start a little into the difficulty curve (friendly, but not empty) */
 const BONUS_DIFF_OFFSET = 900;
@@ -38,7 +38,7 @@ import { Ads, ADS } from './ads/Ads.ts';
 import { advancedScript, basicScript, boostScript, WORLD_LESSONS, type BoostKind, type TrainingScript, type TutorialStep } from './gameplay/Tutorial.ts';
 import { PASS_H, PASS_L, PASS_N } from './gameplay/types.ts';
 import { MAPS, TIER_NAME, type Tier } from './gameplay/Difficulty.ts';
-import { FAIRNESS, V2_POWERUPS, BONUS_SET, CLOUD, GRAPHICS, nextGraphics, type GraphicsQuality } from './config.ts';
+import { FAIRNESS, V2_POWERUPS, BONUS_SET, CLASS_REWARD, CLOUD, GRAPHICS, nextGraphics, type GraphicsQuality } from './config.ts';
 import { RANK_ORDER, rankDist, expRate, VARIANTS, type Variant } from './gameplay/Difficulty.ts';
 import type { Box, PickupKind, RowSpec } from './gameplay/types.ts';
 import { Meta, type EventResult, type RunSummary } from './meta/Meta.ts';
@@ -47,7 +47,7 @@ import { classFor, classProgress, CLASSES, BASE_CLASSES, CLASS_COLOR, CLASS_MIN,
 import type { RunRewards } from './ui/UI.ts';
 import { crashTip, type CrashTip } from './gameplay/CrashTip.ts';
 import { createStore, weekBoard, type PlayerStore } from './net/PlayerStore.ts';
-import { hashStr } from './meta/Leaderboard.ts';
+import { aroundYou, hashStr } from './meta/Leaderboard.ts';
 import { classForScore } from './meta/Rank.ts';
 import { avatarForName, avatarSvg } from './ui/avatars.ts';
 import { productBySku, DemoStore, type Store } from './meta/Shop.ts';
@@ -83,9 +83,8 @@ function cleanName(n: string) {
   return out.trim().slice(0, 14);
 }
 
-const VERSION = 'v3.1.1';
+const VERSION = 'v3.2.0';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
-const ROCKET_PRICE = 250;
 /** welcome-back gift after this many hours away */
 const WELCOME_AFTER_H = 12;
 const WELCOME_GIFT = { coins: 200, shield: 1 };
@@ -473,7 +472,6 @@ export class Game {
         this.audio.play('click');
         this.openDailyPopup();
       },
-      rocketFix: (how) => this.resolveNeedRocket(how),
       setCountry: (code) => {
         this.save.country = code;
         this.save.countryAuto = false;
@@ -504,8 +502,13 @@ export class Game {
       resume: () => this.resume(),
       retry: () =>
         this.afterResults(() => {
-          // v3.0.6 Bonus roads: replay freely while the event is open
-          if (this.course?.bonus) return this.startBonus();
+          // Bonus roads: up to BONUS.maxPlays plays per event (Restart = another play while any are left)
+          if (this.course?.bonus) {
+            const bs = bonusState();
+            if (bs.live && bonusPlaysUsed(this.save.bonusPlays, bs.live.key) < BONUS.maxPlays) return this.startBonus();
+            this.ui.toast(`${ICON.check} Bonus plays used · next one ${localTime(bs.next.start)}`, '#ffc21a');
+            return this.goHome();
+          }
           // v2: every EXP race starts with the special choice (Retry too)
           if (!this.course && !this.tutorialMode) return this.openSpecialPick(this.variant === 'track2' ? 'track2' : 'endless');
           this.startRun();
@@ -546,7 +549,12 @@ export class Game {
     // v4.6 (owner): the game always opens on NORMAL (a level picked on Home lasts for this session)
     this.save.settings.speed = 'normal';
     // Step 06.5: classes reached before the celebration existed count as already celebrated (first-time only)
-    if (!this.save.classCelebrated) this.save.classCelebrated = CLASSES.slice(rankIdx('A'), rankIdx(this.rank) + 1).map(String);
+    if (!this.save.classCelebrated) this.save.classCelebrated = CLASSES.slice(rankIdx('C'), rankIdx(this.rank) + 1).map(String);
+    // v4.6.1: C / B joined the celebration (with a reward) — classes already passed are not paid again
+    if (!this.save.classLowSeen) {
+      for (const c of ['C', 'B'] as RankClass[]) if (rankIdx(this.rank) >= rankIdx(c) && !this.save.classCelebrated.includes(c)) this.save.classCelebrated.push(c);
+      this.save.classLowSeen = true;
+    }
     this.syncCarUnlocks();
     this.applySkin(this.save.vehicle);
 
@@ -1676,24 +1684,34 @@ export class Game {
       next: bs.live ? `${BONUS_NAME[bs.next.theme]} · ${localTime(bs.next.start)}` : '',
       finish: Math.round(BONUS.finishCoins * LEVELS[this.save.settings.speed].reward),
       minutes: BONUS.raceMinutes,
-      played: false, // v3.0.6: replayable while open
+      played: !!bs.live && bonusPlaysUsed(this.save.bonusPlays, bs.live.key) >= BONUS.maxPlays,
+      playsLeft: bs.live ? Math.max(0, BONUS.maxPlays - bonusPlaysUsed(this.save.bonusPlays, bs.live.key)) : BONUS.maxPlays,
+      maxPlays: BONUS.maxPlays,
+      openMinutes: BONUS.openMinutes,
+      everyHours: BONUS.everyHours,
     });
   }
 
-  /** a 30-minute Bonus road in today's place, with a FINISH line — coins only */
+  /** a 5-minute Bonus road in today's place, with a FINISH line — coins only (v4.6: up to 3 plays per hourly event) */
   startBonus() {
     const bs = bonusState();
     if (!bs.live) {
       this.ui.toast(`${ICON.clock} Next Bonus opens ${localTime(bs.next.start)}`, '#ffc21a');
       return;
     }
+    const used = bonusPlaysUsed(this.save.bonusPlays, bs.live.key);
+    if (used >= BONUS.maxPlays) {
+      this.ui.toast(`${ICON.check} ${BONUS.maxPlays} Bonus plays used · next one ${localTime(bs.next.start)}`, '#ffc21a');
+      return;
+    }
     this.ui.hideOverlay('bonus');
-    // v3.0.6: replayable while open (bonusPlayed only remembers the last event played)
+    // up to BONUS.maxPlays plays per event: a play counts from its start (revives still work inside the race)
+    this.save.bonusPlays = { key: bs.live.key, n: used + 1 };
     this.save.bonusPlayed = bs.live.key;
     this.persist();
     const level = this.save.settings.speed;
     const theme = bs.live.theme;
-    // the finish line sits where 30 minutes of non-stop driving end (no turbo)
+    // the finish line sits where BONUS.raceMinutes of non-stop driving end (no turbo)
     const sp = new Spawner();
     sp.level = level;
     sp.speedMul = LEVELS[level].speed;
@@ -2050,9 +2068,8 @@ export class Game {
       this.dangerHold = 0;
       this.ui.dangerOk();
     }
-    // first-flight training: the car only moves on a training prompt (no free swiping);
-    // world (advanced) and boost training: free 4-way control like a normal run
-    if (this.tutorialMode && !this.tutPrompting && this.isBasicTraining) return;
+    // v4.6 (owner): free control in every training (also the first one); each lesson puts the car in
+    // the lane it needs by itself (TutorialStep.from) and waits for its gesture
     if (this.tutorialMode && this.tutPrompting && !this.tutAccept(a)) return;
     // a swipe UP is always a normal hop — the Roadster / HYPER jump has its own button
     this.world.player.input(a);
@@ -2111,8 +2128,8 @@ export class Game {
     if (this.state !== 'run' || !this.run) return;
     const r = this.run;
     if (r.hyperJumps <= 0 && r.superJumps <= 0) {
-      if (this.tutorialMode) this.needRocket();
-      return;
+      if (this.tutorialMode) this.tutRegrant();
+      if (r.hyperJumps <= 0 && r.superJumps <= 0) return;
     }
     if (this.tutorialMode) {
       if (this.tutPrompting) {
@@ -2129,49 +2146,16 @@ export class Game {
     else this.rocketQueuedT = this.time; // still in the air: fire the moment the wheels touch down
   }
 
-  /** no rocket for a step that needs it: explain + offer to use one, buy one or retry */
-  private needRocketOpen = false;
-  private needRocket() {
-    if (this.needRocketOpen) return;
-    this.needRocketOpen = true;
-    this.state = 'paused';
-    this.ui.tutPrompt(null);
-    this.ui.needRocket({ owned: this.save.items.super, wallet: this.save.wallet, price: ROCKET_PRICE });
-    this.ui.show('hud', 'needrocket');
-    this.audio.play('beep');
-  }
-
-  private resolveNeedRocket(how: string) {
+  /** training: the lesson's special is missing (used earlier by mistake) → a free one, so the lesson can be passed */
+  private tutRegrant() {
+    const st = this.tut.steps[this.tutStep];
     const r = this.run;
-    let ok = false;
-    if (how === 'use' && this.save.items.super > 0) {
-      this.save.items.super--;
-      ok = true;
-    } else if (how === 'buy' && this.save.wallet >= ROCKET_PRICE) {
-      this.save.wallet -= ROCKET_PRICE;
-      ok = true;
-    } else if (how === 'shop') {
-      this.needRocketOpen = false;
-      this.returnTo = () => this.goHome();
-      this.openShop();
-      return;
-    } else if (how === 'retry') {
-      this.needRocketOpen = false;
-      this.startRun();
-      return;
-    }
-    if (!ok) return;
-    r.superJumps = Math.min(2, r.superJumps + 1);
-    this.persist();
-    this.needRocketOpen = false;
-    this.audio.play('power');
-    this.ui.toast(`${ICON.rocket} ROADSTER JUMP ready — tap the purple button!`, '#9b6bff');
-    this.state = 'run';
-    this.ui.show('hud');
-    if (this.tutorialMode && this.tutPrompting) {
-      const st = this.tut.steps[this.tutStep];
-      this.ui.tutPrompt({ index: this.tutStep, total: this.tut.steps.length, need: st.need, title: st.title, sub: st.sub });
-    }
+    if (!st || !r) return;
+    if (st.need === 'sos') r.escapes = Math.max(r.escapes, 1);
+    else if (this.tut.grant?.hyper) r.hyperJumps = Math.max(r.hyperJumps, 1);
+    else r.superJumps = Math.max(r.superJumps, 1);
+    this.ui.toast(`${st.need === 'sos' ? ICON.sos : ICON.rocket} Training: you get it back — try again!`, '#9b6bff');
+    this.ui.updateHud(r, this.world.speed, SPEED.max, null);
   }
 
   /**
@@ -2220,7 +2204,7 @@ export class Game {
   useEscape() {
     if (this.state !== 'run' || !this.run || this.run.escapes <= 0) return;
     if (this.tutorialMode && this.tutPrompting && !this.tutAccept('sos')) return;
-    if (this.tutorialMode && !this.tutPrompting && this.isBasicTraining) return;
+    if (this.tutorialMode && !this.tutPrompting && this.tut.steps.slice(this.tutStep).some((s) => s.need === 'sos')) return; // kept for its lesson
     const p = this.world.player;
     if (!p.escape()) return;
     this.run.escapes--;
@@ -2642,12 +2626,18 @@ export class Game {
     // ---- pilot training: wait for each gesture, captions, finish
     if (this.tutorialMode) {
       const st = this.tut.steps[this.tutStep];
+      // v4.6: steer the car into the lesson's start lane by itself shortly before its prompt
+      if (st && st.from !== undefined && !this.tutPrompting && this.state === 'run') {
+        const tLeft = (st.dist - w.dist) / Math.max(1, w.speed);
+        if (tLeft <= st.lead + 0.9 && tLeft > st.lead && p.lane !== st.from && !p.isAirDash) p.input(p.lane < st.from ? 'right' : 'left');
+      }
       if (st && !this.tutPrompting && this.state === 'run' && (st.dist - w.dist) / Math.max(1, w.speed) <= st.lead && this.aimStep(st)) {
         this.tutPrompting = true;
         this.timeScaleTarget = 0.035;
         this.ui.tutPrompt({ index: this.tutStep, total: this.tut.steps.length, need: st.need, title: st.title, sub: st.sub });
         this.audio.play('beep');
-        if (st.need === 'rocket' && run.superJumps <= 0 && run.hyperJumps <= 0) this.needRocket();
+        // v4.6 (owner): a special already used up earlier in the training comes back for its lesson
+        if ((st.need === 'rocket' && run.superJumps <= 0 && run.hyperJumps <= 0) || (st.need === 'sos' && run.escapes <= 0)) this.tutRegrant();
       }
     }
     // rocket button pressed mid-air: launch on touchdown
@@ -2702,7 +2692,7 @@ export class Game {
     this.portal.group.visible = !c && toPortal < 260;
     if (this.portal.group.visible) {
       this.portal.group.position.z = -toPortal;
-      this.portal.setColor(new THREE.Color(this.scenery.accent));
+      this.portal.setColor(this.portalColor.set(this.scenery.accent)); // v4.6 perf: no per-frame allocation
     }
 
     // ---- tutorial
@@ -2984,12 +2974,12 @@ export class Game {
   }
   lastSpecialSource: 'MANUAL' | 'AUTO_LAST_CHANCE' | null = null;
 
-  // ---- Step 06.5 first-time class promotion celebration (A, AA, AAA, S, SS, SSS)
+  // ---- first-time class promotion celebration (C, B, A since v4.6.1 with a reward; AA … SSS)
   private classQueue: RankClass[] = [];
-  /** after the run is over and saved: queue every class ≥ A reached for the first time */
+  /** after the run is over and saved: queue every class ≥ C reached for the first time */
   private queueClassCelebration() {
     const seen = new Set(this.save.classCelebrated ?? []);
-    for (let i = rankIdx('A'); i <= rankIdx(this.rank); i++) {
+    for (let i = rankIdx('C'); i <= rankIdx(this.rank); i++) {
       const c = CLASSES[i];
       if (!seen.has(c) && !this.classQueue.includes(c)) this.classQueue.push(c);
     }
@@ -3001,16 +2991,27 @@ export class Game {
     if (!c || this.state === 'run' || this.state === 'countdown' || this.state === 'paused' || this.state === 'dying' || this.state === 'respawn') return;
     // reward accuracy: the car this class REALLY unlocked (only AA has one; S+ only if configured + owned)
     const carId = SKINS.find((k) => !k.future && k.need === c && this.save.unlocked.includes(k.id))?.id ?? null;
-    const sub: Record<string, string> = { A: 'Top-class driving. Keep the streak going!', AA: 'Elite driver — a new XWAVE car is yours.', AAA: 'The highest Endless class. Mega Rush is open!', S: 'Mega Rush legend.', SS: 'Almost untouchable.', SSS: 'The very top of Sky Roadster.' };
+    const sub: Record<string, string> = { C: 'Nice start — the road is opening up!', B: 'Solid driving. Keep climbing!', A: 'Top-class driving. Keep the streak going!', AA: 'Elite driver — a new XWAVE car is yours.', AAA: 'The highest Endless class. Mega Rush is open!', S: 'Mega Rush legend.', SS: 'Almost untouchable.', SSS: 'The very top of Sky Roadster.' };
     this.audio.play('fanfare');
     this.vibrate([30, 40, 60]);
-    this.ui.classUp({ cls: c, color: CLASS_COLOR[c], sub: sub[c] ?? '', car: carId ? { id: carId, name: SKINS.find((k) => k.id === carId)!.name } : null });
+    const rw = CLASS_REWARD[c as 'C' | 'B' | 'A'];
+    this.ui.classUp({ cls: c, color: CLASS_COLOR[c], sub: sub[c] ?? '', car: carId ? { id: carId, name: SKINS.find((k) => k.id === carId)!.name } : null, reward: rw ?? null });
   }
   private classOk() {
     const c = this.classQueue.shift();
     if (c) {
       const list = (this.save.classCelebrated ??= []);
-      if (!list.includes(c)) list.push(c);
+      if (!list.includes(c)) {
+        list.push(c);
+        // v4.6.1: C / B / A reward, paid once together with the first celebration
+        const rw = CLASS_REWARD[c as 'C' | 'B' | 'A'];
+        if (rw) {
+          this.save.wallet += rw.coins;
+          this.save.items[rw.item] = (this.save.items[rw.item] ?? 0) + 1;
+          this.ui.refreshProfile(this.save);
+          this.audio.play('coin');
+        }
+      }
       this.persist();
     }
     this.audio.play('click');
@@ -3018,6 +3019,7 @@ export class Game {
     if (this.classQueue.length) window.setTimeout(() => this.showNextClass(), 350);
   }
 
+  private portalColor = new THREE.Color();
   /** Step 06.5 AIR DASH runtime protection / landing check */
   airDashGuard = new AirDashGuard();
   /** performance.now() of the last authoritative collision (Step 06.5 audio latency check) */
@@ -3221,6 +3223,8 @@ export class Game {
     const speedBonus = Math.round(run.coins * (lvg.reward - 1));
     this.save.wallet += run.coins + speedBonus;
     this.save.totalRuns++;
+    const isBonusRun = !!this.course?.bonus;
+    const wkBefore = isBonusRun || this.tutorialMode ? 0 : this.meta.weekly().you.rank;
     const rewards = this.recordMeta(false);
     this.persist();
     this.queueClassCelebration();
@@ -3240,6 +3244,13 @@ export class Game {
     this.ads.runEnded();
     this.ui.show('gameover');
     if (rewards && rewards.to > rewards.from) this.audio.play('mission');
+    // v4.6 (owner): EXP races open on the weekly rank board (the result card with Restart is under it)
+    if (!isBonusRun && !this.tutorialMode) {
+      const board = this.meta.weekly();
+      const clsUp = rewards && rewards.clsAfter !== rewards.clsBefore ? rewards.clsAfter : null;
+      this.ui.runRank({ before: wkBefore, board, rows: aroundYou(board, 2), clsUp });
+      if (board.you.rank < wkBefore) window.setTimeout(() => this.audio.play('combo'), 1500);
+    }
   }
 
   private onWorldChange(id: WorldId) {

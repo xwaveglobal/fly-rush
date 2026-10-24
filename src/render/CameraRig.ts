@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { clamp, damp, lerp } from '../core/math.ts';
 import type { Player } from '../gameplay/Player.ts';
+import { CAR_VIEW } from '../config.ts';
 
 export type CamMode = 'menu' | 'garage' | 'run' | 'crash';
 
@@ -118,14 +119,14 @@ export class CameraRig {
         if (this.swingT > 0) this.swingT = Math.max(0, this.swingT - dt);
         const sk = this.swingDur > 0 ? Math.sin(Math.PI * (1 - this.swingT / this.swingDur)) : 0;
         const sway = Math.sin(t * 0.55) * 0.18 + sk * 2.6;
-        const back = 6.6 + this.pushBack - speedFactor * 0.6;
+        const back = CAR_VIEW.camBack + this.pushBack - speedFactor * 0.6;
         // above the normal HIGH hop (Roadster / HYPER jumps) the camera climbs almost 1:1 so the car stays framed
         // a normal hop is seen rising clearly over the obstacle (camera follows only a little);
         // above it (Roadster / HYPER) the camera climbs almost 1:1 so the car stays framed
         const base = Math.min(py, 3.05) - 1;
         const extra = Math.max(0, py - 3.05);
         wantPos.set(px * 0.72 + sway, 3.25 + base * 0.22 + extra * 0.95 + sk * 0.9, back - sk * 0.8);
-        wantLook.set(px * 0.55, 1.15 + base * 0.3 + extra * 0.8, -9);
+        wantLook.set(px * 0.55, 1.15 + CAR_VIEW.lookUp + base * 0.3 + extra * 0.8, -9);
         fov = this.baseFov + speedFactor * 7 + turbo * 9 + this.fovKick;
         break;
       }

@@ -208,6 +208,15 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v3.2.0 changes — rank board after a race, 3 Bonus plays, training fixes, bigger car
+
+- **After an EXP race: weekly rank board** — the rows around you; when the race moved you up, your row climbs from the old place with a glowing frame while the number counts down, plus RANK UP / CLASS congratulation. Share · Details (the result card with Restart under it) · Home; back and close on top. Both UIs.
+- **Bonus**: every hour, open 30 min, **up to 3 plays** per event (Restart = the next play), 5-minute road, finish = congratulations + coins earned.
+- **Training**: free control in every lesson, each lesson first puts the car in its start lane (e.g. SWIPE LEFT from the middle), new "hop, then drop at once" lesson (swipe DOWN in the air to drop straight away), no obstacle the car can drive through, specials given back for their lesson (no paywall popup), Skip always shown; the first Play still opens the training card (Start / Skip).
+- **C / B / A promotion rewards** (coins + one special, once) on the class celebration; car rarity follows the unlock class (Common → Rare → Epic → Legendary → Mythic → Ultimate).
+- **Car a little bigger and further back toward the camera** (`CAR_VIEW` in config: image ×1.1, camera 6.25 m, aim a bit higher) — visual only, hitboxes unchanged.
+- Shop exchange popup fix, Bag "Back" label; v4.6 cleanup (dead code, per-frame allocations); 3D-only QA scripts removed; native paywall popup removed.
+
 ## v3.1.0 changes — new-main: v4.6 gameplay & UI on the v3 game (car, road and camera unchanged)
 
 Branch `new-main` = `main` (v3.0.11) + every change of `feature/sky-roadster-v4.6-big-update` **except the car, the road / environment and the camera** (those stay exactly as on `main`).
@@ -300,6 +309,19 @@ Native canvas UI got every new piece (class celebration, exchange panel, loading
 - Cloud accounts of v2.3 are off in the native build (the HS profile is the save); the web build keeps them.
 - v2 web game kept on branch `v2`.
 
+## v4.6.1 — owner decisions: Zenith ice blue, rarity by class, C / B / A rewards, Step 07 closed
+
+- **Zenith** (starter, class D) is painted ice blue, so it no longer looks like Vega's white. Its garage and share pictures were re-rendered from the 3D model.
+- **Rarity follows the unlock class**: Zenith Common (D) · Inferno Rare (AA) · Nexus Epic (AAA) · Vega Legendary (S) · Volt Mythic (SS) · Phantom Ultimate (SSS). Only the labels changed; the unlock order is the same.
+- **Classes C / B / A** unlock no car. Their first-time promotion screen now gives a reward, paid once when Continue is tapped (`CLASS_REWARD` in `config.ts`):
+  - C: +300 coins and 1 Roadster Jump.
+  - B: +500 coins and 1 HYPER JUMP.
+  - A: +800 coins and 1 SOS.
+
+  Classes already passed before this update are marked as seen, so there is no back-pay and no extra pop-up.
+- **Step 07 FINAL closed**: the approved v4.2.0 car (locked by a sha256 test), its runtime +15 % height and the v4.6 fixed camera are final. The experimental `?cam=premium|arcade` camera candidates and the `?pbr=1` material pass were removed (`docs/3d-upgrade/step07-final/README.md`).
+- **Step 06.5 QA** was rerun on v4.6 with the updated garage and promotion expectations (`docs/gameplay-upgrade/step06-5/`).
+
 ## v4.6.0 — taller 3D car, home camera inside the road, 3D car pictures, ad revive (owner requests)
 
 - Branch `feature/sky-roadster-v4.6-big-update` (owner: big update → own branch), built on v4.5.0.
@@ -308,6 +330,7 @@ Native canvas UI got every new piece (class celebration, exchange panel, loading
 - **Car pictures** in every panel (Garage cards, celebration, share card, result screen, profile tips) are renders of the in-game 3D X1 in each car's colours (`scripts/car/thumbs-x1.mjs` + `thumbs-pack.py`); locked cars stay black silhouettes.
 - **Settings → Camera motion** (default OFF): OFF = a fixed view down the centre of the road — lane changes, jumps and dives never move or tilt the camera (it sits a little further back / higher so the car stays fully on screen in both outer lanes; only Roadster / HYPER / SOS flights still lift it so the car never leaves the screen). ON = the moving chase camera as before.
 - **Rewarded-ad revive** no longer adds a heart and shows no heart / life notice — only "REVIVED!" (the next hit still ends the run, as before).
+- **More owner requests (2026-10-24)**: special button right under the hearts (smaller); bigger car in the fixed camera view (camera distance fitted to the screen so the car stays whole in the outer lanes); Home / Play buttons without shadows or glow; Garage: AA (Inferno) and AAA (Nexus) cars dark until earned; **Restart** instead of Retry; the game opens on NORMAL; Shop starts with a coins → specials exchange (tap an item to exchange); loading bar always runs ("Loading… NN %"); post-race **weekly rank board** (your row climbs with a glowing frame + RANK UP / CLASS congratulation; Share · Details · Home); Bonus every hour, open 30 min, 3 plays, 5-minute road; training: free control, lessons put the car in their lane, new "hop then drop at once" lesson, no obstacle driven through, specials given back for their lesson, Skip always visible; cleanup: −760 KB of pre-3D car images, unused code removed (bundle 4.59 → 3.56 MB JS, single file 4.82 → 3.79 MB), no per-frame allocations in the camera / car / portal.
 - Details: `docs/gameplay-upgrade/v4.6/`.
 
 ## v4.5.0 — Step 06.5: Air Dash, airborne-only spoiler, audio + pause fixes, auto special, class unlocks

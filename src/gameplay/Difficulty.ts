@@ -13,7 +13,6 @@ import { EXP, type SpeedLevel } from '../config.ts';
  */
 
 export type Tier = 1 | 2 | 3 | 4;
-export const TIER_WEIGHT: Record<Tier, number> = { 1: 1, 2: 2, 3: 4, 4: 7 };
 export const TIER_NAME: Record<Tier, string> = { 1: 'EASY', 2: 'NORMAL', 3: 'HARD', 4: 'EXPERT' };
 
 export type Act = 'left' | 'right' | 'up' | 'down' | 'none';
@@ -148,9 +147,6 @@ export function tierWeights(cfg: MapDifficultyConfig, progress: number, inWarmup
   return w.map((x) => x / sum);
 }
 
-export const patternOf = (k: PatternKey) => PATTERNS[k];
-
-
 // ===================================================================== v2 ENDLESS PHASES
 /**
  * v2 Endless (docs/GAME-DESIGN.md §1): difficulty climbs by RANK PHASE, measured in EXP so every
@@ -228,8 +224,6 @@ export function rankIdxAt(d: number, level: SpeedLevel, v: Variant = 'endless') 
   for (let k = 1; k <= VARIANTS[v].top; k++) if (e >= EXP.rank[RANK_ORDER[k]]) i = k;
   return i;
 }
-/** difficulty phase (index into PHASES) at distance d */
-export const phaseAt = (d: number, level: SpeedLevel, v: Variant = 'endless') => Math.min(PHASES.length - 1, rankIdxAt(d, level, v) + VARIANTS[v].shift);
 /** road speed multiplier of a rank index (Track 2 keeps speeding up past AAA) */
 export function rankSpeed(i: number, v: Variant = 'endless') {
   const p = i + VARIANTS[v].shift;

@@ -1375,7 +1375,7 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 /* v1.13 — popups always on top of the home menu; dimmed + blurred background */
 #start { isolation: isolate; }
 #ui .screen.overlay { z-index: 20; background: rgba(3,6,20,.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-#ui .screen.overlay#continue, #ui .screen.overlay#needrocket { z-index: 20; }
+#ui .screen.overlay#continue { z-index: 20; }
 /* bottom row: Garage · Shop · Missions */
 #start .halfrow { display: grid !important; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
 #start .halfrow .mbtn { padding-left: 6px !important; padding-right: 6px !important; min-width: 0; position: relative; }
@@ -2629,3 +2629,38 @@ svg.xpt { width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.18em; }
 #shop .xbtn em { font-style: normal; font-size: 12px; font-weight: 800; color: #ffd24a; display: inline-flex; align-items: center; gap: 3px; }
 #shop .xbtn.short em { color: #ff8aa0; }
 #loading .bar i { transition: none !important; }
+/* v4.6: the training Skip sits on the left under the speed bar (the special button is on the right now) */
+#hud .trskip { right: auto !important; left: 12px; top: calc(124px + var(--safe-t, 0px)) !important; }
+/* v4.6: training prompt card below the special button */
+#tutprompt, #hud:has(.trackbar:not([hidden])) ~ #tutprompt { padding-top: calc(190px + var(--safe-t)) !important; }
+
+/* v4.6 post-race rank board (over the result card) */
+#ui .screen.overlay#runrank { z-index: 22; }
+#runrank .rr { width: min(100%, 370px); gap: 10px; padding: 14px 14px 16px; }
+#runrank .rr-top { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+#runrank .rr-top b { font-size: 18px; font-style: italic; letter-spacing: 1px; }
+#runrank .rr-congrats { width: 100%; text-align: center; padding: 8px 10px; border-radius: 12px; font-size: 15px; color: #fff;
+  background: linear-gradient(90deg, rgba(255,194,26,.18), rgba(155,107,255,.22)); border: 1px solid rgba(255,210,74,.6); display: flex; gap: 6px; align-items: center; justify-content: center; flex-wrap: wrap; }
+#runrank .rr-congrats svg { width: 18px; height: 18px; }
+#runrank.up .rr-congrats { animation: rrPop .6s 1.5s both; }
+@keyframes rrPop { from { transform: scale(.8); opacity: 0; } to { transform: none; opacity: 1; } }
+#runrank .rr-list { width: 100%; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+#runrank .rr-list .lbrow { position: relative; }
+#ui #runrank .rr-list .lbrow.rr-me { z-index: 2; border: 2px solid #ffd24a !important; background: linear-gradient(90deg, rgba(255,210,74,.2), rgba(79,195,255,.14)) !important;
+  box-shadow: 0 0 18px rgba(255,210,74,.55), inset 0 0 12px rgba(255,210,74,.25) !important; }
+#ui #runrank .rr-list .lbrow.rr-me.rr-done { animation: rrGlow 1.6s ease-in-out 2 !important; }
+@keyframes rrGlow { 50% { box-shadow: 0 0 30px rgba(255,210,74,.9), inset 0 0 18px rgba(255,210,74,.4); } }
+#runrank .rr-foot { font-size: 12px; color: rgba(255,255,255,.75); text-align: center; }
+#runrank .rr-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
+#runrank .rr-btns .btn { min-width: 0; }
+/* v4.6: no glowing rim on Play either (a calm solid edge) */
+#ui #start .menu-btns .mbtn[data-a="play"] { border: 2px solid rgba(140, 215, 255, .5) !important; }
+
+/* v4.6.1 — C / B / A promotion reward (coins + one special) */
+#classup .cu-reward { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+#classup.play .cu-reward { animation: cuIn .6s .5s both; }
+#classup .cu-reward small { font-size: 12px; font-weight: 800; letter-spacing: 2px; color: var(--cc); text-transform: uppercase; }
+#classup .cu-rw { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+#classup .cu-rc, #classup .cu-ri { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 14px;
+  background: rgba(10, 14, 40, .72); border: 1px solid rgba(255,255,255,.16); color: #fff; font-size: 17px; }
+#classup .cu-ri svg, #classup .cu-ri img { width: 26px; height: 26px; }

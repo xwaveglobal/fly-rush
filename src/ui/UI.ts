@@ -22,7 +22,7 @@ import type { SaveData } from '../core/Save.ts';
 import { SKINS, carVisibility } from '../render/Vehicle.ts';
 import { CAR_IMG, carImage, carRear, carShadow, logoImg } from './shared.ts';
 export { carImage, carRear, logoImg };
-const RARITY_COLOR: Record<string, string> = { Common: '#4fb3ff', Rare: '#a77bff', Epic: '#ffc24a', Legendary: '#ff4a3c', Mythic: '#d04dff' };
+const RARITY_COLOR: Record<string, string> = { Common: '#4fb3ff', Rare: '#a77bff', Epic: '#ffc24a', Legendary: '#ff4a3c', Mythic: '#d04dff', Ultimate: '#7dfff2' };
 import { LEVELS } from '../config.ts';
 import type { Run } from '../gameplay/Run.ts';
 import type { PickupKind } from '../gameplay/types.ts';
@@ -132,7 +132,6 @@ export interface UIHandlers {
   toggleAutoClaim(): void;
   claimMission(i: number): void;
   rocket(): void;
-  rocketFix(how: string): void;
   popAction(a: string): void;
   freePop(): void;
   perk(k: string): void;
@@ -590,14 +589,6 @@ export class UI {
       </div>
     </section>
 
-    <section id="needrocket" class="screen overlay">
-      <div class="panel modal center needr">
-        <div class="nr-ic">${ICON.rocket}</div>
-        <h2>ROADSTER JUMP NEEDED</h2>
-        <p class="tut-lead">Cars block every lane — only a <b>Roadster Jump</b> gets you past. Collect the purple rocket on the road, or get one now.</p>
-        <div data-k="nrbtns" class="nrbtns"></div>
-      </div>
-    </section>
 
     <section id="hud" class="screen passthrough">
       <div class="row">
@@ -716,7 +707,22 @@ export class UI {
         <div class="cu-sub" data-k="cusub"></div>
       </div>
       <div class="cu-car" data-k="cucar" hidden><img data-k="cucarimg" alt="" /><small>New car unlocked</small><b data-k="cucarname"></b></div>
+      <div class="cu-reward" data-k="cureward" hidden></div>
       <button class="btn big cu-ok" data-a="classok">Continue</button>
+    </section>
+
+    <section id="runrank" class="screen overlay">
+      <div class="panel rr">
+        <div class="rr-top"><button class="icon-btn sm" data-a="rrback" aria-label="Back">${ICON.chevL}</button><b>WEEKLY RANKING</b><button class="icon-btn sm" data-a="home" aria-label="Close">${ICON.close}</button></div>
+        <div class="rr-congrats" data-k="rrcongrats" hidden></div>
+        <div class="rr-list" data-k="rrlist"></div>
+        <div class="rr-foot" data-k="rrfoot"></div>
+        <div class="rr-btns">
+          <button class="btn nav blue" data-a="share">${ICON.share}<span>Share</span></button>
+          <button class="btn nav purple" data-a="rrback">${ICON.info}<span>Details</span></button>
+          <button class="btn nav dark" data-a="home">${ICON.home}<span>Home</span></button>
+        </div>
+      </div>
     </section>
 
     <section id="gameover" class="screen overlay">
@@ -870,7 +876,6 @@ export class UI {
           // already fired on touch-down (see pointerdown below); a click alone (mouse / keyboard) still works
           if (performance.now() - this.fastTapT < 600) return;
           return a === 'sos' ? this.h.sos() : this.h.rocket();
-        case 'rocketfix': return this.h.rocketFix(el.dataset.v!);
         case 'avpick': return this.h.setAvatar(Number(el.dataset.i));
         case 'avrand': return this.h.randomAvatar();
         case 'profile': return this.h.profile();
@@ -919,6 +924,10 @@ export class UI {
           return;
         case 'classok':
           return this.h.classOk?.();
+        case 'rrback':
+          // the race details (result card with Restart) are right under the rank board
+          this.hideOverlay('runrank');
+          return;
         case 'savepname': return this.h.setName($<HTMLInputElement>(this.root, '[data-k="pnameinput"]').value);
         case 'pickcar':
           this.garageIndex = SKINS.findIndex((x) => x.id === el.dataset.id);
@@ -1750,17 +1759,17 @@ export class UI {
   }
 
   /** v2 Bonus event card: today's place, time left / next opening, rules, RACE */
-  bonusSync(o: { live: boolean; theme: string; name: string; left: string; opens: string; opensAt: string; next: string; finish: number; minutes: number; played: boolean }) {
+  bonusSync(o: { live: boolean; theme: string; name: string; left: string; opens: string; opensAt: string; next: string; finish: number; minutes: number; played: boolean; playsLeft: number; maxPlays: number; openMinutes: number; everyHours: number }) {
     $(this.root, '[data-k="bnbody"]').innerHTML = `
       <div class="bn-hero" style="--cc:${BONUS_COLOR[o.theme] ?? '#ffc21a'}" data-theme="${o.theme}"><span class="bn-ic">${BONUS_EMOJI[o.theme] ?? '🏁'}</span><b>${o.name}</b>
         <small>${o.live ? `<em class="live">OPEN</em> ${o.left} left` : `<em class="soon">NEXT</em> ${o.opens}`}</small></div>
       <div class="bn-rules">
-        <span>${ICON.clock}<b>${o.minutes} min</b> to the finish · <b>Replay freely</b></span>
+        <span>${ICON.clock}<b>${o.minutes} min</b> to the finish · <b>${o.maxPlays} plays</b></span>
         <span>${ICON.coin}<b>Coins only</b> · finish +${fmt(o.finish)}</span>
         <span>${ICON.rocket}<b>Rare specials</b> fire by themselves</span>
-        <span>${ICON.gift}<b>Every hour</b> · open 30 min · random place</span>
+        <span>${ICON.gift}<b>Every ${o.everyHours === 1 ? 'hour' : `${o.everyHours} h`}</b> · open ${o.openMinutes} min · random place</span>
       </div>
-      ${o.live && !o.played ? `<button class="btn big gold" data-a="bonusgo">${ICON.play} Race</button>` : o.live ? `<button class="btn" disabled>${ICON.check} Played · next ${o.opensAt}</button>` : `<button class="btn" disabled>${ICON.lock} Opens ${o.opensAt}</button>`}
+      ${o.live && !o.played ? `<button class="btn big gold" data-a="bonusgo">${ICON.play} Race · ${o.playsLeft} / ${o.maxPlays} left</button>` : o.live ? `<button class="btn" disabled>${ICON.check} ${o.maxPlays} plays used · next ${o.opensAt}</button>` : `<button class="btn" disabled>${ICON.lock} Opens ${o.opensAt}</button>`}
       ${o.next ? `<div class="label bn-next">Next: ${o.next}</div>` : ''}`;
     this.screens.bonus.classList.add('show');
     this.scheduleFit();
@@ -1846,8 +1855,53 @@ export class UI {
     this.scheduleFit();
   }
 
+  /**
+   * v4.6 post-race rank board (over the result card): the weekly rows around the player; when this race
+   * moved the player up, the player's row climbs from the old position to the new one with a glowing
+   * frame and a congratulation (class promotion included).
+   */
+  runRank(o: { before: number; board: Board; rows: LbRow[]; clsUp: RankClass | null }) {
+    this.rowCache = [];
+    const y = o.board.you;
+    const up = o.before > y.rank && y.score > 0;
+    const list = $(this.root, '[data-k="rrlist"]');
+    list.innerHTML = o.rows.map((r) => this.lbRow(r)).join('');
+    const me = list.querySelector<HTMLElement>('.lbrow.you');
+    const cg = $(this.root, '[data-k="rrcongrats"]');
+    cg.hidden = !up && !o.clsUp;
+    cg.innerHTML = `${o.clsUp ? `${classBadge(o.clsUp)} <b>CLASS ${o.clsUp}!</b> ` : ''}${up ? `${ICON.trophy} <b>RANK UP!</b> #${fmt(o.before)} → #${fmt(y.rank)}` : ''}`;
+    const pct = Math.max(0.1, (y.rank / o.board.total) * 100);
+    $(this.root, '[data-k="rrfoot"]').innerHTML = y.score <= 0 ? 'Drive a race to get ranked' : `Top ${pct < 1 ? pct.toFixed(1) : Math.ceil(pct)}% of ${fmt(o.board.total)} pilots${o.board.next ? ` · EXP <b>${fmt(o.board.next.score)}</b> for <b>#${fmt(o.board.next.rank)}</b>` : ''}`;
+    const sc = this.screens.runrank;
+    sc.classList.toggle('up', up);
+    this.showOverlay('runrank');
+    if (!me) return;
+    me.classList.add('rr-me');
+    if (!up) return;
+    // the climb: the row starts lower (old rank) and slides up while its number counts down
+    const rowsUp = Math.min(3, o.rows.length - 1 - o.rows.findIndex((r) => r.you));
+    const h = me.getBoundingClientRect().height + 6;
+    me.style.transform = `translateY(${Math.max(1, rowsUp) * h}px)`;
+    me.style.transition = 'none';
+    const num = me.querySelector('.lr b');
+    const t0 = performance.now();
+    const dur = 1600;
+    requestAnimationFrame(() => {
+      me.style.transition = `transform ${dur}ms cubic-bezier(.2,.8,.2,1)`;
+      me.style.transform = 'translateY(0)';
+    });
+    const tick = (now: number) => {
+      const k = Math.min(1, (now - t0) / dur);
+      const e = 1 - Math.pow(1 - k, 3);
+      if (num) num.textContent = `#${fmt(Math.round(o.before + (y.rank - o.before) * e))}`;
+      if (k < 1) requestAnimationFrame(tick);
+      else me.classList.add('rr-done');
+    };
+    requestAnimationFrame(tick);
+  }
+
   /** Step 06.5 first-time class promotion (A and up): emblem, light sweep, particles; car showcase on AA */
-  classUp(o: { cls: string; color: string; sub: string; car: { id: string; name: string } | null }) {
+  classUp(o: { cls: string; color: string; sub: string; car: { id: string; name: string } | null; reward?: { coins: number; item: ItemKey } | null }) {
     const sc = this.screens.classup;
     if (!sc) return;
     sc.style.setProperty('--cc', o.color);
@@ -1857,6 +1911,10 @@ export class UI {
     const car = $(this.root, '[data-k="cucar"]');
     car.hidden = !o.car;
     sc.classList.toggle('withcar', !!o.car);
+    // v4.6.1: C / B / A reward (coins + one special), paid when the player taps Continue
+    const rw = $(this.root, '[data-k="cureward"]');
+    rw.hidden = !o.reward;
+    if (o.reward) rw.innerHTML = `<small>Promotion reward</small><span class="cu-rw"><span class="cu-rc">${coinFace(26)}<b>+${fmt(o.reward.coins)}</b></span><span class="cu-ri">${ITEM_ICON[o.reward.item]}<b>+1 ${ITEM_NAME[o.reward.item]}</b></span></span>`;
     if (o.car) {
       this.setAll('cucarname', o.car.name);
       $<HTMLImageElement>(this.root, '[data-k="cucarimg"]').src = carImage(o.car.id);
@@ -1904,7 +1962,7 @@ export class UI {
     $(this.root, '[data-k="buybody"]').innerHTML = `
       <div class="spwallet">${ICON.coin}<b>${fmt(s.wallet)}</b><span class="bgrule">Buy any amount · keep them in the bag</span></div>
       <div class="bgbuys">${SPECIALS.map(row).join('')}</div>
-      <button class="btn ghost" data-a="closeov" data-v="bagbuy">${ICON.chevL} Back to the bag</button>`;
+      <button class="btn ghost" data-a="closeov" data-v="bagbuy">${ICON.chevL} Back</button>`;
   }
 
   private shareText = '';
@@ -2102,6 +2160,7 @@ export class UI {
   }
 
   shopSync(s: SaveData) {
+    this.lastSave = s; // the exchange popup (bagbuy) opened from the Shop reads it
     const card = (p: Product) => {
       const owned = (p.sku === 'no_ads' && s.noAds) || (p.sku === 'starter_pack' && s.starterBought);
       const passOn = p.sku === 'xwave_pass' && s.passUntil > Date.now();
@@ -2386,16 +2445,6 @@ export class UI {
 
   closePopup() {
     this.screens.popup.classList.remove('show');
-  }
-
-  needRocket(o: { owned: number; wallet: number; price: number }) {
-    const b: string[] = [];
-    if (o.owned > 0) b.push(`<button class="btn big" data-a="rocketfix" data-v="use">${ICON.rocket} Use one · you own ×${o.owned}</button>`);
-    b.push(o.wallet >= o.price
-      ? `<button class="btn gold" data-a="rocketfix" data-v="buy">Buy 1 · <span class="price">${ICON.coin}${fmt(o.price)}</span></button>`
-      : `<button class="btn pink" data-a="rocketfix" data-v="shop">${ICON.bag} Get Roadster Jumps</button>`);
-    b.push(`<button class="btn ghost sm" data-a="rocketfix" data-v="retry">${ICON.retry} Restart & collect the rocket</button>`);
-    $(this.root, '[data-k="nrbtns"]').innerHTML = b.join('');
   }
 
   /** danger-assist arrow (null hides) */

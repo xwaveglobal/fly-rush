@@ -7,7 +7,7 @@ import { BAG_ICON, BOLT, BONUS_COLOR, BONUS_EMOJI, ICON, ITEM_ICON, ITEM_NAME, L
 import { safeBottom, safeTop } from './layout.ts';
 import { avatar } from './screens.ts';
 import { AVATAR_COUNT, avatarSvg, avatarForName } from '../../ui/avatars.ts';
-import { CLASSES, CLASS_COLOR, CLASS_MIN, type RankClass } from '../../meta/Rank.ts';
+import { CLASSES, CLASS_COLOR, CLASS_MIN, classFor, type RankClass } from '../../meta/Rank.ts';
 import { CHECKIN, ITEM_PRICE, LOCKED_SPECIALS, SPECIALS, type ItemKey, type SpecialKey } from '../../meta/Daily.ts';
 import { COUNTRIES, countryName } from '../../meta/Country.ts';
 import { codeOfFlag, flagSvg, svgFlags } from '../../meta/Flags.ts';
@@ -78,6 +78,7 @@ const OV: Record<string, (ui: UI, g: Gfx) => void> = {
   tutdone: tutdoneOv,
   tutintro: tutintroOv,
   settings: settingsOv,
+  runrank: runrankOv,
   classup: classupOv,
   logs: logsOv,
   guide: guideOv,
@@ -90,7 +91,6 @@ const OV: Record<string, (ui: UI, g: Gfx) => void> = {
   boostinfo: boostinfoOv,
   spconfirm: spconfirmOv,
   rankguide: rankguideOv,
-  needrocket: needrocketOv,
   account: accountOv,
   cloudpick: cloudpickOv,
   popup: popupOv,
@@ -539,6 +539,13 @@ function classupOv(ui: UI, g: Gfx) {
     g.text(`Class ${o.cls}`, x + w / 2, y + 28, { size: 28, align: 'center', italic: true, color: o.color, noTr: true });
     y += 48;
     y += g.para(o.sub, x + 8, y, w - 16, { size: 12.5, font: 'b', align: 'center', color: '#dfe8ff' }) + 8;
+    if (o.reward) {
+      // v4.6.1: C / B / A promotion reward (paid when Continue is tapped)
+      g.rr(x, y, w, 58, 14, 'rgba(10,20,52,.85)', `${o.color}88`, 1.4);
+      g.text('Promotion reward', x + w / 2, y + 14, { size: 10, align: 'center', color: C.muted, font: 'b' });
+      g.rich(`${ICON.coin}<b>+${fmt(o.reward.coins)}</b>  ${ITEM_ICON[o.reward.item as ItemKey] ?? ''}<b>+1</b>`, x, y + 24, w, { size: 15, align: 'center', noTr: true });
+      y += 68;
+    }
     if (o.car) {
       g.rr(x, y, w, 96, 14, 'rgba(10,20,52,.85)', `${o.color}88`, 1.4);
       g.img(carImage(o.car.id), x + 10, y + 6, w - 20, 64, 'contain');
@@ -547,6 +554,74 @@ function classupOv(ui: UI, g: Gfx) {
     }
     button(g, 'cu-ok', x, y, w, 52, 'OK', () => ui.h.classOk?.(), { style: 'gold', size: 20 });
     return y + 56;
+  });
+}
+
+/**
+ * v4.6 post-race weekly rank board (native): back + close on top, congratulation (rank up / class),
+ * the rows around the player — the player's row climbs from its old place with a glowing frame while
+ * its number counts down — then Share · Details · Home. Details = the result card under it.
+ */
+function runrankOv(ui: UI, g: Gfx) {
+  const o = ui.rr;
+  if (!o) return;
+  const you = o.board.you;
+  const up = o.before > you.rank && you.score > 0;
+  const dur = 1600;
+  const k = up ? Math.min(1, (g.time - o.t0) / dur) : 1;
+  const e = 1 - Math.pow(1 - k, 3);
+  if (k < 1) ui.dirty = true;
+  modal(ui, g, 'runrank', { close: 'none', w: 360 }, (x, y, w) => {
+    iconBtn(g, 'rr-back', x - 4, y - 4, 34, ICON.chevL, () => ui.hideOverlay('runrank'));
+    g.text('WEEKLY RANKING', x + w / 2, y + 13, { size: 15, align: 'center', italic: true });
+    iconBtn(g, 'rr-x', x + w - 30, y - 4, 34, ICON.close, () => ui.h.home());
+    y += 42;
+    if (up || o.clsUp) {
+      const glow = 0.55 + 0.45 * Math.sin(g.time / 220);
+      g.rr(x, y, w, 40, 12, `rgba(255,194,26,${0.12 + 0.1 * glow})`, C.gold, 1.4);
+      const parts: string[] = [];
+      if (o.clsUp) parts.push(`<span class="clsb" style="--cc:${CLASS_COLOR[o.clsUp]}">${o.clsUp}</span> <b>CLASS ${o.clsUp}!</b>`);
+      if (up) parts.push(`${ICON.trophy} <b>RANK UP!</b> #${fmt(o.before)} → #${fmt(you.rank)}`);
+      g.rich(parts.join('  '), x, y + 11, w, { size: 13, align: 'center', color: C.gold });
+      y += 50;
+    }
+    const rowH = 50,
+      gap = 6;
+    const meIdx = o.rows.findIndex((r) => r.you);
+    const rowsUp = up ? Math.max(1, Math.min(3, o.rows.length - 1 - meIdx)) : 0;
+    const top = y;
+    o.rows.forEach((r, i) => {
+      if (r.you) return;
+      // rows the player passes slide down one slot as the player climbs past them
+      const yy = top + i * (rowH + gap);
+      drawRow(r, yy, false);
+    });
+    if (meIdx >= 0) {
+      const yy = top + meIdx * (rowH + gap) + rowsUp * (rowH + gap) * (1 - e);
+      drawRow({ ...you, rank: Math.round(o.before + (you.rank - o.before) * e) }, yy, true);
+    }
+    y = top + o.rows.length * (rowH + gap) + 4;
+    const pct = Math.max(0.1, (you.rank / o.board.total) * 100);
+    y += g.rich(you.score <= 0 ? 'Drive a race to get ranked' : `Top ${pct < 1 ? pct.toFixed(1) : Math.ceil(pct)}% of ${fmt(o.board.total)} pilots${o.board.next ? ` · EXP <b>${fmt(o.board.next.score)}</b> for #${fmt(o.board.next.rank)}` : ''}`, x, y, w, { size: 10.5, align: 'center', font: 'b', color: C.muted }) + 10;
+    const bw = (w - 16) / 3;
+    button(g, 'rr-share', x, y, bw, 50, 'Share', () => ui.h.share(), { style: 'blue', icon: ICON.share, size: 13 });
+    button(g, 'rr-det', x + bw + 8, y, bw, 50, 'Details', () => ui.hideOverlay('runrank'), { style: 'purple', icon: ICON.info, size: 13 });
+    button(g, 'rr-home', x + 2 * (bw + 8), y, bw, 50, 'Home', () => ui.h.home(), { style: 'dark', icon: ICON.home, size: 13 });
+    return y + 54;
+
+    function drawRow(r: any, yy: number, me: boolean) {
+      const cls: RankClass = me ? ui.myClass : classFor(r.score);
+      if (me) {
+        const glow = up && k >= 1 ? 0.6 + 0.4 * Math.sin(g.time / 200) : 1;
+        g.rr(x - 2, yy - 2, w + 4, rowH + 4, 14, null, `rgba(255,194,26,${glow})`, 2.5);
+      }
+      g.rr(x, yy, w, rowH, 12, me ? 'rgba(255,194,26,.18)' : 'rgba(10,20,52,.8)', me ? C.gold : 'rgba(130,175,255,.16)');
+      g.text(r.score <= 0 && me ? '—' : `#${fmt(r.rank)}`, x + 30, yy + rowH / 2, { size: 13, align: 'center', maxW: 54, noTr: true });
+      g.icon(avatarSvg(r.av ?? avatarForName(r.name)), x + 60, yy + 7, 36);
+      g.text(r.name + (me ? '  YOU' : ''), x + 104, yy + 17, { size: 12, maxW: w - 210, color: r.pass ? C.gold : '#fff', noTr: true });
+      g.rich(`${r.flag} <span class="clsb" style="--cc:${CLASS_COLOR[cls]}">${cls}</span>`, x + 104, yy + 25, w - 210, { size: 11 });
+      g.rich(`<b>${fmt(r.score)}</b> ${BOLT}`, x + w - 110, yy + 16, 100, { size: 12, align: 'right' });
+    }
   });
 }
 
@@ -732,15 +807,15 @@ function bonusOv(ui: UI, g: Gfx) {
     g.rich(o.live ? `<b class="live">OPEN</b> ${o.left} left` : `<b class="soon">NEXT</b> ${o.opens}`, x, y + 76, w, { size: 11.5, align: 'center', font: 'b' });
     y += 110;
     const rules = [
-      `${ICON.clock}<b>${o.minutes} min</b> to the finish · <b>Replay freely</b>`,
+      `${ICON.clock}<b>${o.minutes} min</b> to the finish · <b>${o.maxPlays ?? 3} plays</b>`,
       `${ICON.coin}<b>Coins only</b> · finish +${fmt(o.finish)}`,
       `${ICON.rocket}<b>Rare specials</b> fire by themselves`,
-      `${ICON.gift}<b>Every hour</b> · open 30 min · random place`,
+      `${ICON.gift}<b>Every ${(o.everyHours ?? 1) === 1 ? 'hour' : `${o.everyHours} h`}</b> · open ${o.openMinutes ?? 30} min · random place`,
     ];
     for (const r of rules) y += g.rich(r, x + 4, y, w - 8, { size: 12, font: 'b', color: '#dfe8ff' }) + 4;
     y += 6;
-    if (o.live && !o.played) button(g, 'bonusgo', x, y, w, 54, `${ICON.play} Race`, () => ui.h.bonusGo(), { style: 'gold', size: 20 });
-    else button(g, 'bonusgo', x, y, w, 46, o.live ? `${ICON.check} Played · next ${o.opensAt}` : `${ICON.lock} Opens ${o.opensAt}`, () => {}, { style: 'ghost', disabled: true, size: 13 });
+    if (o.live && !o.played) button(g, 'bonusgo', x, y, w, 54, `${ICON.play} Race · ${o.playsLeft ?? 3} / ${o.maxPlays ?? 3} left`, () => ui.h.bonusGo(), { style: 'gold', size: 20 });
+    else button(g, 'bonusgo', x, y, w, 46, o.live ? `${ICON.check} ${o.maxPlays ?? 3} plays used · next ${o.opensAt}` : `${ICON.lock} Opens ${o.opensAt}`, () => {}, { style: 'ghost', disabled: true, size: 13 });
     y += 60;
     if (o.next) y += g.rich(`Next: ${o.next}`, x, y, w, { size: 10.5, align: 'center', font: 'b', color: C.muted });
     return y + 4;
@@ -847,7 +922,7 @@ function bagbuyOv(ui: UI, g: Gfx) {
       button(g, `sbuy-${k}`, x + w - 100, y + 14, 90, 36, `${ICON.coin}${fmt(ITEM_PRICE[k])}`, () => ui.h.buySpecial(k), { style: s.wallet >= ITEM_PRICE[k] ? 'gold' : 'pink', size: 13 });
       y += 72;
     }
-    button(g, 'bb-back', x, y, w, 42, `${ICON.chevL} Back to the bag`, () => ui.hideOverlay('bagbuy'), { style: 'ghost', size: 13 });
+    button(g, 'bb-back', x, y, w, 42, `${ICON.chevL} Back`, () => ui.hideOverlay('bagbuy'), { style: 'ghost', size: 13 });
     return y + 46;
   });
 }
@@ -942,28 +1017,6 @@ function rankguideOv(ui: UI, g: Gfx) {
   });
 }
 
-function needrocketOv(ui: UI, g: Gfx) {
-  const o = ui.nr;
-  modal(ui, g, 'needrocket', { close: 'none', w: 340 }, (x, y, w) => {
-    g.icon(ICON.rocket, x + w / 2 - 28, y, 56);
-    y += 66;
-    g.text('ROADSTER JUMP NEEDED', x + w / 2, y, { size: 17, align: 'center', italic: true, maxW: w });
-    y += 16;
-    y += g.rich('Cars block every lane — only a <b>Roadster Jump</b> gets you past. Collect the purple rocket on the road, or get one now.', x, y, w, { size: 12, font: 'b', color: '#cfe0ff', align: 'center' }) + 10;
-    if (o) {
-      if (o.owned > 0) {
-        button(g, 'nr-use', x, y, w, 50, `${ICON.rocket} Use one · you own ×${o.owned}`, () => ui.h.rocketFix('use'), { style: 'blue', size: 15 });
-        y += 58;
-      }
-      if (o.wallet >= o.price) button(g, 'nr-buy', x, y, w, 46, `Buy 1 · <span class="price">${ICON.coin}${fmt(o.price)}</span>`, () => ui.h.rocketFix('buy'), { style: 'gold', size: 15 });
-      else button(g, 'nr-shop', x, y, w, 46, `${ICON.bag} Get Roadster Jumps`, () => ui.h.rocketFix('shop'), { style: 'pink', size: 15 });
-      y += 54;
-      button(g, 'nr-retry', x + 20, y, w - 40, 38, `${ICON.retry} Restart & collect the rocket`, () => ui.h.rocketFix('retry'), { style: 'ghost', size: 12 });
-      y += 42;
-    }
-    return y;
-  });
-}
 
 function accountOv(ui: UI, g: Gfx) {
   modal(ui, g, 'account', { title: 'ACCOUNT' }, (x, y, w) => {

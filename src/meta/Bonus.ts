@@ -1,10 +1,10 @@
 /**
  * v2 BONUS events (docs/GAME-DESIGN.md §5) — replace the old cups.
  *
- * v3.0.6: every hour (local time: 00:00, 01:00, …) a Bonus road opens for 30 minutes and can be
- * replayed as often as you like while it is open. Each opening picks a random place (never the same
- * as the hour before; every player sees the same one), a 5-minute road with a
- * FINISH line, and it pays only coins (no EXP, no ranking). Special items lie on the road and fire
+ * v4.6 (owner): every hour (local time: 00:00, 01:00, …) a Bonus road opens for 30 minutes and can be
+ * played up to 3 times. Each opening picks a random place (never the same as the hour before; every
+ * player sees the same one), a 5-minute road with a FINISH line (congratulations + the coins earned),
+ * coins only. Special items lie on the road and fire
  * by themselves when picked up. Pure logic — no DOM.
  */
 import type { BonusWorld } from '../gameplay/Spawner.ts';
@@ -12,7 +12,9 @@ import type { BonusWorld } from '../gameplay/Spawner.ts';
 export const BONUS = {
   everyHours: 1,
   openMinutes: 30,
-  /** non-stop minutes from START to FINISH (a short 5-minute road; v3.0.6: replay freely while open) */
+  /** plays per event (v4.6) */
+  maxPlays: 3,
+  /** non-stop minutes from START to FINISH (a short 5-minute road) */
   raceMinutes: 5,
   /** coins for reaching the finish line (× speed-level coin multiplier) */
   finishCoins: 300,
@@ -86,8 +88,6 @@ export function bonusState(now = Date.now()) {
   return { live, next };
 }
 
-export function fmtClock(ms: number) {
-  const s = Math.max(0, Math.floor(ms / 1000));
-  const m = Math.floor(s / 60);
-  return `${m}:${String(s % 60).padStart(2, '0')}`;
-}
+/** plays already used in this event (save.bonusPlays = { key, n }) */
+export const bonusPlaysUsed = (rec: { key: string; n: number } | undefined, key: string) => (rec && rec.key === key ? rec.n : 0);
+

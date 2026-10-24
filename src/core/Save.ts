@@ -64,6 +64,8 @@ export interface SaveData {
   pendingMissions: { text: string; reward: number }[];
   /** Step 06.5: classes (A and up) whose first-promotion celebration the player has acknowledged */
   classCelebrated?: string[];
+  /** v4.6.1: C / B celebrations added — classes already passed were marked as seen (no back-pay) */
+  classLowSeen?: boolean;
   /** consumable items (equipped on the track screen, used in a run) */
   items: { super: number; hyper: number; shield: number; escape: number; turbo: number; magnet: number; double: number; life: number };
   /** which owned items are equipped for the next run */
@@ -98,6 +100,8 @@ export interface SaveData {
   perks: { profileSeen?: boolean; avatarPicked?: boolean; entry?: boolean; launch?: boolean; shareDay?: string; inviteDay?: string; invites?: number; rated?: boolean; rateAsked?: boolean; countryDetected?: boolean; kit2?: boolean };
   /** v2.2: key of the Bonus event already played (one play per event) */
   bonusPlayed?: string;
+  /** v4.6: plays used in the current Bonus event (key = event start) */
+  bonusPlays?: { key: string; n: number };
   /** v2.2 career missions: lifetime counters + tiers paid (src/meta/Career.ts) */
   career?: CareerStats;
   /** danger-hint gestures the player has answered (hint stops after 3) */

@@ -43,7 +43,7 @@ export interface HudState {
 
 const BASE = ['loading', 'start', 'tracks', 'garage', 'missions', 'ranks', 'daily', 'events', 'shop', 'hud', 'countdown', 'tutprompt'];
 /** overlay draw order (bottom → top) */
-export const OVERLAYS = ['finish', 'gameover', 'continue', 'pause', 'tutdone', 'tutintro', 'settings', 'guide', 'eventres', 'profile', 'bonus', 'specialpick', 'bag', 'bagbuy', 'boostinfo', 'spconfirm', 'rankguide', 'needrocket', 'account', 'cloudpick', 'sharepv', 'popup', 'classup', 'logs'];
+export const OVERLAYS = ['finish', 'gameover', 'continue', 'pause', 'tutdone', 'tutintro', 'settings', 'guide', 'eventres', 'profile', 'bonus', 'specialpick', 'bag', 'bagbuy', 'boostinfo', 'spconfirm', 'rankguide', 'account', 'cloudpick', 'sharepv', 'popup', 'runrank', 'classup', 'logs'];
 
 export class UI {
   /** Game uses root.getBoundingClientRect() to map 3D → screen */
@@ -87,7 +87,6 @@ export class UI {
   acctText = 'This device';
   cloudPick: { device: any; cloud: any } | null = null;
   eventRes: EventResult[] = [];
-  nr: { owned: number; wallet: number; price: number } | null = null;
   adState: Record<string, { used: boolean; text: string }> = {};
   hidden: Record<string, boolean> = {};
   freeLeft = 5;
@@ -401,10 +400,16 @@ export class UI {
     this.pushNotice({ kind: 'toast', html, color });
   }
   /** v4 class celebration (A and up, first time): rank badge, title, line, unlocked car */
-  classup: { cls: string; color: string; sub: string; car: { id: string; name: string } | null; t0: number } | null = null;
-  classUp(o: { cls: string; color: string; sub: string; car: { id: string; name: string } | null }) {
+  classup: { cls: string; color: string; sub: string; car: { id: string; name: string } | null; reward?: { coins: number; item: string } | null; t0: number } | null = null;
+  classUp(o: { cls: string; color: string; sub: string; car: { id: string; name: string } | null; reward?: { coins: number; item: string } | null }) {
     this.classup = { ...o, t0: this.t() };
     this.showOverlay('classup');
+  }
+  /** v4.6 post-race weekly rank board (over the result card): rows around the player, climb animation */
+  rr: { before: number; board: { rows: any[]; total: number; you: any; next: { rank: number; score: number } | null }; rows: any[]; clsUp: RankClass | null; t0: number } | null = null;
+  runRank(o: { before: number; board: { rows: any[]; total: number; you: any; next: { rank: number; score: number } | null }; rows: any[]; clsUp: RankClass | null }) {
+    this.rr = { ...o, t0: this.t() };
+    this.showOverlay('runrank');
   }
   /** v3.0.11: "Reward Claimed!" after an Entry / Launch / Share reward (shown even if its button is gone) */
   rewardClaimed(title: string, what: string) {
@@ -508,7 +513,7 @@ export class UI {
     this.home = o;
     this.dirty = true;
   }
-  bonusSync(o: { live: boolean; theme: string; name: string; left: string; opens: string; opensAt: string; next: string; finish: number; minutes: number; played: boolean }) {
+  bonusSync(o: { live: boolean; theme: string; name: string; left: string; opens: string; opensAt: string; next: string; finish: number; minutes: number; played: boolean; playsLeft?: number; maxPlays?: number; openMinutes?: number; everyHours?: number }) {
     this.bonus = o;
     this.shown.add('bonus');
     this.dirty = true;
@@ -640,10 +645,6 @@ export class UI {
     const l = LANGS.find((x) => x.code === code) ?? LANGS[0];
     this.lang = l.code;
     setLangCode(l.code as Lang);
-    this.dirty = true;
-  }
-  needRocket(o: { owned: number; wallet: number; price: number }) {
-    this.nr = o;
     this.dirty = true;
   }
   dangerOk() {

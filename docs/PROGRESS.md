@@ -1,5 +1,13 @@
 # Progress log
 
+## 2026-10-24 — new-main v3.2.0
+
+**Done**: merged the newest `feature/sky-roadster-v4.6-big-update` (training, Bonus 3 plays, post-race rank board, cleanup / perf, promotion rewards, rarity by class) into `new-main`, car / road / camera files kept as `main` (pre-3D car images restored after the v4.6 cleanup deleted them). Native: `runRank` overlay (climb animation + glow), classUp reward, Bonus plays left. `CAR_VIEW` (config) = bigger car + closer camera. Removed 3D-only QA scripts and the native paywall popup.
+
+**Verified**: typecheck, 9/9 suites, build:tiktok, check:tiktok 0 FAIL, ES2017, web bundle resolves (bun), simulator: race (bigger car, special under the hearts) and the rank board after a forced game over.
+
+---
+
 ## 2026-10-24 — new-main (v3.1.0): v4.6 changes on the v3 game, car / road / camera unchanged
 
 **Done**: branch `new-main` from `main`, merged `feature/sky-roadster-v4.6-big-update`, then restored to `main`'s version: `render/Vehicle.ts` (only the SKINS unlock matrix + `carsForRank` + all-dark `carVisibility` ported), `Track.ts`, `Scenery.ts`, `CameraRig.ts`, `textures.ts`, `Readability.ts`, car pictures, manifest; removed `render/car/`, `roadSurface.ts`, `envFx.ts`, the GLB, `scripts/car`, `scripts/env`, car / camera / env tests, the Camera motion setting. Game.ts: 3D-car calls removed (model ready, crash FX, pickup sweep, turbo aura, camera dynamic / car size, scenery / track quality). Audio / Renderer = the resolved versions from `feat/v4-native`. Native UI: classUp, exchange panel + shopToExchange, loading %, Restart, flat buttons (`g.flat`), Home without shadows, special under the hearts, LO / MED / HI, future-car labels.
@@ -135,9 +143,27 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 **Next**: owner gets App ID + HS Game ID / SDK key → put App ID in `tiktok/project.config.json`, keys in `src/native/hs.ts`, real ad unit ids + products in the HS dashboard, then `npm run pack:tiktok`. Possible: map daily check-in / missions to `HSGame.claim` keys so the dashboard can tune them.
 
+
+## 2026-10-24 — v4.6.1: owner decisions (same branch `feature/sky-roadster-v4.6-big-update`)
+
+**Decided by the owner**:
+- Zenith is now ice blue.
+- Rarity labels follow the unlock class.
+- C / B / A promotions give coins plus one special (`CLASS_REWARD`).
+- Step 07 FINAL is closed: the experimental premium / arcade cameras and the PBR pass were removed (`docs/3d-upgrade/step07-final/README.md`).
+- `feature/sky-roadster-3d-v4.1` is kept as it is (no reset).
+
+**Step 06.5**: the QA (`scripts/qa/step065.mjs`) was rerun on v4.6 with the v4.6 / v4.6.1 garage and promotion expectations. Results and evidence are in `docs/gameplay-upgrade/step06-5/`. The class matrix doc was updated.
+
+**Next**: the owner approves Step 06.5 (v4.6.1). Native / TikTok sync and the merge to `main` happen only after approval. Phone FPS is still not measured.
+
+---
+
 ## 2026-10-23 — v4.6.0 on NEW branch `feature/sky-roadster-v4.6-big-update` (owner requests)
 
 **Done**: 3D car 15 % taller (runtime Y scale, wheels compensated, GLB untouched — fingerprint test still green); home orbit kept inside the road (`CAMERA.home` yaw 0.24 ± 0.14); UI car pictures = renders of the 3D X1 per colourway (`src/assets/images/cars/*.webp`, `rear-*.webp`); ad revive adds no heart, shows only "REVIVED!"; Settings → Camera motion (default OFF: fixed view — lanes, jumps, dives never move / tilt the camera; Roadster / HYPER / SOS flights still lift it); flat-button rule no longer un-blackens locked car silhouettes. npm test 12 / 12. Shots: `docs/gameplay-upgrade/v4.6/`.
+
+**Done 2026-10-24 (owner list of 11)**: special button under the hearts + smaller; bigger car in the fixed view (screen-adaptive camera distance, `RENDER.carScaleFixed`); Home / Play no shadows; Garage AA + AAA dark (Nexus = AAA); Restart label; NORMAL on launch; Shop exchange at the top (item tap → exchange popup); running loading bar; post-race weekly rank board (`#runrank`, `aroundYou`); Bonus hourly / 30 min / 3 plays; training fixes (`scripts/qa/training.mjs`: 7 lessons, 0 obstacles driven through); cleanup (pre-3D sprite images, dead exports, needRocket paywall) + per-frame allocation fixes. Bundle 4.59 → 3.56 MB.
 
 **Note**: `feature/sky-roadster-3d-v4.1` still holds v4.5.0 (Step 06.5) — this branch starts from it. Vega and Zenith render identically (same white paint; Vega's red only lived in the old 2-D picture).
 
