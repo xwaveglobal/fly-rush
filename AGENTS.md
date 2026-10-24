@@ -64,6 +64,7 @@ builds/              prebuilt single-file HTML snapshots (playable by opening th
 ## Workflow
 
 - **Versions live side by side (one branch each):**
+  - `v5.0` = **v5** — the v4.6.1 3D game made a **native TikTok mini game** again (owner 2026-10-24): v3's native layer (`src/native/`, canvas UI, HS SDK kit in `hs-sdk/`) on top of the v4 code. Same TikTok app / HS game / ad unit ids as v3; ads only (no Beans shop); save on the device. Commands: `npm run build:tiktok` → `tiktok/`, `npm run check:tiktok` (hs-check, must be 0 fail), `npm run preview:tiktok` (fake phone), `npm run pack:tiktok` → `tiktok-tiktok.zip`, `node scripts/qa/native.mjs <out> [--platform android]` (real-tap QA). The native build swaps `src/ui/UI.ts` for `src/native/ui/NativeUI.ts` — a new `this.ui.x` in Game.ts needs the same member there (`src/native/ui/api-check.ts` fails typecheck otherwise). Native art: `npm run images:native` after changing any `.webp`. Never upload to TikTok without the owner's approval.
   - `v4.0.1` = **v4** — the 3D upgrade (better 3D graphics). Started at v4.0.1 from the H5 web game v2.3.0 (DOM UI, accounts / cloud save), because the H5 code is the easiest base for 3D work. Work and push here; never merge `main` (v3 native) into it.
   - `main` = **v3** — the native TikTok mini game (+ the web build of the same code). Every push to `main` goes live on the owner's PC.
   - `v2` = the v2 web game frozen at v2.3.0. Fixes: check out `v2`, commit, push `v2`.

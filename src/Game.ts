@@ -83,7 +83,7 @@ function cleanName(n: string) {
   return out.trim().slice(0, 14);
 }
 
-const VERSION = 'v4.6.1';
+const VERSION = 'v5.0.0';
 /** coins for one Roadster Jump bought on the spot (training / blockade) */
 /** welcome-back gift after this many hours away */
 const WELCOME_AFTER_H = 12;

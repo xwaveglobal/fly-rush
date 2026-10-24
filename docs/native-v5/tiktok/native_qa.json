@@ -1,0 +1,219 @@
+{
+ "platform": "tiktok",
+ "checks": [
+  {
+   "ok": true,
+   "msg": "boots to the Home screen in the native runtime",
+   "data": {
+    "v": "",
+    "speed": "normal",
+    "car": true
+   }
+  },
+  {
+   "ok": true,
+   "msg": "launch level is NORMAL (v4.6)",
+   "data": "normal"
+  },
+  {
+   "ok": true,
+   "msg": "TikTok review: Share · Entry · Launch Reward on Home",
+   "data": [
+    "pk-share",
+    "pk-entry",
+    "pk-launch"
+   ]
+  },
+  {
+   "ok": true,
+   "msg": "Camera motion: default OFF, the switch turns it on (rig follows)",
+   "data": {
+    "before": false,
+    "after": {
+     "save": true,
+     "rig": true
+    }
+   }
+  },
+  {
+   "ok": true,
+   "msg": "Graphics LO / MED / HI: MED selected",
+   "data": "medium"
+  },
+  {
+   "ok": true,
+   "msg": "Garage opens",
+   "data": {
+    "shown": [
+     "garage"
+    ],
+    "idx": 0
+   }
+  },
+  {
+   "ok": true,
+   "msg": "Shop exchange: coins → 1 Roadster Jump",
+   "data": {
+    "s0": {
+     "super": 2,
+     "wallet": 20000
+    },
+    "s1": {
+     "super": 3,
+     "wallet": 18200
+    }
+   }
+  },
+  {
+   "ok": true,
+   "msg": "tapping your item opens the exchange popup",
+   "data": [
+    "shop",
+    "bagbuy"
+   ]
+  },
+  {
+   "ok": true,
+   "msg": "no TikTok Beans products (owner: ads only)",
+   "data": false
+  },
+  {
+   "ok": true,
+   "msg": "Bonus: every hour, open 30 min, 3 plays",
+   "data": {
+    "maxPlays": 3,
+    "open": 30,
+    "every": 1,
+    "live": false
+   }
+  },
+  {
+   "ok": true,
+   "msg": "Play opens the track list",
+   "data": [
+    "tracks"
+   ]
+  },
+  {
+   "ok": true,
+   "msg": "the race runs (countdown → run)",
+   "data": "run"
+  },
+  {
+   "ok": true,
+   "msg": "special button under the hearts (top right, v4.6)",
+   "data": {
+    "state": "run",
+    "special": {
+     "key": "rocket",
+     "y": 174,
+     "h": 70
+    },
+    "hearts": 244
+   }
+  },
+  {
+   "ok": true,
+   "msg": "a left swipe changes lane",
+   "data": {
+    "lane0": 1,
+    "lane1": 0
+   }
+  },
+  {
+   "ok": true,
+   "msg": "Pause holds (no auto game over after 9 s)",
+   "data": "paused"
+  },
+  {
+   "ok": true,
+   "msg": "last crash → revive offer (rewarded ad place rw_revive)"
+  },
+  {
+   "ok": true,
+   "msg": "revive ad closed early → no revive, the offer stays",
+   "data": "continue"
+  },
+  {
+   "ok": true,
+   "msg": "revive ad watched → back in the race, no extra heart",
+   "data": {
+    "s": "run",
+    "lives": 0
+   }
+  },
+  {
+   "ok": true,
+   "msg": "game over → result card",
+   "data": [
+    "gameover",
+    "runrank"
+   ]
+  },
+  {
+   "ok": true,
+   "msg": "v4.6 post-race weekly rank board over the result card",
+   "data": [
+    "gameover",
+    "runrank"
+   ]
+  },
+  {
+   "ok": true,
+   "msg": "result card has Restart",
+   "data": true
+  },
+  {
+   "ok": true,
+   "msg": "first-time Class C celebration",
+   "data": [
+    "start",
+    "classup"
+   ]
+  },
+  {
+   "ok": true,
+   "msg": "Class C reward paid on Continue (+300 coins, +1 Roadster Jump)",
+   "data": {
+    "coins": 300,
+    "super": 1
+   }
+  },
+  {
+   "ok": true,
+   "msg": "training: Skip always on screen",
+   "data": true
+  },
+  {
+   "ok": true,
+   "msg": "no page / console errors",
+   "data": []
+  }
+ ],
+ "errors": [],
+ "trackKeys": [
+  "#block",
+  "back",
+  "tr-training",
+  "tr-endless",
+  "tr-t2",
+  "soon-S",
+  "soon-SS",
+  "soon-SSS"
+ ],
+ "pickKeys": [
+  "#block",
+  "back",
+  "tr-training",
+  "tr-endless",
+  "tr-t2",
+  "soon-S",
+  "soon-SS",
+  "soon-SSS",
+  "#block",
+  "#block",
+  "x-specialpick",
+  "bagpick",
+  "sgo"
+ ]
+}

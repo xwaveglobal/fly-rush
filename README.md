@@ -187,6 +187,42 @@ When `window.adBreak` exists the game uses it automatically (remove `data-adbrea
 
 Garage: 9 cars in 5 body styles (GT Coupe ×4 colourways, Hyper Wedge, Thunder Muscle, Orbit Pod, Cyber Blade, Gold Legend); locked cars are faded in the car strip and shown as a dark silhouette in 3D. Profile: random pilot-helmet avatar (24 designs, change or re-roll in Settings) with a skill-tier badge in the corner (Rookie → Bronze 1k → Silver 3k → Gold 7k → Platinum 15k → Diamond 30k → Legend 50k best score), also shown on leaderboards. Missions (3 active, rewards in coins, pilot rank), Settings (sound, music, danger arrows, graphics, pilot name), Garage (4 colourways, Engine / Shield / Magnet upgrades, 5 levels each), best score and everything else persisted in `localStorage`.
 
+## v5.0.0 — native TikTok Minis release of the 3D game (branch `v5.0`)
+
+- **Same game as v4.6.1, as a native TikTok mini game.** v3's native layer is now on top of the v4 code:
+  - the tt runtime adapter;
+  - the canvas UI with the same API as the DOM UI;
+  - the HS SDK kit 3.2.3 / SDK 1.1.2.
+- **Same TikTok app, HS game and SDK key as v3**, with the same five ad places: `rw_revive`, `rw_end_bonus`, `rw_free_coins`, `rw_head_start` and `int_race_end`.
+- **No shop code (owner: ads only).** A Remove Ads bought in v3 keeps working. Progress is saved on the device. The Entry / Launch / Share reward buttons that TikTok review needs are there.
+- **v3 platform fixes carried over:**
+  - fail-safe, "baked" Web Audio, now combined with the Step 06.5 first-tap unlock;
+  - ad waits capped, and the revive countdown frozen while an ad loads or plays;
+  - Android: WebGL context fallback, lighter MSAA and render scale;
+  - shader prewarm of hidden meshes;
+  - an Android-safe name filter;
+  - safe-area / capsule layout;
+  - colour calibration;
+  - the in-game log.
+- **v4 screens drawn natively:**
+  - the 3D X1 car (GLB in the bundle) and Zenith's ice-blue paint;
+  - the class promotion with C / B / A rewards;
+  - the post-race weekly rank board;
+  - the Shop coins → specials exchange;
+  - Settings → Camera motion and LO / MED / HI graphics;
+  - Bonus with 3 plays an hour;
+  - garage silhouettes and rarity by class;
+  - the special button under the hearts;
+  - training Skip on the left;
+  - flat buttons, no shadows;
+  - the running loading bar;
+  - Restart labels.
+- **Checks:**
+  - `npm run check:tiktok`: 0 fail, 0 warn.
+  - `scripts/qa/native.mjs`: 25 / 25 in TikTok mode and 25 / 25 in Android mode (HS fake-phone preview, real taps). Screens are in `docs/native-v5/`.
+  - Package size: 3.6 MB of the 4 MB limit.
+  - Not tested on a real phone here.
+
 ## v4.6.1 — owner decisions: Zenith ice blue, rarity by class, C / B / A rewards, Step 07 closed
 
 - **Zenith** (starter, class D) is painted ice blue, so it no longer looks like Vega's white. Its garage and share pictures were re-rendered from the 3D model.

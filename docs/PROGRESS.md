@@ -4,6 +4,35 @@ Newest entry on top. Every AI session adds a short entry: what was done, what is
 
 ---
 
+## 2026-10-24 — v5.0.0 on NEW branch `v5.0`: native TikTok Minis release prep
+
+**Owner**: "clone this latest version to a new branch, version 5.0, to prepare a native TikTok Minis release; recheck all errors from scratch with the HS SDK; put in the ad ids already sent."
+
+**Owner choices**: same TikTok app (App ID `7698594517263403028`, HS SDK key and 5 ad unit ids from v3) · only v3's platform fixes are carried over, not its rule changes (shield, special prices, Bonus) · no Beans shop (ads only) · save on the device, no sign-in button.
+
+**Done**:
+- v3 native layer brought from `main`:
+  - `src/native/`, `platform.ts`, `kv.ts`, `Perks.ts`, `Flags.ts`;
+  - the build / tools scripts and `hs-sdk/`, `tiktok/`, `tiktok.hs-dashboard.json`.
+- Shared code hooks merged into v4: `Ads`, `Save`, `Renderer`, `Input`, `i18n`, `Cloud`, `PlayerStore`, `Game`, plus `Audio` = v3 fail-safe / baked audio + the Step 06.5 unlock.
+- The native UI gained the v4 screens. `src/native/ui/api-check.ts` checks at typecheck time that the native UI has every member Game.ts uses.
+- `scripts/native-images.py` (PNG / JPG copies of the WebP art).
+- The GLB is bundled as a data URL.
+- Checks:
+  - hs-check: 0 fail, 0 warn.
+  - The pack runs.
+  - `scripts/qa/native.mjs`: 25 / 25 in TikTok mode and 25 / 25 in Android mode (`docs/native-v5/`).
+  - `npm test`: 13 / 13.
+
+**Known**:
+- No real-phone test here (SwiftShader only, ~2–10 fps, so the QA fast-forwards game time with `Game.advance`).
+- `game.js` is 3.1 MB (1.4 MB is the GLB), and the package 3.6 MB of 4 MB: little room left. A next step could move the GLB to a subpackage.
+- The preview's built-in checker shows 2 FAIL when it is run on `tiktok/` directly (this repo is ESM). Use `npm run preview:tiktok`, which runs it on a CommonJS temp copy.
+
+**Next**: the owner pastes `tiktok.hs-dashboard.json` → `iaa_config` into the HS dashboard (Ads Config) if anything changed, uploads `tiktok-tiktok.zip` (Code version → Add code asset) after approving, and tests on Android + iPhone. Do not upload without approval.
+
+---
+
 ## 2026-10-24 — v4.6.1: owner decisions (same branch `feature/sky-roadster-v4.6-big-update`)
 
 **Decided by the owner**:
